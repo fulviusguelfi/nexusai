@@ -95,7 +95,7 @@ nexusai/
 - **OpenRouter** (múltiplos provedores)
 - **AWS Bedrock**
 - **Google Gemini**
-- **GitHub Copilot Models** (a adicionar)
+- **GitHub Copilot Models** (integrado via vscode.authentication — browser, passkey, app mobile, token)
 - **Outros provedores Cline**
 
 ---

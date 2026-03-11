@@ -3,6 +3,7 @@ import { type ReactNode } from "react"
 import { CustomPostHogProvider } from "./CustomPostHogProvider"
 import { ClineAuthProvider } from "./context/ClineAuthContext"
 import { ExtensionStateContextProvider } from "./context/ExtensionStateContext"
+import { GitHubAuthProvider } from "./context/GitHubAuthContext"
 import { PlatformProvider } from "./context/PlatformContext"
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -11,7 +12,9 @@ export function Providers({ children }: { children: ReactNode }) {
 			<ExtensionStateContextProvider>
 				<CustomPostHogProvider>
 					<ClineAuthProvider>
-						<HeroUIProvider>{children}</HeroUIProvider>
+						<GitHubAuthProvider>
+							<HeroUIProvider>{children}</HeroUIProvider>
+						</GitHubAuthProvider>
 					</ClineAuthProvider>
 				</CustomPostHogProvider>
 			</ExtensionStateContextProvider>

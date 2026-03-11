@@ -4,9 +4,11 @@ import { e2e } from "./utils/helpers"
 // Test for setting up API keys
 e2e("Views - can set up API keys and navigate to Settings from Chat", async ({ sidebar }) => {
 	// Use the page object to interact with editor outside the sidebar
-	// Verify initial state
+	// Verify initial state — all user type options and navigation buttons are present
 	await expect(sidebar.getByRole("button", { name: "Login to Cline" })).toBeVisible()
-	await expect(sidebar.getByText("Bring my own API key")).toBeVisible()
+	// Use exact:true because the description text also contains "GitHub Copilot"
+	await expect(sidebar.getByText("GitHub Copilot", { exact: true })).toBeVisible()
+	await expect(sidebar.getByText("Bring my own API key", { exact: true })).toBeVisible()
 
 	// Navigate to API key setup
 	await sidebar.getByText("Bring my own API key").click()
