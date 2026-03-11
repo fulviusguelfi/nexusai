@@ -1,0 +1,31 @@
+name: CI - Build Check
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Proto files
+        run: npm run protos
+      
+      - name: Check TypeScript types
+        run: npx tsc --noEmit
+      
+      - name: Lint code
+        run: npx biome lint --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error
