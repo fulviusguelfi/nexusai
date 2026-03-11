@@ -3,13 +3,13 @@
 ## 1. Informações do Projeto
 
 | Campo | Valor |
-|-------|-------|
+| ----- | ----- |
 | **Nome** | NexusAI |
 | **Versão** | 1.0.0 |
 | **Autores** | Fulvius Titanero Guelfi + IA |
 | **Base** | Cline (Extensão VSCode) |
 | **Licença** | Apache-2.0 (atual) / MIT (proposta) |
-| **Repositório** | https://github.com/fulviusguelfi/nexusai |
+| **Repositório** | [fulviusguelfi/nexusai](https://github.com/fulviusguelfi/nexusai) |
 
 ---
 
@@ -30,17 +30,20 @@ NexusAI é uma extensão de IA para VSCode que oferece assistência autônoma ao
 ## 3. Modos de Operação da IA
 
 ### 3.1 ACT Mode (Execução)
+
 - IA principal que executa ações diretas
 - Modifica arquivos, executa comandos
 - Controla dispositivos IoT
 - Pode usar outras IAs como ferramentas
 
 ### 3.2 PLAN Mode (Planejamento)
+
 - Usado para planejar soluções complexas
 - Faz perguntas clarificadoras
 - Cria planos detalhados antes da execução
 
 ### 3.3 ASK Mode (Pesquisa e Conhecimento)
+
 - Pesquisa na internet
 - Monta base de conhecimento
 - Salva snippets de código e skills
@@ -48,6 +51,7 @@ NexusAI é uma extensão de IA para VSCode que oferece assistência autônoma ao
 - Agrega informações para uso futuro
 
 ### 3.4 JUST CHAT Mode (Conversação)
+
 - Conversa naturalmente como duas pessoas
 - **IMPORTANTE**: Não se confunde com a própria voz
 - Personalidade configurável
@@ -59,7 +63,7 @@ NexusAI é uma extensão de IA para VSCode que oferece assistência autônoma ao
 
 ### 4.1 Estrutura de Pastas
 
-```
+```text
 nexusai/
 ├── src/                    # Backend (TypeScript)
 │   ├── core/              # Lógica principal
@@ -77,7 +81,7 @@ nexusai/
 ### 4.2 Componentes Principais
 
 | Componente | Descrição |
-|------------|-----------|
+| ---------- | --------- |
 | WebviewProvider | Gerencia UI e comunicação |
 | Controller | Estado e mensagens |
 | Task | Execução de tarefas |
@@ -103,21 +107,25 @@ nexusai/
 ## 6. MCP Servers Recomendados
 
 ### 6.1 Pesquisa e Internet
+
 - Fetch - Requisições HTTP
 - Puppeteer - Automação de browser
 - Brave Search - Busca na web
 
 ### 6.2 Gerenciamento de Código
+
 - Git - Controle de versão
 - Filesystem - Operações de arquivo
 - Todo - Gerenciamento de tarefas
 
 ### 6.3 IoT e Rede
+
 - MQTT - Protocolo IoT
 - SSH - Conexões remotas
 - Network - Descoberta de dispositivos
 
 ### 6.4 Conhecimento
+
 - Memory - Armazenamento vetorial
 - SQLite - Banco de dados local
 
@@ -126,6 +134,7 @@ nexusai/
 ## 7. Skills a Desenvolver
 
 ### 7.1 Skills Principais
+
 1. `skills/developer.md` - Conhecimento de desenvolvimento
 2. `skills/researcher.md` - Pesquisa e investigação
 3. `skills/network.md` - Rede e conexões
@@ -134,6 +143,7 @@ nexusai/
 6. `skills/planner.md` - Planejamento estratégico
 
 ### 7.2 Estrutura de Cada Skill
+
 ```markdown
 # Nome da Skill
 
@@ -155,6 +165,7 @@ nexusai/
 ## 8. Personalidade do Avatar
 
 O NexusAI terá uma personalidade configurável:
+
 - Nome do avatar
 - Tom de voz (formal, casual, técnico)
 - Comportamento responses
@@ -162,7 +173,9 @@ O NexusAI terá uma personalidade configurável:
 - Emoji usage
 
 ### Regras de Identificação
+
 ⚠️ **IMPORTANTE**: O avatar não deve se confundir com o usuário
+
 - Sistema de detecção de locutor
 - Diferenciação entre voz do usuário e da IA
 - Prevenção de loop de resposta
@@ -172,6 +185,7 @@ O NexusAI terá uma personalidade configurável:
 ## 9. Requisitos de Licença
 
 O projeto é baseado no Cline (MIT License). Ao usar o código do Cline:
+
 - Manter atribuições necessárias
 - Adicionar créditos dos autores (Fulvius Titanero Guelfi + IA)
 - Manter licença MIT para código derivado
@@ -180,7 +194,7 @@ O projeto é baseado no Cline (MIT License). Ao usar o código do Cline:
 
 ## 10. Fluxo de Desenvolvimento
 
-```
+```text
 master (release)
    ↑
 develop (integração)
@@ -191,6 +205,7 @@ pull requests
 ```
 
 ### Padrão de Commits
+
 - `feat: description` - Nova funcionalidade
 - `fix: description` - Correção de bug
 - `docs: description` - Documentação
@@ -210,5 +225,5 @@ pull requests
 ## 12. Contato
 
 - **Autor**: Fulvius Titanero Guelfi
-- **GitHub**: https://github.com/fulviusguelfi/nexusai
-- **Issues**: https://github.com/fulviusguelfi/nexusai/issues
+- **GitHub**: [fulviusguelfi/nexusai](https://github.com/fulviusguelfi/nexusai)
+- **Issues**: [fulviusguelfi/nexusai/issues](https://github.com/fulviusguelfi/nexusai/issues)
