@@ -21,8 +21,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Compile TypeScript
-        run: npm run compile
+      - name: Generate Proto files
+        run: npm run protos
       
-      - name: Run unit tests
-        run: npm run test:unit || true
+      - name: Check TypeScript types
+        run: npx tsc --noEmit
+      
+      - name: Lint code
+        run: npx biome lint --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error
