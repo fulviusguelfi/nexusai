@@ -78,7 +78,7 @@ Hoje, o desenvolvedor diz ao NexusAI **o que** fazer. No futuro, o NexusAI enten
 
 Imagine:
 
-```
+```text
 Você: "Quero automatizar o deploy do projeto Alfa toda vez que houver
        um PR mergeado para main."
 
@@ -94,7 +94,7 @@ Isso não é ficção científica. É o que estamos construindo, peça por peça
 
 ## O Caminho
 
-```
+```text
 Fase 1 ✅  →  Base sólida, identidade, auth simplificada
 Fase 2 ⏳  →  Terminal e shell — o agente ganha mãos
 Fase 3 ⏳  →  SSH — o agente alcança outros computadores

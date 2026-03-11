@@ -69,7 +69,7 @@ npm run test:unit # deve mostrar "passed"
 
 ## Estrutura do Projeto
 
-```
+```text
 nexusai/
 ├── src/                        # Extensão VS Code (TypeScript)
 │   ├── extension.ts            # Ponto de entrada (activate())

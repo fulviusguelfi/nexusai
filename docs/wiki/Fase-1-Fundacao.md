@@ -98,7 +98,7 @@ O VS Code possui uma API nativa de autenticação (`vscode.authentication`) que 
 
 ### Arquitetura
 
-```
+```text
 VS Code Authentication API
          │
          ▼

@@ -47,6 +47,7 @@ A expansão usará o mesmo padrão de tools já existente:
 ```
 
 A ferramenta `execute_command` será aprimorada com:
+
 - Controle de timeout explícito
 - Modo background (processo persiste após o tool return)
 - Streaming de output em tempo real para a UI
@@ -61,7 +62,7 @@ A ferramenta `execute_command` será aprimorada com:
 
 A maioria dos desenvolvedores trabalha com infraestrutura distribuída: servidores de dev, VMs, Raspberry Pi, NAS, ambientes de staging. Hoje, gerenciar tudo isso exige abrir terminais separados, lembrar IPs e senhas, e mudar de contexto constantemente. Com SSH integrado ao agente, basta dizer "reinicia o servidor de staging" — o NexusAI encontra a máquina, conecta e executa.
 
-### Tarefas Planejadas
+### Tarefas — Conexão SSH
 
 | # | Tarefa | Descrição |
 | - | ------ | --------- |
@@ -72,7 +73,7 @@ A maioria dos desenvolvedores trabalha com infraestrutura distribuída: servidor
 
 ### Preview da Arquitetura
 
-```
+```text
 SSHManager (src/services/ssh/)
 ├── ConnectionPool         → reutiliza conexões abertas
 ├── HostDiscovery          → scan da rede, cache de hosts conhecidos
@@ -123,11 +124,12 @@ Soluções de voz em nuvem têm três problemas: latência perceptível, custo p
 ⚠️ **Desafio técnico crítico**: quando o NexusAI fala, o microfone também pode captar a própria voz e ativar o STT, criando um loop infinito.
 
 Solução planejada:
+
 1. **Gate de áudio**: desativar captura enquanto TTS está rodando
 2. **Detecção de locutor (Speaker Diarization)**: identificar se a voz capturada é do usuário ou ecoada pelo agente
 3. **Delay adaptativo**: esperar silêncio após o TTS antes de reativar o STT
 
-### Tarefas Planejadas
+### Tarefas — Voz
 
 | # | Tarefa | Descrição |
 | - | ------ | --------- |
@@ -137,9 +139,9 @@ Solução planejada:
 | 4.4 | Detecção de locutor | Sistema para distinguir voz do usuário da voz do agente |
 | 4.5 | Personalidade configurável | Nome, tom, velocidade, idioma, modo de resposta |
 
-### Preview da Arquitetura
+### Preview de Voz
 
-```
+```text
 VoiceEngine (src/services/voice/)
 ├── TtsService (Piper)
 │   ├── synthesize(text): AudioBuffer
@@ -170,7 +172,7 @@ VoiceEngine (src/services/voice/)
 - **"Me diz a temperatura do servidor"** → lê sensor de temperature via MQTT
 - **"Liga o ar-condicionado quando minha temperatura corporal subir"** → cria automação com condição
 
-### Tarefas Planejadas
+### Tarefas — IoT
 
 | # | Tarefa | Descrição |
 | - | ------ | --------- |
@@ -180,9 +182,9 @@ VoiceEngine (src/services/voice/)
 | 5.4 | Protocolo WebSocket | Conexão persistente para dispositivos com WS (HA, Hue, etc.) |
 | 5.5 | Interface de controle IoT | Dashboard no webview — mapa de dispositivos, status, histórico |
 
-### Preview da Arquitetura
+### Preview de IoT
 
-```
+```text
 IoTController (src/services/iot/)
 ├── DeviceRegistry        → inventário de dispositivos descobertos
 ├── MqttClient            → pub/sub com broker local (Mosquitto, HA)

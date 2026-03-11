@@ -20,7 +20,7 @@ O NexusAI é uma extensão VS Code construída sobre uma arquitetura em camadas,
 
 ## Visão Geral
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    VS Code Extension Host                │
 │                                                         │
@@ -59,7 +59,7 @@ O NexusAI é uma extensão VS Code construída sobre uma arquitetura em camadas,
 
 O arquivo `src/extension.ts` é a função `activate()` chamada pelo VS Code ao ativar a extensão. Ele orquestra a inicialização na seguinte sequência:
 
-```
+```text
 1. setupHostProvider(context)
    └─ configura adaptadores VS Code para o HostProvider abstrato
 
@@ -111,7 +111,7 @@ export async function initialize(storageContext): Promise<WebviewProvider> {
 
 `src/core/controller/index.ts` é o componente mais crítico da extensão:
 
-```
+```text
 Controller
 ├── StateManager          → persiste e lê estado global e de workspace
 ├── ApiHandler            → gerencia conexão com providers de IA
@@ -138,7 +138,7 @@ A interface da extensão é uma aplicação React rodando dentro de um WebviewVi
 
 **Estrutura em `webview-ui/src/`:**
 
-```
+```text
 context/
 ├── ExtensionStateContext.tsx   ← estado global espelhado da extensão
 ├── GitHubAuthContext.tsx       ← estado de auth GitHub Copilot
@@ -157,7 +157,7 @@ grpc-client/       ← clients gerados (não editar manualmente)
 
 **Fluxo de estado:**
 
-```
+```text
 Extensão envia estado → postMessage({ type: "state", ... })
          │
          ▼
@@ -192,7 +192,7 @@ Em vez de `JSON.parse(message)` e `if (type === "...")` espalhados pelo código,
 
 ### Estrutura dos protos
 
-```
+```text
 proto/cline/
 ├── account.proto     — autenticação, planos, organizações
 ├── common.proto      — tipos compartilhados (EmptyRequest, String, etc.)
@@ -285,7 +285,7 @@ for await (const state of AccountServiceClient.subscribeToGitHubAuthState(
 
 `src/core/task/index.ts` é o "cérebro" do agente. Quando o usuário envia uma mensagem, ela cria uma `Task`:
 
-```
+```text
 Usuário envia mensagem
         │
         ▼
@@ -313,7 +313,7 @@ Task.run()
 
 O system prompt é montado de forma modular em `src/core/prompts/system-prompt/`:
 
-```
+```text
 components/          → blocos reutilizáveis (tools, rules, skills, context)
 variants/            → configurações por família de modelo
   ├── claude/        → prompt otimizado para Claude
@@ -383,7 +383,7 @@ Serviços em `src/services/` são singleton ou stateless helpers usados pelo Con
 
 ### Fluxo de build
 
-```
+```bash
 npm run compile
    │
    ├─ check-types        → tsc (sem emit) em extension + webview + cli
@@ -391,7 +391,7 @@ npm run compile
    └─ build:esbuild      → empacota extension.ts em dist/extension.js
 ```
 
-```
+```bash
 npm run watch  (desenvolvimento)
    │
    ├─ protos             → gera tipos protobuf
@@ -467,7 +467,7 @@ const normalizedPath = toPosixString(absolutePath)
 
 ### Gitflow
 
-```
+```text
 master ─────────────────────────────► releases estáveis + tags de versão
    ▲
    │ PR
