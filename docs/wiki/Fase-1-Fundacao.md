@@ -187,7 +187,7 @@ O contexto assina `subscribeToGitHubAuthState` automaticamente no mount, mantend
 
 ### Fluxo de Onboarding
 
-```
+```text
 WelcomeView
   └─ "Connect GitHub Copilot" (botão primário)
        │
