@@ -1,8 +1,8 @@
 {
-	"name": "claude-dev",
-	"displayName": "Cline",
-	"description": "Autonomous coding agent right in your IDE, capable of creating/editing files, running commands, using the browser, and more with your permission every step of the way.",
-	"version": "3.71.0",
+	"name": "nexusai",
+	"displayName": "NexusAI",
+	"description": "Assistente de IA para VS Code baseado no Cline, com foco em automacao de desenvolvimento e futura expansao para voz, SSH e IoT.",
+	"version": "1.0.0-alpha",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		".",
@@ -12,15 +12,15 @@
 		"vscode": "^1.84.0"
 	},
 	"author": {
-		"name": "Cline Bot Inc."
+		"name": "Fulvius Titanero Guelfi"
 	},
 	"license": "Apache-2.0",
-	"publisher": "saoudrizwan",
+	"publisher": "fulviusguelfi",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/cline/cline"
+		"url": "https://github.com/fulviusguelfi/nexusai"
 	},
-	"homepage": "https://cline.bot",
+	"homepage": "https://github.com/fulviusguelfi/nexusai",
 	"categories": [
 		"AI",
 		"Chat",

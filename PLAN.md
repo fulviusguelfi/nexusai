@@ -8,7 +8,7 @@
 | **Versão** | 1.0.0 |
 | **Autores** | Fulvius Titanero Guelfi + IA |
 | **Base** | Cline (Extensão VSCode) |
-| **Licença** | MIT |
+| **Licença** | Apache-2.0 (atual) / MIT (proposta) |
 | **Repositório** | https://github.com/fulviusguelfi/nexusai |
 
 ---
