@@ -1,8 +1,8 @@
-# Cline Extension Architecture & Development Guide
+# NexusAI Extension Architecture & Development Guide
 
 ## Project Overview
 
-Cline is a VSCode extension that provides AI assistance through a combination of a core extension backend and a React-based webview frontend. The extension is built with TypeScript and follows a modular architecture pattern.
+NexusAI is a VSCode extension (forked from Cline) that provides AI assistance through a combination of a core extension backend and a React-based webview frontend. The extension is built with TypeScript and follows a modular architecture pattern.
 
 ## Architecture Overview
 

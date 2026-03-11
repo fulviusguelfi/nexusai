@@ -40,7 +40,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
               with:
-                  ref: main
+                  ref: master
                   fetch-depth: 0
                   fetch-tags: true
 
@@ -63,17 +63,17 @@ jobs:
                   fi
                   TAG_REF="refs/tags/$TAG"
 
-                  git fetch origin main --tags
+                  git fetch origin master --tags
 
                   if [[ "$AUTO_CREATE" == "true" ]]; then
-                    if [[ "$WORKFLOW_REF" != "refs/heads/main" ]]; then
-                      echo "Error: auto-create mode requires dispatching from main (current ref: $WORKFLOW_REF)"
+                    if [[ "$WORKFLOW_REF" != "refs/heads/master" ]]; then
+                      echo "Error: auto-create mode requires dispatching from master (current ref: $WORKFLOW_REF)"
                       exit 1
                     fi
                     echo "Auto-create enabled. Using tested workflow SHA: $TESTED_SHA"
 
-                    if ! git merge-base --is-ancestor "$TESTED_SHA" origin/main; then
-                      echo "Error: tested SHA $TESTED_SHA is not on origin/main"
+                    if ! git merge-base --is-ancestor "$TESTED_SHA" origin/master; then
+                      echo "Error: tested SHA $TESTED_SHA is not on origin/master"
                       exit 1
                     fi
 
