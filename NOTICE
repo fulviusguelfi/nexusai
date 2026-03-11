@@ -1,0 +1,15 @@
+NexusAI
+
+This project is based on Cline (https://github.com/cline/cline).
+
+Original upstream project:
+- Name: Cline
+- License: Apache License 2.0
+- Copyright: Cline Bot Inc.
+
+Derivative project:
+- Name: NexusAI
+- Repository: https://github.com/fulviusguelfi/nexusai
+- Maintainer: Fulvius Titanero Guelfi
+
+Unless explicitly stated otherwise in a file header, source files in this repository are distributed under the Apache License 2.0, matching the current repository license.

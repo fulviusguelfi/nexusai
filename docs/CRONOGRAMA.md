@@ -15,10 +15,10 @@ Este documento detalha o cronograma de desenvolvimento para a versão 1.0 do Nex
 |--------|-----------|--------|
 | 1.1 | Criar repositório GitHub | ✅ Concluído |
 | 1.2 | Configurar branches (master, develop) | ✅ Concluído |
-| 1.3 | Renomear projeto para NexusAI | ⏳ Pendente |
-| 1.4 | Atualizar identidade visual (ícones, nome) | ⏳ Pendente |
-| 1.5 | Configurar autores e licença | ⏳ Pendente |
-| 1.6 | Criar documentos do projeto | ⏳ Pendente |
+| 1.3 | Renomear projeto para NexusAI | ✅ Concluído |
+| 1.4 | Atualizar identidade visual (ícones, nome) | ✅ Concluído |
+| 1.5 | Configurar autores e licença (NOTICE e autoria base atualizados) | ✅ Concluído |
+| 1.6 | Criar documentos do projeto | ✅ Concluído |
 
 ### Fase 2: Controle Local 🖥️
 **Objetivo**: Terminal local e comandos shell

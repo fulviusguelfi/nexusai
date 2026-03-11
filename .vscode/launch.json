@@ -16,6 +16,8 @@
 				"saoudrizwan.claude-dev", // Avoid conflicts with installed Cline
 				"--disable-extension",
 				"saoudrizwan.cline-nightly", // Avoid conflicts with installed Cline Nightly
+				"--disable-extension",
+				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
 				"${workspaceFolder}",
 				"--disable-extensions"
 			],
@@ -41,6 +43,8 @@
 				"saoudrizwan.claude-dev", // Avoid conflicts with installed Cline
 				"--disable-extension",
 				"saoudrizwan.cline-nightly", // Avoid conflicts with installed Cline Nightly
+				"--disable-extension",
+				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
 				"${workspaceFolder}"
 			],
 			"outFiles": [
@@ -65,6 +69,8 @@
 				"saoudrizwan.claude-dev", // Avoid conflicts with installed Cline
 				"--disable-extension",
 				"saoudrizwan.cline-nightly", // Avoid conflicts with installed Cline Nightly
+				"--disable-extension",
+				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
 				"${workspaceFolder}"
 			],
 			"outFiles": [
@@ -91,6 +97,8 @@
 				"saoudrizwan.claude-dev", // Avoid conflicts with installed Cline
 				"--disable-extension",
 				"saoudrizwan.cline-nightly", // Avoid conflicts with installed Cline Nightly
+				"--disable-extension",
+				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"${workspaceFolder}"
 			],
