@@ -38,6 +38,8 @@ export const config = createVariant(ModelFamily.HERMES)
 	)
 	.tools(
 		ClineDefaultTool.BASH,
+		ClineDefaultTool.LIST_PROCESSES,
+		ClineDefaultTool.KILL_PROCESS,
 		ClineDefaultTool.FILE_READ,
 		ClineDefaultTool.FILE_NEW,
 		ClineDefaultTool.FILE_EDIT,

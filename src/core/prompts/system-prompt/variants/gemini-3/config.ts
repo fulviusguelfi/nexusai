@@ -46,6 +46,8 @@ export const config = createVariant(ModelFamily.GEMINI_3)
 	)
 	.tools(
 		ClineDefaultTool.BASH,
+		ClineDefaultTool.LIST_PROCESSES,
+		ClineDefaultTool.KILL_PROCESS,
 		ClineDefaultTool.FILE_READ,
 		ClineDefaultTool.FILE_NEW,
 		ClineDefaultTool.FILE_EDIT,

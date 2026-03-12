@@ -1,8 +1,8 @@
 import { ErrorSettings } from "./providers/IErrorProvider"
 
-export { ClineError, ClineErrorType } from "./ClineError"
 export { type ErrorProviderConfig, ErrorProviderFactory, type ErrorProviderType } from "./ErrorProviderFactory"
 export { ErrorService } from "./ErrorService"
+export { AuthInvalidTokenError, AuthNetworkError, ClineError, ClineErrorType, NexusError, NexusErrorType } from "./NexusError"
 export type { ErrorSettings, IErrorProvider } from "./providers/IErrorProvider"
 export { PostHogErrorProvider } from "./providers/PostHogErrorProvider"
 

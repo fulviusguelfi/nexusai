@@ -61,7 +61,6 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 			// Track that we're using shell integration
 			const execution = terminal.shellIntegration.executeCommand(command)
 			const stream = execution.read()
-			// todo: need to handle errors
 			let isFirstChunk = true
 			let didOutputNonCommand = false
 			let didEmitEmptyLine = false
