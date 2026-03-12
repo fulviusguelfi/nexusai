@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemMedia, ItemTitle } from "@/components/ui/item"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { useGitHubAuth } from "@/context/GitHubAuthContext"
 import { cn } from "@/lib/utils"
 import { AccountServiceClient, StateServiceClient } from "@/services/grpc-client"
 import ApiConfigurationSection from "../settings/sections/ApiConfigurationSection"
@@ -224,6 +225,41 @@ const UserTypeSelectionStep = ({ userType, onSelectUserType }: UserTypeSelection
 	</div>
 )
 
+/** Shown in step 1 when the user selected "GitHub Copilot" as their user type. */
+const GitHubCopilotStep = () => {
+	const { isSignedIn, githubUser } = useGitHubAuth()
+	return (
+		<div className="flex flex-col w-full items-center">
+			<div className="flex w-full max-w-lg flex-col gap-4 my-4">
+				{isSignedIn && githubUser ? (
+					<Item className="w-full" variant="outline">
+						<ItemMedia className="[&_svg]:stroke-green-500" variant="icon">
+							<CircleCheckIcon className="stroke-1.5" />
+						</ItemMedia>
+						<ItemContent className="w-full">
+							<ItemTitle>Connected as {githubUser.displayName || githubUser.login}</ItemTitle>
+							<ItemDescription>GitHub Copilot models are ready to use</ItemDescription>
+						</ItemContent>
+					</Item>
+				) : (
+					<Item className="w-full" variant="outline">
+						<ItemMedia variant="icon">
+							<span className="codicon codicon-github text-xl" />
+						</ItemMedia>
+						<ItemContent className="w-full">
+							<ItemTitle>GitHub Copilot</ItemTitle>
+							<ItemDescription>
+								Sign in with your GitHub account to use Copilot models. VS Code will guide you through
+								authentication (browser, passkey, mobile app, or token).
+							</ItemDescription>
+						</ItemContent>
+					</Item>
+				)}
+			</div>
+		</div>
+	)
+}
+
 type OnboardingStepContentProps = {
 	step: number
 	userType: NEW_USER_TYPE | undefined
@@ -253,6 +289,9 @@ const OnboardingStepContent = ({
 	if (step === 2) {
 		return null
 	}
+	if (userType === NEW_USER_TYPE.GITHUB) {
+		return <GitHubCopilotStep />
+	}
 	if (userType === NEW_USER_TYPE.FREE || userType === NEW_USER_TYPE.POWER) {
 		return (
 			<ModelSelection
@@ -273,10 +312,11 @@ const OnboardingStepContent = ({
 const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingModelGroup }) => {
 	const { handleFieldsChange } = useApiConfigurationHandlers()
 	const { openRouterModels, hideSettings, hideAccount, setShowWelcome } = useExtensionState()
+	const { signIn: githubSignIn } = useGitHubAuth()
 
 	const [stepNumber, setStepNumber] = useState(0)
 	const [isActionLoading, setIsActionLoading] = useState(false)
-	const [userType, setUserType] = useState<NEW_USER_TYPE>(NEW_USER_TYPE.FREE)
+	const [userType, setUserType] = useState<NEW_USER_TYPE>(NEW_USER_TYPE.GITHUB)
 
 	const [selectedModelId, setSelectedModelId] = useState("")
 	const [searchTerm, setSearchTerm] = useState("")
@@ -285,6 +325,9 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 
 	useEffect(() => {
 		setSearchTerm("")
+		if (userType === NEW_USER_TYPE.GITHUB || userType === NEW_USER_TYPE.BYOK) {
+			return
+		}
 		const userGroup = userType === NEW_USER_TYPE.POWER ? NEW_USER_TYPE.POWER : NEW_USER_TYPE.FREE
 		const modelGroup = models[userGroup][0]
 		const userGroupInitModel = modelGroup.models[0]
@@ -331,8 +374,33 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 	)
 
 	const handleFooterAction = useCallback(
-		async (action: "signin" | "next" | "back" | "done" | "signup") => {
+		async (action: "signin" | "next" | "back" | "done" | "signup" | "github") => {
 			switch (action) {
+				case "github":
+					setIsActionLoading(true)
+					try {
+						const signedIn = await githubSignIn()
+						if (signedIn) {
+							await handleFieldsChange({
+								planModeApiProvider: "vscode-lm",
+								actModeApiProvider: "vscode-lm",
+							})
+							hideAccount()
+							hideSettings()
+							StateServiceClient.captureOnboardingProgress({
+								step: stepNumber,
+								action: "onboarding_completed",
+								completed: true,
+							})
+							await StateServiceClient.setWelcomeViewCompleted({ value: true }).catch(() => {})
+							setShowWelcome(false)
+						}
+					} catch {
+						// Sign-in was cancelled or failed — stay on this step
+					} finally {
+						setIsActionLoading(false)
+					}
+					break
 				case "signup":
 					setStepNumber(stepNumber + 1)
 					setIsActionLoading(true)
@@ -363,7 +431,7 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 					break
 			}
 		},
-		[stepNumber, finishOnboarding, setShowWelcome],
+		[stepNumber, finishOnboarding, setShowWelcome, githubSignIn, handleFieldsChange, hideAccount, hideSettings],
 	)
 
 	const stepDisplayInfo = useMemo(() => {

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Important:** All bug reports must be reproducible using Claude Sonnet 4.5. Cline uses complex prompts so less capable models may not work as expected.
+        **Important:** All bug reports must be reproducible using Claude Sonnet 4.6. NexusAI uses complex prompts so less capable models may not work as expected.
   - type: dropdown
     id: plugin-type
     attributes:
@@ -19,11 +19,11 @@ body:
     validations:
       required: true
   - type: input
-    id: cline-version
+    id: nexusai-version
     attributes:
-      label: Cline Version
-      description: What version of Cline are you using? (You can find this at the bottom of the Settings view)
-      placeholder: 'e.g., 1.2.3'
+      label: NexusAI Version
+      description: What version of NexusAI are you using? (You can find this at the bottom of the Settings view)
+      placeholder: 'e.g., 1.0.0-alpha'
     validations:
       required: true
   - type: textarea
@@ -50,7 +50,7 @@ body:
     attributes:
       label: Provider/Model
       description: What provider and model were you using when the issue occurred?
-      placeholder: 'e.g., cline:anthropic/claude-sonnet-4.5, gemini:gemini-2.5-pro-exp-03-25'
+      placeholder: 'e.g., nexusai:anthropic/claude-sonnet-4.6, gemini:gemini-2.5-pro-exp-03-25'
     validations:
       required: false
   - type: textarea

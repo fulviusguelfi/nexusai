@@ -8,6 +8,7 @@
 - [x] Branches configuradas (master, develop)
 - [x] Documentação inicial (PLAN.md, CRONOGRAMA.md)
 - [x] Skills base criadas
+- [x] Renomeação inicial para NexusAI (metadados e README base)
 
 ### 📋 Em Andamento
 - [ ] Revisão e merge do PR #1
@@ -15,10 +16,10 @@
 ### ⏳ Próximas Tarefas
 
 #### Fase 1: Fundação
-- [ ] Renomear projeto para NexusAI (package.json, etc.)
-- [ ] Atualizar identidade visual
-- [ ] Configurar autores e licença
-- [ ] Preparar estrutura de pastas
+- [x] Renomear projeto para NexusAI (package.json, etc.)
+- [x] Atualizar identidade visual
+- [x] Configurar autores e licença (Apache-2.0 mantida por ser fork; NOTICE e autoria configurados)
+- [x] Preparar estrutura documental base
 
 #### Fase 2: Controle Local
 - [ ] Adaptar terminal do Cline

@@ -2,6 +2,8 @@
 
 Global settings, secrets and workspace state are stored in **file-backed JSON stores** under `~/.cline/data/`. This is the shared storage layer used by VSCode, CLI, and JetBrains.
 
+> **Note (NexusAI):** The storage path `~/.cline/data/` is inherited from upstream Cline and has not been renamed yet. Renaming is planned for a future phase.
+
 ## Key Abstractions
 
 ### `StorageContext` (src/shared/storage/storage-context.ts)

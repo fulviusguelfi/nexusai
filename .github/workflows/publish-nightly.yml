@@ -17,8 +17,8 @@ jobs:
 
     publish:
         needs: test
-        name: Publish Cline (Nightly) Extension
-        if: github.repository == 'cline/cline'
+        name: Publish NexusAI (Nightly) Extension
+        if: github.repository == 'fulviusguelfi/nexusai'
         runs-on: ubuntu-latest
         environment: PublishNightly
 
