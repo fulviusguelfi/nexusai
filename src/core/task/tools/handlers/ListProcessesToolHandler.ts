@@ -13,7 +13,10 @@ const MAX_PROCESS_LINES = 100
 export class ListProcessesToolHandler implements IFullyManagedTool {
 	readonly name = ClineDefaultTool.LIST_PROCESSES
 
-	constructor(_validator: ToolValidator) {}
+	constructor(
+		_validator: ToolValidator,
+		private readonly _execSync: typeof execSync = execSync,
+	) {}
 
 	getDescription(_block: ToolUse): string {
 		return "[list_processes]"
@@ -29,9 +32,9 @@ export class ListProcessesToolHandler implements IFullyManagedTool {
 			const isWin = process.platform === "win32"
 
 			if (isWin) {
-				output = execSync("tasklist /fo csv /nh", { encoding: "utf8", timeout: 10_000 })
+				output = this._execSync("tasklist /fo csv /nh", { encoding: "utf8", timeout: 10_000 })
 			} else {
-				output = execSync("ps aux", { encoding: "utf8", timeout: 10_000 })
+				output = this._execSync("ps aux", { encoding: "utf8", timeout: 10_000 })
 			}
 
 			const lines = output.trim().split("\n")

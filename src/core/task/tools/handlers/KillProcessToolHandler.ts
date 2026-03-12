@@ -11,7 +11,10 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 export class KillProcessToolHandler implements IFullyManagedTool {
 	readonly name = ClineDefaultTool.KILL_PROCESS
 
-	constructor(private validator: ToolValidator) {}
+	constructor(
+		private readonly validator: ToolValidator,
+		private readonly _execSync: typeof execSync = execSync,
+	) {}
 
 	getDescription(block: ToolUse): string {
 		return `[kill_process PID=${block.params.pid}]`
@@ -43,7 +46,7 @@ export class KillProcessToolHandler implements IFullyManagedTool {
 			const isWin = process.platform === "win32"
 
 			if (isWin) {
-				execSync(`taskkill /PID ${pid} /F`, { encoding: "utf8", timeout: 10_000 })
+				this._execSync(`taskkill /PID ${pid} /F`, { encoding: "utf8", timeout: 10_000 })
 			} else {
 				process.kill(pid, signal as NodeJS.Signals)
 			}
