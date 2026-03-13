@@ -53,7 +53,7 @@ The user wants me to replace the name "john" with "cline" in the test.ts file. I
 export const name = "john"
 \`\`\`
 
-I need to change "john" to "cline". This is a simple targeted edit, so I should use the replace_in_file tool rather than write_to_file since I\'m only changing one small part of the file.
+I need to change "john" to "cline". This is a simple targeted edit, so I should use the replace_in_file tool rather than write_to_file since I'm only changing one small part of the file.
 
 I need to:
 1. Use replace_in_file to change "john" to "cline" in the test.ts file
@@ -61,7 +61,7 @@ I need to:
 3. The REPLACE block should be: \`export const name = "cline"\`
 </thinking>
 
-I\'ll replace "john" with "cline" in the test.ts file.
+I'll replace "john" with "cline" in the test.ts file.
 
 <replace_in_file>
 <path>test.ts</path>
@@ -74,8 +74,34 @@ export const name = "cline"
 </diff>
 </replace_in_file>`
 
+const list_processes_request = `I'll list the running processes for you.
+
+<list_processes>
+</list_processes>`
+
+const execute_command_long = `I'll run a long-running command for you.
+
+<execute_command>
+<command>${process.platform === "win32" ? "ping -n 30 127.0.0.1" : "ping -c 30 127.0.0.1"}</command>
+<requires_approval>true</requires_approval>
+</execute_command>`
+
 export const E2E_MOCK_API_RESPONSES = {
 	DEFAULT: "Hello! I'm a mock Cline API response.",
 	REPLACE_REQUEST: replace_in_file,
 	EDIT_REQUEST: edit_request,
+	LIST_PROCESSES_REQUEST: list_processes_request,
+	EXECUTE_COMMAND_LONG: execute_command_long,
+}
+
+/**
+ * Builds a mock LLM response that calls kill_process with the given PID.
+ * Used by terminal.test.ts to inject the real PID of the spawned test process.
+ */
+export function buildKillProcessResponse(pid: number): string {
+	return `I'll terminate process ${pid} for you.
+
+<kill_process>
+<pid>${pid}</pid>
+</kill_process>`
 }

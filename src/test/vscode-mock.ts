@@ -58,3 +58,8 @@ export const Uri = {
 export const ExtensionContextMock = {}
 export const StatusBarAlignmentMock = { Left: 1, Right: 2 }
 export const ViewColumnMock = { One: 1, Two: 2, Three: 3 }
+
+export const authentication = {
+	getSession: (_providerId: string, _scopes: string[], _options?: any): Promise<any> => Promise.resolve(undefined),
+	onDidChangeSessions: (_listener: (e: any) => void) => ({ dispose: () => {} }),
+}

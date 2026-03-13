@@ -11,8 +11,10 @@ import { BrowserToolHandler } from "./handlers/BrowserToolHandler"
 import { CondenseHandler } from "./handlers/CondenseHandler"
 import { ExecuteCommandToolHandler } from "./handlers/ExecuteCommandToolHandler"
 import { GenerateExplanationToolHandler } from "./handlers/GenerateExplanationToolHandler"
+import { KillProcessToolHandler } from "./handlers/KillProcessToolHandler"
 import { ListCodeDefinitionNamesToolHandler } from "./handlers/ListCodeDefinitionNamesToolHandler"
 import { ListFilesToolHandler } from "./handlers/ListFilesToolHandler"
+import { ListProcessesToolHandler } from "./handlers/ListProcessesToolHandler"
 import { LoadMcpDocumentationHandler } from "./handlers/LoadMcpDocumentationHandler"
 import { NewTaskHandler } from "./handlers/NewTaskHandler"
 import { PlanModeRespondHandler } from "./handlers/PlanModeRespondHandler"
@@ -106,6 +108,8 @@ export class ToolExecutorCoordinator {
 		[ClineDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
 		[ClineDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
 		[ClineDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
+		[ClineDefaultTool.LIST_PROCESSES]: (v: ToolValidator) => new ListProcessesToolHandler(v),
+		[ClineDefaultTool.KILL_PROCESS]: (v: ToolValidator) => new KillProcessToolHandler(v),
 	}
 
 	/**

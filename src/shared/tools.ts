@@ -33,6 +33,8 @@ export enum ClineDefaultTool {
 	GENERATE_EXPLANATION = "generate_explanation",
 	USE_SKILL = "use_skill",
 	USE_SUBAGENTS = "use_subagents",
+	LIST_PROCESSES = "list_processes",
+	KILL_PROCESS = "kill_process",
 }
 
 // Array of all tool names for compatibility
