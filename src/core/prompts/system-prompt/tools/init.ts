@@ -6,6 +6,7 @@ import { apply_patch_variants } from "./apply_patch"
 import { ask_followup_question_variants } from "./ask_followup_question"
 import { attempt_completion_variants } from "./attempt_completion"
 import { browser_action_variants } from "./browser_action"
+import { discover_network_hosts_variants } from "./discover_network_hosts"
 import { execute_command_variants } from "./execute_command"
 import { focus_chain_variants } from "./focus_chain"
 import { generate_explanation_variants } from "./generate_explanation"
@@ -19,6 +20,11 @@ import { plan_mode_respond_variants } from "./plan_mode_respond"
 import { read_file_variants } from "./read_file"
 import { replace_in_file_variants } from "./replace_in_file"
 import { search_files_variants } from "./search_files"
+import { ssh_connect_variants } from "./ssh_connect"
+import { ssh_disconnect_variants } from "./ssh_disconnect"
+import { ssh_download_variants } from "./ssh_download"
+import { ssh_execute_variants } from "./ssh_execute"
+import { ssh_upload_variants } from "./ssh_upload"
 import { subagent_variants } from "./subagent"
 import { use_mcp_tool_variants } from "./use_mcp_tool"
 import { use_skill_variants } from "./use_skill"
@@ -59,6 +65,12 @@ export function registerClineToolSets(): void {
 		...apply_patch_variants,
 		...list_processes_variants,
 		...kill_process_variants,
+		...discover_network_hosts_variants,
+		...ssh_connect_variants,
+		...ssh_execute_variants,
+		...ssh_upload_variants,
+		...ssh_download_variants,
+		...ssh_disconnect_variants,
 	]
 
 	// Register each variant

@@ -35,13 +35,18 @@
 - [x] Ferramenta `kill_process` (spec + handler + 12 variantes de prompt)
 - [x] Puppeteer lazy-load (import dinâmico em BrowserSession.ts)
 - [x] Suite E2E Playwright — todos os testes passando (mock server, auth flow, diff editor, chat, editor)
-- [ ] E2E cobertura — terminal tools: `terminal.test.ts` (list_processes, execute_command, kill_process)
-- [ ] E2E cobertura — retry: `checkpoint.test.ts` (botão Retry após api_req_failed)
+- [x] E2E cobertura — terminal tools: `terminal.test.ts` (list_processes, execute_command, kill_process)
+	- [x] E2E cobertura — retry: `checkpoint.test.ts` (botão Retry após api_req_failed)
 
 #### Fase 3: SSH
-- [ ] Descoberta de máquinas na rede
-- [ ] Implementar cliente SSH
-- [ ] Execução remota de comandos
+- [x] Ferramenta `discover_network_hosts` (spec + handler + 12 variantes de prompt)
+- [x] Ferramenta `ssh_connect` (spec + handler + aprovação do usuário)
+- [x] Ferramenta `ssh_execute` (spec + handler + requires_approval)
+- [x] Ferramenta `ssh_upload` (spec + handler + SFTP fastPut)
+- [x] Ferramenta `ssh_download` (spec + handler + SFTP fastGet)
+- [x] Ferramenta `ssh_disconnect` (spec + handler + SshSessionRegistry)
+- [ ] E2E cobertura — SSH tools: `ssh.test.ts` (remover test.skip após instalar ssh2)
+- [ ] Integrar com interface (webview: exibir sessão SSH ativa)
 
 #### Fase 4: Voz
 - [ ] Integrar Piper (TTS)

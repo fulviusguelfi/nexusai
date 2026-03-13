@@ -57,6 +57,15 @@ export const toolParamNames = [
 	"filter",
 	"pid",
 	"signal",
+	"host",
+	"port",
+	"user",
+	"password",
+	"private_key_path",
+	"auth_method",
+	"local_path",
+	"remote_path",
+	"subnet",
 ] as const
 
 export type ToolParamName = (typeof toolParamNames)[number]
@@ -91,7 +100,7 @@ export interface ReasoningStreamContent {
 	/**
 	 * openrouter has various properties that we can pass back unmodified in api requests to preserve reasoning traces
 	 */
-	details?: any
+	details?: Record<string, unknown>
 	/**
 	 * It's used when sending the thinking block back to the  API.
 	 * API expects this in completed form, not as array of deltas.

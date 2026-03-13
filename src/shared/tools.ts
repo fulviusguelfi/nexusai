@@ -35,6 +35,12 @@ export enum ClineDefaultTool {
 	USE_SUBAGENTS = "use_subagents",
 	LIST_PROCESSES = "list_processes",
 	KILL_PROCESS = "kill_process",
+	DISCOVER_NETWORK_HOSTS = "discover_network_hosts",
+	SSH_CONNECT = "ssh_connect",
+	SSH_EXECUTE = "ssh_execute",
+	SSH_UPLOAD = "ssh_upload",
+	SSH_DOWNLOAD = "ssh_download",
+	SSH_DISCONNECT = "ssh_disconnect",
 }
 
 // Array of all tool names for compatibility
