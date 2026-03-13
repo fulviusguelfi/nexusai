@@ -3,7 +3,7 @@ import type { Socket } from "node:net"
 import { parse } from "node:url"
 import { v4 as uuidv4 } from "uuid"
 import type { BalanceResponse, OrganizationBalanceResponse, UserResponse } from "../../../../shared/ClineAccount"
-import { E2E_MOCK_API_RESPONSES, E2E_REGISTERED_MOCK_ENDPOINTS } from "./api"
+import { buildKillProcessResponse, E2E_MOCK_API_RESPONSES, E2E_REGISTERED_MOCK_ENDPOINTS } from "./api"
 import { ClineDataMock } from "./data"
 
 const E2E_API_SERVER_PORT = 7777
@@ -374,6 +374,12 @@ export class ClineApiServerMock {
 						}
 
 						const body = await readBody()
+
+						// Return 500 for invalid_response_request to trigger api_req_failed in UI
+						if (body.includes("invalid_response_request")) {
+							return sendApiError("Simulated API failure for retry testing", 500)
+						}
+
 						const parsed = JSON.parse(body)
 						const { _messages, model = "claude-3-5-sonnet-20241022", stream = true } = parsed
 						let responseText = E2E_MOCK_API_RESPONSES.DEFAULT
@@ -382,6 +388,16 @@ export class ClineApiServerMock {
 						}
 						if (body.includes("edit_request")) {
 							responseText = E2E_MOCK_API_RESPONSES.EDIT_REQUEST
+						}
+						if (body.includes("list_processes_request")) {
+							responseText = E2E_MOCK_API_RESPONSES.LIST_PROCESSES_REQUEST
+						}
+						if (body.includes("execute_command_long")) {
+							responseText = E2E_MOCK_API_RESPONSES.EXECUTE_COMMAND_LONG
+						}
+						const pidMatch = body.match(/kill_process_request\s+(\d+)/)
+						if (pidMatch) {
+							responseText = buildKillProcessResponse(Number.parseInt(pidMatch[1], 10))
 						}
 						if (body.includes("[diff.test.ts] Hello, Cline!")) {
 							// The playwright test in diff.test.ts needs the "API Request..." text
@@ -454,31 +470,30 @@ export class ClineApiServerMock {
 
 							sendChunk()
 							return
-						} else {
-							const response = {
-								id: generationId,
-								object: "chat.completion",
-								created: Math.floor(Date.now() / 1000),
-								model,
-								choices: [
-									{
-										index: 0,
-										message: {
-											role: "assistant",
-											content: "Hello! I'm a mock Cline API response.",
-										},
-										finish_reason: "stop",
-									},
-								],
-								usage: {
-									prompt_tokens: 140,
-									completion_tokens: responseText.length,
-									total_tokens: 140 + responseText.length,
-									cost: (140 + responseText.length) * 0.00015,
-								},
-							}
-							return sendJson(response)
 						}
+						const response = {
+							id: generationId,
+							object: "chat.completion",
+							created: Math.floor(Date.now() / 1000),
+							model,
+							choices: [
+								{
+									index: 0,
+									message: {
+										role: "assistant",
+										content: "Hello! I'm a mock Cline API response.",
+									},
+									finish_reason: "stop",
+								},
+							],
+							usage: {
+								prompt_tokens: 140,
+								completion_tokens: responseText.length,
+								total_tokens: 140 + responseText.length,
+								cost: (140 + responseText.length) * 0.00015,
+							},
+						}
+						return sendJson(response)
 					}
 
 					// Generation details endpoint

@@ -9,8 +9,10 @@ import { browser_action_variants } from "./browser_action"
 import { execute_command_variants } from "./execute_command"
 import { focus_chain_variants } from "./focus_chain"
 import { generate_explanation_variants } from "./generate_explanation"
+import { kill_process_variants } from "./kill_process"
 import { list_code_definition_names_variants } from "./list_code_definition_names"
 import { list_files_variants } from "./list_files"
+import { list_processes_variants } from "./list_processes"
 import { load_mcp_documentation_variants } from "./load_mcp_documentation"
 import { new_task_variants } from "./new_task"
 import { plan_mode_respond_variants } from "./plan_mode_respond"
@@ -55,6 +57,8 @@ export function registerClineToolSets(): void {
 		...web_search_variants,
 		...write_to_file_variants,
 		...apply_patch_variants,
+		...list_processes_variants,
+		...kill_process_variants,
 	]
 
 	// Register each variant

@@ -21,6 +21,40 @@
     }
   },
   {
+    "name": "list_processes",
+    "description": "List currently running OS processes. Returns PID, name, CPU%, and memory usage for each process. Useful for inspecting what is running before killing a process or diagnosing resource usage.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "filter": {
+          "type": "STRING",
+          "description": "Optional substring to filter process names. If omitted, returns all processes."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "kill_process",
+    "description": "Terminate a running OS process by PID. Use list_processes first to find the correct PID. Requires user approval since this is a potentially destructive operation.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "pid": {
+          "type": "NUMBER",
+          "description": "The process ID (PID) to terminate."
+        },
+        "signal": {
+          "type": "STRING",
+          "description": "The signal to send. Defaults to SIGTERM (graceful). Use SIGKILL to force-kill. On Windows, SIGKILL is used regardless."
+        }
+      },
+      "required": [
+        "pid"
+      ]
+    }
+  },
+  {
     "name": "read_file",
     "description": "Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. Automatically extracts raw text from PDF and DOCX files. May not be suitable for other types of binary files, as it returns the raw content as a string. Do NOT use this tool to list the contents of a directory. Only use this tool on files.",
     "parameters": {

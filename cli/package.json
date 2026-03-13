@@ -1,11 +1,11 @@
 {
-	"name": "cline",
+	"name": "@nexusai/cli",
 	"version": "2.6.1",
 	"description": "Autonomous coding agent CLI - capable of creating/editing files, running commands, using the browser, and more",
 	"main": "dist/lib.mjs",
 	"types": "dist/lib.d.ts",
 	"bin": {
-		"cline": "./dist/cli.mjs"
+		"nexusai": "./dist/cli.mjs"
 	},
 	"exports": {
 		".": {
