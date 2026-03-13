@@ -21,10 +21,22 @@
 - [x] Configurar autores e licença (Apache-2.0 mantida por ser fork; NOTICE e autoria configurados)
 - [x] Preparar estrutura documental base
 
-#### Fase 2: Controle Local
-- [ ] Adaptar terminal do Cline
-- [ ] Comandos shell básicos
-- [ ] Gerenciamento de processos
+#### Fase 1: Fundação
+- [x] Renomear projeto para NexusAI (package.json, etc.)
+- [x] Atualizar identidade visual
+- [x] Configurar autores e licença (Apache-2.0 mantida por ser fork; NOTICE e autoria configurados)
+- [x] Preparar estrutura documental base
+
+#### Fase 2: Controle Local ✅ Concluída (`2026-03-11`)
+- [x] Renomear ClineError → NexusError / ClineAuthProvider → NexusAuthProvider (barrels de retrocompatibilidade)
+- [x] Corrigir nome de pacote CLI (`@nexusai/cli`)
+- [x] Testes unitários GitHubAuthService (12 testes)
+- [x] Ferramenta `list_processes` (spec + handler + 12 variantes de prompt)
+- [x] Ferramenta `kill_process` (spec + handler + 12 variantes de prompt)
+- [x] Puppeteer lazy-load (import dinâmico em BrowserSession.ts)
+- [x] Suite E2E Playwright — todos os testes passando (mock server, auth flow, diff editor, chat, editor)
+- [ ] E2E cobertura — terminal tools: `terminal.test.ts` (list_processes, execute_command, kill_process)
+- [ ] E2E cobertura — retry: `checkpoint.test.ts` (botão Retry após api_req_failed)
 
 #### Fase 3: SSH
 - [ ] Descoberta de máquinas na rede
