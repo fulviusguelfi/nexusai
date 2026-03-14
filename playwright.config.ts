@@ -17,6 +17,7 @@ export default defineConfig({
 	reporter: isCI ? [["github"], ["list"]] : [["list"]],
 	use: {
 		video: "retain-on-failure",
+		actionTimeout: isCI || isWindow ? 60000 : 15000,
 	},
 	projects: [
 		{

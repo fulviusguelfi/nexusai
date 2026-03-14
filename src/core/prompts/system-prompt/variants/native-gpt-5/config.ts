@@ -60,6 +60,12 @@ export const config = createVariant(ModelFamily.NATIVE_GPT_5)
 		ClineDefaultTool.BASH,
 		ClineDefaultTool.LIST_PROCESSES,
 		ClineDefaultTool.KILL_PROCESS,
+		ClineDefaultTool.DISCOVER_NETWORK_HOSTS,
+		ClineDefaultTool.SSH_CONNECT,
+		ClineDefaultTool.SSH_EXECUTE,
+		ClineDefaultTool.SSH_UPLOAD,
+		ClineDefaultTool.SSH_DOWNLOAD,
+		ClineDefaultTool.SSH_DISCONNECT,
 		ClineDefaultTool.FILE_READ,
 		// Should disable FILE_NEW and FILE_EDIT when enabled
 		ClineDefaultTool.APPLY_PATCH,

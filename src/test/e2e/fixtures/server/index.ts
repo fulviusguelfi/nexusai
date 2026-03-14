@@ -3,7 +3,12 @@ import type { Socket } from "node:net"
 import { parse } from "node:url"
 import { v4 as uuidv4 } from "uuid"
 import type { BalanceResponse, OrganizationBalanceResponse, UserResponse } from "../../../../shared/ClineAccount"
-import { buildKillProcessResponse, E2E_MOCK_API_RESPONSES, E2E_REGISTERED_MOCK_ENDPOINTS } from "./api"
+import {
+	buildKillProcessCompletionResponse,
+	buildKillProcessResponse,
+	E2E_MOCK_API_RESPONSES,
+	E2E_REGISTERED_MOCK_ENDPOINTS,
+} from "./api"
 import { ClineDataMock } from "./data"
 
 const E2E_API_SERVER_PORT = 7777
@@ -392,12 +397,74 @@ export class ClineApiServerMock {
 						if (body.includes("list_processes_request")) {
 							responseText = E2E_MOCK_API_RESPONSES.LIST_PROCESSES_REQUEST
 						}
+						// ── SSH routing ─────────────────────────────────────────────────────
+						if (body.includes("discover_network_hosts_request")) {
+							if (body.includes("</discover_network_hosts>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCOVER_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCOVER_REQUEST
+							}
+						}
+						if (body.includes("ssh_connect_password_request") || body.includes("ssh_connect_key_request")) {
+							if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						if (body.includes("ssh_execute_request") && !body.includes("ssh_execute_no_session_request")) {
+							if (body.includes("</ssh_execute>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_REQUEST
+							} else {
+								// no session yet — connect first
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						if (body.includes("ssh_execute_no_session_request")) {
+							if (body.includes("</ssh_execute>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_REQUEST
+							}
+						}
+						if (body.includes("ssh_disconnect_request")) {
+							if (body.includes("</ssh_disconnect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCONNECT_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCONNECT_REQUEST
+							}
+						}
+						if (body.includes("ssh_upload_request")) {
+							if (body.includes("</ssh_upload>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_UPLOAD_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_UPLOAD_REQUEST
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						if (body.includes("ssh_download_request")) {
+							if (body.includes("</ssh_download>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DOWNLOAD_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DOWNLOAD_REQUEST
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
 						if (body.includes("execute_command_long")) {
 							responseText = E2E_MOCK_API_RESPONSES.EXECUTE_COMMAND_LONG
 						}
 						const pidMatch = body.match(/kill_process_request\s+(\d+)/)
 						if (pidMatch) {
-							responseText = buildKillProcessResponse(Number.parseInt(pidMatch[1], 10))
+							if (body.includes("terminated successfully")) {
+								// Tool already ran — return a completion so the agent wraps up
+								responseText = buildKillProcessCompletionResponse(Number.parseInt(pidMatch[1], 10))
+							} else {
+								responseText = buildKillProcessResponse(Number.parseInt(pidMatch[1], 10))
+							}
 						}
 						if (body.includes("[diff.test.ts] Hello, Cline!")) {
 							// The playwright test in diff.test.ts needs the "API Request..." text

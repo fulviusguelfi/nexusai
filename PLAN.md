@@ -141,6 +141,7 @@ nexusai/
 4. `skills/iot.md` - Dispositivos IoT
 5. `skills/voice.md` - Comandos de voz
 6. `skills/planner.md` - Planejamento estratégico
+7. `skills/playwright-e2e.md` - ✅ **ADICIONADO** — Ciclo de vida de testes E2E com Playwright (definição, implementação, execução, diagnóstico, monitoramento)
 
 ### 7.2 Estrutura de Cada Skill
 
@@ -227,3 +228,73 @@ pull requests
 - **Autor**: Fulvius Titanero Guelfi
 - **GitHub**: [fulviusguelfi/nexusai](https://github.com/fulviusguelfi/nexusai)
 - **Issues**: [fulviusguelfi/nexusai/issues](https://github.com/fulviusguelfi/nexusai/issues)
+
+---
+
+## 13. Status de Implementação das Fases
+
+### Fase 1 — Fundação ✅
+- Renomeação Cline → NexusAI
+- Configuração de build, CI, protobuf
+- Estrutura de pastas, licença, documentação inicial
+
+### Fase 2 — Ferramentas de Terminal e Processos ✅
+- `list_processes`, `kill_process` handlers implementados
+- Testes unitários com DI para mocks de `execSync`
+- Pattern DI-for-testability documentado em `.clinerules/general.md`
+
+### Fase 3 — SSH e Rede ✅ _(concluído em 2026-03-13)_
+- **Handlers implementados**: `ssh_connect`, `ssh_execute`, `ssh_disconnect`, `ssh_upload`, `ssh_download`, `discover_network_hosts`
+- **Sessões SSH**: `SshSessionRegistry` com gerenciamento por `taskId`
+- **Say format**: JSON `say("tool", JSON.stringify({tool, content}))` para integração com ChatRow
+- **Tipos**: `ClineSayTool.tool` atualizado com 6 SSH tool names; `private_key_content` em `toolParamNames`
+- **ChatRow**: 6 novos casos de renderização
+- **E2E Mock Server**: respostas LLM e roteamento para todos os cenários SSH
+- **MockSshServer**: correção ESM/CJS interop (`ssh2Module.default ?? ssh2Module`), formato de chave `pkcs1`, `stop()` com force-close de conexões
+- **ssh2 bundling**: `nativeNodePlugin` no esbuild.mjs — resolve ECONNRESET em testes E2E
+- **Testes E2E**: 7 cenários ativos, 26 testes, Exit Code: 0
+- **Issues**: #20 (feat), #21 (skill), #22 (bug fix documentado), todos fechados
+- **Skill criada**: `skills/playwright-e2e.md`
+- **Wiki**: `docs/wiki/Fase-3-SSH.md`
+- **Pendência**: exibição de sessão SSH ativa na webview — resolvida na Fase 3.5
+
+### Fase 3.5 — SSH Panel + Bug Fixes ✅ _(concluído em 2026-06-08)_
+- **SshSessionRegistry**: estendido com `SshSessionInfo`, `setMetadata()`, `getActiveSessions()`, `onDidChange()` + notificações em `delete()`
+- **SshConnectToolHandler**: salva metadados da sessão imediatamente após conexão bem-sucedida
+- **ExtensionState**: campo `activeSshSessions: SshSessionInfo[]` exposto via `getStateToPostToWebview()` no Controller
+- **SshSessionsPanelProvider**: `WebviewViewProvider` registrado em `extension.ts` para o painel `nexusai.sshPanel` na Activity Bar
+- **package.json**: `nexusai-panels` Activity Bar container + views `nexusai.sshPanel` (SSH Sessions) e `nexusai.iotPanel` (IoT Devices — placeholder)
+- **Bug #15 corrigido**: `kill_process` agora usa `taskkill /T` no Windows e `pkill -P` no Linux/macOS para matar toda a árvore de processos
+- **Bug #18**: confirmado já implementado (3 auto-retries com backoff 2s/4s/8s no `Task.ts`) — sem mudanças necessárias
+- **Testes unitários**: 8 novos testes para `SshSessionRegistry`; 2 novos testes para `KillProcessToolHandler` (tree kill)
+- **Suite completa**: 1244 testes passando, 3 falhas pré-existentes em `BannerService` (timeout)
+- **Commits**: `c59a67d`, `66db2c6`, `e72e22a`, `a8d431b`
+
+### Fase 4 — IoT (próxima)
+- **Objetivo**: controle de dispositivos IoT na rede local via MQTT, mDNS e HTTP
+- **Ferramentas planejadas**: `mqtt_publish`, `mqtt_subscribe`, `mdns_discover`, `http_request`
+- **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23) (overview), [#24](https://github.com/fulviusguelfi/nexusai/issues/24) (mdns), [#25](https://github.com/fulviusguelfi/nexusai/issues/25) (mqtt), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) (http_request)
+- **Dependência**: `mqtt` e `mdns-js` (ou `bonjour`) como dependências externas; avaliar bundling
+
+### Próximas Fases
+
+| # | Descrição | Issues Relacionados |
+|---|---|---|
+| Fase 4 | IoT — MQTT, mDNS, device discovery | [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) |
+| Fase 5 | Voz — Piper TTS, Whisper STT | — |
+| Fase 6 | Agentes Autônomos e multi-IA | — |
+
+### Backlog — Tech Debt e Bugs Pendentes
+
+| Issue | Tipo | Título |
+|---|---|---|
+| [#18](https://github.com/fulviusguelfi/nexusai/issues/18) | bug | Invalid API Response loop + Checkpoint timeout — ✅ já implementado (retry backoff em Task.ts) |
+| [#15](https://github.com/fulviusguelfi/nexusai/issues/15) | bug | kill_process cross-platform (Linux/macOS) — ✅ corrigido na Fase 3.5 |
+| [#13](https://github.com/fulviusguelfi/nexusai/issues/13) | tech-debt | Unit tests para MultiRootCheckpointManager |
+| [#12](https://github.com/fulviusguelfi/nexusai/issues/12) | tech-debt | Lazy-init CheckpointManager |
+| [#11](https://github.com/fulviusguelfi/nexusai/issues/11) | tech-debt | Interface ICheckpointManager |
+| [#10](https://github.com/fulviusguelfi/nexusai/issues/10) | refactor | Extract TaskRunner de Task.ts |
+| [#9](https://github.com/fulviusguelfi/nexusai/issues/9) | refactor | Extract PresentationLayer de Task.ts |
+| [#8](https://github.com/fulviusguelfi/nexusai/issues/8) | refactor | Extract ContextCompactor de Task.ts |
+| [#7](https://github.com/fulviusguelfi/nexusai/issues/7) | refactor | Extract NativeToolCallProcessor de Task.ts |
+| [#6](https://github.com/fulviusguelfi/nexusai/issues/6) | refactor | Extract EnvironmentDetailsService de Task.ts |

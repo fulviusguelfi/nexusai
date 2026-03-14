@@ -9,6 +9,7 @@ import { AskFollowupQuestionToolHandler } from "./handlers/AskFollowupQuestionTo
 import { AttemptCompletionHandler } from "./handlers/AttemptCompletionHandler"
 import { BrowserToolHandler } from "./handlers/BrowserToolHandler"
 import { CondenseHandler } from "./handlers/CondenseHandler"
+import { DiscoverNetworkHostsToolHandler } from "./handlers/DiscoverNetworkHostsToolHandler"
 import { ExecuteCommandToolHandler } from "./handlers/ExecuteCommandToolHandler"
 import { GenerateExplanationToolHandler } from "./handlers/GenerateExplanationToolHandler"
 import { KillProcessToolHandler } from "./handlers/KillProcessToolHandler"
@@ -21,6 +22,11 @@ import { PlanModeRespondHandler } from "./handlers/PlanModeRespondHandler"
 import { ReadFileToolHandler } from "./handlers/ReadFileToolHandler"
 import { ReportBugHandler } from "./handlers/ReportBugHandler"
 import { SearchFilesToolHandler } from "./handlers/SearchFilesToolHandler"
+import { SshConnectToolHandler } from "./handlers/SshConnectToolHandler"
+import { SshDisconnectToolHandler } from "./handlers/SshDisconnectToolHandler"
+import { SshDownloadToolHandler } from "./handlers/SshDownloadToolHandler"
+import { SshExecuteToolHandler } from "./handlers/SshExecuteToolHandler"
+import { SshUploadToolHandler } from "./handlers/SshUploadToolHandler"
 import { UseSubagentsToolHandler } from "./handlers/SubagentToolHandler"
 import { SummarizeTaskHandler } from "./handlers/SummarizeTaskHandler"
 import { UseMcpToolHandler } from "./handlers/UseMcpToolHandler"
@@ -110,6 +116,12 @@ export class ToolExecutorCoordinator {
 		[ClineDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
 		[ClineDefaultTool.LIST_PROCESSES]: (v: ToolValidator) => new ListProcessesToolHandler(v),
 		[ClineDefaultTool.KILL_PROCESS]: (v: ToolValidator) => new KillProcessToolHandler(v),
+		[ClineDefaultTool.DISCOVER_NETWORK_HOSTS]: (v: ToolValidator) => new DiscoverNetworkHostsToolHandler(v),
+		[ClineDefaultTool.SSH_CONNECT]: (v: ToolValidator) => new SshConnectToolHandler(v),
+		[ClineDefaultTool.SSH_EXECUTE]: (v: ToolValidator) => new SshExecuteToolHandler(v),
+		[ClineDefaultTool.SSH_UPLOAD]: (v: ToolValidator) => new SshUploadToolHandler(v),
+		[ClineDefaultTool.SSH_DOWNLOAD]: (v: ToolValidator) => new SshDownloadToolHandler(v),
+		[ClineDefaultTool.SSH_DISCONNECT]: (v: ToolValidator) => new SshDisconnectToolHandler(v),
 	}
 
 	/**

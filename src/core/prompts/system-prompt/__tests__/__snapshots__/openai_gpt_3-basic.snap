@@ -58,6 +58,72 @@ Usage:
 <signal>SIGTERM</signal>
 </kill_process>
 
+## discover_network_hosts
+Description: Discover machines currently reachable on the local network by querying the system ARP table. Returns IP addresses, MAC addresses, and interface information for known hosts. Useful before attempting SSH connections to identify available targets.
+Parameters:
+- subnet: (optional) Optional subnet prefix to filter results, e.g. '192.168.1'. If omitted, returns all ARP table entries.
+Usage:
+<discover_network_hosts>
+<subnet>192.168.1</subnet>
+</discover_network_hosts>
+
+## ssh_connect
+Description: Open an SSH connection to a remote host. Supports password and private-key authentication. The session persists for the duration of the task and can be used with ssh_execute, ssh_upload, ssh_download, and ssh_disconnect. Requires user approval.
+Parameters:
+- host: (required) Hostname or IP address of the remote SSH server.
+- user: (required) SSH username.
+- port: (optional) SSH port. Defaults to 22.
+- password: (optional) Password for password-based authentication. Either password or private_key_path is required.
+- private_key_path: (optional) Absolute path to a PEM-encoded private key file for key-based authentication.
+Usage:
+<ssh_connect>
+<host>192.168.1.10</host>
+<user>ubuntu</user>
+<port>22</port>
+<password>mypassword</password>
+<private_key_path>/home/user/.ssh/id_rsa</private_key_path>
+</ssh_connect>
+
+## ssh_execute
+Description: Execute a shell command on the active SSH session established by ssh_connect. Returns combined stdout and stderr. The session must be open; use ssh_connect first.
+Parameters:
+- command: (required) The shell command to execute on the remote host.
+- requires_approval: (optional) Whether to ask the user for approval before running the command. Defaults to true. Set to false only for read-only commands.
+Usage:
+<ssh_execute>
+<command>ls -la /var/log</command>
+<requires_approval>false</requires_approval>
+</ssh_execute>
+
+## ssh_upload
+Description: Upload a local file to the remote host over the active SSH/SFTP session. Requires user approval. Use the absolute local path and the desired absolute remote destination path.
+Parameters:
+- local_path: (required) Absolute path of the local file to upload.
+- remote_path: (required) Absolute destination path on the remote host.
+Usage:
+<ssh_upload>
+<local_path>/home/user/script.sh</local_path>
+<remote_path>/tmp/script.sh</remote_path>
+</ssh_upload>
+
+## ssh_download
+Description: Download a file from the remote host to the local machine over the active SSH/SFTP session. Use the absolute remote source path and the desired local destination path.
+Parameters:
+- remote_path: (required) Absolute path of the file on the remote host to download.
+- local_path: (required) Absolute destination path on the local machine.
+Usage:
+<ssh_download>
+<remote_path>/var/log/syslog</remote_path>
+<local_path>/tmp/syslog</local_path>
+</ssh_download>
+
+## ssh_disconnect
+Description: Close the active SSH session opened by ssh_connect. Always call this when the SSH work is complete to free the remote connection.
+Parameters: None
+Usage:
+<ssh_disconnect>
+</ssh_disconnect>
+
 ## read_file
 Description: Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. Automatically extracts raw text from PDF and DOCX files. May not be suitable for other types of binary files, as it returns the raw content as a string. Do NOT use this tool to list the contents of a directory. Only use this tool on files.
 Parameters:

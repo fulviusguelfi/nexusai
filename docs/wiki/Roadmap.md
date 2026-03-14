@@ -10,66 +10,70 @@
 | Fase | Nome | Versão Alvo | Status |
 | ---- | ---- | ----------- | ------ |
 | 1 | Fundação | 1.0.0-alpha | ✅ Concluída |
-| 2 | Controle Local | 1.0.0-beta | ⏳ Planejada |
-| 3 | Conexão SSH | 1.0.0-beta | ⏳ Planejada |
-| 4 | Voz (TTS/STT) | 1.0.0-rc | ⏳ Planejada |
-| 5 | IoT | 1.0.0-rc | ⏳ Planejada |
+| 2 | Controle Local | 1.0.0-beta | ✅ Concluída |
+| 3 | Conexão SSH | 1.0.0-beta | ✅ Concluída |
+| 4 | IoT — MQTT, mDNS, HTTP | 1.0.0-rc | ⏳ Planejada |
+| 5 | Voz (TTS/STT) | 1.0.0-rc | ⏳ Planejada |
 | — | Stable | 1.0.0 | ⏳ Planejada |
 
 ---
 
-## Fase 2 — Controle Local 🖥️
+## Fase 2 — Controle Local 🖥️ ✅
 
-> **Objetivo**: O agente ganha habilidade de operar o computador em que roda — terminal, processos, sistema de arquivos.
+> **Status**: Concluída em `2026-03-11` · Veja [Fase-2-Terminal.md](Fase-2-Terminal.md) para detalhes completos.
 
-### Contexto
+### Entregues
 
-O Cline (base do NexusAI) já possui `execute_command` — uma ferramenta que roda comandos shell. A Fase 2 expande isso com uma visão de terminal vetada, gerenciamento de processos e integração mais profunda com o workspace.
+| # | Entrega | Descrição |
+| - | ------- | --------- |
+| A1 | Renomeações + barrels | `NexusError`, `NexusAuthProvider` com retrocompatibilidade |
+| A2 | Testes unitários GitHubAuthService | 12 testes cobrindo todos os métodos públicos |
+| B2 | Ferramenta `list_processes` | Spec + handler + 12 variantes de prompt |
+| B3 | Ferramenta `kill_process` | Spec + handler + 12 variantes de prompt |
+| B4 | Puppeteer lazy-load | Import dinâmico em `BrowserSession.ts` |
+| B5 | Suite E2E Playwright | Mock server, auth flow, diff editor, chat, editor — todos passando |
 
-### Tarefas Planejadas
+### Issues Abertas (tech-debt Fase 2 → resolver antes/durante Fase 3)
 
-| # | Tarefa | Descrição |
-| - | ------ | --------- |
-| 2.1 | Adaptar terminal do Cline | Customizar a UX do terminal integrado — histórico, kills de processo, output streaming |
-| 2.2 | Comandos shell básicos | Expandir o toolset com `list_processes`, `kill_process`, `get_env`, `set_env` |
-| 2.3 | Gerenciamento de processos | Listar processos rodando, monitorar output, iniciar/parar serviços |
-
-### Preview Técnico
-
-A expansão usará o mesmo padrão de tools já existente:
-
-```typescript
-// Nova ferramenta: list_processes
-// Retorna PIDs, nomes, CPU%, mem% dos processos ativos
-
-// Nova ferramenta: kill_process
-// Para um processo pelo PID ou nome
-```
-
-A ferramenta `execute_command` será aprimorada com:
-
-- Controle de timeout explícito
-- Modo background (processo persiste após o tool return)
-- Streaming de output em tempo real para a UI
+| # | Issue | Prioridade |
+| - | ----- | ---------- |
+| [#15](https://github.com/fulviusguelfi/nexusai/issues/15) | Cross-platform `kill_process` (Linux/macOS) | Antes de Fase 3 |
+| [#16](https://github.com/fulviusguelfi/nexusai/issues/16) | Documentar padrão DI-for-testability | ✅ Resolvido |
+| [#18](https://github.com/fulviusguelfi/nexusai/issues/18) | Bug: checkpoint timeout + API retry backoff | Inicio de Fase 3 |
+| [#13](https://github.com/fulviusguelfi/nexusai/issues/13) | Unit tests `MultiRootCheckpointManager` | Durante Fase 3 |
+| [#11](https://github.com/fulviusguelfi/nexusai/issues/11) | Interface `ICheckpointManager` | Durante Fase 3 |
+| [#12](https://github.com/fulviusguelfi/nexusai/issues/12) | Lazy-init checkpoint manager | Durante Fase 3 |
+| [#6–#10](https://github.com/fulviusguelfi/nexusai/issues/10) | Refactors grandes de `Task.ts` | Sprint tech-debt → Fase 4+ |
 
 ---
 
-## Fase 3 — Conexão SSH 🔐
+## Fase 3 — Conexão SSH 🔐 ✅
 
-> **Objetivo**: O agente alcança outros computadores na rede — executa comandos, transfere arquivos e gerencia conexões remotas.
+> **Status**: Concluída em `2026-03-13` · Veja [Fase-3-SSH.md](Fase-3-SSH.md) para detalhes completos.
 
-### Por que SSH?
+### Entregues
 
-A maioria dos desenvolvedores trabalha com infraestrutura distribuída: servidores de dev, VMs, Raspberry Pi, NAS, ambientes de staging. Hoje, gerenciar tudo isso exige abrir terminais separados, lembrar IPs e senhas, e mudar de contexto constantemente. Com SSH integrado ao agente, basta dizer "reinicia o servidor de staging" — o NexusAI encontra a máquina, conecta e executa.
+| # | Entrega | Descrição |
+| - | ------- | --------- |
+| 3.1 | `discover_network_hosts` | ARP scan da rede local, retorna lista de hosts |
+| 3.2 | `ssh_connect` | Sessão SSH por password ou private key inline |
+| 3.3 | `ssh_execute` | Executa comando remoto, retorna stdout |
+| 3.4 | `ssh_upload` / `ssh_download` | Transferência de arquivos via SFTP |
+| 3.5 | `ssh_disconnect` | Encerra sessão + limpa `SshSessionRegistry` |
+| 3.6 | `SshSessionRegistry` | Singleton com escopo por taskId |
+| 3.7 | `MockSshServer` | Servidor SSH mock para testes E2E |
+| 3.8 | E2E coverage | 7 cenários, 26 testes, Exit Code: 0 |
+| 3.9 | `skills/playwright-e2e.md` | Skill de IA para ciclo de vida dos testes E2E |
 
-### Tarefas — Conexão SSH
+### Bug Fixes
 
-| # | Tarefa | Descrição |
-| - | ------ | --------- |
-| 3.1 | Descoberta de máquinas na rede | Scan da rede local para encontrar hosts com SSH aberto (nmap / ARP scan) |
-| 3.2 | Implementar cliente SSH | Integração com `ssh2` (Node.js) — autenticação por senha, chave, agent forwarding |
-| 3.3 | Execução remota de comandos | Ferramenta `ssh_execute` — roda comandos em hosts remotos |
-| 3.4 | Gerenciamento de conexões | Pool de conexões, timeout, reconexão automática, multi-host |
+- **ESM/CJS interop**: `await import('ssh2')` requer `module.default ?? module` — documentado em #22
+- **ssh2 bundling**: `nativeNodePlugin` no `esbuild.mjs` resolve ECONNRESET em testes E2E
+- **Formato de chave**: `pkcs1` (não `pkcs8`) é aceito pelo `ssh2.Server`
+
+### Pendência Registrada
+
+- Exibição de sessão SSH ativa na webview — adiado para Fase 4/5
 
 ### Preview da Arquitetura
 
@@ -108,94 +112,58 @@ message SshExecuteResponse {
 
 ---
 
-## Fase 4 — Voz (TTS/STT) 🎙️
+## Fase 4 — IoT 📡
+
+> **Objetivo**: O agente entra no mundo físico — descobre e controla dispositivos na rede local via MQTT, mDNS e HTTP.
+
+### Casos de Uso
+
+- **"Liga o ar-condicionado"** → descobre o dispositivo Shelly/Sonoff → envia comando MQTT/HTTP
+- **"Me diz a temperatura do servidor"** → lê sensor via MQTT
+- **"Quais dispositivos tenho na rede?"** → mDNS scan, retorna inventário
+
+### Tarefas
+
+| # | Tarefa | Descrição |
+| - | ------ | --------- |
+| 4.1 | `mdns_discover` | Descoberta de dispositivos via mDNS/Bonjour — [#24](https://github.com/fulviusguelfi/nexusai/issues/24) |
+| 4.2 | `mqtt_publish` + `mqtt_subscribe` | Cliente MQTT, pub/sub — [#25](https://github.com/fulviusguelfi/nexusai/issues/25) |
+| 4.3 | `http_request` | REST para dispositivos HTTP (Shelly, Tasmota…) — [#26](https://github.com/fulviusguelfi/nexusai/issues/26) |
+| 4.5 | Interface webview | Painel de dispositivos IoT descobertos |
+| 4.6 | E2E coverage | Mock MQTT broker + testes dos handlers |
+
+### Dependências
+
+- `mqtt` — cliente MQTT para Node.js
+- `mdns-js` ou `bonjour-service` — descoberta mDNS local
+- Avaliar bundling (mesma estratégia do `ssh2` — incluir no bundle, não external)
+
+---
+
+## Fase 5 — Voz (TTS/STT) 🎙️
 
 > **Objetivo**: Interagir com o agente por voz — dar comandos falados, ouvir respostas, ter um avatar com personalidade.
 
 ### Por que Voz Local?
 
-Soluções de voz em nuvem têm três problemas: latência perceptível, custo por uso e envio de áudio para servidores externos. O NexusAI usa modelos rodando 100% localmente:
+Soluções em nuvem têm latência perceptível, custo por uso e enviam áudio para servidores externos. O NexusAI usa modelos rodando 100% localmente:
 
-- **[Piper](https://github.com/rhasspy/piper)** para TTS — voz sintética com qualidade impressionante, modelos de ~50-70MB
-- **[Whisper](https://github.com/openai/whisper)** para STT — reconhecimento de fala com qualidade OpenAI, rodando local via `whisper.cpp`
+- **[Piper](https://github.com/rhasspy/piper)** para TTS — voz sintética de qualidade, modelos de ~50-70MB
+- **[Whisper](https://github.com/openai/whisper)** para STT — reconhecimento de fala via `whisper.cpp`
 
-### O Problema da Auto-Escuta
+### Desafio: Auto-Escuta
 
-⚠️ **Desafio técnico crítico**: quando o NexusAI fala, o microfone também pode captar a própria voz e ativar o STT, criando um loop infinito.
+⚠️ Quando o NexusAI fala, o microfone pode captar a própria voz e ativar o STT em loop. Solução: gate de áudio (desativa captura durante TTS) + speaker diarization.
 
-Solução planejada:
-
-1. **Gate de áudio**: desativar captura enquanto TTS está rodando
-2. **Detecção de locutor (Speaker Diarization)**: identificar se a voz capturada é do usuário ou ecoada pelo agente
-3. **Delay adaptativo**: esperar silêncio após o TTS antes de reativar o STT
-
-### Tarefas — Voz
+### Tarefas
 
 | # | Tarefa | Descrição |
 | - | ------ | --------- |
-| 4.1 | Integrar Piper (TTS) | API local para síntese de voz, seleção de voz/idioma |
-| 4.2 | Integrar Whisper (STT) | Captura de microfone, transcrição em tempo real |
-| 4.3 | Avatar interativo | Visualização animada no webview (reage ao falar/ouvir) |
-| 4.4 | Detecção de locutor | Sistema para distinguir voz do usuário da voz do agente |
-| 4.5 | Personalidade configurável | Nome, tom, velocidade, idioma, modo de resposta |
-
-### Preview de Voz
-
-```text
-VoiceEngine (src/services/voice/)
-├── TtsService (Piper)
-│   ├── synthesize(text): AudioBuffer
-│   └── listVoices(): Voice[]
-│
-├── SttService (Whisper.cpp)
-│   ├── startCapture(): Stream<Transcript>
-│   └── stopCapture(): void
-│
-├── SpeakerGate
-│   ├── lockDuringPlayback()    → previne auto-escuta
-│   └── detectSpeaker(audio)   → enum: USER | AGENT | UNKNOWN
-│
-└── AvatarController
-    ├── setMood(mood: Mood)
-    └── animateSpeaking(duration)
-```
-
----
-
-## Fase 5 — IoT 📡
-
-> **Objetivo**: O agente entra no mundo físico — descobre e controla dispositivos na rede local via MQTT, HTTP e WebSocket.
-
-### Casos de Uso
-
-- **"Apaga a luz do escritório"** → encontra o dispositivo Zigbee/Shelly → envia comando MQTT/HTTP
-- **"Me diz a temperatura do servidor"** → lê sensor de temperature via MQTT
-- **"Liga o ar-condicionado quando minha temperatura corporal subir"** → cria automação com condição
-
-### Tarefas — IoT
-
-| # | Tarefa | Descrição |
-| - | ------ | --------- |
-| 5.1 | Descoberta de dispositivos | mDNS, SSDP, scan de rede — cria inventário de dispositivos |
-| 5.2 | Protocolo MQTT | Cliente MQTT, subscribe/publish, integração com Home Assistant |
-| 5.3 | Protocolo HTTP | Chamadas REST para APIs de dispositivos (Shelly, Sonoff, etc.) |
-| 5.4 | Protocolo WebSocket | Conexão persistente para dispositivos com WS (HA, Hue, etc.) |
-| 5.5 | Interface de controle IoT | Dashboard no webview — mapa de dispositivos, status, histórico |
-
-### Preview de IoT
-
-```text
-IoTController (src/services/iot/)
-├── DeviceRegistry        → inventário de dispositivos descobertos
-├── MqttClient            → pub/sub com broker local (Mosquitto, HA)
-├── HttpDeviceClient      → REST para Shelly, Sonoff, Tasmota
-├── WsDeviceClient        → WebSocket para Home Assistant, Philips Hue
-│
-└── tools/
-    ├── IotDiscoverToolHandler      → "quais dispositivos tenho na rede?"
-    ├── IotControlToolHandler       → "liga/desliga dispositivo X"
-    └── IotReadToolHandler          → "qual o estado atual do dispositivo X?"
-```
+| 5.1 | Integrar Piper (TTS) | Síntese de voz local, seleção de voz/idioma |
+| 5.2 | Integrar Whisper (STT) | Captura de microfone, transcrição em tempo real |
+| 5.3 | Speaker gate | Desativa captura durante playback TTS |
+| 5.4 | Avatar interativo | Visualização animada no webview |
+| 5.5 | Personalidade configurável | Nome, tom, idioma, modo de resposta |
 
 ---
 

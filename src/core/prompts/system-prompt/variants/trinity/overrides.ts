@@ -1,5 +1,5 @@
 import { SystemPromptSection } from "../../templates/placeholders"
-import type { PromptVariant, SystemPromptContext } from "../../types"
+import type { SystemPromptContext } from "../../types"
 
 /**
  * Trinity-specific TOOL_USE override.
@@ -70,7 +70,7 @@ const TRINITY_RULES_TEMPLATE = (context: SystemPromptContext) => `RULES
 - When you call a tool, your message MUST contain ONLY the XML tool call (no other text). No preamble, no explanation in the same message as the tool call.
 - If multiple actions are needed, do them sequentially across multiple messages, waiting for the result after each tool call.`
 
-export const trinityComponentOverrides: PromptVariant["componentOverrides"] = {
+export const trinityComponentOverrides = {
 	[SystemPromptSection.TOOL_USE]: {
 		template: TRINITY_TOOL_USE_TEMPLATE,
 	},

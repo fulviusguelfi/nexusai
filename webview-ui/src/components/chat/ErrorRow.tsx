@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button"
 import { useClineAuth, useClineSignIn } from "@/context/ClineAuthContext"
 import { ClineError, ClineErrorType } from "../../../../src/services/error/ClineError"
 
+interface BalanceErrorDetails {
+	buy_credits_url?: string
+	current_balance?: number
+	message?: string
+	total_promotions?: number
+	total_spent?: number
+}
+
 const _errorColor = "var(--vscode-errorForeground)"
 
 interface ErrorRowProps {
@@ -35,12 +43,12 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 					const errorCode = clineError?._error?.code
 
 					if (clineError?.isErrorType(ClineErrorType.Balance)) {
-						const errorDetails = clineError._error?.details
+						const errorDetails = clineError._error?.details as BalanceErrorDetails | undefined
 						return (
 							<CreditLimitError
 								buyCreditsUrl={errorDetails?.buy_credits_url}
-								currentBalance={errorDetails?.current_balance}
-								message={errorDetails?.message}
+								currentBalance={errorDetails?.current_balance ?? 0}
+								message={errorDetails?.message ?? "You have run out of credits."}
 								totalPromotions={errorDetails?.total_promotions}
 								totalSpent={errorDetails?.total_spent}
 							/>
@@ -91,7 +99,7 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 										Sign in to Cline
 										{isLoginLoading && (
 											<span className="ml-1 animate-spin">
-												<span className="codicon codicon-refresh"></span>
+												<span className="codicon codicon-refresh" />
 											</span>
 										)}
 									</Button>

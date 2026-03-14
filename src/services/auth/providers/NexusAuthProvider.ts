@@ -337,10 +337,11 @@ export class NexusAuthProvider {
 				provider: this.name,
 				startedAt: storedData.startedAt || Date.now(),
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			// Network errors (ECONNREFUSED, timeout, etc)
-			if (error.name === "TypeError" || error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
-				throw new AuthNetworkError("Network error during token refresh", error)
+			const networkErr = error as NodeJS.ErrnoException
+			if (networkErr.name === "TypeError" || networkErr.code === "ECONNREFUSED" || networkErr.code === "ETIMEDOUT") {
+				throw new AuthNetworkError("Network error during token refresh", error instanceof Error ? error : undefined)
 			}
 			throw error
 		}

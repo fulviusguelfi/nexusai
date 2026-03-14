@@ -72,6 +72,154 @@
   {
     "type": "function",
     "function": {
+      "name": "discover_network_hosts",
+      "description": "Discover machines currently reachable on the local network by querying the system ARP table. Returns IP addresses, MAC addresses, and interface information for known hosts. Useful before attempting SSH connections to identify available targets.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "subnet": {
+            "type": "string",
+            "description": "Optional subnet prefix to filter results, e.g. '192.168.1'. If omitted, returns all ARP table entries."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "ssh_connect",
+      "description": "Open an SSH connection to a remote host. Supports password and private-key authentication. The session persists for the duration of the task and can be used with ssh_execute, ssh_upload, ssh_download, and ssh_disconnect. Requires user approval.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Hostname or IP address of the remote SSH server."
+          },
+          "user": {
+            "type": "string",
+            "description": "SSH username."
+          },
+          "port": {
+            "type": "integer",
+            "description": "SSH port. Defaults to 22."
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for password-based authentication. Either password or private_key_path is required."
+          },
+          "private_key_path": {
+            "type": "string",
+            "description": "Absolute path to a PEM-encoded private key file for key-based authentication."
+          }
+        },
+        "required": [
+          "host",
+          "user"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "ssh_execute",
+      "description": "Execute a shell command on the active SSH session established by ssh_connect. Returns combined stdout and stderr. The session must be open; use ssh_connect first.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The shell command to execute on the remote host."
+          },
+          "requires_approval": {
+            "type": "string",
+            "description": "Whether to ask the user for approval before running the command. Defaults to true. Set to false only for read-only commands."
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "ssh_upload",
+      "description": "Upload a local file to the remote host over the active SSH/SFTP session. Requires user approval. Use the absolute local path and the desired absolute remote destination path.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "local_path": {
+            "type": "string",
+            "description": "Absolute path of the local file to upload."
+          },
+          "remote_path": {
+            "type": "string",
+            "description": "Absolute destination path on the remote host."
+          }
+        },
+        "required": [
+          "local_path",
+          "remote_path"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "ssh_download",
+      "description": "Download a file from the remote host to the local machine over the active SSH/SFTP session. Use the absolute remote source path and the desired local destination path.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "remote_path": {
+            "type": "string",
+            "description": "Absolute path of the file on the remote host to download."
+          },
+          "local_path": {
+            "type": "string",
+            "description": "Absolute destination path on the local machine."
+          }
+        },
+        "required": [
+          "remote_path",
+          "local_path"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "ssh_disconnect",
+      "description": "Close the active SSH session opened by ssh_connect. Always call this when the SSH work is complete to free the remote connection.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "read_file",
       "description": "Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. Automatically extracts raw text from PDF and DOCX files. May not be suitable for other types of binary files, as it returns the raw content as a string. Do NOT use this tool to list the contents of a directory. Only use this tool on files.",
       "strict": false,

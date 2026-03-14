@@ -48,6 +48,12 @@ export const config = createVariant(ModelFamily.GEMINI_3)
 		ClineDefaultTool.BASH,
 		ClineDefaultTool.LIST_PROCESSES,
 		ClineDefaultTool.KILL_PROCESS,
+		ClineDefaultTool.DISCOVER_NETWORK_HOSTS,
+		ClineDefaultTool.SSH_CONNECT,
+		ClineDefaultTool.SSH_EXECUTE,
+		ClineDefaultTool.SSH_UPLOAD,
+		ClineDefaultTool.SSH_DOWNLOAD,
+		ClineDefaultTool.SSH_DISCONNECT,
 		ClineDefaultTool.FILE_READ,
 		ClineDefaultTool.FILE_NEW,
 		ClineDefaultTool.FILE_EDIT,
@@ -74,14 +80,14 @@ export const config = createVariant(ModelFamily.GEMINI_3)
 	})
 	.config({})
 	// Apply Gemini 3.0 specific component overrides
-	.overrideComponent(SystemPromptSection.AGENT_ROLE, gemini3ComponentOverrides[SystemPromptSection.AGENT_ROLE]!)
-	.overrideComponent(SystemPromptSection.TOOL_USE, gemini3ComponentOverrides[SystemPromptSection.TOOL_USE]!)
-	.overrideComponent(SystemPromptSection.EDITING_FILES, gemini3ComponentOverrides[SystemPromptSection.EDITING_FILES]!)
-	.overrideComponent(SystemPromptSection.OBJECTIVE, gemini3ComponentOverrides[SystemPromptSection.OBJECTIVE]!)
-	.overrideComponent(SystemPromptSection.RULES, gemini3ComponentOverrides[SystemPromptSection.RULES]!)
-	.overrideComponent(SystemPromptSection.FEEDBACK, gemini3ComponentOverrides[SystemPromptSection.FEEDBACK]!)
-	.overrideComponent(SystemPromptSection.ACT_VS_PLAN, gemini3ComponentOverrides[SystemPromptSection.ACT_VS_PLAN]!)
-	.overrideComponent(SystemPromptSection.TASK_PROGRESS, gemini3ComponentOverrides[SystemPromptSection.TASK_PROGRESS]!)
+	.overrideComponent(SystemPromptSection.AGENT_ROLE, gemini3ComponentOverrides[SystemPromptSection.AGENT_ROLE])
+	.overrideComponent(SystemPromptSection.TOOL_USE, gemini3ComponentOverrides[SystemPromptSection.TOOL_USE])
+	.overrideComponent(SystemPromptSection.EDITING_FILES, gemini3ComponentOverrides[SystemPromptSection.EDITING_FILES])
+	.overrideComponent(SystemPromptSection.OBJECTIVE, gemini3ComponentOverrides[SystemPromptSection.OBJECTIVE])
+	.overrideComponent(SystemPromptSection.RULES, gemini3ComponentOverrides[SystemPromptSection.RULES])
+	.overrideComponent(SystemPromptSection.FEEDBACK, gemini3ComponentOverrides[SystemPromptSection.FEEDBACK])
+	.overrideComponent(SystemPromptSection.ACT_VS_PLAN, gemini3ComponentOverrides[SystemPromptSection.ACT_VS_PLAN])
+	.overrideComponent(SystemPromptSection.TASK_PROGRESS, gemini3ComponentOverrides[SystemPromptSection.TASK_PROGRESS])
 	.build()
 
 // Compile-time validation

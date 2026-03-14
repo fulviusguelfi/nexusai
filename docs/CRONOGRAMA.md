@@ -22,15 +22,18 @@ Este documento detalha o cronograma de desenvolvimento para a versão 1.0 do Nex
 | 1.6 | Criar documentos do projeto | ✅ Concluído |
 | 1.7 | Integração GitHub Copilot (login via browser/passkey/app/token) como auth primária | ✅ Concluído |
 
-### Fase 2: Controle Local 🖥️
+### Fase 2: Controle Local 🖥️ ✅ Concluída (`2026-03-11`)
 
 **Objetivo**: Terminal local e comandos shell
 
 | Tarefa | Descrição | Status |
 | ------ | --------- | ------ |
-| 2.1 | Adaptar terminal do Cline | ⏳ Pendente |
-| 2.2 | Comandos shell básicos | ⏳ Pendente |
-| 2.3 | Gerenciamento de processos | ⏳ Pendente |
+| 2.1 | Renomear ClineError → NexusError / ClineAuthProvider → NexusAuthProvider | ✅ Concluído |
+| 2.2 | Ferramenta `list_processes` (spec + handler + 12 variantes) | ✅ Concluído |
+| 2.3 | Ferramenta `kill_process` (spec + handler + 12 variantes) | ✅ Concluído |
+| 2.4 | Testes unitários GitHubAuthService (12 testes) | ✅ Concluído |
+| 2.5 | Puppeteer lazy-load (import dinâmico em BrowserSession.ts) | ✅ Concluído |
+| 2.6 | Suite E2E Playwright — mock server, auth flow, diff editor, chat, editor | ✅ Concluído |
 
 ### Fase 3: Conexão SSH 🔐
 

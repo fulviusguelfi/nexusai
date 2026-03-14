@@ -13,7 +13,7 @@ export const env = {
 export const workspace = {
 	getConfiguration: (section?: string) => {
 		return {
-			get: (key: string, defaultValue?: any) => {
+			get: (key: string, defaultValue?: unknown) => {
 				// Return default values for common configuration keys
 				if (section === "cline" && key === "telemetrySetting") {
 					return "enabled"
@@ -32,7 +32,7 @@ export const window = {
 	showErrorMessage: (_message: string) => Promise.resolve(),
 	showWarningMessage: (_message: string) => Promise.resolve(),
 	showInformationMessage: (_message: string) => Promise.resolve(),
-	createTextEditorDecorationType: (_options: any) => ({
+	createTextEditorDecorationType: (_options: unknown) => ({
 		key: "mock-decoration-type",
 		dispose: () => {},
 	}),
@@ -47,7 +47,7 @@ export const window = {
 }
 
 export const commands = {
-	executeCommand: (_command: string, ..._args: any[]) => Promise.resolve(),
+	executeCommand: (_command: string, ..._args: unknown[]) => Promise.resolve(),
 }
 
 export const Uri = {
@@ -60,6 +60,6 @@ export const StatusBarAlignmentMock = { Left: 1, Right: 2 }
 export const ViewColumnMock = { One: 1, Two: 2, Three: 3 }
 
 export const authentication = {
-	getSession: (_providerId: string, _scopes: string[], _options?: any): Promise<any> => Promise.resolve(undefined),
-	onDidChangeSessions: (_listener: (e: any) => void) => ({ dispose: () => {} }),
+	getSession: (_providerId: string, _scopes: string[], _options?: unknown): Promise<unknown> => Promise.resolve(undefined),
+	onDidChangeSessions: (_listener: (e: unknown) => void) => ({ dispose: () => {} }),
 }

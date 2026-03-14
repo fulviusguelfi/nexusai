@@ -41,10 +41,14 @@ export class ListProcessesToolHandler implements IFullyManagedTool {
 			const filtered = filter ? lines.filter((l) => l.toLowerCase().includes(filter.toLowerCase())) : lines
 			const result = filtered.slice(0, MAX_PROCESS_LINES).join("\n")
 
-			await config.callbacks.say("tool", `[list_processes]`)
+			const completeMessage = JSON.stringify({
+				tool: "list_processes",
+				content: result || "No processes found.",
+			})
+			await config.callbacks.say("tool", completeMessage, undefined, undefined, false)
 			return [{ type: "text", text: result || "No processes found." }]
-		} catch (error: any) {
-			return formatResponse.toolError(`Failed to list processes: ${error.message}`)
+		} catch (error: unknown) {
+			return formatResponse.toolError(`Failed to list processes: ${error instanceof Error ? error.message : String(error)}`)
 		}
 	}
 }

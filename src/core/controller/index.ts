@@ -8,6 +8,7 @@ import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { cleanupLegacyCheckpoints } from "@integrations/checkpoints/CheckpointMigration"
 import { ClineAccountService } from "@services/account/ClineAccountService"
 import { McpHub } from "@services/mcp/McpHub"
+import { SshSessionRegistry } from "@services/ssh/SshSessionRegistry"
 import type { ApiProvider, ModelInfo } from "@shared/api"
 import type { ChatContent } from "@shared/ChatContent"
 import type { ExtensionState, Platform } from "@shared/ExtensionMessage"
@@ -1000,6 +1001,7 @@ export class Controller {
 			banners,
 			welcomeBanners,
 			openAiCodexIsAuthenticated,
+			activeSshSessions: SshSessionRegistry.getActiveSessions(),
 		}
 	}
 
