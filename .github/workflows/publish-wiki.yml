@@ -1,0 +1,57 @@
+name: Publish Wiki
+
+on:
+  push:
+    paths:
+      - "docs/wiki/**"
+    branches:
+      - master
+      - develop
+      - "feat/**"
+  workflow_dispatch:
+
+jobs:
+  publish-wiki:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Push wiki pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          WIKI_URL="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.wiki.git"
+
+          # Try to clone existing wiki; on failure (repo not yet init), start fresh
+          if git clone "$WIKI_URL" wiki-tmp 2>/dev/null; then
+            echo "Wiki cloned successfully"
+          else
+            echo "Wiki not initialized yet — creating fresh repo"
+            mkdir wiki-tmp
+            cd wiki-tmp
+            git init
+            git remote add origin "$WIKI_URL"
+            cd ..
+          fi
+
+          # Copy all wiki markdown files
+          cp docs/wiki/*.md wiki-tmp/
+
+          cd wiki-tmp
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .
+
+          # Commit only if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: atualiza wiki — $(date -u '+%Y-%m-%d')"
+            git push origin HEAD:master --force
+            echo "Wiki published successfully"
+          fi
