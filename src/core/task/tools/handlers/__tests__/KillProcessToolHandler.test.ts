@@ -185,4 +185,38 @@ describe("KillProcessToolHandler", () => {
 			handler.name.should.equal(ClineDefaultTool.KILL_PROCESS)
 		})
 	})
+
+	describe("execute() — process tree kill (Bug #15)", () => {
+		it("calls taskkill with /T flag on Windows to kill process tree", async () => {
+			const platformStub = sinon.stub(process, "platform").value("win32")
+			const execFn = sinon.stub().returns("")
+			const handler = new KillProcessToolHandler({} as unknown as ToolValidator, execFn as typeof execSync)
+			const { config } = makeConfig()
+
+			await handler.execute(config, makeBlock({ pid: "1234" }))
+
+			const cmd: string = execFn.firstCall.args[0]
+			cmd.should.containEql("/T")
+			cmd.should.containEql("taskkill")
+			platformStub.restore?.()
+		})
+
+		it("calls pkill -P on Linux before killing parent process", async () => {
+			const platformStub = sinon.stub(process, "platform").value("linux")
+			const execFn = sinon.stub().returns("")
+			const killStub = sinon.stub(process, "kill")
+			const handler = new KillProcessToolHandler({} as unknown as ToolValidator, execFn as typeof execSync)
+			const { config } = makeConfig()
+
+			await handler.execute(config, makeBlock({ pid: "5678" }))
+
+			const cmd: string = execFn.firstCall.args[0]
+			cmd.should.containEql("pkill")
+			cmd.should.containEql("5678")
+			killStub.calledWith(5678).should.be.true()
+
+			platformStub.restore?.()
+			killStub.restore()
+		})
+	})
 })
