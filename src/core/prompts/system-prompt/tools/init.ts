@@ -6,18 +6,27 @@ import { apply_patch_variants } from "./apply_patch"
 import { ask_followup_question_variants } from "./ask_followup_question"
 import { attempt_completion_variants } from "./attempt_completion"
 import { browser_action_variants } from "./browser_action"
+import { discover_devices_variants } from "./discover_devices"
 import { discover_network_hosts_variants } from "./discover_network_hosts"
 import { execute_command_variants } from "./execute_command"
 import { focus_chain_variants } from "./focus_chain"
 import { generate_explanation_variants } from "./generate_explanation"
+import { get_device_info_variants } from "./get_device_info"
+import { http_request_variants } from "./http_request"
 import { kill_process_variants } from "./kill_process"
 import { list_code_definition_names_variants } from "./list_code_definition_names"
 import { list_files_variants } from "./list_files"
 import { list_processes_variants } from "./list_processes"
 import { load_mcp_documentation_variants } from "./load_mcp_documentation"
+import { mqtt_connect_variants } from "./mqtt_connect"
+import { mqtt_disconnect_variants } from "./mqtt_disconnect"
+import { mqtt_publish_variants } from "./mqtt_publish"
+import { mqtt_subscribe_variants } from "./mqtt_subscribe"
 import { new_task_variants } from "./new_task"
+import { operate_device_variants } from "./operate_device"
 import { plan_mode_respond_variants } from "./plan_mode_respond"
 import { read_file_variants } from "./read_file"
+import { register_device_variants } from "./register_device"
 import { replace_in_file_variants } from "./replace_in_file"
 import { search_files_variants } from "./search_files"
 import { ssh_connect_variants } from "./ssh_connect"
@@ -71,6 +80,15 @@ export function registerClineToolSets(): void {
 		...ssh_upload_variants,
 		...ssh_download_variants,
 		...ssh_disconnect_variants,
+		...http_request_variants,
+		...mqtt_connect_variants,
+		...mqtt_publish_variants,
+		...mqtt_subscribe_variants,
+		...mqtt_disconnect_variants,
+		...discover_devices_variants,
+		...register_device_variants,
+		...get_device_info_variants,
+		...operate_device_variants,
 	]
 
 	// Register each variant
