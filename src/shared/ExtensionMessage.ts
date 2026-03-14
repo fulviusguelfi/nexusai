@@ -1,5 +1,6 @@
 // type that represents json data that is sent from extension to webview, called ExtensionMessage and has 'type' enum which can be 'plusButtonClicked' or 'settingsButtonClicked' or 'hello'
 
+import type { SshSessionInfo } from "@services/ssh/SshSessionRegistry"
 import { WorkspaceRoot } from "@shared/multi-root/types"
 import { RemoteConfigFields } from "@shared/storage/state-keys"
 import type { Environment } from "../config"
@@ -111,6 +112,7 @@ export interface ExtensionState {
 	banners?: BannerCardData[]
 	welcomeBanners?: BannerCardData[]
 	openAiCodexIsAuthenticated?: boolean
+	activeSshSessions: SshSessionInfo[]
 }
 
 export interface ClineMessage {

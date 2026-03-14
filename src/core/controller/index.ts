@@ -1000,6 +1000,7 @@ export class Controller {
 			banners,
 			welcomeBanners,
 			openAiCodexIsAuthenticated,
+			activeSshSessions: SshSessionRegistry.getActiveSessions(),
 		}
 	}
 
