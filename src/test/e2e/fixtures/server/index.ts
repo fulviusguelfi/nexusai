@@ -6,6 +6,7 @@ import type { BalanceResponse, OrganizationBalanceResponse, UserResponse } from 
 import {
 	buildKillProcessCompletionResponse,
 	buildKillProcessResponse,
+	E2E_IOT_MOCK_API_RESPONSES,
 	E2E_MOCK_API_RESPONSES,
 	E2E_REGISTERED_MOCK_ENDPOINTS,
 } from "./api"
@@ -205,6 +206,13 @@ export class ClineApiServerMock {
 							status: "ok",
 							timestamp: new Date().toISOString(),
 						})
+					}
+				}
+
+				// IoT device command endpoint (used by operate_device HTTP path in E2E tests)
+				if (baseRoute === "/command") {
+					if (endpoint === "/" && method === "POST") {
+						return sendJson({ result: "ok", status: "up" })
 					}
 				}
 
@@ -456,6 +464,139 @@ export class ClineApiServerMock {
 						}
 						if (body.includes("execute_command_long")) {
 							responseText = E2E_MOCK_API_RESPONSES.EXECUTE_COMMAND_LONG
+						}
+						// ── IoT routing ──────────────────────────────────────────────────
+						// 1. discover_devices
+						if (body.includes("iot_discover_devices_request")) {
+							if (body.includes("</discover_devices>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_DISCOVER_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_DISCOVER_REQUEST
+							}
+						}
+						// 2. register_device
+						if (body.includes("iot_register_device_request")) {
+							if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_REGISTER_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_REGISTER_REQUEST
+							}
+						}
+						// 3. get_device_info list all (register first, then list)
+						if (body.includes("iot_get_all_devices_request")) {
+							if (body.includes("</get_device_info>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_ALL_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_ALL_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_ALL_REGISTER
+							}
+						}
+						// 4. get_device_info by ip
+						if (body.includes("iot_get_by_ip_request")) {
+							if (body.includes("</get_device_info>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_BY_IP_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_BY_IP_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_BY_IP_REGISTER
+							}
+						}
+						// 5. http_request SSRF block
+						if (body.includes("iot_http_ssrf_request")) {
+							if (body.includes("</http_request>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_SSRF_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_SSRF_REQUEST
+							}
+						}
+						// 6. http_request trusted
+						if (body.includes("iot_http_trusted_request")) {
+							if (body.includes("</http_request>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_TRUSTED_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_TRUSTED_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_TRUSTED_REGISTER
+							}
+						}
+						// 7. mqtt_connect
+						if (
+							body.includes("iot_mqtt_connect_request") &&
+							!body.includes("iot_mqtt_publish_request") &&
+							!body.includes("iot_mqtt_subscribe_request") &&
+							!body.includes("iot_mqtt_disconnect_request") &&
+							!body.includes("iot_operate_mqtt_request")
+						) {
+							if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 8. mqtt_publish (connect first, then publish)
+						if (body.includes("iot_mqtt_publish_request")) {
+							if (body.includes("</mqtt_publish>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_PUBLISH_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_PUBLISH_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 9. mqtt_subscribe (connect first, then subscribe)
+						if (body.includes("iot_mqtt_subscribe_request")) {
+							if (body.includes("</mqtt_subscribe>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_SUBSCRIBE_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_SUBSCRIBE_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 10. mqtt_disconnect (connect first, then disconnect)
+						if (body.includes("iot_mqtt_disconnect_request")) {
+							if (body.includes("</mqtt_disconnect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_DISCONNECT_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_DISCONNECT_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 11. operate_device MQTT path (register → connect → operate)
+						if (body.includes("iot_operate_mqtt_request")) {
+							if (body.includes("</operate_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_OPERATE
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_CONNECT
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_REGISTER
+							}
+						}
+						// 12. operate_device HTTP path (register → operate)
+						if (body.includes("iot_operate_http_request")) {
+							if (body.includes("</operate_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_HTTP_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_HTTP_OPERATE
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_HTTP_REGISTER
+							}
+						}
+						// 13. operate_device SSH path (register → ssh_connect → operate)
+						if (body.includes("iot_operate_ssh_request")) {
+							if (body.includes("</operate_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_OPERATE
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_CONNECT
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_REGISTER
+							}
 						}
 						const pidMatch = body.match(/kill_process_request\s+(\d+)/)
 						if (pidMatch) {
