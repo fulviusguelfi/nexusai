@@ -46,8 +46,15 @@ export class KillProcessToolHandler implements IFullyManagedTool {
 			const isWin = process.platform === "win32"
 
 			if (isWin) {
-				this._execSync(`taskkill /PID ${pid} /F`, { encoding: "utf8", timeout: 10_000 })
+				// /T kills the process tree (child processes included)
+				this._execSync(`taskkill /PID ${pid} /F /T`, { encoding: "utf8", timeout: 10_000 })
 			} else {
+				// pkill -P kills all children of the process, then we kill the parent
+				try {
+					this._execSync(`pkill -P ${pid}`, { encoding: "utf8", timeout: 5_000 })
+				} catch {
+					// ignore: no children or already dead
+				}
 				process.kill(pid, signal as NodeJS.Signals)
 			}
 
