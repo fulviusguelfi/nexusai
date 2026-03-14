@@ -75,6 +75,7 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 			})
 
 			SshSessionRegistry.set(config.cwd, client)
+			SshSessionRegistry.setMetadata(config.cwd, { host, port, user, connectedAt: Date.now() })
 
 			const sayContent = JSON.stringify({ tool: "ssh_connect", content: `connected to ${user}@${host}:${port}` })
 			await config.callbacks.say("tool", sayContent, undefined, undefined, false)
