@@ -256,7 +256,19 @@ pull requests
 - **Issues**: #20 (feat), #21 (skill), #22 (bug fix documentado), todos fechados
 - **Skill criada**: `skills/playwright-e2e.md`
 - **Wiki**: `docs/wiki/Fase-3-SSH.md`
-- **Pendência**: exibição de sessão SSH ativa na webview — adiada para Fase 4 ou 5
+- **Pendência**: exibição de sessão SSH ativa na webview — resolvida na Fase 3.5
+
+### Fase 3.5 — SSH Panel + Bug Fixes ✅ _(concluído em 2026-06-08)_
+- **SshSessionRegistry**: estendido com `SshSessionInfo`, `setMetadata()`, `getActiveSessions()`, `onDidChange()` + notificações em `delete()`
+- **SshConnectToolHandler**: salva metadados da sessão imediatamente após conexão bem-sucedida
+- **ExtensionState**: campo `activeSshSessions: SshSessionInfo[]` exposto via `getStateToPostToWebview()` no Controller
+- **SshSessionsPanelProvider**: `WebviewViewProvider` registrado em `extension.ts` para o painel `nexusai.sshPanel` na Activity Bar
+- **package.json**: `nexusai-panels` Activity Bar container + views `nexusai.sshPanel` (SSH Sessions) e `nexusai.iotPanel` (IoT Devices — placeholder)
+- **Bug #15 corrigido**: `kill_process` agora usa `taskkill /T` no Windows e `pkill -P` no Linux/macOS para matar toda a árvore de processos
+- **Bug #18**: confirmado já implementado (3 auto-retries com backoff 2s/4s/8s no `Task.ts`) — sem mudanças necessárias
+- **Testes unitários**: 8 novos testes para `SshSessionRegistry`; 2 novos testes para `KillProcessToolHandler` (tree kill)
+- **Suite completa**: 1244 testes passando, 3 falhas pré-existentes em `BannerService` (timeout)
+- **Commits**: `c59a67d`, `66db2c6`, `e72e22a`, `a8d431b`
 
 ### Fase 4 — IoT (próxima)
 - **Objetivo**: controle de dispositivos IoT na rede local via MQTT, mDNS e HTTP
@@ -276,8 +288,8 @@ pull requests
 
 | Issue | Tipo | Título |
 |---|---|---|
-| [#18](https://github.com/fulviusguelfi/nexusai/issues/18) | bug | Invalid API Response loop + Checkpoint timeout |
-| [#15](https://github.com/fulviusguelfi/nexusai/issues/15) | bug | kill_process cross-platform (Linux/macOS) |
+| [#18](https://github.com/fulviusguelfi/nexusai/issues/18) | bug | Invalid API Response loop + Checkpoint timeout — ✅ já implementado (retry backoff em Task.ts) |
+| [#15](https://github.com/fulviusguelfi/nexusai/issues/15) | bug | kill_process cross-platform (Linux/macOS) — ✅ corrigido na Fase 3.5 |
 | [#13](https://github.com/fulviusguelfi/nexusai/issues/13) | tech-debt | Unit tests para MultiRootCheckpointManager |
 | [#12](https://github.com/fulviusguelfi/nexusai/issues/12) | tech-debt | Lazy-init CheckpointManager |
 | [#11](https://github.com/fulviusguelfi/nexusai/issues/11) | tech-debt | Interface ICheckpointManager |
