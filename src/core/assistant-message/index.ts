@@ -62,6 +62,7 @@ export const toolParamNames = [
 	"user",
 	"password",
 	"private_key_path",
+	"private_key_content",
 	"auth_method",
 	"local_path",
 	"remote_path",

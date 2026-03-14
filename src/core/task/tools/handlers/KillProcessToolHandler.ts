@@ -12,7 +12,7 @@ export class KillProcessToolHandler implements IFullyManagedTool {
 	readonly name = ClineDefaultTool.KILL_PROCESS
 
 	constructor(
-		private readonly validator: ToolValidator,
+		_validator: ToolValidator,
 		private readonly _execSync: typeof execSync = execSync,
 	) {}
 
@@ -52,8 +52,10 @@ export class KillProcessToolHandler implements IFullyManagedTool {
 			}
 
 			return [{ type: "text", text: `Process ${pid} terminated successfully.` }]
-		} catch (error: any) {
-			return formatResponse.toolError(`Failed to kill process ${pid}: ${error.message}`)
+		} catch (error: unknown) {
+			return formatResponse.toolError(
+				`Failed to kill process ${pid}: ${error instanceof Error ? error.message : String(error)}`,
+			)
 		}
 	}
 }

@@ -1,5 +1,7 @@
 # Fase 2 — Controle Local ✅
 
+<!-- markdownlint-disable MD024 -->
+
 > **Status**: Concluída em `2026-03-11`
 > **Branch**: `feat/fase-2-terminal` → PR [#14](https://github.com/fulviusguelfi/nexusai/pull/14) para `develop`
 
@@ -12,7 +14,6 @@ A Fase 2 entregou as primeiras ferramentas nativas de controle de terminal, melh
 - [Tarefas Concluídas](#tarefas-concluídas)
 - [A1 — Renomeações e Barrels](#a1--renomeações-e-barrels)
 - [A2 — Testes de Autenticação GitHub](#a2--testes-de-autenticação-github)
-- [B1 — VscodeTerminalProcess](#b1--vscodeterminalprocess)
 - [B2 — Ferramenta list_processes](#b2--ferramenta-list_processes)
 - [B3 — Ferramenta kill_process](#b3--ferramenta-kill_process)
 - [B4 — Puppeteer Lazy-Load](#b4--puppeteer-lazy-load)
@@ -60,7 +61,7 @@ export {
 } from "./NexusError"
 ```
 
-3. **Código existente** continua importando de `ClineError` sem mudanças.
+1. **Código existente** continua importando de `ClineError` sem mudanças.
 
 ### Correção CLI Package
 
@@ -239,20 +240,89 @@ O tipo `ToolParamName` em `src/core/assistant-message/index.ts` é uma união es
 
 ---
 
+## B6 — Suite E2E Playwright
+
+### Problema Raiz
+
+A suite E2E existente falhava silenciosamente porque o servidor mock da API (`ClineApiServerMock` na porta 7777) nunca era iniciado. O fixture `server` estava definido mas nenhum teste o desestruturava explicitamente — e o Playwright só ativa fixtures quando explicitamente solicitados.
+
+### Solução
+
+Três correções foram necessárias em sequência:
+
+#### 1. Dependency entre fixtures (`helpers.ts`)
+
+```typescript
+// Antes: app não dependia de server
+app: async ({ openVSCode, userDataDir, ... }, use) => { ... }
+
+// Depois: app garante que server está rodando
+app: async ({ server, openVSCode, userDataDir, ... }, use) => {
+  if (!server) throw new Error("Mock server failed to start")
+  // ...
+}
+```
+
+#### 2. Provider fixado em "cline" (`OnboardingView.tsx`)
+
+O provider estava sendo setado como "openrouter" por padrão durante o signin. Adicionado:
+
+```typescript
+case "signin":
+  // ...
+  await handleFieldsChange({
+    planModeApiProvider: "cline",
+    actModeApiProvider: "cline",
+  })
+```
+
+#### 3. Teardown com timeout (`helpers.ts`)
+
+`app.close()` travava indefinidamente em alguns testes no Windows, consumindo todo o timeout do teste:
+
+```typescript
+// Antes
+await app.close()
+
+// Depois — 10s de limite para fechar o VS Code
+await Promise.race([
+  app.close(),
+  new Promise(resolve => setTimeout(resolve, 10_000)),
+])
+```
+
+### Resultado Final
+
+| Suite | Testes | Status |
+| ----- | ------ | ------ |
+| `diff.test.ts` | 2 (Single Root + Multi-Roots) | ✅ Passando |
+| `chat.test.ts` | 2 (Single Root + Multi-Roots) | ✅ Passando |
+| `editor.test.ts` | 2 (Single Root + Multi-Roots) | ✅ Passando |
+| `auth.test.ts` | 2 | ✅ Passando |
+| `github.test.ts` | 4 | ✅ Passando |
+| `copilot-provider.test.ts` | 1 | ⏭️ Skipped (requer vscode-lm real) |
+
+**Total**: 13 passando · 0 falhando · 1 skipped
+
+---
+
 ## Issues Relacionados
 
 Os seguintes issues foram criados para rastrear work futuro identificado durante esta fase:
 
-| Issue | Título |
-| ----- | ------ |
-| [#6](https://github.com/fulviusguelfi/nexusai/issues/6) | refactor: extract getEnvironmentDetails from Task.ts |
-| [#7](https://github.com/fulviusguelfi/nexusai/issues/7) | refactor: extract processNativeToolCalls from Task.ts |
-| [#8](https://github.com/fulviusguelfi/nexusai/issues/8) | refactor: extract ContextCompactor from Task.ts |
-| [#9](https://github.com/fulviusguelfi/nexusai/issues/9) | refactor: extract PresentationLayer from Task.ts |
-| [#10](https://github.com/fulviusguelfi/nexusai/issues/10) | refactor: extract TaskRunner from Task.ts |
-| [#11](https://github.com/fulviusguelfi/nexusai/issues/11) | refactor: extract ICheckpointManager interface |
-| [#12](https://github.com/fulviusguelfi/nexusai/issues/12) | perf: lazy-initialize MultiRootCheckpointManager |
-| [#13](https://github.com/fulviusguelfi/nexusai/issues/13) | test: add unit tests for MultiRootCheckpointManager |
+| Issue | Título | Prioridade |
+| ----- | ------ | ---------- |
+| [#15](https://github.com/fulviusguelfi/nexusai/issues/15) | feat: cross-platform `kill_process` (Linux/macOS) | Antes de Fase 3 |
+| [#16](https://github.com/fulviusguelfi/nexusai/issues/16) | docs: DI-for-testability pattern | ✅ Resolvido — adicionado em `.clinerules/general.md` |
+| [#18](https://github.com/fulviusguelfi/nexusai/issues/18) | bug: checkpoint timeout + API retry backoff | Inicio de Fase 3 |
+| [#6](https://github.com/fulviusguelfi/nexusai/issues/6) | refactor: extract getEnvironmentDetails | Sprint tech-debt → Fase 4+ |
+| [#7](https://github.com/fulviusguelfi/nexusai/issues/7) | refactor: extract processNativeToolCalls | Sprint tech-debt → Fase 4+ |
+| [#8](https://github.com/fulviusguelfi/nexusai/issues/8) | refactor: extract ContextCompactor | Sprint tech-debt → Fase 4+ |
+| [#9](https://github.com/fulviusguelfi/nexusai/issues/9) | refactor: extract PresentationLayer | Sprint tech-debt → Fase 4+ |
+| [#10](https://github.com/fulviusguelfi/nexusai/issues/10) | refactor: extract TaskRunner | Sprint tech-debt → Fase 4+ |
+| [#11](https://github.com/fulviusguelfi/nexusai/issues/11) | refactor: ICheckpointManager interface | Durante Fase 3 |
+| [#12](https://github.com/fulviusguelfi/nexusai/issues/12) | perf: lazy-initialize MultiRootCheckpointManager | Durante Fase 3 |
+| [#13](https://github.com/fulviusguelfi/nexusai/issues/13) | test: unit tests MultiRootCheckpointManager | Durante Fase 3 |
 
 ---
 

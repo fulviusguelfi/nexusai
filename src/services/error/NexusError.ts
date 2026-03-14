@@ -38,7 +38,33 @@ interface ErrorDetails {
 	message?: string
 	// Additional details that might be present in the error
 	// This can include things like current balance, error messages, etc.
-	details?: any
+	details?: unknown
+	// Explicitly excluded to prevent stack trace serialization
+	stack?: undefined
+}
+
+export interface BalanceErrorDetails {
+	buy_credits_url?: string
+	current_balance?: number
+	message?: string
+	total_promotions?: number
+	total_spent?: number
+}
+
+/** Shape of the object produced by serializeError for API responses */
+type SerializedError = {
+	message?: string
+	stack?: string
+	status?: number
+	statusCode?: number
+	code?: string
+	modelId?: string
+	providerId?: string
+	details?: unknown
+	request_id?: string
+	response?: { message?: string; status?: number; request_id?: string; headers?: Record<string, string> }
+	error?: { request_id?: string }
+	cause?: { means?: string; code?: string }
 }
 
 const RATE_LIMIT_PATTERNS = [/status code 429/i, /rate limit/i, /too many requests/i, /quota exceeded/i, /resource exhausted/i]
@@ -52,11 +78,12 @@ export class NexusError extends Error {
 	// Ollama: error?.cause
 	// tbc
 	constructor(
-		raw: any,
+		raw: unknown,
 		public readonly modelId?: string,
 		public readonly providerId?: string,
 	) {
-		const error = serializeError(raw)
+		const error = serializeError(raw) as SerializedError
+		const rawRecord = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {}
 
 		const message = error.message || error?.response?.message || String(error) || error?.cause?.means
 		super(message)
@@ -70,7 +97,7 @@ export class NexusError extends Error {
 		// And ensure it has a consistent structure
 		this._error = {
 			...error,
-			message: raw.message || message,
+			message: (rawRecord.message as string | undefined) || message,
 			status,
 			request_id:
 				error.error?.request_id ||
@@ -115,13 +142,13 @@ export class NexusError extends Error {
 	 * Transforms any object into a NexusError instance.
 	 * Always returns a NexusError, even if the input is not a valid error object.
 	 */
-	static transform(error: any, modelId?: string, providerId?: string): NexusError {
+	static transform(error: unknown, modelId?: string, providerId?: string): NexusError {
 		try {
 			// If already a NexusError, return it directly to prevent infinite recursion
 			if (error instanceof NexusError) {
 				return error
 			}
-			return new NexusError(JSON.parse(error), modelId, providerId)
+			return new NexusError(JSON.parse(error as string), modelId, providerId)
 		} catch {
 			return new NexusError(error, modelId, providerId)
 		}
@@ -140,7 +167,10 @@ export class NexusError extends Error {
 		const message = (err._error?.message || err.message || JSON.stringify(err._error))?.toLowerCase()
 
 		// Check balance error first (most specific)
-		if (code === "insufficient_credits" && typeof details?.current_balance === "number") {
+		if (
+			code === "insufficient_credits" &&
+			typeof (details as Record<string, unknown> | undefined)?.current_balance === "number"
+		) {
 			return NexusErrorType.Balance
 		}
 

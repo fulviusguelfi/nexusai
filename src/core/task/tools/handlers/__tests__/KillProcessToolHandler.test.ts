@@ -1,11 +1,15 @@
+import { execSync } from "node:child_process"
 import { afterEach, describe, it } from "mocha"
 import "should"
 import type { ToolUse } from "@core/assistant-message"
 import sinon from "sinon"
 import { ClineDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
+import type { ToolValidator } from "../../ToolValidator"
 import type { TaskConfig } from "../../types/TaskConfig"
 import { KillProcessToolHandler } from "../KillProcessToolHandler"
+
+type TextResult = { type: string; text: string }
 
 function makeBlock(params: Record<string, string | undefined> = {}): ToolUse {
 	return { type: "tool_use", name: ClineDefaultTool.KILL_PROCESS, params, partial: false }
@@ -36,7 +40,7 @@ function makeConfig(options: { askResponse?: "yesButtonClicked" | "noButtonClick
 
 function makeHandler(execResult: string | Error = ""): KillProcessToolHandler {
 	const execFn = execResult instanceof Error ? sinon.stub().throws(execResult) : sinon.stub().returns(execResult)
-	return new KillProcessToolHandler({} as any, execFn as any)
+	return new KillProcessToolHandler({} as unknown as ToolValidator, execFn as typeof execSync)
 }
 
 describe("KillProcessToolHandler", () => {
@@ -99,7 +103,7 @@ describe("KillProcessToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock({ pid: "1234" }))
 
-			;(result as any[])[0].text.should.equal("User declined to kill process.")
+			;(result as TextResult[])[0].text.should.equal("User declined to kill process.")
 		})
 
 		it("prompts user with tool/pid/signal details before killing", async () => {
@@ -134,7 +138,7 @@ describe("KillProcessToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock({ pid: "1234" }))
 
-			;(result as any[])[0].text.should.equal("Process 1234 terminated successfully.")
+			;(result as TextResult[])[0].text.should.equal("Process 1234 terminated successfully.")
 		})
 
 		it("returns toolError when the OS kill command throws", async () => {

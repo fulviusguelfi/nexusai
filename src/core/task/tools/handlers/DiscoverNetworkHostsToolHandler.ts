@@ -58,7 +58,11 @@ export class DiscoverNetworkHostsToolHandler implements IFullyManagedTool {
 				.slice(0, MAX_HOST_LINES)
 				.join("\n")
 
-			await config.callbacks.say("tool", "[discover_network_hosts]")
+			const saySrc = JSON.stringify({
+				tool: "discover_network_hosts",
+				content: result || "No hosts discovered in ARP table.",
+			})
+			await config.callbacks.say("tool", saySrc, undefined, undefined, false)
 			return [{ type: "text", text: result || "No hosts discovered in ARP table." }]
 		} catch (error: unknown) {
 			return formatResponse.toolError(

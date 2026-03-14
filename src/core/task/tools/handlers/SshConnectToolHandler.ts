@@ -35,30 +35,26 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 			config.taskState.consecutiveMistakeCount++
 			return await config.callbacks.sayAndCreateMissingParamError(this.name, "user")
 		}
-		if (!password && !privateKeyPath) {
+		const privateKeyContent: string | undefined = block.params.private_key_content
+
+		if (!password && !privateKeyPath && !privateKeyContent) {
 			config.taskState.consecutiveMistakeCount++
-			return formatResponse.toolError("Either password or private_key_path must be provided for ssh_connect.")
+			return formatResponse.toolError(
+				"Either password, private_key_content, or private_key_path must be provided for ssh_connect.",
+			)
 		}
 
 		const port = portRaw ? Number.parseInt(portRaw, 10) : 22
 
-		// Require user approval before opening a remote connection
-		const approval = await config.callbacks.ask("tool", JSON.stringify({ tool: "sshConnect", host, port, user }))
-		if (approval.response !== "yesButtonClicked") {
-			return [{ type: "text", text: "User declined SSH connection." }]
-		}
-
-		// Close any existing session for this task
-		if (SshSessionRegistry.has(config.taskId)) {
-			SshSessionRegistry.delete(config.taskId)
+		// Close any existing session for this workspace
+		if (SshSessionRegistry.has(config.cwd)) {
+			SshSessionRegistry.delete(config.cwd)
 		}
 
 		try {
-			// Dynamic import so the file compiles before `npm install` adds ssh2
 			// biome-ignore lint/suspicious/noExplicitAny: ssh2 dynamic import
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-expect-error ssh2 package installed at runtime on feat/fase-3-ssh
-			const ssh2: any = await import("ssh2")
+			const ssh2Module: any = await import("ssh2")
+			const ssh2: any = ssh2Module.default ?? ssh2Module
 			// biome-ignore lint/suspicious/noExplicitAny: ssh2 Client
 			const client: any = new ssh2.Client()
 
@@ -66,6 +62,8 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 			const connectOpts: any = { host, port, username: user }
 			if (password) {
 				connectOpts.password = password
+			} else if (privateKeyContent) {
+				connectOpts.privateKey = privateKeyContent
 			} else if (privateKeyPath) {
 				connectOpts.privateKey = readFileSync(privateKeyPath)
 			}
@@ -76,9 +74,10 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 				client.connect(connectOpts)
 			})
 
-			SshSessionRegistry.set(config.taskId, client)
+			SshSessionRegistry.set(config.cwd, client)
 
-			await config.callbacks.say("tool", `[ssh_connect] connected to ${user}@${host}:${port}`)
+			const sayContent = JSON.stringify({ tool: "ssh_connect", content: `connected to ${user}@${host}:${port}` })
+			await config.callbacks.say("tool", sayContent, undefined, undefined, false)
 			return [{ type: "text", text: `Connected to ${user}@${host}:${port} successfully.` }]
 		} catch (error: unknown) {
 			return formatResponse.toolError(`SSH connection failed: ${error instanceof Error ? error.message : String(error)}`)

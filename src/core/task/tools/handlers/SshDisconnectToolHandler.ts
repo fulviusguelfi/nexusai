@@ -20,13 +20,14 @@ export class SshDisconnectToolHandler implements IFullyManagedTool {
 	async handlePartialBlock(_block: ToolUse, _uiHelpers: StronglyTypedUIHelpers): Promise<void> {}
 
 	async execute(config: TaskConfig, _block: ToolUse): Promise<ToolResponse> {
-		if (!SshSessionRegistry.has(config.taskId)) {
+		if (!SshSessionRegistry.has(config.cwd)) {
 			return formatResponse.toolError("No active SSH session to disconnect.")
 		}
 
 		try {
-			SshSessionRegistry.delete(config.taskId)
-			await config.callbacks.say("tool", "[ssh_disconnect] session closed")
+			SshSessionRegistry.delete(config.cwd)
+			const sayDisc = JSON.stringify({ tool: "ssh_disconnect", content: "disconnected from session" })
+			await config.callbacks.say("tool", sayDisc, undefined, undefined, false)
 			return [{ type: "text", text: "SSH session disconnected." }]
 		} catch (error: unknown) {
 			return formatResponse.toolError(`SSH disconnect failed: ${error instanceof Error ? error.message : String(error)}`)

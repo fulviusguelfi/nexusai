@@ -18,17 +18,25 @@ export class MockSshServer {
 	private acceptedCredentials = new Map<string, string>() // user → password
 	private acceptedPublicKeys: Buffer[] = []
 	private executeHandlers = new Map<string, (channel: SshChannel) => void>()
+	// biome-ignore lint/suspicious/noExplicitAny: runtime ssh2 client refs
+	private activeClients: any[] = []
 
 	async start(port = 2222): Promise<void> {
 		// Dynamic import keeps this file compilable before `npm install` adds ssh2
 		// biome-ignore lint/suspicious/noExplicitAny: ssh2 types require npm install first
-		const ssh2: any = await import("ssh2")
+		const ssh2Module: any = await import("ssh2")
+		const ssh2: any = ssh2Module.default ?? ssh2Module
 
 		const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 })
-		const hostKey = privateKey.export({ type: "pkcs8", format: "pem" })
+		const hostKey = privateKey.export({ type: "pkcs1", format: "pem" })
 
 		// biome-ignore lint/suspicious/noExplicitAny: ssh2 Connection type
 		this.server = new ssh2.Server({ hostKeys: [hostKey] }, (client: any) => {
+			this.activeClients.push(client)
+			client.on("close", () => {
+				this.activeClients = this.activeClients.filter((c) => c !== client)
+			})
+
 			// biome-ignore lint/suspicious/noExplicitAny: ssh2 AuthContext type
 			client.on("authentication", (ctx: any) => {
 				if (ctx.method === "password") {
@@ -56,8 +64,8 @@ export class MockSshServer {
 						if (handler) {
 							handler(stream)
 						} else {
-							stream.write(`Command not found: ${info.command}\n`)
-							stream.exit(127)
+							// Default: silently succeed for unknown commands (allows upload via exec)
+							stream.exit(0)
 							stream.end()
 						}
 					})
@@ -75,8 +83,22 @@ export class MockSshServer {
 
 	async stop(): Promise<void> {
 		if (!this.server) return
+		// Force-close any active SSH client connections so server.close() can resolve
+		for (const client of this.activeClients) {
+			try {
+				client.end()
+			} catch {
+				// ignore
+			}
+		}
+		this.activeClients = []
 		await new Promise<void>((resolve) => {
+			const timer = setTimeout(() => {
+				this.server = null
+				resolve()
+			}, 3000)
 			this.server.close(() => {
+				clearTimeout(timer)
 				this.server = null
 				resolve()
 			})

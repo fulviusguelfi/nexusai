@@ -85,6 +85,18 @@ const esbuildProblemMatcherPlugin = {
 	},
 }
 
+/**
+ * Mark native .node binary files as external so esbuild doesn't try to bundle them.
+ * At runtime the relative-path require()s fail with MODULE_NOT_FOUND which is caught
+ * inside ssh2's try/catch blocks — no crash, ssh2 falls back to pure-JS crypto.
+ */
+const nativeNodePlugin = {
+	name: "native-node",
+	setup(build) {
+		build.onResolve({ filter: /\.node$/ }, () => ({ external: true }))
+	},
+}
+
 const copyWasmFiles = {
 	name: "copy-wasm-files",
 	setup(build) {
@@ -176,6 +188,7 @@ const baseConfig = {
 	define: buildEnvVars,
 	tsconfig: path.resolve(__dirname, "tsconfig.json"),
 	plugins: [
+		nativeNodePlugin,
 		copyWasmFiles,
 		aliasResolverPlugin,
 		/* add to the end of plugins array */
@@ -194,6 +207,10 @@ const extensionConfig = {
 	...baseConfig,
 	entryPoints: ["src/extension.ts"],
 	outfile: `${destDir}/extension.js`,
+	// ssh2 ships optional native .node binaries (sshcrypto.node, cpufeatures.node).
+	// Bundle the JS parts of ssh2; esbuild marks the .node files as external automatically.
+	// At runtime those native requires are inside try/catch in ssh2, so they fail gracefully
+	// and ssh2 uses its pure-JS fallback — no VS Code process crash from ABI mismatches.
 	external: ["vscode"],
 }
 

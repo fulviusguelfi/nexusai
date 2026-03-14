@@ -38,27 +38,39 @@
 - [x] E2E cobertura — terminal tools: `terminal.test.ts` (list_processes, execute_command, kill_process)
 	- [x] E2E cobertura — retry: `checkpoint.test.ts` (botão Retry após api_req_failed)
 
-#### Fase 3: SSH
+#### Fase 3: SSH ✅ Concluída (`2026-03-13`)
 - [x] Ferramenta `discover_network_hosts` (spec + handler + 12 variantes de prompt)
 - [x] Ferramenta `ssh_connect` (spec + handler + aprovação do usuário)
 - [x] Ferramenta `ssh_execute` (spec + handler + requires_approval)
 - [x] Ferramenta `ssh_upload` (spec + handler + SFTP fastPut)
 - [x] Ferramenta `ssh_download` (spec + handler + SFTP fastGet)
 - [x] Ferramenta `ssh_disconnect` (spec + handler + SshSessionRegistry)
-- [ ] E2E cobertura — SSH tools: `ssh.test.ts` (remover test.skip após instalar ssh2)
-- [ ] Integrar com interface (webview: exibir sessão SSH ativa)
+- [x] E2E cobertura — SSH tools: `ssh.test.ts` (7 cenários, 26 testes, Exit Code: 0)
+- [x] `SshSessionRegistry` — gerenciamento por taskId
+- [x] MockSshServer — ESM/CJS interop, pkcs1, force-close connections
+- [x] Bug fix: ssh2 bundled via esbuild (nativeNodePlugin); ECONNRESET resolvido
+- [x] Bug documentado: ESM/CJS interop pattern (#22)
+- [x] Skill criada: `skills/playwright-e2e.md`
+- [ ] Integrar com interface (webview: exibir sessão SSH ativa) — registrado como pendência
 
-#### Fase 4: Voz
+#### Fase 4: IoT
+- [ ] Ferramenta `mqtt_publish` (spec + handler)
+- [ ] Ferramenta `mqtt_subscribe` (spec + handler)
+- [ ] Ferramenta `mdns_discover` (spec + handler — descoberta de dispositivos)
+- [ ] Ferramenta `http_request` para dispositivos HTTP locais
+- [ ] Interface de controle IoT na webview
+- [ ] E2E cobertura — IoT tools
+
+#### Fase 5: Voz
 - [ ] Integrar Piper (TTS)
 - [ ] Integrar Whisper (STT)
 - [ ] Avatar interativo
 - [ ] Sistema de detecção de locutor
 
-#### Fase 5: IoT
-- [ ] Descoberta de dispositivos
-- [ ] Protocolo MQTT
-- [ ] Protocolo HTTP
-- [ ] Interface de controle
+#### Fase 6: Agentes Autônomos
+- [ ] Multi-IA (usar outras IAs como ferramentas)
+- [ ] Agent loop autônomo
+- [ ] Memory persistente entre sessões
 
 ---
 

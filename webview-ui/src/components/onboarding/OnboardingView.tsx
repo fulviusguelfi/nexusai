@@ -414,6 +414,15 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 					await AccountServiceClient.accountLoginClicked({})
 						.catch(() => {})
 						.finally(() => setIsActionLoading(false))
+					// Ensure provider is set to "cline" for the signin flow even if no model was selected
+					await handleFieldsChange({
+						planModeApiProvider: "cline",
+						actModeApiProvider: "cline",
+					})
+					// Explicitly close the welcome view after sign-in attempt,
+					// consistent with the "done" and "github" flows.
+					await StateServiceClient.setWelcomeViewCompleted({ value: true }).catch(() => {})
+					setShowWelcome(false)
 					await finishOnboarding(true, stepNumber + 1)
 					break
 				case "next":

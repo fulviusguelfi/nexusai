@@ -271,10 +271,19 @@ export const e2e = test
 				// Create isolated Cline data directory for this test
 				const clineTestDir = mkdtempSync(path.join(os.tmpdir(), "cline-e2e-"))
 
+				// Strip ELECTRON_RUN_AS_NODE from the inherited environment.
+				// When tests run from within VS Code's extension host (e.g. via MCP tools or
+				// the integrated terminal), ELECTRON_RUN_AS_NODE=1 is set by VS Code so its own
+				// Node.js modules run in Node mode.  If it leaks into the child Code.exe process,
+				// VS Code launches as a CLI (runs cli.js) instead of as an Electron app, causing
+				// VS Code 1.111+ to reject Playwright's --remote-debugging-port=0 flag with
+				// "bad option" and exit 9 — breaking every E2E test.
+				const { ELECTRON_RUN_AS_NODE: _strip, ...safeEnv } = process.env
+
 				const app = await _electron.launch({
 					executablePath,
 					env: {
-						...process.env,
+						...safeEnv,
 						TEMP_PROFILE: "true",
 						E2E_TEST: "true",
 						CLINE_ENVIRONMENT: "local",

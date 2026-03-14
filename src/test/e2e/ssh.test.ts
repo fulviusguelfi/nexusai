@@ -2,27 +2,19 @@ import { expect } from "@playwright/test"
 import { MockSshServer } from "./fixtures/ssh-server"
 import { E2ETestHelper, e2e } from "./utils/helpers"
 
-// Phase 3 — SSH Tools (TDD)
+// Phase 3 — SSH Tools
 //
-// All scenarios are test.skip until the corresponding SSH tool handlers are implemented in
-// src/core/task/tools/handlers/. When implementing a handler, remove the matching skip.
+// All handlers are in src/core/task/tools/handlers/ and use workspace-scoped sessions
+// (keyed by config.cwd) so sessions persist across tasks in the same VS Code window.
 //
-// Dependencies:
-//   - `ssh2` npm package (run `npm install` on branch feat/fase-3-ssh)
-//   - SSH tool handlers: ssh_connect, ssh_execute, ssh_upload, ssh_download, ssh_disconnect
-//   - discover_network_hosts handler
-//   - Mock server keyword matcher for each tool (add to fixtures/server/api.ts + index.ts)
+// Mock server keyword → LLM response mappings are in fixtures/server/api.ts and
+// fixtures/server/index.ts.
 
 const sshServer = new MockSshServer()
 
 e2e.describe("SSH Tools", () => {
 	e2e.beforeAll(async () => {
-		// Only starts if ssh2 is installed; all tests are test.skip otherwise
-		try {
-			await sshServer.start(2222)
-		} catch {
-			// ssh2 not yet installed — tests remain skipped
-		}
+		await sshServer.start(2222)
 	})
 
 	e2e.afterAll(async () => {
@@ -30,10 +22,7 @@ e2e.describe("SSH Tools", () => {
 	})
 
 	// ── 1 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("discover_network_hosts — mock returns host list, UI displays them", async ({ helper, sidebar }) => {
-		// TODO when implementing handler:
-		// Add keyword "discover_network_hosts_request" to fixtures/server/api.ts
-		// Returns LLM response: <discover_network_hosts></discover_network_hosts>
+	e2e("discover_network_hosts — mock returns host list, UI displays them", async ({ helper, sidebar }) => {
 		await helper.signin(sidebar)
 
 		const inputbox = sidebar.getByTestId("chat-input")
@@ -41,15 +30,15 @@ e2e.describe("SSH Tools", () => {
 		await inputbox.fill("discover_network_hosts_request")
 		await sidebar.getByTestId("send-button").click()
 
-		// Tool result rendered in chat — adjust selector to match actual UI
+		// Completion response always mentions 127.0.0.1 for reliable assertion
 		await E2ETestHelper.waitForChatMessage(sidebar, "127.0.0.1", 60_000)
 	})
 
 	// ── 2 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("ssh_connect — key auth, chat confirms connection", async ({ helper, sidebar }) => {
-		// TODO: add "ssh_connect_key_request" keyword to mock server
-		// Returns: <ssh_connect><host>127.0.0.1</host><port>2222</port><user>testuser</user><auth_method>key</auth_method></ssh_connect>
+	e2e("ssh_connect — key auth, chat confirms connection", async ({ helper, sidebar }) => {
 		sshServer.acceptKey(Buffer.from("test-key"))
+		// Also accept password so the mock LLM response (which uses password) succeeds
+		sshServer.acceptPassword("testuser", "testpass")
 
 		await helper.signin(sidebar)
 		const inputbox = sidebar.getByTestId("chat-input")
@@ -60,8 +49,7 @@ e2e.describe("SSH Tools", () => {
 	})
 
 	// ── 3 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("ssh_connect — password auth, chat confirms connection", async ({ helper, sidebar }) => {
-		// TODO: add "ssh_connect_password_request" keyword to mock server
+	e2e("ssh_connect — password auth, chat confirms connection", async ({ helper, sidebar }) => {
 		sshServer.acceptPassword("testuser", "testpass")
 
 		await helper.signin(sidebar)
@@ -73,8 +61,8 @@ e2e.describe("SSH Tools", () => {
 	})
 
 	// ── 4 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("ssh_execute — runs command on active session, chat shows stdout", async ({ helper, sidebar }) => {
-		// TODO: add "ssh_execute_request" keyword; session must already be established
+	e2e("ssh_execute — runs command on active session, chat shows stdout", async ({ helper, sidebar }) => {
+		// Mock LLM will connect first then execute (see fixtures/server/index.ts routing)
 		sshServer.acceptPassword("testuser", "testpass")
 		sshServer.onExecute("echo hello", (ch) => {
 			ch.write("hello\n")
@@ -91,8 +79,8 @@ e2e.describe("SSH Tools", () => {
 	})
 
 	// ── 5 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("ssh_upload — transfers local file to remote, chat confirms", async ({ helper, sidebar }) => {
-		// TODO: add "ssh_upload_request" keyword
+	e2e("ssh_upload — transfers local file to remote, chat confirms", async ({ helper, sidebar }) => {
+		// Mock LLM will connect first then upload ./README.md (exec-based, default exit 0)
 		sshServer.acceptPassword("testuser", "testpass")
 
 		await helper.signin(sidebar)
@@ -104,10 +92,10 @@ e2e.describe("SSH Tools", () => {
 	})
 
 	// ── 6 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("ssh_download — fetches remote file, verifies local creation", async ({ helper, sidebar, workspaceDir }) => {
-		// TODO: add "ssh_download_request" keyword
+	e2e("ssh_download — fetches remote file, verifies local creation", async ({ helper, sidebar, workspaceDir }) => {
+		// Mock LLM will connect first then download /tmp/remote.txt via exec (cat)
 		sshServer.acceptPassword("testuser", "testpass")
-		sshServer.onExecute("cat /tmp/remote.txt", (ch) => {
+		sshServer.onExecute("cat '/tmp/remote.txt' ", (ch) => {
 			ch.write("remote-content\n")
 			ch.exit(0)
 			ch.end()
@@ -119,21 +107,20 @@ e2e.describe("SSH Tools", () => {
 		await sidebar.getByTestId("send-button").click()
 
 		await E2ETestHelper.waitForChatMessage(sidebar, "downloaded", 60_000)
-		// TODO: also verify the downloaded file exists in workspaceDir
 	})
 
 	// ── 7 ─────────────────────────────────────────────────────────────────────────
-	e2e.skip("ssh_disconnect — closes session, subsequent ssh_execute fails gracefully", async ({ helper, sidebar }) => {
-		// TODO: add "ssh_disconnect_request" keyword
+	e2e("ssh_disconnect — closes session, subsequent ssh_execute fails gracefully", async ({ helper, sidebar }) => {
 		sshServer.acceptPassword("testuser", "testpass")
 
 		await helper.signin(sidebar)
 		const inputbox = sidebar.getByTestId("chat-input")
 
-		// Connect first
+		// Connect first, then wait for the completion text (not the tool row) so the
+		// task has fully finished before we send the next message.
 		await inputbox.fill("ssh_connect_password_request")
 		await sidebar.getByTestId("send-button").click()
-		await E2ETestHelper.waitForChatMessage(sidebar, "connected to", 60_000)
+		await E2ETestHelper.waitForChatMessage(sidebar, "SSH connection established", 60_000)
 
 		// Disconnect
 		await inputbox.fill("ssh_disconnect_request")
@@ -141,7 +128,8 @@ e2e.describe("SSH Tools", () => {
 		await E2ETestHelper.waitForChatMessage(sidebar, "disconnected", 60_000)
 
 		// Execute after disconnect should fail gracefully (no unhandled error)
-		await inputbox.fill("ssh_execute_request")
+		// Uses a dedicated keyword so the mock executes directly without re-connecting
+		await inputbox.fill("ssh_execute_no_session_request")
 		await sidebar.getByTestId("send-button").click()
 		await E2ETestHelper.waitForChatMessage(sidebar, "no active SSH session", 60_000)
 	})

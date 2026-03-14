@@ -48,7 +48,7 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 		const returnCurrentTerminalContents = async () => {
 			try {
 				const terminalSnapshot = await getLatestTerminalOutput()
-				if (terminalSnapshot && terminalSnapshot.trim()) {
+				if (terminalSnapshot?.trim()) {
 					const fallbackMessage = `The command's output could not be captured due to some technical issue, however it has been executed successfully. Here's the current terminal's content to help you get the command's output:\n\n${terminalSnapshot}`
 					this.emit("line", fallbackMessage)
 				}
@@ -57,7 +57,7 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 			}
 		}
 
-		if (terminal.shellIntegration && terminal.shellIntegration.executeCommand) {
+		if (terminal.shellIntegration?.executeCommand) {
 			// Track that we're using shell integration
 			const execution = terminal.shellIntegration.executeCommand(command)
 			const stream = execution.read()
@@ -101,14 +101,15 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 
 					// Once we've retrieved any potential output between sequences, we can remove everything up to end of the last sequence
 					// https://code.visualstudio.com/docs/terminal/shell-integration#_vs-code-custom-sequences-osc-633-st
-					const vscodeSequenceRegex = /\x1b\]633;.[^\x07]*\x07/g
+					// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional VT100 OSC 633 sequence matching (ESC and BEL)
+					const vscodeSequenceRegex = /\u{1b}\]633;.[^\u{7}]*\u{7}/gu
 					const lastMatch = [...data.matchAll(vscodeSequenceRegex)].pop()
 					if (lastMatch && lastMatch.index !== undefined) {
 						data = data.slice(lastMatch.index + lastMatch[0].length)
 					}
 					// Place output back after removing vscode sequences
 					if (outputBetweenSequences) {
-						data = outputBetweenSequences + "\n" + data
+						data = `${outputBetweenSequences}\n${data}`
 					}
 					// remove ansi
 					data = stripAnsi(data)
@@ -132,10 +133,12 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 					if (lines.length > 0) {
 						// This regex only removes common terminal artifacts (%, $, >, #) and invisible control chars
 						// but preserves important syntax chars like {, [, ", etc.
-						lines[0] = lines[0].replace(/^[\x00-\x1F%$>#\s]*/, "")
+						// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional stripping of terminal control chars from output
+						lines[0] = lines[0].replace(/^[\u{0}-\u{1f}%$>#\s]*/u, "")
 					}
 					if (lines.length > 1) {
-						lines[1] = lines[1].replace(/^[\x00-\x1F%$>#\s]*/, "")
+						// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional stripping of terminal control chars from output
+						lines[1] = lines[1].replace(/^[\u{0}-\u{1f}%$>#\s]*/u, "")
 					}
 					// Join lines back
 					data = lines.join("\n")
@@ -216,7 +219,7 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 				await returnCurrentTerminalContents()
 				// Check if fallback worked
 				const terminalSnapshot = await getLatestTerminalOutput()
-				if (terminalSnapshot && terminalSnapshot.trim()) {
+				if (terminalSnapshot?.trim()) {
 					telemetryService.captureTerminalExecution(true, "vscode", "clipboard")
 				} else {
 					telemetryService.captureTerminalExecution(false, "vscode", "none")
@@ -247,7 +250,7 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 			await returnCurrentTerminalContents()
 			// Check if clipboard fallback worked
 			const terminalSnapshot = await getLatestTerminalOutput()
-			if (terminalSnapshot && terminalSnapshot.trim()) {
+			if (terminalSnapshot?.trim()) {
 				telemetryService.captureTerminalExecution(true, "vscode", "clipboard")
 			} else {
 				telemetryService.captureTerminalExecution(false, "vscode", "none")
@@ -267,8 +270,8 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 	// Inspired by https://github.com/sindresorhus/execa/blob/main/lib/transform/split.js
 	private emitIfEol(chunk: string) {
 		this.buffer += chunk
-		let lineEndIndex: number
-		while ((lineEndIndex = this.buffer.indexOf("\n")) !== -1) {
+		let lineEndIndex = this.buffer.indexOf("\n")
+		while (lineEndIndex !== -1) {
 			const line = this.buffer.slice(0, lineEndIndex).trimEnd() // removes trailing \r
 			// Remove \r if present (for Windows-style line endings)
 			// if (line.endsWith("\r")) {
@@ -276,6 +279,7 @@ export class VscodeTerminalProcess extends EventEmitter<TerminalProcessEvents> i
 			// }
 			this.emit("line", line)
 			this.buffer = this.buffer.slice(lineEndIndex + 1)
+			lineEndIndex = this.buffer.indexOf("\n")
 		}
 	}
 

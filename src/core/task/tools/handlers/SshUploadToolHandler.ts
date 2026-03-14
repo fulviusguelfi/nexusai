@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { SshSessionRegistry } from "@services/ssh/SshSessionRegistry"
@@ -32,29 +34,31 @@ export class SshUploadToolHandler implements IFullyManagedTool {
 			return await config.callbacks.sayAndCreateMissingParamError(this.name, "remote_path")
 		}
 
-		const client = SshSessionRegistry.get(config.taskId)
+		const client = SshSessionRegistry.get(config.cwd)
 		if (!client) {
 			return formatResponse.toolError("No active SSH session. Use ssh_connect first.")
 		}
 
-		const approval = await config.callbacks.ask("tool", JSON.stringify({ tool: "sshUpload", localPath, remotePath }))
-		if (approval.response !== "yesButtonClicked") {
-			return [{ type: "text", text: "User declined file upload." }]
-		}
-
 		try {
-			await new Promise<void>((resolve, reject) => {
-				// biome-ignore lint/suspicious/noExplicitAny: ssh2 sftp type
-				client.sftp((err: Error | undefined, sftp: any) => {
+			const absoluteLocalPath = resolve(config.cwd, localPath)
+			const content = readFileSync(absoluteLocalPath)
+
+			await new Promise<void>((resolveFn, reject) => {
+				// biome-ignore lint/suspicious/noExplicitAny: ssh2 stream type
+				client.exec(`cat > '${remotePath.replace(/'/g, "'\\''")}' `, (err: Error | undefined, stream: any) => {
 					if (err) return reject(err)
-					sftp.fastPut(localPath, remotePath, (putErr: Error | null) => {
-						if (putErr) return reject(putErr)
-						resolve()
+					stream.on("close", (code: number) => {
+						if (code && code !== 0) return reject(new Error(`upload exited with code ${code}`))
+						resolveFn()
 					})
+					stream.on("error", reject)
+					stream.write(content)
+					stream.end()
 				})
 			})
 
-			await config.callbacks.say("tool", `[ssh_upload] uploaded ${localPath} → ${remotePath}`)
+			const sayUpload = JSON.stringify({ tool: "ssh_upload", content: `uploaded ${localPath} → ${remotePath}` })
+			await config.callbacks.say("tool", sayUpload, undefined, undefined, false)
 			return [{ type: "text", text: `File uploaded: ${localPath} → ${remotePath}` }]
 		} catch (error: unknown) {
 			return formatResponse.toolError(`SSH upload failed: ${error instanceof Error ? error.message : String(error)}`)

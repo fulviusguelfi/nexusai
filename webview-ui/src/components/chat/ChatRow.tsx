@@ -371,7 +371,11 @@ export const ChatRowContent = memo(
 
 		const tool = useMemo(() => {
 			if (message.ask === "tool" || message.say === "tool") {
-				return JSON.parse(message.text || "{}") as ClineSayTool
+				try {
+					return JSON.parse(message.text || "{}") as ClineSayTool
+				} catch {
+					return null
+				}
 			}
 			return null
 		}, [message.ask, message.say, message.text])
@@ -717,6 +721,106 @@ export const ChatRowContent = memo(
 							<div className="bg-code border border-editor-group-border overflow-hidden rounded-xs py-[9px] px-2.5">
 								<span className="ph-no-capture font-medium">{tool.path}</span>
 							</div>
+						</div>
+					)
+				case "list_processes":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("list-tree")}
+								<span className="font-bold">
+									{"[list_processes]"} —{" "}
+									{message.type === "ask"
+										? "NexusAI wants to list running processes:"
+										: "NexusAI listed running processes:"}
+								</span>
+							</div>
+							<CodeAccordian
+								code={tool.content!}
+								isExpanded={isExpanded}
+								language="shell-session"
+								onToggleExpand={handleToggle}
+							/>
+						</div>
+					)
+				case "ssh_connect":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("plug")}
+								<span className="font-bold">
+									{"[ssh_connect]"} —{" "}
+									{message.type === "ask" ? "NexusAI wants to connect via SSH:" : "NexusAI connected via SSH:"}
+								</span>
+							</div>
+							{tool.content && <div className="ml-4 mt-1 text-sm font-mono">{tool.content}</div>}
+						</div>
+					)
+				case "ssh_execute":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("terminal")}
+								<span className="font-bold">{"[ssh_execute]"} — NexusAI executed remote command:</span>
+							</div>
+							{tool.content && (
+								<CodeAccordian
+									code={tool.content}
+									isExpanded={isExpanded}
+									language="shell-session"
+									onToggleExpand={handleToggle}
+								/>
+							)}
+						</div>
+					)
+				case "ssh_disconnect":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("debug-disconnect")}
+								<span className="font-bold">
+									{"[ssh_disconnect]"} — NexusAI {tool.content ?? "disconnected from session"}
+								</span>
+							</div>
+						</div>
+					)
+				case "ssh_upload":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("cloud-upload")}
+								<span className="font-bold">
+									{"[ssh_upload]"} — {tool.content ?? "uploaded file"}
+								</span>
+							</div>
+						</div>
+					)
+				case "ssh_download":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("cloud-download")}
+								<span className="font-bold">
+									{"[ssh_download]"} — {tool.content ?? "downloaded file"}
+								</span>
+							</div>
+						</div>
+					)
+				case "discover_network_hosts":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								{toolIcon("broadcast")}
+								<span className="font-bold">{"[discover_network_hosts]"} — NexusAI scanned local network:</span>
+							</div>
+							{tool.content && (
+								<CodeAccordian
+									code={tool.content}
+									isExpanded={isExpanded}
+									language="shell-session"
+									onToggleExpand={handleToggle}
+								/>
+							)}
 						</div>
 					)
 				default:

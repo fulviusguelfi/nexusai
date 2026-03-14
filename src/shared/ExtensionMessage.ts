@@ -206,6 +206,13 @@ export interface ClineSayTool {
 		| "webSearch"
 		| "summarizeTask"
 		| "useSkill"
+		| "list_processes"
+		| "ssh_connect"
+		| "ssh_execute"
+		| "ssh_disconnect"
+		| "ssh_upload"
+		| "ssh_download"
+		| "discover_network_hosts"
 	path?: string
 	diff?: string
 	content?: string

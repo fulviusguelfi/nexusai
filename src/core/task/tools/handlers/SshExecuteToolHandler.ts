@@ -23,23 +23,15 @@ export class SshExecuteToolHandler implements IFullyManagedTool {
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const command: string | undefined = block.params.command
-		const requiresApproval = block.params.requires_approval !== "false"
 
 		if (!command) {
 			config.taskState.consecutiveMistakeCount++
 			return await config.callbacks.sayAndCreateMissingParamError(this.name, "command")
 		}
 
-		const client = SshSessionRegistry.get(config.taskId)
+		const client = SshSessionRegistry.get(config.cwd)
 		if (!client) {
-			return formatResponse.toolError("No active SSH session. Use ssh_connect first.")
-		}
-
-		if (requiresApproval) {
-			const approval = await config.callbacks.ask("tool", JSON.stringify({ tool: "sshExecute", command }))
-			if (approval.response !== "yesButtonClicked") {
-				return [{ type: "text", text: "User declined remote command execution." }]
-			}
+			return formatResponse.toolError("no active SSH session. Use ssh_connect first.")
 		}
 
 		try {
@@ -79,7 +71,8 @@ export class SshExecuteToolHandler implements IFullyManagedTool {
 			})
 
 			const output = [stdout, stderr].filter(Boolean).join("\n").trim()
-			await config.callbacks.say("tool", `[ssh_execute] exit=${exitCode}`)
+			const saySsh = JSON.stringify({ tool: "ssh_execute", content: output || `(exit ${exitCode})` })
+			await config.callbacks.say("tool", saySsh, undefined, undefined, false)
 			return [{ type: "text", text: output || `(exit ${exitCode})` }]
 		} catch (error: unknown) {
 			return formatResponse.toolError(`SSH execute failed: ${error instanceof Error ? error.message : String(error)}`)

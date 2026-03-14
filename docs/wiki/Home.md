@@ -24,9 +24,9 @@ O Cline já é um dos melhores agentes de IA para VS Code. O NexusAI parte dessa
 | ---- | --------- | ------ |
 | **Fase 1** | Fundação — estrutura, identidade, auth GitHub Copilot | ✅ Concluída |
 | **Fase 2** | Controle Local — terminal e shell | ✅ Concluída |
-| **Fase 3** | Conexão SSH — controle remoto | ⏳ Planejada |
-| **Fase 4** | Voz (TTS/STT) — Piper + Whisper | ⏳ Planejada |
-| **Fase 5** | IoT — MQTT, HTTP, WebSocket | ⏳ Planejada |
+| **Fase 3** | Conexão SSH — controle remoto | ✅ Concluída |
+| **Fase 4** | IoT — MQTT, mDNS, HTTP | ⏳ Planejada |
+| **Fase 5** | Voz (TTS/STT) — Piper + Whisper | ⏳ Planejada |
 
 **Versão atual**: `1.0.0-alpha` · **Branch estável**: `master` · **Branch de integração**: `develop`
 
@@ -44,6 +44,7 @@ O Cline já é um dos melhores agentes de IA para VS Code. O NexusAI parte dessa
 
 - [Fase 1 — Fundação](Fase-1-Fundacao.md) — identidade, estrutura, auth GitHub Copilot — tudo detalhado
 - [Fase 2 — Controle Local](Fase-2-Terminal.md) — ferramentas de terminal, renomeações, testes, lazy-load Puppeteer
+- [Fase 3 — SSH e Rede](Fase-3-SSH.md) — 6 ferramentas SSH, MockSshServer, 26 testes E2E, ESM/CJS fix
 
 ### O que vem a seguir
 

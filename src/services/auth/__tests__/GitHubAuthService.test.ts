@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
+import type { GitHubAuthState } from "@shared/proto/cline/account"
+import type { EmptyRequest } from "@shared/proto/cline/common"
 import sinon from "sinon"
+import type { Controller } from "@/core/controller"
 import * as vscodeMock from "../../../test/vscode-mock"
 import { GitHubAuthService } from "../GitHubAuthService"
 
@@ -21,7 +24,7 @@ describe("GitHubAuthService", () => {
 	beforeEach(() => {
 		sandbox = sinon.createSandbox()
 		// Reset singleton between tests
-		;(GitHubAuthService as any)._instance = undefined
+		;(GitHubAuthService as unknown as { _instance: GitHubAuthService | undefined })._instance = undefined
 		service = GitHubAuthService.getInstance()
 	})
 
@@ -41,8 +44,8 @@ describe("GitHubAuthService", () => {
 			await service.signIn()
 			const state = service.getState()
 			state.isSignedIn.should.be.true()
-			state.displayName!.should.equal("octocat")
-			state.login!.should.equal("octocat")
+			;(state.displayName as string).should.equal("octocat")
+			;(state.login as string).should.equal("octocat")
 		})
 	})
 
@@ -51,8 +54,8 @@ describe("GitHubAuthService", () => {
 			sandbox.stub(vscodeMock.authentication, "getSession").resolves(mockSession)
 			const state = await service.signIn()
 			state.isSignedIn.should.be.true()
-			state.displayName!.should.equal("octocat")
-			state.login!.should.equal("octocat")
+			;(state.displayName as string).should.equal("octocat")
+			;(state.login as string).should.equal("octocat")
 		})
 
 		it("returns isSignedIn: false when user cancels", async () => {
@@ -80,12 +83,14 @@ describe("GitHubAuthService", () => {
 			sandbox.stub(vscodeMock.authentication, "getSession").resolves(mockSession)
 			await service.signIn()
 
-			const received: any[] = []
-			const handler = async (state: any) => {
+			const received: GitHubAuthState[] = []
+			const handler = async (state: GitHubAuthState) => {
 				received.push(state)
 			}
 			// Manually add handler (simulates subscribe without grpc overhead)
-			;(service as any)._activeHandlers.add(handler)
+			;(service as unknown as { _activeHandlers: Set<(state: GitHubAuthState) => Promise<void>> })._activeHandlers.add(
+				handler,
+			)
 
 			await service.signOut()
 
@@ -98,24 +103,24 @@ describe("GitHubAuthService", () => {
 			sandbox.stub(vscodeMock.authentication, "getSession").resolves(mockSession)
 			await service.signIn()
 
-			const received: any[] = []
-			const handler = async (state: any, _done?: boolean) => {
+			const received: GitHubAuthState[] = []
+			const handler = async (state: GitHubAuthState, _done?: boolean) => {
 				received.push(state)
 			}
 
-			await service.subscribe({} as any, {} as any, handler)
+			await service.subscribe({} as unknown as Controller, {} as unknown as EmptyRequest, handler)
 
 			received.length.should.be.greaterThan(0)
 			received[0].isSignedIn.should.be.true()
 		})
 
 		it("sends isSignedIn: false immediately when no session", async () => {
-			const received: any[] = []
-			const handler = async (state: any, _done?: boolean) => {
+			const received: GitHubAuthState[] = []
+			const handler = async (state: GitHubAuthState, _done?: boolean) => {
 				received.push(state)
 			}
 
-			await service.subscribe({} as any, {} as any, handler)
+			await service.subscribe({} as unknown as Controller, {} as unknown as EmptyRequest, handler)
 
 			received.length.should.equal(1)
 			received[0].should.deepEqual({ isSignedIn: false })
@@ -132,7 +137,7 @@ describe("GitHubAuthService", () => {
 		it("clears session when silent getSession returns nothing", async () => {
 			sandbox.stub(vscodeMock.authentication, "getSession").resolves(undefined)
 			// Manually inject a session first
-			;(service as any)._session = mockSession
+			;(service as unknown as { _session: typeof mockSession | undefined })._session = mockSession
 			await service.refreshSilently()
 			service.getState().should.deepEqual({ isSignedIn: false })
 		})

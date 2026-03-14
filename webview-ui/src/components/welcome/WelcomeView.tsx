@@ -1,6 +1,6 @@
 import { BooleanRequest, EmptyRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeDivider, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
-import { memo, useEffect, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useRef, useState } from "react"
 import ClineLogoWhite from "@/assets/ClineLogoWhite"
 import ApiOptions from "@/components/settings/ApiOptions"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
@@ -27,15 +27,7 @@ const WelcomeView = memo(() => {
 	}
 
 	// Once GitHub sign-in completes (after user clicked the button), configure vscode-lm and close welcome
-	useEffect(() => {
-		if (pendingGitHubComplete.current && isGitHubSignedIn && !isSigningIn) {
-			pendingGitHubComplete.current = false
-			completeWithVsCodeLm()
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isGitHubSignedIn, isSigningIn])
-
-	const completeWithVsCodeLm = async () => {
+	const completeWithVsCodeLm = useCallback(async () => {
 		try {
 			await handleFieldsChange({
 				planModeApiProvider: "vscode-lm",
@@ -45,7 +37,14 @@ const WelcomeView = memo(() => {
 		} catch (error) {
 			console.error("Failed to configure GitHub Copilot provider:", error)
 		}
-	}
+	}, [handleFieldsChange])
+
+	useEffect(() => {
+		if (pendingGitHubComplete.current && isGitHubSignedIn && !isSigningIn) {
+			pendingGitHubComplete.current = false
+			completeWithVsCodeLm()
+		}
+	}, [isGitHubSignedIn, isSigningIn, completeWithVsCodeLm])
 
 	const handleClineLogin = () => {
 		setIsClineLoading(true)

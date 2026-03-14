@@ -1,11 +1,15 @@
-﻿import { afterEach, describe, it } from "mocha"
+﻿import { execSync } from "node:child_process"
+import { afterEach, describe, it } from "mocha"
 import "should"
 import type { ToolUse } from "@core/assistant-message"
 import sinon from "sinon"
 import { ClineDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
+import type { ToolValidator } from "../../ToolValidator"
 import type { TaskConfig } from "../../types/TaskConfig"
 import { ListProcessesToolHandler } from "../ListProcessesToolHandler"
+
+type TextResult = { type: string; text: string }
 
 function makeBlock(params: Record<string, string | undefined> = {}): ToolUse {
 	return { type: "tool_use", name: ClineDefaultTool.LIST_PROCESSES, params, partial: false }
@@ -30,7 +34,7 @@ function makeConfig(taskState = new TaskState()): { config: TaskConfig; say: sin
 
 function makeHandler(execResult: string | Error = ""): ListProcessesToolHandler {
 	const execFn = execResult instanceof Error ? sinon.stub().throws(execResult) : sinon.stub().returns(execResult)
-	return new ListProcessesToolHandler({} as any, execFn as any)
+	return new ListProcessesToolHandler({} as unknown as ToolValidator, execFn as typeof execSync)
 }
 
 describe("ListProcessesToolHandler", () => {
@@ -43,9 +47,9 @@ describe("ListProcessesToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock())
 
-			;(result as any[]).should.have.length(1)
-			;(result as any[])[0].text.should.containEql("proc1")
-			;(result as any[])[0].text.should.containEql("proc2")
+			;(result as TextResult[]).should.have.length(1)
+			;(result as TextResult[])[0].text.should.containEql("proc1")
+			;(result as TextResult[])[0].text.should.containEql("proc2")
 			say.calledOnce.should.be.true()
 		})
 
@@ -55,7 +59,7 @@ describe("ListProcessesToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock({ filter: "node" }))
 
-			const text = (result as any[])[0].text as string
+			const text = (result as TextResult[])[0].text as string
 			text.should.containEql("node server.js")
 			text.should.containEql("node worker.js")
 			text.should.not.containEql("nginx")
@@ -68,7 +72,7 @@ describe("ListProcessesToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock({ filter: "mysql" }))
 
-			const text = (result as any[])[0].text as string
+			const text = (result as TextResult[])[0].text as string
 			text.should.containEql("MYSQLD")
 			text.should.containEql("MySQLDaemon")
 			text.should.not.containEql("postgres")
@@ -80,7 +84,7 @@ describe("ListProcessesToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock({ filter: "xyzzy-not-real" }))
 
-			;(result as any[])[0].text.should.equal("No processes found.")
+			;(result as TextResult[])[0].text.should.equal("No processes found.")
 		})
 
 		it("caps output at 100 lines", async () => {
@@ -90,7 +94,7 @@ describe("ListProcessesToolHandler", () => {
 
 			const result = await handler.execute(config, makeBlock())
 
-			const outputLines = ((result as any[])[0].text as string).split("\n")
+			const outputLines = ((result as TextResult[])[0].text as string).split("\n")
 			outputLines.should.have.length(100)
 		})
 
