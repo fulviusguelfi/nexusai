@@ -37,6 +37,7 @@ import {
 	migrateWelcomeViewCompleted,
 	migrateWorkspaceToGlobalStorage,
 } from "./core/storage/state-migrations"
+import { SshSessionsPanelProvider } from "./core/webview/panels/SshSessionsPanelProvider"
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
 import { abortCommitGeneration, generateCommitMsg } from "./hosts/vscode/commit-message-generator"
@@ -120,6 +121,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(VscodeWebviewProvider.SIDEBAR_ID, webview, {
 			webviewOptions: { retainContextWhenHidden: true },
 		}),
+	)
+
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(SshSessionsPanelProvider.viewId, new SshSessionsPanelProvider()),
 	)
 
 	// NOTE: Commands must be added to the internal registry before registering them with VSCode
