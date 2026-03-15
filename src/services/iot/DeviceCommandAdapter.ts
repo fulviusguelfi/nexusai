@@ -101,7 +101,9 @@ export class DeviceCommandAdapter {
 				if (err) return reject(err)
 				const parts: string[] = []
 				stream.on("data", (d: Buffer) => parts.push(d.toString()))
+				stream.on("error", reject)
 				stream.stderr.on("data", (d: Buffer) => parts.push(d.toString()))
+				stream.stderr.on("error", () => {})
 				stream.on("close", () => resolve(parts.join("")))
 			})
 		})

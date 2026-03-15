@@ -1,6 +1,14 @@
 // type that represents json data that is sent from extension to webview, called ExtensionMessage and has 'type' enum which can be 'plusButtonClicked' or 'settingsButtonClicked' or 'hello'
 
-import type { SshSessionInfo } from "@services/ssh/SshSessionRegistry"
+/** Shared type — also imported by SshSessionRegistry.ts to avoid circular deps */
+export interface SshSessionInfo {
+	taskId: string
+	host: string
+	port: number
+	user: string
+	connectedAt: number // unix ms
+}
+
 import { WorkspaceRoot } from "@shared/multi-root/types"
 import { RemoteConfigFields } from "@shared/storage/state-keys"
 import type { Environment } from "../config"

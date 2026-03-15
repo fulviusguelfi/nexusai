@@ -1,6 +1,12 @@
 #!/bin/bash
 set -u
 
+# On Windows, node may not be in bash PATH — skip gracefully instead of failing
+if ! command -v node &> /dev/null; then
+  echo "Warning: node not found in bash PATH, skipping proto lint"
+  exit 0
+fi
+
 buf lint
 
 if ! buf format -w --exit-code; then

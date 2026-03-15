@@ -47,6 +47,10 @@ export class SshUploadToolHandler implements IFullyManagedTool {
 				// biome-ignore lint/suspicious/noExplicitAny: ssh2 stream type
 				client.exec(`cat > '${remotePath.replace(/'/g, "'\\''")}' `, (err: Error | undefined, stream: any) => {
 					if (err) return reject(err)
+					// Drain stdout and stderr so the "close" event fires
+					stream.on("data", () => {})
+					stream.stderr.on("data", () => {})
+					stream.stderr.on("error", () => {})
 					stream.on("close", (code: number) => {
 						if (code && code !== 0) return reject(new Error(`upload exited with code ${code}`))
 						resolveFn()

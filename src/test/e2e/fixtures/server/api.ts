@@ -167,7 +167,7 @@ const SSH_UPLOAD_REQUEST = `I'll upload the file to the remote server.
 </ssh_upload>`
 
 /** Completion after ssh_upload ran. */
-const SSH_UPLOAD_COMPLETION = `File upload completed successfully.
+const SSH_UPLOAD_COMPLETION = `File uploaded successfully to the remote server.
 
 <attempt_completion>
 <result>File uploaded to remote server.</result>

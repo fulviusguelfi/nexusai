@@ -413,7 +413,11 @@ export class ClineApiServerMock {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCOVER_REQUEST
 							}
 						}
-						if (body.includes("ssh_connect_password_request") || body.includes("ssh_connect_key_request")) {
+						if (
+							body.includes("ssh_connect_password_request") ||
+							body.includes("ssh_connect_key_request") ||
+							body.includes("ssh_connect_for_disconnect_request")
+						) {
 							if (body.includes("</ssh_connect>")) {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_COMPLETION
 							} else {
@@ -430,18 +434,22 @@ export class ClineApiServerMock {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
 							}
 						}
-						if (body.includes("ssh_execute_no_session_request")) {
-							if (body.includes("</ssh_execute>")) {
-								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_COMPLETION
-							} else {
-								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_REQUEST
-							}
-						}
 						if (body.includes("ssh_disconnect_request")) {
 							if (body.includes("</ssh_disconnect>")) {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCONNECT_COMPLETION
 							} else {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCONNECT_REQUEST
+							}
+						}
+						// Note: ssh_execute_no_session check intentionally comes AFTER ssh_disconnect
+						// so that when both keywords appear in the conversation history (i.e. the user
+						// sent a no-session execute request as feedback after a completed disconnect task),
+						// the no-session response wins over re-sending the disconnect completion.
+						if (body.includes("ssh_execute_no_session_request")) {
+							if (body.includes("</ssh_execute>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_REQUEST
 							}
 						}
 						if (body.includes("ssh_upload_request")) {

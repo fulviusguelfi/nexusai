@@ -28,6 +28,11 @@ e2e.describe("IoT Tools", () => {
 		await sshServer.stop()
 	})
 
+	// Reset accumulated credentials/handlers between tests to prevent state bleeding.
+	e2e.beforeEach(() => {
+		sshServer.reset()
+	})
+
 	// ── 1 ─────────────────────────────────────────────────────────────────────────
 	e2e("discover_devices — mDNS scan completes, chat reports no devices", async ({ helper, sidebar }) => {
 		await helper.signin(sidebar)

@@ -1,10 +1,6 @@
-export interface SshSessionInfo {
-	taskId: string
-	host: string
-	port: number
-	user: string
-	connectedAt: number // unix ms
-}
+// SshSessionInfo is defined in src/shared/ExtensionMessage.ts (shared with webview)
+import type { SshSessionInfo } from "@shared/ExtensionMessage"
+export type { SshSessionInfo }
 
 /**
  * Module-level registry of active SSH client connections, keyed by taskId.
