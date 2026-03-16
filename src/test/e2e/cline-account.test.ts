@@ -163,19 +163,31 @@ e2e.describe("Cline Account — free model onboarding + chat (requests intercept
 
 			// ── 6. Wait for onboarding to close and chat view to appear ─────────
 			const chatInput = sidebar.getByTestId("chat-input")
-			// Handle optional "What's New" / welcome dialog that may appear after
-			// first login (click "Close" if visible, otherwise proceed).
+			// Phase A: wait until the chat input is visible, dismissing any
+			// "What's New" / welcome dialog that may block it.
 			await expect(async () => {
 				const closeBtn = sidebar.getByRole("button", { name: "Close" })
-				const chatReady = await chatInput.isVisible()
-				if (!chatReady) {
-					const closeVisible = await closeBtn.isVisible()
-					if (closeVisible) {
-						await closeBtn.click({ delay: 50 })
-					}
+				const closeVisible = await closeBtn.isVisible()
+				if (closeVisible) {
+					await closeBtn.click({ delay: 50 })
 				}
 				await expect(chatInput).toBeVisible()
 			}).toPass({ timeout: 20_000, intervals: [500] })
+
+			// Phase B: the "What's New" announcement modal has a ~3-second delayed
+			// appearance after ChatView mounts.  Even if chatInput was already
+			// visible above, the overlay can appear now and block pointer events.
+			// Wait up to 6s for it to show, then dismiss it.
+			try {
+				const closeBtn = sidebar.getByRole("button", { name: "Close" })
+				await closeBtn.waitFor({ state: "visible", timeout: 6_000 })
+				await closeBtn.click({ delay: 50 })
+				// Wait for the backdrop to disappear before proceeding
+				const backdrop = sidebar.locator('[aria-hidden="true"].fixed.inset-0')
+				await backdrop.waitFor({ state: "hidden", timeout: 3_000 })
+			} catch {
+				// No delayed modal appeared — continue.
+			}
 
 			// ── 7. Send random messages and verify mock-server responses ────────
 			// Each message is sent as a fresh task (via "New Task") so the Cline

@@ -1,14 +1,12 @@
 import React from "react"
 
 interface WhatsNewItemsProps {
-	onClose: () => void
-	inlineCodeStyle: React.CSSProperties
 	onNavigateToModelPicker: (initialModelTab: "recommended" | "free", modelId?: string) => void
 }
 
 type InlineModelLinkProps = { pickerTab: "recommended" | "free"; modelId: string; label: string }
 
-export const WhatsNewItems: React.FC<WhatsNewItemsProps> = ({ onClose, inlineCodeStyle, onNavigateToModelPicker }) => {
+export const WhatsNewItems: React.FC<WhatsNewItemsProps> = ({ onNavigateToModelPicker }) => {
 	const InlineModelLink: React.FC<InlineModelLinkProps> = ({ pickerTab, modelId, label }) => (
 		<span
 			onClick={() => onNavigateToModelPicker(pickerTab, modelId)}
@@ -19,21 +17,21 @@ export const WhatsNewItems: React.FC<WhatsNewItemsProps> = ({ onClose, inlineCod
 
 	return (
 		<ul className="text-sm pl-3 list-disc" style={{ color: "var(--vscode-descriptionForeground)" }}>
-			{/* Hardcoded items */}
 			<li className="mb-2">
-				<strong>Try Codex 5.3:</strong> OpenAI's latest coding model, now available in Cline!{" "}
-				<InlineModelLink label="Try now" modelId="openai/gpt-5.3-codex" pickerTab="recommended" />
+				<strong>IoT Tools (Fase 4):</strong> discover, register, and operate local network devices via mDNS, SSDP, ARP,
+				MQTT, HTTP and SSH — all from the chat.
 			</li>
 			<li className="mb-2">
-				<strong>Try latest SOTA coding model:</strong> Claude Sonnet 4.6 and Gemini 3.1 pro within Cline!{" "}
-				<InlineModelLink label="Try now" modelId="anthropic/claude-sonnet-4.6" pickerTab="recommended" />
+				<strong>SSH Tools (Fase 3):</strong> connect to remote hosts, execute commands, upload/download files and manage
+				sessions directly in the agent loop.
 			</li>
 			<li className="mb-2">
-				<strong>Try Cline CLI 2.0:</strong> with /mcp functionality added in CLI{" "}
-				<code style={inlineCodeStyle}>npm install -g cline</code>
+				<strong>PostHog removed:</strong> no usage data is sent to third-party analytics services. Your prompts and tasks
+				stay private.
 			</li>
 			<li className="mb-2">
-				<strong>Minimax M2.5 and Z.ai GLM 5:</strong> no longer free starting Feb 23, 2026
+				<strong>Try Claude Sonnet 4.6:</strong>{" "}
+				<InlineModelLink label="Set as active model" modelId="anthropic/claude-sonnet-4.6" pickerTab="recommended" />
 			</li>
 		</ul>
 	)
