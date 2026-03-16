@@ -36,6 +36,11 @@ export class MockSshServer {
 			client.on("close", () => {
 				this.activeClients = this.activeClients.filter((c) => c !== client)
 			})
+			// Prevent uncaught error events when the VS Code process is killed after a test:
+			// abrupt socket close causes the server-side client to emit 'error' (ECONNRESET).
+			// Without a handler, Node.js throws an uncaughtException that crashes the
+			// Playwright test-runner process, marking the running test as FAILED.
+			client.on("error", () => {})
 
 			// biome-ignore lint/suspicious/noExplicitAny: ssh2 AuthContext type
 			client.on("authentication", (ctx: any) => {
@@ -64,9 +69,17 @@ export class MockSshServer {
 						if (handler) {
 							handler(stream)
 						} else {
-							// Default: silently succeed for unknown commands (allows upload via exec)
-							stream.exit(0)
-							stream.end()
+							// Default: consume client stdin (e.g. upload content) then exit 0.
+							// A 'data' listener is required for Node.js to switch the stream to
+							// flowing mode so the 'end' event fires when the client sends EOF.
+							// Without it, 'resume()' alone may not trigger 'end'.
+							// biome-ignore lint/suspicious/noExplicitAny: ssh2 ServerChannel extends Duplex
+							const s = stream as any
+							s.on("data", () => {})
+							s.on("end", () => {
+								stream.exit(0)
+								stream.end()
+							})
 						}
 					})
 				})
@@ -118,5 +131,15 @@ export class MockSshServer {
 	/** Register a handler for a specific remote command. */
 	onExecute(command: string, handler: (channel: SshChannel) => void): void {
 		this.executeHandlers.set(command, handler)
+	}
+
+	/**
+	 * Reset server state between tests: clear accumulated credentials, public keys,
+	 * and exec handlers so tests don't bleed state into each other.
+	 */
+	reset(): void {
+		this.acceptedCredentials.clear()
+		this.acceptedPublicKeys.length = 0
+		this.executeHandlers.clear()
 	}
 }

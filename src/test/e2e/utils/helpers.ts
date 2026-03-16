@@ -163,10 +163,7 @@ export class E2ETestHelper {
 	}
 
 	public static async openClineSidebar(page: Page): Promise<void> {
-		await page
-			.getByRole("tab", { name: /NexusAI/ })
-			.locator("a")
-			.click()
+		await page.getByRole("tab", { name: "NexusAI", exact: true }).locator("a").click()
 	}
 
 	public static async runCommandPalette(page: Page, command: string): Promise<void> {

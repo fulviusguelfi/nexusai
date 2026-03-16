@@ -8,6 +8,7 @@ export interface VsCodeNativeModel {
 	family?: string
 	version?: string
 	id?: string
+	name?: string
 }
 
 /**
@@ -19,5 +20,6 @@ export function convertVsCodeNativeModelsToProtoModels(models: VsCodeNativeModel
 		family: model.family || "",
 		version: model.version || "",
 		id: model.id || "",
+		name: model.name || "",
 	}))
 }

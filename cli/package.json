@@ -38,7 +38,7 @@
 		"clean": "rimraf dist",
 		"typecheck": "npx tsc --noEmit",
 		"link": "npm run build && npm link",
-		"unlink": "npm unlink -g cline",
+		"unlink": "npm unlink -g nexusai",
 		"test": "vitest",
 		"test:run": "vitest run"
 	},

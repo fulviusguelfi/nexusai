@@ -270,17 +270,22 @@ pull requests
 - **Suite completa**: 1244 testes passando, 3 falhas pré-existentes em `BannerService` (timeout)
 - **Commits**: `c59a67d`, `66db2c6`, `e72e22a`, `a8d431b`
 
-### Fase 4 — IoT (próxima)
-- **Objetivo**: controle de dispositivos IoT na rede local via MQTT, mDNS e HTTP
-- **Ferramentas planejadas**: `mqtt_publish`, `mqtt_subscribe`, `mdns_discover`, `http_request`
-- **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23) (overview), [#24](https://github.com/fulviusguelfi/nexusai/issues/24) (mdns), [#25](https://github.com/fulviusguelfi/nexusai/issues/25) (mqtt), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) (http_request)
-- **Dependência**: `mqtt` e `mdns-js` (ou `bonjour`) como dependências externas; avaliar bundling
+### Fase 4 — IoT (MQTT, HTTP, Operação de Dispositivos) ✅ _(concluído em 2026-03-14)_
+- **Handlers implementados**: `discover_devices`, `register_device`, `get_device_info`, `http_request`, `mqtt_connect`, `mqtt_publish`, `mqtt_subscribe`, `mqtt_disconnect`, `operate_device`
+- **Serviços**: `DeviceRegistry`, `MqttConnectionRegistry`, `DeviceCommandAdapter`, `DeviceIdentificationService`
+- **SSRF Guard**: `http_request` bloqueia IPs privados por padrão (`trusted_local` flag para rede local)
+- **DeviceCommandAdapter**: despacha comandos para MQTT, HTTP ou SSH conforme protocolo do dispositivo
+- **IotDevicesPanelProvider**: painel `nexusai.iotPanel` na Activity Bar
+- **MockMqttBroker**: broker em memória para testes E2E (porta 1884)
+- **Testes E2E**: 13 cenários IoT, 37 testes passando, 2 skipped (dependências externas)
+- **Testes unitários**: `DeviceRegistry`, `MqttConnectionRegistry`, `DeviceIdentificationService`
+- **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) — todos fechados
+- **Wiki**: `docs/wiki/Fase-4-IoT.md`
 
 ### Próximas Fases
 
 | # | Descrição | Issues Relacionados |
 |---|---|---|
-| Fase 4 | IoT — MQTT, mDNS, device discovery | [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) |
 | Fase 5 | Voz — Piper TTS, Whisper STT | — |
 | Fase 6 | Agentes Autônomos e multi-IA | — |
 

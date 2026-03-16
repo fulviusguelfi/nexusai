@@ -31,6 +31,8 @@ export class SshExecuteToolHandler implements IFullyManagedTool {
 
 		const client = SshSessionRegistry.get(config.cwd)
 		if (!client) {
+			const sayNoSession = JSON.stringify({ tool: "ssh_execute", content: "no active SSH session" })
+			await config.callbacks.say("tool", sayNoSession, undefined, undefined, false)
 			return formatResponse.toolError("no active SSH session. Use ssh_connect first.")
 		}
 
@@ -59,6 +61,8 @@ export class SshExecuteToolHandler implements IFullyManagedTool {
 					stream.stderr.on("data", (data: Buffer) => {
 						stderr += data.toString()
 					})
+					// Guard against uncaught 'error' events on the stderr sub-stream
+					stream.stderr.on("error", () => {})
 					stream.on("close", (code: number) => {
 						clearTimeout(timeout)
 						resolve({ stdout, stderr, exitCode: code ?? 0 })

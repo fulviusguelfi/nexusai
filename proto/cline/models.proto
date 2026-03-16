@@ -68,6 +68,7 @@ message LanguageModelChatSelector {
   optional string family = 2;
   optional string version = 3;
   optional string id = 4;
+  optional string name = 5;
 }
 
 // Price tier for tiered pricing models

@@ -18,7 +18,6 @@ import { FileEditProvider } from "@/integrations/editor/FileEditProvider"
 import { StandaloneTerminalManager } from "@/integrations/terminal/standalone/StandaloneTerminalManager"
 import { ErrorService } from "@/services/error/ErrorService"
 import { telemetryService } from "@/services/telemetry"
-import { PostHogClientProvider } from "@/services/telemetry/providers/posthog/PostHogClientProvider"
 import { HistoryItem } from "@/shared/HistoryItem"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
@@ -82,7 +81,7 @@ async function disposeTelemetryServices(): Promise<void> {
 	}
 
 	telemetryDisposed = true
-	await Promise.allSettled([telemetryService.dispose(), PostHogClientProvider.getInstance().dispose()])
+	await telemetryService.dispose()
 }
 
 async function disposeCliContext(ctx: CliContext): Promise<void> {

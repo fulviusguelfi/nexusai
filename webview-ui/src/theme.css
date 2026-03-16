@@ -54,9 +54,6 @@
 	--color-list-hover: var(--vscode-list-hoverBackground);
 	--color-badge-foreground: var(--vscode-badge-foreground);
 	--color-badge-background: var(--vscode-badge-background);
-	--color-banner-background: var(--vscode-banner-background);
-	--color-banner-foreground: var(--vscode-banner-foreground);
-	--color-banner-icon: var(--vscode-banner-iconForeground);
 	--color-editor-match-highlight: var(--vscode-editor-findMatchHighlightBackground);
 	--color-icon-foreground: var(--vscode-icon-foreground);
 	--color-notification-foreground: var(--vscode-notificationsInfoIcon-foreground);

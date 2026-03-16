@@ -37,6 +37,7 @@ import {
 	migrateWelcomeViewCompleted,
 	migrateWorkspaceToGlobalStorage,
 } from "./core/storage/state-migrations"
+import { IotDevicesPanelProvider } from "./core/webview/panels/IotDevicesPanelProvider"
 import { SshSessionsPanelProvider } from "./core/webview/panels/SshSessionsPanelProvider"
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
@@ -53,6 +54,9 @@ import { exportVSCodeStorageToSharedFiles } from "./hosts/vscode/vscode-to-file-
 import { ExtensionRegistryInfo } from "./registry"
 import { AuthService } from "./services/auth/AuthService"
 import { LogoutReason } from "./services/auth/types"
+import { DeviceRegistry } from "./services/iot/DeviceRegistry"
+import { IotDiscoveryService } from "./services/iot/IotDiscoveryService"
+import { SshServerProfileRegistry } from "./services/ssh/SshServerProfileRegistry"
 import { telemetryService } from "./services/telemetry"
 import { SharedUriHandler, TASK_URI_PATH } from "./services/uri/SharedUriHandler"
 import { ShowMessageType } from "./shared/proto/host/window"
@@ -123,8 +127,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
+	DeviceRegistry.initialize(context)
+	SshServerProfileRegistry.initialize(context)
+	// IoT auto-discovery on startup — fire and forget, runs in background without blocking
+	IotDiscoveryService.scan(8000).catch(() => {})
+
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(SshSessionsPanelProvider.viewId, new SshSessionsPanelProvider()),
+	)
+
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(IotDevicesPanelProvider.viewId, new IotDevicesPanelProvider()),
 	)
 
 	// NOTE: Commands must be added to the internal registry before registering them with VSCode
@@ -601,7 +614,7 @@ async function showJupyterPromptInput(title: string, placeholder: string): Promi
 
 function setupHostProvider(context: ExtensionContext) {
 	const outputChannel = registerClineOutputChannel(context)
-	outputChannel.appendLine("[Cline] Setting up VS Code host...")
+	outputChannel.appendLine("[NexusAI] Setting up VS Code host...")
 
 	const createWebview = () => new VscodeWebviewProvider(context)
 	const createDiffView = () => new VscodeDiffViewProvider()

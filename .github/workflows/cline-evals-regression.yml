@@ -48,13 +48,13 @@ jobs:
           echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
 
       - name: Verify CLI
-        run: cline --version
+        run: nexusai --version
 
       - name: Run smoke tests
         env:
           CLINE_API_KEY: ${{ secrets.CLINE_API_KEY }}
         run: |
-          cline auth -p cline -k "$CLINE_API_KEY" -m "anthropic/claude-sonnet-4.5"
+          nexusai auth -p cline -k "$CLINE_API_KEY" -m "anthropic/claude-sonnet-4.5"
           max_attempts=3
           for attempt in $(seq 1 $max_attempts); do
             echo "::group::Attempt $attempt of $max_attempts"
