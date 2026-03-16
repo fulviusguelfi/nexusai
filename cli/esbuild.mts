@@ -116,6 +116,18 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
 	},
 }
 
+/**
+ * Mark native .node binary files as external so esbuild doesn't try to bundle them.
+ * At runtime the relative-path require()s fail with MODULE_NOT_FOUND which is caught
+ * inside ssh2's try/catch blocks — no crash, ssh2 falls back to pure-JS crypto.
+ */
+const nativeNodePlugin: esbuild.Plugin = {
+	name: "native-node",
+	setup(build) {
+		build.onResolve({ filter: /\.node$/ }, () => ({ external: true }))
+	},
+}
+
 // Plugin to stub out optional devtools module
 const stubOptionalModulesPlugin: esbuild.Plugin = {
 	name: "stub-optional-modules",
@@ -217,7 +229,14 @@ const sharedOptions: Partial<esbuild.BuildOptions> = {
 	logLevel: "silent",
 	define: buildEnvVars,
 	tsconfig: path.join(__dirname, "tsconfig.json"),
-	plugins: [copyWasmFiles, aliasResolverPlugin, vscodeStubPlugin, stubOptionalModulesPlugin, esbuildProblemMatcherPlugin],
+	plugins: [
+		nativeNodePlugin,
+		copyWasmFiles,
+		aliasResolverPlugin,
+		vscodeStubPlugin,
+		stubOptionalModulesPlugin,
+		esbuildProblemMatcherPlugin,
+	],
 	format: "esm",
 	sourcesContent: false,
 	platform: "node",
