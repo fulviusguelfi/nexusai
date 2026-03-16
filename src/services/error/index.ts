@@ -4,7 +4,6 @@ export { type ErrorProviderConfig, ErrorProviderFactory, type ErrorProviderType 
 export { ErrorService } from "./ErrorService"
 export { AuthInvalidTokenError, AuthNetworkError, ClineError, ClineErrorType, NexusError, NexusErrorType } from "./NexusError"
 export type { ErrorSettings, IErrorProvider } from "./providers/IErrorProvider"
-export { PostHogErrorProvider } from "./providers/PostHogErrorProvider"
 
 export function getErrorLevelFromString(level: string | undefined): ErrorSettings["level"] {
 	switch (level) {

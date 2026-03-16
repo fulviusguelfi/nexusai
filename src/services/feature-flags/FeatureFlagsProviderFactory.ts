@@ -1,14 +1,10 @@
-import { ClineEndpoint } from "@/config"
-import { isPostHogConfigValid, posthogConfig } from "@/shared/services/config/posthog-config"
 import { Logger } from "@/shared/services/Logger"
-import { PostHogClientProvider } from "../telemetry/providers/posthog/PostHogClientProvider"
 import type { FeatureFlagsAndPayloads, IFeatureFlagsProvider } from "./providers/IFeatureFlagsProvider"
-import { PostHogFeatureFlagsProvider } from "./providers/PostHogFeatureFlagsProvider"
 
 /**
  * Supported feature flags provider types
  */
-export type FeatureFlagsProviderType = "posthog" | "no-op"
+export type FeatureFlagsProviderType = "no-op"
 
 /**
  * Configuration for feature flags providers
@@ -27,35 +23,16 @@ export class FeatureFlagsProviderFactory {
 	 * @param config Configuration for the feature flags provider
 	 * @returns IFeatureFlagsProvider instance
 	 */
-	public static createProvider(config: FeatureFlagsProviderConfig): IFeatureFlagsProvider {
-		switch (config.type) {
-			case "posthog": {
-				// Get the shared PostHog client from PostHogClientProvider
-				const sharedClient = PostHogClientProvider.getClient()
-				if (sharedClient) {
-					return new PostHogFeatureFlagsProvider(sharedClient)
-				}
-				// Fall back to NoOp provider if no client is available
-				return new NoOpFeatureFlagsProvider()
-			}
-			default:
-				return new NoOpFeatureFlagsProvider()
-		}
+	public static createProvider(_config: FeatureFlagsProviderConfig): IFeatureFlagsProvider {
+		return new NoOpFeatureFlagsProvider()
 	}
 
 	/**
 	 * Gets the default feature flags provider configuration
-	 * @returns Default configuration using PostHog, or no-op for self-hosted mode
+	 * @returns Default no-op configuration
 	 */
 	public static getDefaultConfig(): FeatureFlagsProviderConfig {
-		// Use no-op provider in self-hosted mode to avoid external network calls
-		if (ClineEndpoint.isSelfHosted()) {
-			return { type: "no-op" }
-		}
-		const hasValidConfig = isPostHogConfigValid(posthogConfig)
-		return {
-			type: hasValidConfig ? "posthog" : "no-op",
-		}
+		return { type: "no-op" }
 	}
 }
 
