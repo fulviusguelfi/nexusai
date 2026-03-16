@@ -23,7 +23,7 @@ A Fase 4 entregou controle de dispositivos IoT com 8 ferramentas novas, MockMqtt
 
 | Ferramenta | Handler | Descrição |
 |---|---|---|
-| `discover_devices` | `DiscoverDevicesToolHandler` | Varre a rede local via mDNS/Bonjour (timeout configurável) |
+| `discover_devices` | `DiscoverDevicesToolHandler` | Varre a rede local via mDNS/Bonjour + SSDP (UDP multicast) + ARP table (timeout configurável) |
 | `register_device` | `RegisterDeviceToolHandler` | Cadastra dispositivo no `DeviceRegistry` com ip, tipo, protocolo e flags |
 | `get_device_info` | `GetDeviceInfoToolHandler` | Lista todos ou busca por `id`/`ip` |
 | `http_request` | `HttpRequestToolHandler` | Realiza requisições HTTP com guarda SSRF (IPs privados bloqueados por padrão) |
@@ -38,6 +38,18 @@ Todas seguem o padrão: `say("tool", JSON.stringify({ tool: "nome_ferramenta", c
 ---
 
 ## Arquitetura IoT
+
+### Descoberta de Dispositivos (`IotDiscoveryService`)
+
+`scan(timeoutMs?)` executa três métodos em paralelo via `Promise.allSettled`, o que garante que a falha de um não bloqueia os outros, e mergeia os resultados por IP:
+
+| Método | Protocolo | Detalhes |
+|---|---|---|
+| `scanViaMdns()` | mDNS/Bonjour | Usa `bonjour-service`; identifica tipo via `DeviceIdentificationService` (ex.: `_googlecast`, `_sonos`, `_hap`) |
+| `scanViaSsdp()` | SSDP/UPnP | UDP multicast 239.255.255.250:1900; M-SEARCH; parseia headers `SERVER`/`ST`/`USN`; retorna `DeviceProtocol.UPNP` |
+| `scanViaArp()` | ARP (passivo) | `arp -a` via `child_process`; parseia IP + MAC; filtra broadcast; retorna `DeviceType.UNKNOWN` para enriquecimento posterior |
+
+`DeviceIdentificationService.identifyFromMdnsType()` reconhece tipos: `_googlecast`/`_sonos` → `SMART_SPEAKER`; `_tuya`/`_homekit` → `SMART_BULB`; `_printer` → `PRINTER`; `_ssh` → `COMPUTER`; etc.
 
 ### Camadas
 

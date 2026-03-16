@@ -33,6 +33,8 @@ describe("IotDiscoveryService", () => {
 	beforeEach(() => {
 		resetDeviceRegistry()
 		DeviceRegistry.initialize(makeMockContext())
+		// Prevent ARP scan from hitting the real network in unit tests
+		sinon.stub(IotDiscoveryService as any, "execArp").returns("")
 	})
 
 	afterEach(() => {

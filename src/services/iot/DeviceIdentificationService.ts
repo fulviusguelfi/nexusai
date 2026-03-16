@@ -14,11 +14,18 @@ export class DeviceIdentificationService {
 		if (t.includes("_ssh") || t.includes("_sftp") || t.includes("workstation") || t.includes("_remote-disc")) {
 			return { type: DeviceType.COMPUTER, protocol: DeviceProtocol.SSH }
 		}
-		if (t.includes("_http") || t.includes("_https") || t.includes("_hap")) {
-			return { type: DeviceType.SMART_BULB, protocol: DeviceProtocol.HTTP_REST }
-		}
-		if (t.includes("speaker") || t.includes("airplay") || t.includes("_raop") || t.includes("cast")) {
+		if (
+			t.includes("_googlecast") ||
+			t.includes("_sonos") ||
+			t.includes("speaker") ||
+			t.includes("airplay") ||
+			t.includes("_raop") ||
+			t.includes("cast")
+		) {
 			return { type: DeviceType.SMART_SPEAKER, protocol: DeviceProtocol.HTTP_REST }
+		}
+		if (t.includes("_tuya") || t.includes("_http") || t.includes("_https") || t.includes("_hap") || t.includes("_homekit")) {
+			return { type: DeviceType.SMART_BULB, protocol: DeviceProtocol.HTTP_REST }
 		}
 		if (t.includes("router") || t.includes("gateway") || t.includes("_router")) {
 			return { type: DeviceType.ROUTER, protocol: DeviceProtocol.HTTP_REST }
