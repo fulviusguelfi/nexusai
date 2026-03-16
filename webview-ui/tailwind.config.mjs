@@ -77,11 +77,6 @@ export default {
 					foreground: "var(--vscode-badge-foreground)",
 					background: "var(--vscode-badge-background)",
 				},
-				banner: {
-					background: "var(--vscode-banner-background)",
-					foreground: "var(--vscode-banner-foreground)",
-					icon: "var(--vscode-banner-iconForeground)",
-				},
 				toolbar: {
 					DEFAULT: "var(--vscode-toolbar-background)",
 					hover: "var(--vscode-toolbar-hoverBackground)",

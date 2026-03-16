@@ -16,7 +16,6 @@ import { AutoApprovalSettings } from "./AutoApprovalSettings"
 import { ApiConfiguration } from "./api"
 import { BrowserSettings } from "./BrowserSettings"
 import { ClineFeatureSetting } from "./ClineFeatureSetting"
-import { BannerCardData } from "./cline/banner"
 import { ClineRulesToggles } from "./cline-rules"
 import { FocusChainSettings } from "./FocusChainSettings"
 import { HistoryItem } from "./HistoryItem"
@@ -104,10 +103,6 @@ export interface ExtensionState {
 	primaryRootIndex: number
 	isMultiRootWorkspace: boolean
 	multiRootSetting: ClineFeatureSetting
-	lastDismissedInfoBannerVersion: number
-	lastDismissedModelBannerVersion: number
-	lastDismissedCliBannerVersion: number
-	dismissedBanners?: Array<{ bannerId: string; dismissedAt: number }>
 	hooksEnabled?: boolean
 	remoteConfigSettings?: Partial<RemoteConfigFields>
 	globalSkillsToggles?: Record<string, boolean>
@@ -117,8 +112,6 @@ export interface ExtensionState {
 	backgroundEditEnabled?: boolean
 	optOutOfRemoteConfig?: boolean
 	doubleCheckCompletionEnabled?: boolean
-	banners?: BannerCardData[]
-	welcomeBanners?: BannerCardData[]
 	openAiCodexIsAuthenticated?: boolean
 	activeSshSessions: SshSessionInfo[]
 }

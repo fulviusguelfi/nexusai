@@ -8,7 +8,6 @@ import { HostProvider } from "@/hosts/host-provider"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import { openExternal } from "@/utils/env"
-import { BannerService } from "../banner/BannerService"
 import { AuthInvalidTokenError, AuthNetworkError } from "../error/ClineError"
 import { featureFlagsService } from "../feature-flags"
 import { ClineAuthProvider } from "./providers/ClineAuthProvider"
@@ -100,8 +99,7 @@ export class AuthService {
 			} else {
 				AuthService.instance = new AuthService(controller)
 			}
-			// Initialize BannerService after AuthService is created
-			BannerService.initialize(controller)
+			// Auth instance created - no banner init needed
 		}
 		if (controller !== undefined && AuthService.instance) {
 			AuthService.instance.controller = controller
@@ -416,11 +414,6 @@ export class AuthService {
 			// Poll feature flags for unauthenticated state
 			await featureFlagsService.poll(null)
 		}
-
-		// Update banners based on new auth token
-		BannerService.onAuthUpdate(this._clineAuthInfo?.userInfo?.id || null).catch((error) => {
-			Logger.error("[AuthService] Banner update failed", error)
-		})
 
 		// Update state in webviews once per unique controller
 		await Promise.all(Array.from(uniqueControllers).map((c) => c.postStateToWebview()))

@@ -25,11 +25,6 @@ service StateService {
   rpc updateTelemetrySetting(TelemetrySettingRequest) returns (Empty);
   rpc captureOnboardingProgress(OnboardingProgressRequest) returns (Empty);
   rpc setWelcomeViewCompleted(BooleanRequest) returns (Empty);
-  rpc updateInfoBannerVersion(Int64Request) returns (Empty);
-  rpc updateModelBannerVersion(Int64Request) returns (Empty);
-  rpc updateCliBannerVersion(Int64Request) returns (Empty);
-  rpc dismissBanner(StringRequest) returns (Empty);
-  rpc trackBannerEvent(TrackBannerEventRequest) returns (Empty);
   rpc installClineCli(EmptyRequest) returns (Empty);
   rpc checkCliInstallation(EmptyRequest) returns (Boolean);
   rpc getProcessInfo(EmptyRequest) returns (ProcessInfo);
@@ -104,7 +99,7 @@ message Secrets {
   optional string oca_refresh_token = 42;
   optional string mcp_o_auth_secrets = 43;
   optional string cline_api_key = 44;
-  optional string openai_codex_oauth_credentials = 50;
+  optional string openai_codex_oauth_credentials = 51;
 }
 
 // NOTE: Add new fields under API_HANDLER_SETTINGS_FIELDS or USER_SETTINGS_FIELDS
@@ -465,11 +460,6 @@ message OnboardingModel {
   string badge = 5;
   string group = 6;
   OpenRouterModelInfo info = 7;
-}
-
-message TrackBannerEventRequest {
-  string banner_id = 1;
-  string event_type = 2;
 }
 
 // Result of a connection test (OTEL, prompt uploading, etc.)

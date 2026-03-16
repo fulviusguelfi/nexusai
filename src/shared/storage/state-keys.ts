@@ -82,13 +82,9 @@ const GLOBAL_STATE_FIELDS = {
 	workspaceRoots: { default: undefined as WorkspaceRoot[] | undefined },
 	primaryRootIndex: { default: 0 as number },
 	multiRootEnabled: { default: true as boolean },
-	lastDismissedInfoBannerVersion: { default: 0 as number },
-	lastDismissedModelBannerVersion: { default: 0 as number },
-	lastDismissedCliBannerVersion: { default: 0 as number },
 	nativeToolCallEnabled: { default: true as boolean },
 	remoteRulesToggles: { default: {} as ClineRulesToggles },
 	remoteWorkflowToggles: { default: {} as ClineRulesToggles },
-	dismissedBanners: { default: [] as Array<{ bannerId: string; dismissedAt: number }> },
 	// Path to worktree that should auto-open Cline sidebar when launched
 	worktreeAutoOpenPath: { default: undefined as string | undefined },
 	// IoT Device Registry — persisted across sessions
