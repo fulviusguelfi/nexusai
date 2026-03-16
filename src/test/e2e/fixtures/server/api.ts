@@ -117,6 +117,20 @@ const SSH_DISCOVER_COMPLETION = `The network scan is complete. Found host 127.0.
 <result>Discovered hosts: 127.0.0.1</result>
 </attempt_completion>`
 
+/** Turn 1 for ssh_connect by saved server name (profile already persisted in registry). */
+const SSH_CONNECT_BY_NAME_REQUEST = `I'll connect using the saved server profile.
+
+<ssh_connect>
+<server_name>testuser@127.0.0.1</server_name>
+</ssh_connect>`
+
+/** Completion after ssh_connect by name succeeds. */
+const SSH_CONNECT_BY_NAME_COMPLETION = `Connected successfully using the saved server profile.
+
+<attempt_completion>
+<result>Connected to SSH server using saved profile testuser@127.0.0.1.</result>
+</attempt_completion>`
+
 /** Turn 2 for ssh_execute (after connect succeeds). */
 const SSH_EXECUTE_REQUEST = `Now I'll execute the command on the remote host.
 
@@ -204,6 +218,8 @@ export const E2E_MOCK_API_RESPONSES = {
 	// SSH responses
 	SSH_CONNECT_REQUEST,
 	SSH_CONNECT_COMPLETION,
+	SSH_CONNECT_BY_NAME_REQUEST,
+	SSH_CONNECT_BY_NAME_COMPLETION,
 	SSH_DISCOVER_REQUEST,
 	SSH_DISCOVER_COMPLETION,
 	SSH_EXECUTE_REQUEST,

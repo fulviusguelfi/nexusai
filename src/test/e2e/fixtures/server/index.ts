@@ -424,6 +424,17 @@ export class ClineApiServerMock {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
 							}
 						}
+						// ssh_connect by saved server name:
+						// Task 1 (normal password connect + auto-save) ran first in the same test.
+						// Task 2 sends the keyword "ssh_connect_by_name_request", and the mock
+						// LLM returns a server_name-only ssh_connect call.
+						if (body.includes("ssh_connect_by_name_request")) {
+							if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_BY_NAME_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_BY_NAME_REQUEST
+							}
+						}
 						if (body.includes("ssh_execute_request") && !body.includes("ssh_execute_no_session_request")) {
 							if (body.includes("</ssh_execute>")) {
 								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_COMPLETION

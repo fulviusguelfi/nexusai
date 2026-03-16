@@ -1089,7 +1089,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				case "openai":
 					return `openai-compat:${selectedModelId}`
 				case "vscode-lm":
-					return `vscode-lm:${vsCodeLmModelSelector ? `${vsCodeLmModelSelector.vendor ?? ""}/${vsCodeLmModelSelector.family ?? ""}` : unknownModel}`
+					return `vscode-lm:${vsCodeLmModelSelector ? vsCodeLmModelSelector.family || unknownModel : unknownModel}`
 				case "together":
 					return `${selectedProvider}:${togetherModelId}`
 				case "lmstudio":

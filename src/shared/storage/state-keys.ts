@@ -93,6 +93,8 @@ const GLOBAL_STATE_FIELDS = {
 	worktreeAutoOpenPath: { default: undefined as string | undefined },
 	// IoT Device Registry — persisted across sessions
 	iotDevices: { default: [] as import("@shared/iot/DeviceProfile").DeviceProfile[] },
+	// SSH Server Registry — persisted across sessions (credentials stored separately in SecretStorage)
+	sshServerProfiles: { default: [] as import("@shared/ssh/SshServerProfile").SshServerProfile[] },
 } satisfies FieldDefinitions
 
 // Fields that map directly to ApiHandlerOptions in @shared/api.ts

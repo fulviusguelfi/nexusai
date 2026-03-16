@@ -1,16 +1,19 @@
 import { DeviceRegistry } from "@services/iot/DeviceRegistry"
+import { IotDiscoveryService } from "@services/iot/IotDiscoveryService"
 import type { DeviceProfile } from "@shared/iot/DeviceProfile"
 import * as vscode from "vscode"
 
 /**
  * WebviewViewProvider for the "IoT Devices" panel in the NexusAI Activity Bar container.
  * Renders a lightweight HTML list of registered IoT devices and updates in real time.
+ * Includes a "Escanear Rede" button that triggers a background mDNS scan.
  */
 export class IotDevicesPanelProvider implements vscode.WebviewViewProvider {
 	public static readonly viewId = "nexusai.iotPanel"
 
 	private _view?: vscode.WebviewView
 	private _disposeListener?: () => void
+	private _scanning = false
 
 	resolveWebviewView(webviewView: vscode.WebviewView): void {
 		this._view = webviewView
@@ -18,12 +21,19 @@ export class IotDevicesPanelProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.options = { enableScripts: true }
 		webviewView.webview.html = this._buildHtml(DeviceRegistry.getAll())
 
-		// Update panel whenever devices change
-		this._disposeListener = DeviceRegistry.onDidChange(() => {
-			if (this._view) {
-				this._view.webview.html = this._buildHtml(DeviceRegistry.getAll())
+		// Handle scan request from button in the panel
+		webviewView.webview.onDidReceiveMessage(async (msg: { command: string }) => {
+			if (msg.command === "scan_network" && !this._scanning) {
+				this._scanning = true
+				this._refresh()
+				await IotDiscoveryService.scan(8000).catch(() => {})
+				this._scanning = false
+				this._refresh()
 			}
 		})
+
+		// Update panel whenever devices change (e.g. from background discovery)
+		this._disposeListener = DeviceRegistry.onDidChange(() => this._refresh())
 
 		webviewView.onDidDispose(() => {
 			this._disposeListener?.()
@@ -32,10 +42,16 @@ export class IotDevicesPanelProvider implements vscode.WebviewViewProvider {
 		})
 	}
 
+	private _refresh(): void {
+		if (this._view) {
+			this._view.webview.html = this._buildHtml(DeviceRegistry.getAll())
+		}
+	}
+
 	private _buildHtml(devices: DeviceProfile[]): string {
 		const rows =
 			devices.length === 0
-				? `<p class="empty">No registered IoT devices</p>`
+				? `<p class="empty">Nenhum dispositivo encontrado</p>`
 				: devices
 						.map(
 							(d) => `
@@ -45,18 +61,25 @@ export class IotDevicesPanelProvider implements vscode.WebviewViewProvider {
 					<span class="meta">${escapeHtml(d.ip)} &bull; ${escapeHtml(d.type)} &bull; ${escapeHtml(d.protocol)}</span>
 					${d.notes ? `<small>${escapeHtml(d.notes)}</small>` : ""}
 				</div>
-				<span class="badge ${d.trustedLocal ? "trusted" : ""}">${d.trustedLocal ? "trusted" : ""}</span>
+				${d.trustedLocal ? `<span class="badge trusted">trusted</span>` : ""}
 			</div>`,
 						)
 						.join("")
 
+		const scanLabel = this._scanning ? "Escaneando..." : "Escanear Rede"
+		const scanDisabled = this._scanning ? "disabled" : ""
+
 		return /* html */ `<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
 <style>
   body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); padding: 8px; margin: 0; }
+  .toolbar { margin-bottom: 8px; }
+  .scan-btn { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 0.85em; width: 100%; }
+  .scan-btn:hover:not(:disabled) { background: var(--vscode-button-hoverBackground); }
+  .scan-btn:disabled { opacity: 0.6; cursor: default; }
   .device { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--vscode-widget-border, #444); }
   .device:last-child { border-bottom: none; }
   .info { display: flex; flex-direction: column; gap: 2px; }
@@ -68,6 +91,13 @@ export class IotDevicesPanelProvider implements vscode.WebviewViewProvider {
 </style>
 </head>
 <body>
+<script>
+  const vscode = acquireVsCodeApi();
+  function scanNetwork() { vscode.postMessage({ command: 'scan_network' }); }
+</script>
+<div class="toolbar">
+  <button class="scan-btn" onclick="scanNetwork()" ${scanDisabled}>${scanLabel}</button>
+</div>
 ${rows}
 </body>
 </html>`

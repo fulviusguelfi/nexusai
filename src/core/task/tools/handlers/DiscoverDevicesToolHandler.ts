@@ -1,6 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { DeviceIdentificationService } from "@services/iot/DeviceIdentificationService"
+import { IotDiscoveryService } from "@services/iot/IotDiscoveryService"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -26,39 +26,7 @@ export class DiscoverDevicesToolHandler implements IFullyManagedTool {
 		const timeoutMs = timeoutRaw ? Number.parseInt(timeoutRaw, 10) : SCAN_TIMEOUT_MS
 
 		try {
-			const found: Array<{ name: string; ip: string; type: string; protocol: string; serviceType?: string }> = []
-
-			// mDNS discovery via bonjour-service
-			try {
-				// biome-ignore lint/suspicious/noExplicitAny: bonjour dynamic import
-				const bonjourMod: any = await import("bonjour-service")
-				const Bonjour = bonjourMod.default ?? bonjourMod.Bonjour ?? bonjourMod
-				const bonjour = new Bonjour()
-
-				await new Promise<void>((resolve) => {
-					const browser = bonjour.findAll(
-						{},
-						(svc: { name: string; host: string; type: string; referer: { address: string } }) => {
-							const ip = svc.referer?.address ?? svc.host
-							const identified = DeviceIdentificationService.identifyFromMdnsType(svc.type)
-							found.push({
-								name: svc.name,
-								ip,
-								type: identified.type as string,
-								protocol: identified.protocol as string,
-								serviceType: svc.type,
-							})
-						},
-					)
-					setTimeout(() => {
-						browser.stop()
-						bonjour.destroy()
-						resolve()
-					}, timeoutMs)
-				})
-			} catch (_bonjourErr) {
-				// bonjour not available — skip mDNS, continue with empty results
-			}
+			const found = await IotDiscoveryService.scan(timeoutMs)
 
 			const sayContent = JSON.stringify({ tool: "discover_devices", content: `found ${found.length} devices` })
 			await config.callbacks.say("tool", sayContent, undefined, undefined, false)
@@ -67,9 +35,7 @@ export class DiscoverDevicesToolHandler implements IFullyManagedTool {
 				return [{ type: "text", text: "No devices discovered on the local network within the scan window." }]
 			}
 
-			const lines = found.map(
-				(d) => `• ${d.name} — ${d.ip} [${d.type} / ${d.protocol}]${d.serviceType ? ` (${d.serviceType})` : ""}`,
-			)
+			const lines = found.map((d) => `\u2022 ${d.name} \u2014 ${d.ip} [${d.type} / ${d.protocol}]`)
 			return [{ type: "text", text: `Discovered ${found.length} device(s):\n\n${lines.join("\n")}` }]
 		} catch (error: unknown) {
 			return formatResponse.toolError(`Device discovery failed: ${error instanceof Error ? error.message : String(error)}`)

@@ -170,6 +170,32 @@ e2e.describe("SSH Tools", () => {
 	})
 
 	// ── 8 ─────────────────────────────────────────────────────────────────────────
+	e2e("ssh_connect — by saved server name, resolves credentials from registry", async ({ helper, sidebar }) => {
+		// The handler auto-saves every successful connection to SshServerProfileRegistry.
+		// This test verifies that a follow-up task can connect using only server_name,
+		// with credentials resolved transparently from SecretStorage.
+		sshServer.acceptPassword("testuser", "testpass")
+
+		await helper.signin(sidebar)
+		const inputbox = sidebar.getByTestId("chat-input")
+		const sendBtn = sidebar.getByTestId("send-button")
+
+		// Task 1 — regular password connect (profile gets auto-saved).
+		await inputbox.fill("ssh_connect_password_request")
+		await sendBtn.click()
+		await E2ETestHelper.waitForChatMessage(sidebar, "connected to", 60_000)
+
+		// Wait for the task to complete and send button to re-enable.
+		await sendBtn.waitFor({ state: "visible", timeout: 20_000 })
+		await expect(sendBtn).not.toHaveClass(/\bdisabled\b/, { timeout: 20_000 })
+
+		// Task 2 — connect by name only; registry resolves host/port/user/credential.
+		await inputbox.fill("ssh_connect_by_name_request")
+		await sendBtn.click()
+		await E2ETestHelper.waitForChatMessage(sidebar, "saved profile", 60_000)
+	})
+
+	// ── 9 ─────────────────────────────────────────────────────────────────────────
 	e2e("(SSH_CONNECT_REAL=true) real SSH connection to localhost", async ({ helper, sidebar }) => {
 		e2e.skip(!process.env.SSH_CONNECT_REAL, "Set SSH_CONNECT_REAL=true to run this test")
 
