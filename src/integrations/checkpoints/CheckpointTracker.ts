@@ -210,7 +210,7 @@ class CheckpointTracker {
 	 * - Stage or commit files
 	 */
 	public async commit(): Promise<string | undefined> {
-		let lockAcquired: boolean = false
+		let lockAcquired = false
 
 		try {
 			await this.sendCheckpointSubscriptionEvent("CHECKPOINT_COMMIT", true)
@@ -334,7 +334,7 @@ class CheckpointTracker {
 	 * - Reset to target commit
 	 */
 	public async resetHead(commitHash: string): Promise<void> {
-		let lockAcquired: boolean = false
+		let lockAcquired = false
 
 		try {
 			Logger.info(`Resetting to checkpoint: ${commitHash}`)
@@ -505,6 +505,33 @@ class CheckpointTracker {
 		telemetryService.captureCheckpointUsage(this.taskId, "diff_generated", durationMs)
 
 		return diffSummary.files.length
+	}
+
+	/**
+	 * Returns an ordered list of checkpoint commit SHAs for this task (newest first).
+	 * Only commits whose message matches the checkpoint pattern for this task are returned.
+	 *
+	 * @returns Promise<string[]> Array of commit SHAs, newest first
+	 */
+	public async listCheckpoints(): Promise<string[]> {
+		try {
+			const gitPath = await getShadowGitPath(this.cwdHash)
+			const git = simpleGit(path.dirname(gitPath))
+			const taskPattern = `checkpoint-${this.cwdHash}-${this.taskId}`
+			const log = await git.log()
+			return log.all.filter((commit) => commit.message.startsWith(taskPattern)).map((commit) => commit.hash)
+		} catch (error) {
+			Logger.error("Failed to list checkpoints:", error)
+			return []
+		}
+	}
+
+	/**
+	 * Releases any resources held by this tracker.
+	 * Safe to call multiple times.
+	 */
+	public async dispose(): Promise<void> {
+		this.lastRetrievedShadowGitConfigWorkTree = undefined
 	}
 }
 

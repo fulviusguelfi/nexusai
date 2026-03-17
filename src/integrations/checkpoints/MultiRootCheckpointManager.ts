@@ -53,8 +53,10 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 	) {}
 
 	/**
-	 * Initialize checkpoint trackers for all workspace roots
-	 * This is called separately to avoid blocking the Task constructor
+	 * Initialize checkpoint trackers for all workspace roots.
+	 * This is called separately to avoid blocking the Task constructor.
+	 * Callers may also rely on lazy-init: the first call to saveCheckpoint/commit
+	 * will trigger initialization automatically.
 	 */
 	async initialize(): Promise<void> {
 		// Prevent multiple initialization attempts
@@ -69,6 +71,18 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 		this.initPromise = this.doInitialize()
 		await this.initPromise
 		this.initPromise = undefined
+	}
+
+	/**
+	 * Ensures the manager is initialized, lazily calling initialize() on first use.
+	 * Subsequent calls are near-zero cost (single boolean check).
+	 */
+	private async ensureInitialized(): Promise<void> {
+		if (this.initialized) {
+			return
+		}
+		Logger.log("[MultiRootCheckpointManager] Lazy-initializing on first use")
+		await this.initialize()
 	}
 
 	private async doInitialize(): Promise<void> {
@@ -118,13 +132,16 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 	}
 
 	/**
-	 * Save checkpoint across all workspace roots
-	 * Commits happen in parallel in the background (non-blocking)
+	 * Save checkpoint across all workspace roots.
+	 * Lazily initializes on first call.
+	 * Commits happen in parallel in the background (non-blocking).
 	 */
 	async saveCheckpoint(): Promise<void> {
-		if (!this.enableCheckpoints || !this.initialized) {
+		if (!this.enableCheckpoints) {
 			return
 		}
+
+		await this.ensureInitialized()
 
 		if (this.trackers.size === 0) {
 			Logger.log("[MultiRootCheckpointManager] No trackers available for checkpoint")
@@ -174,11 +191,12 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 	}
 
 	/**
-	 * Restore checkpoint for workspace roots
-	 * For now, this restores the primary root only for simplicity
-	 * Future enhancement: restore all roots to their respective checkpoints
+	 * Restore checkpoint for workspace roots.
+	 * For now, this restores the primary root only for simplicity.
+	 * Future enhancement: restore all roots to their respective checkpoints.
 	 */
-	async restoreCheckpoint(): Promise<any> {
+	async restoreCheckpoint(_messageTs?: number, _restoreType?: any, _offset?: number): Promise<any> {
+		await this.ensureInitialized()
 		const primaryRoot = this.workspaceManager.getPrimaryRoot()
 		if (!primaryRoot) {
 			Logger.error("[MultiRootCheckpointManager] No primary root found")
@@ -202,11 +220,12 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 	}
 
 	/**
-	 * Check if the latest task completion has new changes
-	 * Returns true if ANY workspace has changes
+	 * Check if the latest task completion has new changes.
+	 * Returns true if ANY workspace has changes.
 	 */
 	async doesLatestTaskCompletionHaveNewChanges(): Promise<boolean> {
-		if (!this.initialized || this.trackers.size === 0) {
+		await this.ensureInitialized()
+		if (this.trackers.size === 0) {
 			return false
 		}
 
@@ -227,11 +246,13 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 	}
 
 	/**
-	 * Commit changes across all workspaces
-	 * Returns the primary root's commit hash for backward compatibility
+	 * Commit changes across all workspaces.
+	 * Returns the primary root's commit hash for backward compatibility.
+	 * Lazily initializes on first call.
 	 */
 	async commit(): Promise<string | undefined> {
-		if (!this.initialized || this.trackers.size === 0) {
+		await this.ensureInitialized()
+		if (this.trackers.size === 0) {
 			return undefined
 		}
 
@@ -305,5 +326,32 @@ export class MultiRootCheckpointManager implements ICheckpointManager {
 				message: "Failed to present diff: " + errorMessage,
 			})
 		}
+	}
+
+	/**
+	 * Returns an ordered list of checkpoint commit SHAs for the primary workspace root.
+	 * Returns an empty array if not initialized or no tracker is available.
+	 */
+	async listCheckpoints(): Promise<string[]> {
+		await this.ensureInitialized()
+		const primaryRoot = this.workspaceManager.getPrimaryRoot()
+		if (!primaryRoot) {
+			return []
+		}
+		const tracker = this.trackers.get(primaryRoot.path)
+		if (!tracker) {
+			return []
+		}
+		return tracker.listCheckpoints()
+	}
+
+	/**
+	 * Releases all tracker resources and resets initialization state.
+	 * Safe to call multiple times.
+	 */
+	async dispose(): Promise<void> {
+		await Promise.all(Array.from(this.trackers.values()).map((t) => t.dispose()))
+		this.trackers.clear()
+		this.initialized = false
 	}
 }
