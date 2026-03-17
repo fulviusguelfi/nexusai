@@ -70,6 +70,14 @@ export class E2ETestHelper {
 		}
 	}
 
+	/**
+	 * Waits for a text message to appear in the chat sidebar.
+	 * Reusable helper to reduce boilerplate in terminal, checkpoint, and SSH tests.
+	 */
+	public static async waitForChatMessage(sidebar: Frame, text: string, timeout = 30_000): Promise<void> {
+		await sidebar.getByText(text, { exact: false }).first().waitFor({ state: "visible", timeout })
+	}
+
 	public async getSidebar(page: Page): Promise<Frame> {
 		const findSidebarFrame = async (): Promise<Frame | null> => {
 			// Check cached frame first
@@ -84,12 +92,13 @@ export class E2ETestHelper {
 
 				try {
 					const title = await frame.title()
-					if (title.startsWith("Cline")) {
+					if (title.startsWith("NexusAI")) {
 						this.cachedFrame = frame
 						return frame
 					}
-				} catch (error: any) {
-					if (!error.message.includes("detached") && !error.message.includes("navigation")) {
+				} catch (error) {
+					const msg = error instanceof Error ? error.message : ""
+					if (!msg.includes("detached") && !msg.includes("navigation")) {
 						throw error
 					}
 				}
@@ -119,16 +128,42 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Login to Cline" }).click({ delay: 100 })
+		await webview.getByRole("button", { name: "Login to Nexus AI" }).click({ delay: 100 })
 
-		// Verify start up page is no longer visible
-		await expect(webview.getByRole("button", { name: "Login to Cline" })).not.toBeVisible()
+		const chatInput = webview.getByTestId("chat-input")
+		const closeBtn = webview.getByRole("button", { name: "Close" }).first()
 
-		await webview.getByRole("button", { name: "Close" }).click({ delay: 50 })
+		// Phase 1 — wait for the chat view to load. If the announcement dialog
+		// appears during onboarding (e.g. auth is slow), dismiss it here.
+		await expect(async () => {
+			const chatReady = await chatInput.isVisible()
+			if (!chatReady) {
+				const closeVisible = await closeBtn.isVisible()
+				if (closeVisible) {
+					await closeBtn.click({ delay: 50 })
+				}
+			}
+			await expect(chatInput).toBeVisible()
+		}).toPass({ timeout: 25_000, intervals: [500] })
+
+		// Phase 2 — the "What's New" modal has a 3-second delay after ChatView
+		// mounts. Wait for it to appear (up to 5s to account for system variance
+		// on Windows/CI), then dismiss it so it doesn't block subsequent
+		// button interactions in the test.
+		try {
+			await closeBtn.waitFor({ state: "visible", timeout: 5000 })
+			await closeBtn.click({ delay: 50 })
+		} catch {
+			// Modal did not appear within the window — already dismissed or
+			// the announcement was not scheduled for this session.
+		}
+
+		// Brief wait to ensure any modal animation completes and overlay is gone
+		await new Promise((resolve) => setTimeout(resolve, 200))
 	}
 
 	public static async openClineSidebar(page: Page): Promise<void> {
-		await page.getByRole("tab", { name: /Cline/ }).locator("a").click()
+		await page.getByRole("tab", { name: "NexusAI", exact: true }).locator("a").click()
 	}
 
 	public static async runCommandPalette(page: Page, command: string): Promise<void> {
@@ -233,10 +268,19 @@ export const e2e = test
 				// Create isolated Cline data directory for this test
 				const clineTestDir = mkdtempSync(path.join(os.tmpdir(), "cline-e2e-"))
 
+				// Strip ELECTRON_RUN_AS_NODE from the inherited environment.
+				// When tests run from within VS Code's extension host (e.g. via MCP tools or
+				// the integrated terminal), ELECTRON_RUN_AS_NODE=1 is set by VS Code so its own
+				// Node.js modules run in Node mode.  If it leaks into the child Code.exe process,
+				// VS Code launches as a CLI (runs cli.js) instead of as an Electron app, causing
+				// VS Code 1.111+ to reject Playwright's --remote-debugging-port=0 flag with
+				// "bad option" and exit 9 — breaking every E2E test.
+				const { ELECTRON_RUN_AS_NODE: _strip, ...safeEnv } = process.env
+
 				const app = await _electron.launch({
 					executablePath,
 					env: {
-						...process.env,
+						...safeEnv,
 						TEMP_PROFILE: "true",
 						E2E_TEST: "true",
 						CLINE_ENVIRONMENT: "local",
@@ -269,25 +313,26 @@ export const e2e = test
 		},
 	})
 	.extend<{ app: ElectronApplication; clineTestDir: string }>({
-		app: async ({ openVSCode, userDataDir, extensionsDir, workspaceType, workspaceDir, multiRootWorkspaceDir }, use) => {
-			const workspacePath = workspaceType === "single" ? workspaceDir : multiRootWorkspaceDir
-
-			// Track the clineTestDir created in openVSCode
-			let clineTestDir: string | undefined
-			const originalOpenVSCode = openVSCode
-			const wrappedOpenVSCode = async (wp: string) => {
-				const app = await originalOpenVSCode(wp)
-				// Extract CLINE_DIR from the launched app's environment
-				// We'll need to pass it through the fixture chain
-				return app
+		app: async (
+			{ server, openVSCode, userDataDir, extensionsDir, workspaceType, workspaceDir, multiRootWorkspaceDir },
+			use,
+		) => {
+			// Ensure mock server is running before app starts
+			if (!server) {
+				throw new Error("Mock server failed to start")
 			}
+			const workspacePath = workspaceType === "single" ? workspaceDir : multiRootWorkspaceDir
 
 			const app = await openVSCode(workspacePath)
 
 			try {
 				await use(app)
 			} finally {
-				await app.close()
+				// Close app with timeout to prevent hanging during teardown
+				await Promise.race([
+					app.close(),
+					new Promise((resolve) => setTimeout(resolve, 10_000)), // 10s max for close
+				])
 				// Cleanup in parallel - include clineTestDir if it was created
 				const cleanupTasks = [
 					E2ETestHelper.rmForRetries(userDataDir, { recursive: true }),
@@ -304,7 +349,7 @@ export const e2e = test
 							cleanupTasks.push(E2ETestHelper.rmForRetries(path.join(tmpDir, entry), { recursive: true }))
 						}
 					}
-				} catch (error) {
+				} catch {
 					// Ignore cleanup errors
 				}
 
@@ -337,7 +382,7 @@ export const e2e = test
 		},
 	})
 	.extend<{ sidebar: Frame }>({
-		sidebar: async ({ page, helper, server }, use) => {
+		sidebar: async ({ page, helper }, use) => {
 			await E2ETestHelper.openClineSidebar(page)
 			const sidebar = await helper.getSidebar(page)
 			await use(sidebar)

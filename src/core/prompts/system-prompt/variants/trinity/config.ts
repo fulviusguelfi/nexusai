@@ -38,6 +38,25 @@ export const config = createVariant(ModelFamily.TRINITY)
 	)
 	.tools(
 		ClineDefaultTool.BASH,
+		ClineDefaultTool.LIST_PROCESSES,
+		ClineDefaultTool.KILL_PROCESS,
+		ClineDefaultTool.DISCOVER_NETWORK_HOSTS,
+		ClineDefaultTool.SSH_CONNECT,
+		ClineDefaultTool.SSH_EXECUTE,
+		ClineDefaultTool.SSH_UPLOAD,
+		ClineDefaultTool.SSH_DOWNLOAD,
+		ClineDefaultTool.SSH_DISCONNECT,
+		ClineDefaultTool.HTTP_REQUEST,
+		ClineDefaultTool.MQTT_CONNECT,
+		ClineDefaultTool.MQTT_PUBLISH,
+		ClineDefaultTool.MQTT_SUBSCRIBE,
+		ClineDefaultTool.MQTT_DISCONNECT,
+		ClineDefaultTool.DISCOVER_DEVICES,
+		ClineDefaultTool.REGISTER_DEVICE,
+		ClineDefaultTool.GET_DEVICE_INFO,
+		ClineDefaultTool.OPERATE_DEVICE,
+		ClineDefaultTool.SPEAK_TEXT,
+		ClineDefaultTool.LISTEN_FOR_SPEECH,
 		ClineDefaultTool.FILE_READ,
 		ClineDefaultTool.FILE_NEW,
 		ClineDefaultTool.FILE_EDIT,
@@ -60,8 +79,8 @@ export const config = createVariant(ModelFamily.TRINITY)
 		MODEL_FAMILY: ModelFamily.TRINITY,
 	})
 	.config({})
-	.overrideComponent(SystemPromptSection.TOOL_USE, trinityComponentOverrides[SystemPromptSection.TOOL_USE]!)
-	.overrideComponent(SystemPromptSection.RULES, trinityComponentOverrides[SystemPromptSection.RULES]!)
+	.overrideComponent(SystemPromptSection.TOOL_USE, trinityComponentOverrides[SystemPromptSection.TOOL_USE])
+	.overrideComponent(SystemPromptSection.RULES, trinityComponentOverrides[SystemPromptSection.RULES])
 	.build()
 
 // Compile-time validation

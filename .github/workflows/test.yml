@@ -3,11 +3,11 @@ name: Tests
 on:
     push:
         branches:
-            - main
+            - master
     workflow_dispatch:
     pull_request:
         branches:
-            - main
+            - master
     workflow_call:
 
 # Set default permissions for all jobs
@@ -177,7 +177,7 @@ jobs:
     qlty:
         needs: [test, test-platform-integration]
         runs-on: ubuntu-latest
-        # Run on PRs to main, pushes to main, and manual dispatches
+        # Run on PRs to master, pushes to master, and manual dispatches
         steps:
             - name: Checkout code
               uses: actions/checkout@v4

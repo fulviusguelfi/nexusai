@@ -1,10 +1,4 @@
-import {
-	isGptOssModelFamily,
-	isGPT5ModelFamily,
-	isGPT51Model,
-	isGPT52Model,
-	isNextGenModelProvider,
-} from "@utils/model-utils"
+import { isGPT5ModelFamily, isGPT51Model, isGPT52Model, isGptOssModelFamily, isNextGenModelProvider } from "@utils/model-utils"
 import { ModelFamily } from "@/shared/prompts"
 import { Logger } from "@/shared/services/Logger"
 import { ClineDefaultTool } from "@/shared/tools"
@@ -64,6 +58,25 @@ export const config = createVariant(ModelFamily.NATIVE_GPT_5)
 	)
 	.tools(
 		ClineDefaultTool.BASH,
+		ClineDefaultTool.LIST_PROCESSES,
+		ClineDefaultTool.KILL_PROCESS,
+		ClineDefaultTool.DISCOVER_NETWORK_HOSTS,
+		ClineDefaultTool.SSH_CONNECT,
+		ClineDefaultTool.SSH_EXECUTE,
+		ClineDefaultTool.SSH_UPLOAD,
+		ClineDefaultTool.SSH_DOWNLOAD,
+		ClineDefaultTool.SSH_DISCONNECT,
+		ClineDefaultTool.HTTP_REQUEST,
+		ClineDefaultTool.MQTT_CONNECT,
+		ClineDefaultTool.MQTT_PUBLISH,
+		ClineDefaultTool.MQTT_SUBSCRIBE,
+		ClineDefaultTool.MQTT_DISCONNECT,
+		ClineDefaultTool.DISCOVER_DEVICES,
+		ClineDefaultTool.REGISTER_DEVICE,
+		ClineDefaultTool.GET_DEVICE_INFO,
+		ClineDefaultTool.OPERATE_DEVICE,
+		ClineDefaultTool.SPEAK_TEXT,
+		ClineDefaultTool.LISTEN_FOR_SPEECH,
 		ClineDefaultTool.FILE_READ,
 		// Should disable FILE_NEW and FILE_EDIT when enabled
 		ClineDefaultTool.APPLY_PATCH,

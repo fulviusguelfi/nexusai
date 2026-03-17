@@ -62,7 +62,7 @@ This is typically `main` or `master`.
 ### 3. Analyze recent commits relevant to this PR
 
 ```bash
-git log origin/main..HEAD --oneline --no-decorate
+git log origin/master..HEAD --oneline --no-decorate
 ```
 
 Review these commits to understand:
@@ -73,7 +73,7 @@ Review these commits to understand:
 ### 4. Review the diff
 
 ```bash
-git diff origin/main..HEAD --stat
+git diff origin/master..HEAD --stat
 ```
 
 This shows which files changed and helps identify the type of change.
@@ -111,10 +111,10 @@ Before creating the PR, consider these best practices:
 
 ### Branch Management
 
-1. **Rebase on latest main** (if needed):
+1. **Rebase on latest master** (if needed):
    ```bash
    git fetch origin
-   git rebase origin/main
+   git rebase origin/master
    ```
 
 2. **Squash if appropriate**: If there are many small "WIP" commits, consider interactive rebase:

@@ -45,9 +45,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	mcpServers: McpServer[]
 	mcpMarketplaceCatalog: McpMarketplaceCatalog
 	totalTasksSize: number | null
-	lastDismissedCliBannerVersion: number
-	dismissedBanners?: Array<{ bannerId: string; dismissedAt: number }>
-
 	availableTerminalProfiles: TerminalProfile[]
 
 	// View state
@@ -268,13 +265,10 @@ export const ExtensionStateContextProvider: React.FC<{
 		clineWebToolsEnabled: { user: true, featureFlag: false },
 		worktreesEnabled: { user: true, featureFlag: false },
 		favoritedModelIds: [],
-		lastDismissedInfoBannerVersion: 0,
-		lastDismissedModelBannerVersion: 0,
 		optOutOfRemoteConfig: false,
 		remoteConfigSettings: {},
 		backgroundCommandRunning: false,
 		backgroundCommandTaskId: undefined,
-		lastDismissedCliBannerVersion: 0,
 		backgroundEditEnabled: false,
 		doubleCheckCompletionEnabled: false,
 		globalSkillsToggles: {},
@@ -288,6 +282,12 @@ export const ExtensionStateContextProvider: React.FC<{
 		hooksEnabled: false,
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
+		activeSshSessions: [],
+		voiceTtsEnabled: false,
+		voiceSttEnabled: false,
+		voiceInputDeviceId: undefined,
+		voiceOutputDeviceId: undefined,
+		voicePiperVoice: "en_US-lessac-medium",
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)

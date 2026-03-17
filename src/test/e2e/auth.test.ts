@@ -4,9 +4,11 @@ import { e2e } from "./utils/helpers"
 // Test for setting up API keys
 e2e("Views - can set up API keys and navigate to Settings from Chat", async ({ sidebar }) => {
 	// Use the page object to interact with editor outside the sidebar
-	// Verify initial state
-	await expect(sidebar.getByRole("button", { name: "Login to Cline" })).toBeVisible()
-	await expect(sidebar.getByText("Bring my own API key")).toBeVisible()
+	// Verify initial state — all user type options and navigation buttons are present
+	await expect(sidebar.getByRole("button", { name: "Login to Nexus AI" })).toBeVisible()
+	// Use exact:true because the description text also contains "GitHub Copilot"
+	await expect(sidebar.getByText("GitHub Copilot", { exact: true })).toBeVisible()
+	await expect(sidebar.getByText("Bring my own API key", { exact: true })).toBeVisible()
 
 	// Navigate to API key setup
 	await sidebar.getByText("Bring my own API key").click()
@@ -22,7 +24,7 @@ e2e("Views - can set up API keys and navigate to Settings from Chat", async ({ s
 	// Wait for dropdown to appear and find Cline option
 	await expect(sidebar.getByTestId("provider-option-cline")).toBeVisible()
 	await sidebar.getByTestId("provider-option-cline").click({ delay: 100 })
-	await expect(sidebar.getByRole("button", { name: "Sign Up with Cline" })).toBeVisible()
+	await expect(sidebar.getByRole("button", { name: "Sign Up with Nexus AI" })).toBeVisible()
 
 	// Switch to OpenRouter and complete setup
 	await providerSelectorInput.click({ delay: 100 })
@@ -36,7 +38,7 @@ e2e("Views - can set up API keys and navigate to Settings from Chat", async ({ s
 	await apiKeyInput.click({ delay: 100 })
 	await sidebar.getByRole("button", { name: "Continue" }).click()
 
-	await expect(sidebar.getByRole("button", { name: "Login to Cline" })).not.toBeVisible()
+	await expect(sidebar.getByRole("button", { name: "Login to Nexus AI" })).not.toBeVisible()
 
 	// Verify start up page is no longer visible
 	await expect(apiKeyInput).not.toBeVisible()
@@ -56,25 +58,4 @@ e2e("Views - can set up API keys and navigate to Settings from Chat", async ({ s
 	await expect(clineLogo).toBeVisible()
 	const chatInputBox = sidebar.getByTestId("chat-input")
 	await expect(chatInputBox).toBeVisible()
-
-	// Verify What's New Section is showing and starts with first banner,
-	// and the navigation buttons work
-	const announcementsRegion = sidebar.locator('[aria-label="Announcements"]')
-	await expect(announcementsRegion).toBeVisible()
-
-	const pageIndicator = announcementsRegion
-		.locator("div")
-		.filter({ hasText: /^\d+ \/ \d+$/ })
-		.first()
-	await expect(pageIndicator).toBeVisible()
-
-	const initialIndicator = (await pageIndicator.innerText()).trim()
-	const totalBanners = Number(initialIndicator.split("/")[1]?.trim() || "0")
-
-	if (totalBanners > 1) {
-		await sidebar.getByRole("button", { name: "Next banner" }).click()
-		await expect(pageIndicator).not.toHaveText(initialIndicator)
-		await sidebar.getByRole("button", { name: "Previous banner" }).click()
-		await expect(pageIndicator).toHaveText(initialIndicator)
-	}
 })

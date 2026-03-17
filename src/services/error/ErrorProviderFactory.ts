@@ -1,21 +1,18 @@
-import { ClineEndpoint } from "@/config"
-import { isPostHogConfigValid, PostHogClientConfig, posthogConfig } from "@/shared/services/config/posthog-config"
 import { Logger } from "@/shared/services/Logger"
 import { ClineError } from "./ClineError"
 import { IErrorProvider } from "./providers/IErrorProvider"
-import { PostHogErrorProvider } from "./providers/PostHogErrorProvider"
 
 /**
  * Supported error provider types
  */
-export type ErrorProviderType = "posthog" | "no-op"
+export type ErrorProviderType = "no-op"
 
 /**
  * Configuration for error providers
  */
 export interface ErrorProviderConfig {
 	type: ErrorProviderType
-	config: PostHogClientConfig
+	config?: Record<string, unknown>
 }
 
 /**
@@ -28,42 +25,16 @@ export class ErrorProviderFactory {
 	 * @param config Configuration for the error provider
 	 * @returns IErrorProvider instance
 	 */
-	public static async createProvider(config: ErrorProviderConfig): Promise<IErrorProvider> {
-		switch (config.type) {
-			case "posthog": {
-				const hasValidPostHogConfig = isPostHogConfigValid(config.config)
-				const errorTrackingApiKey = config.config.errorTrackingApiKey
-				return hasValidPostHogConfig && errorTrackingApiKey
-					? await new PostHogErrorProvider({
-							apiKey: errorTrackingApiKey,
-							errorTrackingApiKey: errorTrackingApiKey,
-							host: config.config.host,
-							uiHost: config.config.uiHost,
-							enableExceptionAutocapture: !!config.config.enableErrorAutocapture,
-						}).initialize()
-					: new NoOpErrorProvider() // Fallback to no-op provider
-			}
-			default:
-				return new NoOpErrorProvider()
-		}
+	public static async createProvider(_config: ErrorProviderConfig): Promise<IErrorProvider> {
+		return new NoOpErrorProvider()
 	}
 
 	/**
 	 * Gets the default error provider configuration
-	 * @returns Default configuration using PostHog, or no-op for self-hosted mode
+	 * @returns Default no-op configuration
 	 */
 	public static getDefaultConfig(): ErrorProviderConfig {
-		// Use no-op provider in self-hosted mode to avoid external network calls
-		if (ClineEndpoint.isSelfHosted()) {
-			return {
-				type: "no-op",
-				config: posthogConfig,
-			}
-		}
-		return {
-			type: "posthog",
-			config: posthogConfig,
-		}
+		return { type: "no-op" }
 	}
 }
 

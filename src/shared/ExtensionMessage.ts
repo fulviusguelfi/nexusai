@@ -1,5 +1,14 @@
 // type that represents json data that is sent from extension to webview, called ExtensionMessage and has 'type' enum which can be 'plusButtonClicked' or 'settingsButtonClicked' or 'hello'
 
+/** Shared type — also imported by SshSessionRegistry.ts to avoid circular deps */
+export interface SshSessionInfo {
+	taskId: string
+	host: string
+	port: number
+	user: string
+	connectedAt: number // unix ms
+}
+
 import { WorkspaceRoot } from "@shared/multi-root/types"
 import { RemoteConfigFields } from "@shared/storage/state-keys"
 import type { Environment } from "../config"
@@ -7,7 +16,6 @@ import { AutoApprovalSettings } from "./AutoApprovalSettings"
 import { ApiConfiguration } from "./api"
 import { BrowserSettings } from "./BrowserSettings"
 import { ClineFeatureSetting } from "./ClineFeatureSetting"
-import { BannerCardData } from "./cline/banner"
 import { ClineRulesToggles } from "./cline-rules"
 import { FocusChainSettings } from "./FocusChainSettings"
 import { HistoryItem } from "./HistoryItem"
@@ -19,8 +27,10 @@ import { TelemetrySetting } from "./TelemetrySetting"
 import { UserInfo } from "./UserInfo"
 // webview will hold state
 export interface ExtensionMessage {
-	type: "grpc_response" // New type for gRPC responses
+	type: "grpc_response" | "voice_audio_play" | "voice_transcription"
 	grpc_response?: GrpcResponse
+	voice_audio_play?: { wavBase64: string }
+	voice_transcription?: { text: string }
 }
 
 export type GrpcResponse = {
@@ -95,10 +105,6 @@ export interface ExtensionState {
 	primaryRootIndex: number
 	isMultiRootWorkspace: boolean
 	multiRootSetting: ClineFeatureSetting
-	lastDismissedInfoBannerVersion: number
-	lastDismissedModelBannerVersion: number
-	lastDismissedCliBannerVersion: number
-	dismissedBanners?: Array<{ bannerId: string; dismissedAt: number }>
 	hooksEnabled?: boolean
 	remoteConfigSettings?: Partial<RemoteConfigFields>
 	globalSkillsToggles?: Record<string, boolean>
@@ -108,9 +114,14 @@ export interface ExtensionState {
 	backgroundEditEnabled?: boolean
 	optOutOfRemoteConfig?: boolean
 	doubleCheckCompletionEnabled?: boolean
-	banners?: BannerCardData[]
-	welcomeBanners?: BannerCardData[]
 	openAiCodexIsAuthenticated?: boolean
+	activeSshSessions: SshSessionInfo[]
+	// Voice settings
+	voiceTtsEnabled: boolean
+	voiceSttEnabled: boolean
+	voiceInputDeviceId?: string
+	voiceOutputDeviceId?: string
+	voicePiperVoice: string
 }
 
 export interface ClineMessage {
@@ -191,6 +202,8 @@ export type ClineSay =
 	| "use_subagents"
 	| "subagent_usage"
 	| "conditional_rules_applied"
+	| "voice_speak"
+	| "voice_listen"
 
 export interface ClineSayTool {
 	tool:
@@ -206,6 +219,13 @@ export interface ClineSayTool {
 		| "webSearch"
 		| "summarizeTask"
 		| "useSkill"
+		| "list_processes"
+		| "ssh_connect"
+		| "ssh_execute"
+		| "ssh_disconnect"
+		| "ssh_upload"
+		| "ssh_download"
+		| "discover_network_hosts"
 	path?: string
 	diff?: string
 	content?: string

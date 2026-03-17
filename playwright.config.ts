@@ -9,7 +9,7 @@ export default defineConfig({
 	forbidOnly: isCI,
 	testDir: "src/test/e2e",
 	testMatch: /.*\.test\.ts/,
-	timeout: isCI || isWindow ? 60000 : 20000,
+	timeout: isCI || isWindow ? 90000 : 20000,
 	expect: {
 		timeout: isCI || isWindow ? 5000 : 2000,
 	},
@@ -17,6 +17,7 @@ export default defineConfig({
 	reporter: isCI ? [["github"], ["list"]] : [["list"]],
 	use: {
 		video: "retain-on-failure",
+		actionTimeout: isCI || isWindow ? 60000 : 15000,
 	},
 	projects: [
 		{

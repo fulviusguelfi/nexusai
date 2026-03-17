@@ -53,6 +53,17 @@ service AccountService {
 
   // Signs out of OpenAI Codex and clears stored credentials
   rpc openAiCodexSignOut(EmptyRequest) returns (Empty);
+
+  // GitHub authentication via VS Code's built-in GitHub auth provider.
+  // Supports web browser OAuth, passkeys, GitHub mobile app, and token auth.
+  // On success, configures the vscode-lm (GitHub Copilot) provider.
+  rpc githubSignIn(EmptyRequest) returns (GitHubAuthState);
+
+  // Signs out of GitHub and clears stored GitHub session.
+  rpc githubSignOut(EmptyRequest) returns (Empty);
+
+  // Subscribe to GitHub auth state changes
+  rpc subscribeToGitHubAuthState(EmptyRequest) returns (stream GitHubAuthState);
 }
 
 message AuthStateChangedRequest {
@@ -146,4 +157,13 @@ message OrganizationUsageTransaction {
   int32 total_tokens = 11;
   string user_id = 12;
   string operation = 13;
+}
+
+// GitHub authentication state
+message GitHubAuthState {
+  bool is_signed_in = 1;
+  optional string display_name = 2;
+  optional string email = 3;
+  optional string avatar_url = 4;
+  optional string login = 5;  // GitHub username
 }

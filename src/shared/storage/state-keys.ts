@@ -65,7 +65,7 @@ const REMOTE_CONFIG_EXTRA_FIELDS = {
 
 const GLOBAL_STATE_FIELDS = {
 	clineVersion: { default: undefined as string | undefined },
-	"cline.generatedMachineId": { default: undefined as string | undefined }, // Note, distinctId reads/writes this directly from/to StorageContext before StateManager is initialized.
+	"nexusai.generatedMachineId": { default: undefined as string | undefined }, // Note, distinctId reads/writes this directly from/to StorageContext before StateManager is initialized.
 	lastShownAnnouncementId: { default: undefined as string | undefined },
 	taskHistory: { default: [] as HistoryItem[], isAsync: true },
 	userInfo: { default: undefined as UserInfo | undefined },
@@ -82,15 +82,21 @@ const GLOBAL_STATE_FIELDS = {
 	workspaceRoots: { default: undefined as WorkspaceRoot[] | undefined },
 	primaryRootIndex: { default: 0 as number },
 	multiRootEnabled: { default: true as boolean },
-	lastDismissedInfoBannerVersion: { default: 0 as number },
-	lastDismissedModelBannerVersion: { default: 0 as number },
-	lastDismissedCliBannerVersion: { default: 0 as number },
 	nativeToolCallEnabled: { default: true as boolean },
 	remoteRulesToggles: { default: {} as ClineRulesToggles },
 	remoteWorkflowToggles: { default: {} as ClineRulesToggles },
-	dismissedBanners: { default: [] as Array<{ bannerId: string; dismissedAt: number }> },
 	// Path to worktree that should auto-open Cline sidebar when launched
 	worktreeAutoOpenPath: { default: undefined as string | undefined },
+	// IoT Device Registry — persisted across sessions
+	iotDevices: { default: [] as import("@shared/iot/DeviceProfile").DeviceProfile[] },
+	// SSH Server Registry — persisted across sessions (credentials stored separately in SecretStorage)
+	sshServerProfiles: { default: [] as import("@shared/ssh/SshServerProfile").SshServerProfile[] },
+	// Voice settings
+	voiceTtsEnabled: { default: false as boolean },
+	voiceSttEnabled: { default: false as boolean },
+	voiceInputDeviceId: { default: undefined as string | undefined },
+	voiceOutputDeviceId: { default: undefined as string | undefined },
+	voicePiperVoice: { default: "en_US-lessac-medium" as string },
 } satisfies FieldDefinitions
 
 // Fields that map directly to ApiHandlerOptions in @shared/api.ts
@@ -298,11 +304,15 @@ const GLOBAL_STATE_AND_SETTINGS_FIELDS = { ...GLOBAL_STATE_FIELDS, ...SETTINGS_F
 // ============================================================================
 
 // Secret keys used in Api Configuration
+// MIGRATION NOTE (A5): "clineApiKey" and "clineAccountId" are legacy keys tied to the Cline
+// backend infrastructure. They must remain as-is until NexusAI deploys its own auth backend.
+// When NexusAI backend is ready, add new keys ("nexusai:apiKey", "nexusai:accountId") and
+// implement dual-read migration in state-migrations.ts: read new key first, fall back to old.
 const SECRETS_KEYS = [
 	"apiKey",
 	"clineApiKey",
-	"clineAccountId", // Cline Account ID for Firebase
-	"cline:clineAccountId",
+	"clineAccountId", // Cline Account ID for Firebase — see migration note above
+	"cline:clineAccountId", // see migration note above
 	"openRouterApiKey",
 	"awsAccessKey",
 	"awsSecretKey",

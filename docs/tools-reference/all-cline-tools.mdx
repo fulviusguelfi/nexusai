@@ -64,6 +64,8 @@ Search for a pattern:
 | Tool | Description |
 |------|-------------|
 | `execute_command` | Run CLI commands |
+| `list_processes` | List running processes on the host (optional filter) |
+| `kill_process` | Terminate a process by PID (requires user approval) |
 
 Run a command:
 ```xml
@@ -71,6 +73,21 @@ Run a command:
 <command>npm install axios</command>
 <requires_approval>false</requires_approval>
 </execute_command>
+```
+
+List processes (optionally filtered):
+```xml
+<list_processes>
+<filter>node</filter>
+</list_processes>
+```
+
+Kill a process by PID (will prompt for approval):
+```xml
+<kill_process>
+<pid>12345</pid>
+<signal>SIGTERM</signal>
+</kill_process>
 ```
 
 ## Browser Operations

@@ -9,16 +9,35 @@ import { AskFollowupQuestionToolHandler } from "./handlers/AskFollowupQuestionTo
 import { AttemptCompletionHandler } from "./handlers/AttemptCompletionHandler"
 import { BrowserToolHandler } from "./handlers/BrowserToolHandler"
 import { CondenseHandler } from "./handlers/CondenseHandler"
+import { DiscoverDevicesToolHandler } from "./handlers/DiscoverDevicesToolHandler"
+import { DiscoverNetworkHostsToolHandler } from "./handlers/DiscoverNetworkHostsToolHandler"
 import { ExecuteCommandToolHandler } from "./handlers/ExecuteCommandToolHandler"
 import { GenerateExplanationToolHandler } from "./handlers/GenerateExplanationToolHandler"
+import { GetDeviceInfoToolHandler } from "./handlers/GetDeviceInfoToolHandler"
+import { HttpRequestToolHandler } from "./handlers/HttpRequestToolHandler"
+import { KillProcessToolHandler } from "./handlers/KillProcessToolHandler"
 import { ListCodeDefinitionNamesToolHandler } from "./handlers/ListCodeDefinitionNamesToolHandler"
+import { ListenForSpeechToolHandler } from "./handlers/ListenForSpeechToolHandler"
 import { ListFilesToolHandler } from "./handlers/ListFilesToolHandler"
+import { ListProcessesToolHandler } from "./handlers/ListProcessesToolHandler"
 import { LoadMcpDocumentationHandler } from "./handlers/LoadMcpDocumentationHandler"
+import { MqttConnectToolHandler } from "./handlers/MqttConnectToolHandler"
+import { MqttDisconnectToolHandler } from "./handlers/MqttDisconnectToolHandler"
+import { MqttPublishToolHandler } from "./handlers/MqttPublishToolHandler"
+import { MqttSubscribeToolHandler } from "./handlers/MqttSubscribeToolHandler"
 import { NewTaskHandler } from "./handlers/NewTaskHandler"
+import { OperateDeviceToolHandler } from "./handlers/OperateDeviceToolHandler"
 import { PlanModeRespondHandler } from "./handlers/PlanModeRespondHandler"
 import { ReadFileToolHandler } from "./handlers/ReadFileToolHandler"
+import { RegisterDeviceToolHandler } from "./handlers/RegisterDeviceToolHandler"
 import { ReportBugHandler } from "./handlers/ReportBugHandler"
 import { SearchFilesToolHandler } from "./handlers/SearchFilesToolHandler"
+import { SpeakTextToolHandler } from "./handlers/SpeakTextToolHandler"
+import { SshConnectToolHandler } from "./handlers/SshConnectToolHandler"
+import { SshDisconnectToolHandler } from "./handlers/SshDisconnectToolHandler"
+import { SshDownloadToolHandler } from "./handlers/SshDownloadToolHandler"
+import { SshExecuteToolHandler } from "./handlers/SshExecuteToolHandler"
+import { SshUploadToolHandler } from "./handlers/SshUploadToolHandler"
 import { UseSubagentsToolHandler } from "./handlers/SubagentToolHandler"
 import { SummarizeTaskHandler } from "./handlers/SummarizeTaskHandler"
 import { UseMcpToolHandler } from "./handlers/UseMcpToolHandler"
@@ -106,6 +125,25 @@ export class ToolExecutorCoordinator {
 		[ClineDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
 		[ClineDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
 		[ClineDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
+		[ClineDefaultTool.LIST_PROCESSES]: (v: ToolValidator) => new ListProcessesToolHandler(v),
+		[ClineDefaultTool.KILL_PROCESS]: (v: ToolValidator) => new KillProcessToolHandler(v),
+		[ClineDefaultTool.DISCOVER_NETWORK_HOSTS]: (v: ToolValidator) => new DiscoverNetworkHostsToolHandler(v),
+		[ClineDefaultTool.SSH_CONNECT]: (v: ToolValidator) => new SshConnectToolHandler(v),
+		[ClineDefaultTool.SSH_EXECUTE]: (v: ToolValidator) => new SshExecuteToolHandler(v),
+		[ClineDefaultTool.SSH_UPLOAD]: (v: ToolValidator) => new SshUploadToolHandler(v),
+		[ClineDefaultTool.SSH_DOWNLOAD]: (v: ToolValidator) => new SshDownloadToolHandler(v),
+		[ClineDefaultTool.SSH_DISCONNECT]: (v: ToolValidator) => new SshDisconnectToolHandler(v),
+		[ClineDefaultTool.HTTP_REQUEST]: (v: ToolValidator) => new HttpRequestToolHandler(v),
+		[ClineDefaultTool.MQTT_CONNECT]: (v: ToolValidator) => new MqttConnectToolHandler(v),
+		[ClineDefaultTool.MQTT_PUBLISH]: (v: ToolValidator) => new MqttPublishToolHandler(v),
+		[ClineDefaultTool.MQTT_SUBSCRIBE]: (v: ToolValidator) => new MqttSubscribeToolHandler(v),
+		[ClineDefaultTool.MQTT_DISCONNECT]: (v: ToolValidator) => new MqttDisconnectToolHandler(v),
+		[ClineDefaultTool.DISCOVER_DEVICES]: (v: ToolValidator) => new DiscoverDevicesToolHandler(v),
+		[ClineDefaultTool.REGISTER_DEVICE]: (v: ToolValidator) => new RegisterDeviceToolHandler(v),
+		[ClineDefaultTool.GET_DEVICE_INFO]: (v: ToolValidator) => new GetDeviceInfoToolHandler(v),
+		[ClineDefaultTool.OPERATE_DEVICE]: (v: ToolValidator) => new OperateDeviceToolHandler(v),
+		[ClineDefaultTool.SPEAK_TEXT]: (v: ToolValidator) => new SpeakTextToolHandler(v),
+		[ClineDefaultTool.LISTEN_FOR_SPEECH]: (v: ToolValidator) => new ListenForSpeechToolHandler(v),
 	}
 
 	/**

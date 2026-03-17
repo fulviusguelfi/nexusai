@@ -1,6 +1,6 @@
-# Copilot Instructions for Cline
+# Copilot Instructions for NexusAI
 
-This is a VS Code extension. Read `.clinerules/general.md` for tribal knowledge and nuanced patterns.
+This is a VS Code extension forked from Cline. Read `.clinerules/general.md` for tribal knowledge and nuanced patterns.
 
 ## Architecture
 - **Core** (`src/`): `extension.ts` → `WebviewProvider` → `Controller` (single source of truth) → `Task` (agent loop).

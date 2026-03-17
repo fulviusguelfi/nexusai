@@ -6,12 +6,17 @@ import { createAndOpenGitHubIssue } from "@utils/github-url-utils"
 import * as os from "os"
 import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
+import { GitHubAuthService } from "@/services/auth/GitHubAuthService"
+import { GitHubIssueService } from "@/services/github/GitHubIssueService"
 import { Logger } from "@/shared/services/Logger"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
+
+const BUG_REPO_OWNER = "fulviusguelfi"
+const BUG_REPO_NAME = "nexusai"
 
 export class ReportBugHandler implements IToolHandler, IPartialBlockHandler {
 	readonly name = ClineDefaultTool.REPORT_BUG
@@ -112,29 +117,48 @@ export class ReportBugHandler implements IToolHandler, IPartialBlockHandler {
 				images,
 				fileContentString,
 			)
-		} else {
-			// If no response, the user accepted the bug report
-			try {
-				// Create a Map of parameters for the GitHub issue
-				const params = new Map<string, string>()
-				params.set("title", title)
-				params.set("operating-system", operatingSystem)
-				params.set("cline-version", clineVersion)
-				params.set("system-info", systemInfo)
-				params.set("additional-context", additional_context)
-				params.set("what-happened", what_happened)
-				params.set("steps", steps_to_reproduce)
-				params.set("provider-model", providerAndModel)
-				params.set("logs", api_request_output)
+		}
+		// If no response, the user accepted the bug report
+		try {
+			// Try GitHub REST API first (requires public_repo token)
+			const token = await GitHubAuthService.getInstance().getAccessTokenForIssues()
+			if (token) {
+				const body = [
+					`**What happened**\n${what_happened}`,
+					`**Steps to reproduce**\n${steps_to_reproduce}`,
+					`**API request output / logs**\n\`\`\`\n${api_request_output}\n\`\`\``,
+					`**Additional context**\n${additional_context}`,
+					`---`,
+					`| Field | Value |`,
+					`|---|---|`,
+					`| Provider / Model | ${providerAndModel} |`,
+					`| OS | ${operatingSystem} |`,
+					`| System info | ${systemInfo} |`,
+					`| NexusAI version | ${clineVersion} |`,
+				].join("\n\n")
 
-				// Use our utility function to create and open the GitHub issue URL
-				// This bypasses VS Code's URI handling issues with special characters
-				await createAndOpenGitHubIssue("cline", "cline", "bug_report.yml", params)
-			} catch (error) {
-				Logger.error(`An error occurred while attempting to report the bug: ${error}`)
+				const issue = await GitHubIssueService.createIssue(token, BUG_REPO_OWNER, BUG_REPO_NAME, title, body, ["bug"])
+				Logger.log(`[ReportBugHandler] Issue created: ${issue.html_url}`)
+				return formatResponse.toolResult(`Bug report submitted successfully. Issue #${issue.number}: ${issue.html_url}`)
 			}
 
-			return formatResponse.toolResult(`The user accepted the creation of the Github issue.`)
+			// Fallback: open browser with pre-filled form
+			const params = new Map<string, string>()
+			params.set("title", title)
+			params.set("operating-system", operatingSystem)
+			params.set("cline-version", clineVersion)
+			params.set("system-info", systemInfo)
+			params.set("additional-context", additional_context)
+			params.set("what-happened", what_happened)
+			params.set("steps", steps_to_reproduce)
+			params.set("provider-model", providerAndModel)
+			params.set("logs", api_request_output)
+
+			await createAndOpenGitHubIssue(BUG_REPO_OWNER, BUG_REPO_NAME, "bug_report.yml", params)
+		} catch (error) {
+			Logger.error(`An error occurred while attempting to report the bug: ${error}`)
 		}
+
+		return formatResponse.toolResult(`The user accepted the creation of the Github issue.`)
 	}
 }

@@ -8,9 +8,8 @@ import * as chromeLauncher from "chrome-launcher"
 import os from "os"
 import pWaitFor from "p-wait-for"
 import * as path from "path"
-// @ts-ignore
-import type { LoggerMessage, ScreenshotOptions } from "puppeteer-core"
-import { Browser, connect, launch, Page, TimeoutError } from "puppeteer-core"
+// @ts-expect-error
+import type { Browser, LoggerMessage, Page, ScreenshotOptions } from "puppeteer-core"
 import { StateManager } from "@/core/storage/StateManager"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
@@ -40,17 +39,17 @@ export class BrowserSession {
 	private page?: Page
 	private currentMousePosition?: string
 	private cachedWebSocketEndpoint?: string
-	private lastConnectionAttempt: number = 0
-	private isConnectedToRemote: boolean = false
+	private lastConnectionAttempt = 0
+	private isConnectedToRemote = false
 	private useWebp: boolean
 
 	// Telemetry tracking properties
-	private sessionStartTime: number = 0
+	private sessionStartTime = 0
 	private browserActions: string[] = []
 	private ulid?: string
 	private stateManager: StateManager
 
-	constructor(stateManager: StateManager, useWebp: boolean = true) {
+	constructor(stateManager: StateManager, useWebp = true) {
 		this.stateManager = stateManager
 		this.useWebp = useWebp
 	}
@@ -213,6 +212,7 @@ export class BrowserSession {
 		const browserSettings = this.stateManager.getGlobalSettingsKey("browserSettings")
 		const { path } = await this.getDetectedChromePath()
 		const userArgs = splitArgs(browserSettings.customArgs)
+		const { launch } = await import("puppeteer-core")
 		this.browser = await launch({
 			args: [
 				"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
@@ -230,6 +230,7 @@ export class BrowserSession {
 		let remoteBrowserHost = browserSettings.remoteBrowserHost
 		let browserWSEndpoint: string | undefined = this.cachedWebSocketEndpoint
 		let _reconnectionAttempted = false
+		const { connect } = await import("puppeteer-core")
 
 		const getViewport = () => {
 			return browserSettings.viewport
@@ -408,7 +409,7 @@ export class BrowserSession {
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : String(err)
 
-			if (!(err instanceof TimeoutError)) {
+			if (!(err instanceof Error && err.name === "TimeoutError")) {
 				logs.push(`[Error] ${errorMessage}`)
 
 				// Capture error telemetry

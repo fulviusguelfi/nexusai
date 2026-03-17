@@ -3,7 +3,14 @@ import type { Socket } from "node:net"
 import { parse } from "node:url"
 import { v4 as uuidv4 } from "uuid"
 import type { BalanceResponse, OrganizationBalanceResponse, UserResponse } from "../../../../shared/ClineAccount"
-import { E2E_MOCK_API_RESPONSES, E2E_REGISTERED_MOCK_ENDPOINTS } from "./api"
+import {
+	buildKillProcessCompletionResponse,
+	buildKillProcessResponse,
+	E2E_IOT_MOCK_API_RESPONSES,
+	E2E_MOCK_API_RESPONSES,
+	E2E_REGISTERED_MOCK_ENDPOINTS,
+	E2E_VOICE_MOCK_API_RESPONSES,
+} from "./api"
 import { ClineDataMock } from "./data"
 
 const E2E_API_SERVER_PORT = 7777
@@ -203,6 +210,13 @@ export class ClineApiServerMock {
 					}
 				}
 
+				// IoT device command endpoint (used by operate_device HTTP path in E2E tests)
+				if (baseRoute === "/command") {
+					if (endpoint === "/" && method === "POST") {
+						return sendJson({ result: "ok", status: "up" })
+					}
+				}
+
 				// API v1 endpoints
 				if (baseRoute === "/api/v1") {
 					// User endpoints
@@ -374,6 +388,12 @@ export class ClineApiServerMock {
 						}
 
 						const body = await readBody()
+
+						// Return 500 for invalid_response_request to trigger api_req_failed in UI
+						if (body.includes("invalid_response_request")) {
+							return sendApiError("Simulated API failure for retry testing", 500)
+						}
+
 						const parsed = JSON.parse(body)
 						const { _messages, model = "claude-3-5-sonnet-20241022", stream = true } = parsed
 						let responseText = E2E_MOCK_API_RESPONSES.DEFAULT
@@ -382,6 +402,247 @@ export class ClineApiServerMock {
 						}
 						if (body.includes("edit_request")) {
 							responseText = E2E_MOCK_API_RESPONSES.EDIT_REQUEST
+						}
+						if (body.includes("list_processes_request")) {
+							responseText = E2E_MOCK_API_RESPONSES.LIST_PROCESSES_REQUEST
+						}
+						// ── SSH routing ─────────────────────────────────────────────────────
+						if (body.includes("discover_network_hosts_request")) {
+							if (body.includes("</discover_network_hosts>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCOVER_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCOVER_REQUEST
+							}
+						}
+						if (
+							body.includes("ssh_connect_password_request") ||
+							body.includes("ssh_connect_key_request") ||
+							body.includes("ssh_connect_for_disconnect_request")
+						) {
+							if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						// ssh_connect by saved server name:
+						// Task 1 (normal password connect + auto-save) ran first in the same test.
+						// Task 2 sends the keyword "ssh_connect_by_name_request", and the mock
+						// LLM returns a server_name-only ssh_connect call.
+						if (body.includes("ssh_connect_by_name_request")) {
+							if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_BY_NAME_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_BY_NAME_REQUEST
+							}
+						}
+						if (body.includes("ssh_execute_request") && !body.includes("ssh_execute_no_session_request")) {
+							if (body.includes("</ssh_execute>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_REQUEST
+							} else {
+								// no session yet — connect first
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						if (body.includes("ssh_disconnect_request")) {
+							if (body.includes("</ssh_disconnect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCONNECT_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DISCONNECT_REQUEST
+							}
+						}
+						// Note: ssh_execute_no_session check intentionally comes AFTER ssh_disconnect
+						// so that when both keywords appear in the conversation history (i.e. the user
+						// sent a no-session execute request as feedback after a completed disconnect task),
+						// the no-session response wins over re-sending the disconnect completion.
+						if (body.includes("ssh_execute_no_session_request")) {
+							if (body.includes("</ssh_execute>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_COMPLETION
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_EXECUTE_NO_SESSION_REQUEST
+							}
+						}
+						if (body.includes("ssh_upload_request")) {
+							if (body.includes("</ssh_upload>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_UPLOAD_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_UPLOAD_REQUEST
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						if (body.includes("ssh_download_request")) {
+							if (body.includes("</ssh_download>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DOWNLOAD_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_DOWNLOAD_REQUEST
+							} else {
+								responseText = E2E_MOCK_API_RESPONSES.SSH_CONNECT_REQUEST
+							}
+						}
+						if (body.includes("execute_command_long")) {
+							responseText = E2E_MOCK_API_RESPONSES.EXECUTE_COMMAND_LONG
+						}
+						// ── IoT routing ──────────────────────────────────────────────────
+						// 1. discover_devices
+						if (body.includes("iot_discover_devices_request")) {
+							if (body.includes("</discover_devices>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_DISCOVER_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_DISCOVER_REQUEST
+							}
+						}
+						// 2. register_device
+						if (body.includes("iot_register_device_request")) {
+							if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_REGISTER_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_REGISTER_REQUEST
+							}
+						}
+						// 3. get_device_info list all (register first, then list)
+						if (body.includes("iot_get_all_devices_request")) {
+							if (body.includes("</get_device_info>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_ALL_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_ALL_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_ALL_REGISTER
+							}
+						}
+						// 4. get_device_info by ip
+						if (body.includes("iot_get_by_ip_request")) {
+							if (body.includes("</get_device_info>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_BY_IP_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_BY_IP_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_GET_BY_IP_REGISTER
+							}
+						}
+						// 5. http_request SSRF block
+						if (body.includes("iot_http_ssrf_request")) {
+							if (body.includes("</http_request>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_SSRF_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_SSRF_REQUEST
+							}
+						}
+						// 6. http_request trusted
+						if (body.includes("iot_http_trusted_request")) {
+							if (body.includes("</http_request>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_TRUSTED_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_TRUSTED_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_HTTP_TRUSTED_REGISTER
+							}
+						}
+						// 7. mqtt_connect
+						if (
+							body.includes("iot_mqtt_connect_request") &&
+							!body.includes("iot_mqtt_publish_request") &&
+							!body.includes("iot_mqtt_subscribe_request") &&
+							!body.includes("iot_mqtt_disconnect_request") &&
+							!body.includes("iot_operate_mqtt_request")
+						) {
+							if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_COMPLETION
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 8. mqtt_publish (connect first, then publish)
+						if (body.includes("iot_mqtt_publish_request")) {
+							if (body.includes("</mqtt_publish>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_PUBLISH_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_PUBLISH_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 9. mqtt_subscribe (connect first, then subscribe)
+						if (body.includes("iot_mqtt_subscribe_request")) {
+							if (body.includes("</mqtt_subscribe>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_SUBSCRIBE_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_SUBSCRIBE_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 10. mqtt_disconnect (connect first, then disconnect)
+						if (body.includes("iot_mqtt_disconnect_request")) {
+							if (body.includes("</mqtt_disconnect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_DISCONNECT_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_DISCONNECT_REQUEST
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_MQTT_CONNECT_REQUEST
+							}
+						}
+						// 11. operate_device MQTT path (register → connect → operate)
+						if (body.includes("iot_operate_mqtt_request")) {
+							if (body.includes("</operate_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_COMPLETION
+							} else if (body.includes("</mqtt_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_OPERATE
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_CONNECT
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_MQTT_REGISTER
+							}
+						}
+						// 12. operate_device HTTP path (register → operate)
+						if (body.includes("iot_operate_http_request")) {
+							if (body.includes("</operate_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_HTTP_COMPLETION
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_HTTP_OPERATE
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_HTTP_REGISTER
+							}
+						}
+						// 13. operate_device SSH path (register → ssh_connect → operate)
+						if (body.includes("iot_operate_ssh_request")) {
+							if (body.includes("</operate_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_COMPLETION
+							} else if (body.includes("</ssh_connect>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_OPERATE
+							} else if (body.includes("</register_device>")) {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_CONNECT
+							} else {
+								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_REGISTER
+							}
+						}
+						// ── Voice routing ────────────────────────────────────────────────
+						// 1. speak_text (TTS disabled by default in CI — tool still executes and returns message)
+						if (body.includes("voice_speak_request")) {
+							if (body.includes("</speak_text>")) {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_COMPLETION
+							} else {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_REQUEST
+							}
+						}
+						// 2. listen_for_speech (STT disabled by default in CI)
+						if (body.includes("voice_listen_request")) {
+							if (body.includes("</listen_for_speech>")) {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_COMPLETION
+							} else {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_REQUEST
+							}
+						}
+						const pidMatch = body.match(/kill_process_request\s+(\d+)/)
+						if (pidMatch) {
+							if (body.includes("terminated successfully")) {
+								// Tool already ran — return a completion so the agent wraps up
+								responseText = buildKillProcessCompletionResponse(Number.parseInt(pidMatch[1], 10))
+							} else {
+								responseText = buildKillProcessResponse(Number.parseInt(pidMatch[1], 10))
+							}
 						}
 						if (body.includes("[diff.test.ts] Hello, Cline!")) {
 							// The playwright test in diff.test.ts needs the "API Request..." text
@@ -454,31 +715,30 @@ export class ClineApiServerMock {
 
 							sendChunk()
 							return
-						} else {
-							const response = {
-								id: generationId,
-								object: "chat.completion",
-								created: Math.floor(Date.now() / 1000),
-								model,
-								choices: [
-									{
-										index: 0,
-										message: {
-											role: "assistant",
-											content: "Hello! I'm a mock Cline API response.",
-										},
-										finish_reason: "stop",
-									},
-								],
-								usage: {
-									prompt_tokens: 140,
-									completion_tokens: responseText.length,
-									total_tokens: 140 + responseText.length,
-									cost: (140 + responseText.length) * 0.00015,
-								},
-							}
-							return sendJson(response)
 						}
+						const response = {
+							id: generationId,
+							object: "chat.completion",
+							created: Math.floor(Date.now() / 1000),
+							model,
+							choices: [
+								{
+									index: 0,
+									message: {
+										role: "assistant",
+										content: "Hello! I'm a mock Cline API response.",
+									},
+									finish_reason: "stop",
+								},
+							],
+							usage: {
+								prompt_tokens: 140,
+								completion_tokens: responseText.length,
+								total_tokens: 140 + responseText.length,
+								cost: (140 + responseText.length) * 0.00015,
+							},
+						}
+						return sendJson(response)
 					}
 
 					// Generation details endpoint

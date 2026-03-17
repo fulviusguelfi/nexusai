@@ -101,7 +101,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// Listen for configuration changes
 		vscode.workspace.onDidChangeConfiguration(
 			async (e) => {
-				if (e && e.affectsConfiguration("cline.mcpMarketplace.enabled")) {
+				if (e && e.affectsConfiguration("nexusai.mcpMarketplace.enabled")) {
 					// Update state when marketplace tab setting changes
 					await this.controller.postStateToWebview()
 				}
@@ -112,6 +112,27 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 		// if the extension is starting a new session, clear previous task state
 		this.controller.clearTask()
+
+		// Wire VoiceSessionManager speak requests → PiperService → webview audio
+		void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (text: string) => {
+				try {
+					const { PiperService } = await import("@services/voice/PiperService")
+					const voicePiperVoice =
+						(this.controller.stateManager.getGlobalStateKey("voicePiperVoice") as string | undefined) ??
+						"en_US-lessac-medium"
+					const wavBuf = await PiperService.getInstance(this.controller.context.globalStoragePath).synthesize(
+						text,
+						voicePiperVoice,
+					)
+					const wavBase64 = wavBuf.toString("base64")
+					await this.postMessageToWebview({ type: "voice_audio_play", voice_audio_play: { wavBase64 } })
+				} catch (err) {
+					Logger.error("[VscodeWebviewProvider] TTS speak error:", err)
+				}
+			})
+			this.disposables.push({ dispose })
+		})
 
 		Logger.log("[VscodeWebviewProvider] Webview view resolved")
 
@@ -171,6 +192,24 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			case "grpc_request_cancel": {
 				if (message.grpc_request_cancel) {
 					await handleGrpcRequestCancel(postMessageToWebview, message.grpc_request_cancel)
+				}
+				break
+			}
+			case "voice_float32_audio": {
+				if (message.voice_float32_audio) {
+					const { buffer, sampleRate } = message.voice_float32_audio
+					const float32 = new Float32Array(buffer)
+					try {
+						const { VoiceSessionManager } = await import("@services/voice/VoiceSessionManager")
+						const { WhisperService } = await import("@services/voice/WhisperService")
+						const whisper = WhisperService.getInstance(this.controller.context.globalStoragePath)
+						const text = await whisper.transcribe(float32, sampleRate)
+						VoiceSessionManager.getInstance().setLastTranscription(text)
+						postMessageToWebview({ type: "voice_transcription", voice_transcription: { text } })
+					} catch (err) {
+						Logger.error("[VscodeWebviewProvider] voice transcription failed:", err)
+						postMessageToWebview({ type: "voice_transcription", voice_transcription: { text: "" } })
+					}
 				}
 				break
 			}

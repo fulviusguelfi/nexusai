@@ -20,21 +20,7 @@ You have access to the `gh` terminal command. I already authenticated it for you
    gh pr view <PR-number> --json files
    ```
 
-2. Examine the original files in the main branch to understand the context:
-   ```xml
-   <read_file>
-   <path>path/to/file</path>
-   </read_file>
-   ```
-
-3. For specific sections of a file, you can use search_files:
-   ```xml
-   <search_files>
-   <path>path/to/directory</path>
-   <regex>search term</regex>
-   <file_pattern>*.ts</file_pattern>
-   </search_files>
-   ```
+2. Read the changed files to understand the original context and how the PR modifies them.
 
 ## 3. Analyze the Changes
 1. For each modified file, understand:
@@ -51,35 +37,10 @@ You have access to the `gh` terminal command. I already authenticated it for you
    - Test coverage
 
 ## 4. Ask for User Confirmation
-1. Before making a decision, ask the user if you should approve the PR, providing your assessment and justification:
-   ```xml
-   <ask_followup_question>
-   <question>Based on my review of PR #<PR-number>, I recommend [approving/requesting changes]. Here's my justification:
-   
-   [Detailed justification with key points about the PR quality, implementation, and any concerns]
-   
-   Would you like me to proceed with this recommendation?</question>
-   <options>["Yes, approve the PR", "Yes, request changes", "No, I'd like to discuss further"]</options>
-   </ask_followup_question>
-   ```
+1. Before making a decision, present your assessment and ask the user whether to approve or request changes, with your justification.
 
 ## 5. Ask if User Wants a Comment Drafted
-1. After the user decides on approval/rejection, ask if they would like a comment drafted:
-   ```xml
-   <ask_followup_question>
-   <question>Would you like me to draft a comment for this PR that you can copy and paste?</question>
-   <options>["Yes, please draft a comment", "No, I'll handle the comment myself"]</options>
-   </ask_followup_question>
-   ```
-
-2. If the user wants a comment drafted, provide a well-structured comment they can copy:
-   ```
-   Thank you for this PR! Here's my assessment:
-
-   [Detailed assessment with key points about the PR quality, implementation, and any suggestions]
-
-   [Include specific feedback on code quality, functionality, and testing]
-   ```
+1. After the user decides on approval/rejection, ask if they would like a comment drafted.
 
 ## 6. Make a Decision
 1. Approve the PR if it meets quality standards:

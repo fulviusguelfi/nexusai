@@ -111,12 +111,13 @@ export abstract class WebviewProvider {
 				<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 				<link href="${codiconsUrl}" rel="stylesheet" />
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none';
-					connect-src https://*.posthog.com https://*.cline.bot; 
+					connect-src https://*.cline.bot https://*.nexusai.dev; 
 					font-src ${this.getCspSource()} data:; 
 					style-src ${this.getCspSource()} 'unsafe-inline'; 
 					img-src ${this.getCspSource()} https: data:; 
+					media-src 'self' blob:;
 					script-src 'nonce-${nonce}' 'unsafe-eval';">
-				<title>Cline</title>
+				<title>NexusAI</title>
 			</head>
 			<body>
 				<noscript>You need to enable JavaScript to run this app.</noscript>
@@ -140,7 +141,7 @@ export abstract class WebviewProvider {
 
 		return readFile(portFilePath, "utf8")
 			.then((portFile) => {
-				const port = Number.parseInt(portFile.trim()) || DEFAULT_PORT
+				const port = Number.parseInt(portFile.trim(), 10) || DEFAULT_PORT
 				Logger.info(`[getDevServerPort] Using dev server port ${port} from .vite-port file`)
 
 				return port
@@ -173,7 +174,7 @@ export abstract class WebviewProvider {
 				HostProvider.window.showMessage({
 					type: ShowMessageType.ERROR,
 					message:
-						"Cline: Local webview dev server is not running, HMR will not work. Please run 'npm run dev:webview' before launching the extension to enable HMR. Using bundled assets.",
+						"NexusAI: Local webview dev server is not running, HMR will not work. Please run 'npm run dev:webview' before launching the extension to enable HMR. Using bundled assets.",
 				})
 			}
 
@@ -216,7 +217,7 @@ export abstract class WebviewProvider {
 					<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
 					<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 					<link href="${codiconsUrl}" rel="stylesheet" />
-					<title>Cline</title>
+					<title>NexusAI</title>
 				</head>
 				<body>
 					<div id="root"></div>

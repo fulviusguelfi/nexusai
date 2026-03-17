@@ -1,16 +1,16 @@
 {
 	"$schema": "https://mintlify.com/docs.json",
 	"theme": "mint",
-	"name": "Cline",
-	"description": "AI-powered coding agent for complex work",
+	"name": "NexusAI",
+	"description": "AI coding assistant for complex development workflows",
 	"colors": {
-		"primary": "#9D4EDD",
-		"light": "#F0E6FF",
-		"dark": "#000000"
+		"primary": "#1D4ED8",
+		"light": "#DBEAFE",
+		"dark": "#0B1220"
 	},
 	"logo": {
-		"light": "/assets/Cline_Logo-complete_black.png",
-		"dark": "/assets/Cline_Logo-complete_white.png"
+		"light": "/assets/nexusai-logo-light.png",
+		"dark": "/assets/nexusai-logo-dark.png"
 	},
 	"favicon": {
 		"light": "/assets/robot_panel_light.png",
@@ -39,7 +39,7 @@
 			{
 				"label": "GitHub",
 				"icon": "github",
-				"href": "https://github.com/cline/cline"
+				"href": "https://github.com/fulviusguelfi/nexusai"
 			},
 			{
 				"label": "Discord",
@@ -49,8 +49,8 @@
 		],
 		"primary": {
 			"type": "button",
-			"label": "Install Cline",
-			"href": "https://cline.bot/install?utm_source=website&utm_medium=header"
+			"label": "View NexusAI",
+			"href": "https://github.com/fulviusguelfi/nexusai"
 		}
 	},
 	"navigation": {

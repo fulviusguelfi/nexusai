@@ -33,6 +33,27 @@ export enum ClineDefaultTool {
 	GENERATE_EXPLANATION = "generate_explanation",
 	USE_SKILL = "use_skill",
 	USE_SUBAGENTS = "use_subagents",
+	LIST_PROCESSES = "list_processes",
+	KILL_PROCESS = "kill_process",
+	DISCOVER_NETWORK_HOSTS = "discover_network_hosts",
+	SSH_CONNECT = "ssh_connect",
+	SSH_EXECUTE = "ssh_execute",
+	SSH_UPLOAD = "ssh_upload",
+	SSH_DOWNLOAD = "ssh_download",
+	SSH_DISCONNECT = "ssh_disconnect",
+	// IoT tools
+	MQTT_CONNECT = "mqtt_connect",
+	MQTT_PUBLISH = "mqtt_publish",
+	MQTT_SUBSCRIBE = "mqtt_subscribe",
+	MQTT_DISCONNECT = "mqtt_disconnect",
+	DISCOVER_DEVICES = "discover_devices",
+	REGISTER_DEVICE = "register_device",
+	GET_DEVICE_INFO = "get_device_info",
+	OPERATE_DEVICE = "operate_device",
+	HTTP_REQUEST = "http_request",
+	// Voice tools
+	SPEAK_TEXT = "speak_text",
+	LISTEN_FOR_SPEECH = "listen_for_speech",
 }
 
 // Array of all tool names for compatibility
@@ -64,4 +85,6 @@ export const READ_ONLY_TOOLS = [
 	ClineDefaultTool.WEB_FETCH,
 	ClineDefaultTool.USE_SKILL,
 	ClineDefaultTool.USE_SUBAGENTS,
+	ClineDefaultTool.DISCOVER_DEVICES,
+	ClineDefaultTool.GET_DEVICE_INFO,
 ] as const

@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
     - name: ✨ Feature Request
-      url: https://github.com/cline/cline/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop
-      about: Share and vote on feature requests for Cline
-    - name: 👋 Cline Discord
-      url: https://discord.gg/cline
-      about: Join our Discord community for discussions and support
+      url: https://github.com/fulviusguelfi/nexusai/discussions/categories/feature-requests
+      about: Share and vote on feature requests for NexusAI
+    - name: 💬 NexusAI Discussions
+      url: https://github.com/fulviusguelfi/nexusai/discussions
+      about: Join our GitHub Discussions community for questions and support

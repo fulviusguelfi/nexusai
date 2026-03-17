@@ -6,7 +6,6 @@ import { WebviewProvider } from "@/core/webview"
 import { CLINE_API_ENDPOINT } from "@/shared/cline/api"
 import { fetch } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
-import { BannerService } from "../banner/BannerService"
 import { buildBasicClineHeaders } from "../EnvUtils"
 import { AuthService } from "./AuthService"
 
@@ -31,8 +30,7 @@ export class AuthServiceMock extends AuthService {
 				throw new Error("Extension controller was not provided to AuthServiceMock.getInstance")
 			}
 			AuthServiceMock.instance = new AuthServiceMock(controller)
-			// Initialize BannerService after AuthService is created
-			BannerService.initialize(controller)
+			// No banner service to initialize
 		}
 		if (controller !== undefined) {
 			AuthServiceMock.instance.controller = controller
@@ -106,12 +104,13 @@ export class AuthServiceMock extends AuthService {
 
 			Logger.log(`Successfully authenticated with mock server as ${authData.userInfo.name} (${authData.userInfo.email})`)
 
-			const visibleWebview = WebviewProvider.getVisibleInstance()
-
 			// Use appropriate provider name for callback
 			const providerName = this._provider?.name || "mock"
-			// Simulate handling the auth callback as if from a real provider
-			await visibleWebview?.controller.handleAuthCallback(authData.accessToken, providerName)
+			// Simulate handling the auth callback as if from a real provider.
+			// Fall back to getInstance() if the webview isn't currently "visible" (focused sidebar)
+			// to avoid silently skipping auth completion during E2E tests.
+			const webviewForCallback = WebviewProvider.getVisibleInstance() ?? WebviewProvider.getInstance()
+			await webviewForCallback.controller.handleAuthCallback(authData.accessToken, providerName)
 		} catch (error) {
 			Logger.error("Error signing in with mock server:", error)
 			this._authenticated = false

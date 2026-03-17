@@ -1,0 +1,15 @@
+{
+	"name": "List running processes",
+	"description": "Tests the list_processes tool by asking the AI to enumerate current processes and save the output",
+	"prompt": "Use the list_processes tool to get a list of all currently running processes. Save the output to a file called processes.txt.",
+	"expectedFiles": [
+		"processes.txt"
+	],
+	"expectedContent": [
+		{
+			"file": "processes.txt",
+			"matchesRegex": "\\S+"
+		}
+	],
+	"timeout": 60
+}
