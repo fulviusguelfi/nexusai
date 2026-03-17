@@ -55,7 +55,12 @@ export class MockSshServer {
 						return ctx.accept()
 					}
 				}
-				ctx.reject()
+				// Always advertise accepted methods so the ssh2 client retries with
+				// password/publickey after the mandatory "none" probe. Without the
+				// argument, the client on Linux (Ubuntu CI) receives an empty
+				// authMethods list and stops retrying, causing the connection to
+				// silently fail.
+				ctx.reject(["password", "publickey"])
 			})
 
 			client.on("ready", () => {
@@ -76,10 +81,18 @@ export class MockSshServer {
 							// biome-ignore lint/suspicious/noExplicitAny: ssh2 ServerChannel extends Duplex
 							const s = stream as any
 							s.on("data", () => {})
-							s.on("end", () => {
-								stream.exit(0)
-								stream.end()
-							})
+							// Use a done guard and listen on both 'end' and 'close': on Linux
+							// 'end' fires reliably; on Windows 'close' is the fallback.
+							let defaultDone = false
+							const defaultFinish = () => {
+								if (!defaultDone) {
+									defaultDone = true
+									stream.exit(0)
+									stream.end()
+								}
+							}
+							s.on("end", defaultFinish)
+							s.on("close", defaultFinish)
 						}
 					})
 				})
