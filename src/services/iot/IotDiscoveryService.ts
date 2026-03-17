@@ -76,7 +76,8 @@ export class IotDiscoveryService {
 		return found
 	}
 
-	private static async scanViaMdns(timeoutMs: number): Promise<DeviceProfile[]> {
+	// Exposed as protected so tests can stub network I/O
+	protected static async scanViaMdns(timeoutMs: number): Promise<DeviceProfile[]> {
 		const found: DeviceProfile[] = []
 
 		// biome-ignore lint/suspicious/noExplicitAny: bonjour dynamic import
@@ -119,7 +120,8 @@ export class IotDiscoveryService {
 		return found
 	}
 
-	private static async scanViaSsdp(timeoutMs: number): Promise<DeviceProfile[]> {
+	// Exposed as protected so tests can stub network I/O
+	protected static async scanViaSsdp(timeoutMs: number): Promise<DeviceProfile[]> {
 		const found: DeviceProfile[] = []
 		const seenIps = new Set<string>()
 

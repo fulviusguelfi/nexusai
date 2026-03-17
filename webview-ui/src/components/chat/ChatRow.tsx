@@ -1238,6 +1238,36 @@ export const ChatRowContent = memo(
 						)
 					case "task_progress":
 						return <InvisibleSpacer /> // task_progress messages should be displayed in TaskHeader only, not in chat
+					case "voice_speak":
+						return (
+							<div>
+								<div className={HEADER_CLASSNAMES}>
+									<span className="codicon codicon-unmute text-foreground mb-[-1.5px]" />
+									<span className="font-bold text-foreground">{message.partial ? "Speaking:" : "Spoke:"}</span>
+								</div>
+								{message.text && (
+									<div className="pt-1">
+										<MarkdownRow markdown={message.text} />
+									</div>
+								)}
+							</div>
+						)
+					case "voice_listen":
+						return (
+							<div>
+								<div className={HEADER_CLASSNAMES}>
+									<span className="codicon codicon-mic text-foreground mb-[-1.5px]" />
+									<span className="font-bold text-foreground">
+										{message.partial ? "Listening for speech\u2026" : "Transcription complete"}
+									</span>
+								</div>
+								{message.text && (
+									<div className="pt-1">
+										<MarkdownRow markdown={message.text} />
+									</div>
+								)}
+							</div>
+						)
 					default:
 						return (
 							<div>
@@ -1345,7 +1375,9 @@ export const ChatRowContent = memo(
 							<div>
 								<div className={HEADER_CLASSNAMES}>
 									<FilePlus2Icon className="size-2" />
-									<span className="text-foreground font-bold">Nexus AI wants to condense your conversation:</span>
+									<span className="text-foreground font-bold">
+										Nexus AI wants to condense your conversation:
+									</span>
 								</div>
 								<NewTaskPreview context={message.text || ""} />
 							</div>
