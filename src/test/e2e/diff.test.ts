@@ -27,7 +27,7 @@ e2e.describe("Diff Editor", () => {
 			await sidebar.getByTestId("send-button").click({ delay: 50 })
 
 			// Wait for the sidebar to load the file edit request (allow extra time for checkpoint init)
-			await sidebar.waitForSelector('span:has-text("Cline wants to edit this file:")', { timeout: 60_000 })
+			await sidebar.waitForSelector('span:has-text("Nexus AI wants to edit this file:")', { timeout: 60_000 })
 
 			// Cline Diff Editor should open with the file name and diff
 			await expect(page.getByText("test.ts: Original ↔ Cline's")).toBeVisible()
