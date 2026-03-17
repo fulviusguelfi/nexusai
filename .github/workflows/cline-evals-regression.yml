@@ -28,7 +28,6 @@ concurrency:
 jobs:
   smoke-tests:
     name: Smoke Tests
-    if: false  # Disabled: smoke tests require the `cline` CLI which was removed in NexusAI rebranding
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -45,35 +44,19 @@ jobs:
       - name: Build protos
         run: npm run protos
 
-      - name: Run smoke tests
-        env:
-          CLINE_API_KEY: ${{ secrets.CLINE_API_KEY }}
+      - name: Run smoke checks (core paths)
         run: |
-          max_attempts=3
-          for attempt in $(seq 1 $max_attempts); do
-            echo "::group::Attempt $attempt of $max_attempts"
-            if npx tsx evals/smoke-tests/run-smoke-tests.ts --trials 1 --parallel; then
-              echo "::endgroup::"
-              echo "Smoke tests passed on attempt $attempt"
-              exit 0
-            fi
-            echo "::endgroup::"
-            if [ $attempt -lt $max_attempts ]; then
-              echo "::warning::Smoke tests failed on attempt $attempt, retrying..."
-              sleep 10
-            fi
-          done
-          echo "::error::Smoke tests failed after $max_attempts attempts"
-          exit 1
+          # Transitional smoke suite: legacy eval runner depends on removed `cline` CLI.
+          # Keep CI signal alive with deterministic, fast checks over critical runtime paths.
+          npm run test:unit -- \
+            src/core/task/tools/handlers/__tests__/KillProcessToolHandler.test.ts \
+            src/core/task/tools/handlers/__tests__/ListProcessesToolHandler.test.ts \
+            src/integrations/checkpoints/__tests__/MultiRootCheckpointManager.test.ts
 
       - name: Generate summary
         if: always()
-        run: cat evals/smoke-tests/results/latest/summary.md >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: smoke-test-results-${{ github.run_id }}
-          path: evals/smoke-tests/results/latest/
-          retention-days: 30
+        run: |
+          echo "## Smoke Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- Mode: transitional core smoke checks" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage: tool handlers + checkpoint manager" >> $GITHUB_STEP_SUMMARY
+          echo "- Legacy eval runner remains pending migration off removed cline CLI" >> $GITHUB_STEP_SUMMARY
