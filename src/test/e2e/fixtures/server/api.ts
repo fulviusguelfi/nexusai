@@ -234,6 +234,47 @@ export const E2E_MOCK_API_RESPONSES = {
 	SSH_DOWNLOAD_COMPLETION,
 }
 
+// ── Voice mock responses ──────────────────────────────────────────────────
+
+// ─ 1. speak_text ─────────────────────────────────────────────────────────
+
+/** Turn 1 for speak_text — TTS is disabled by default so the tool returns a "TTS disabled" message. */
+const VOICE_SPEAK_REQUEST = `I'll speak the text using text-to-speech.
+
+<speak_text>
+<text>Hello, NexusAI voice is working.</text>
+</speak_text>`
+
+/** Completion returned after speak_text tool result is in context. */
+const VOICE_SPEAK_COMPLETION = `The text-to-speech attempt has been processed.
+
+<attempt_completion>
+<result>speak_text executed. TTS is disabled. The user can enable it in Settings → Voice. Text was: Hello, NexusAI voice is working.</result>
+</attempt_completion>`
+
+// ─ 2. listen_for_speech ──────────────────────────────────────────────────
+
+/** Turn 1 for listen_for_speech — STT is disabled by default. */
+const VOICE_LISTEN_REQUEST = `I'll listen for speech input from the user.
+
+<listen_for_speech>
+<prompt>Please speak now.</prompt>
+</listen_for_speech>`
+
+/** Completion returned after listen_for_speech tool result is in context. */
+const VOICE_LISTEN_COMPLETION = `The speech-to-text attempt has been processed.
+
+<attempt_completion>
+<result>listen_for_speech executed. STT is disabled. The user can enable it in Settings → Voice.</result>
+</attempt_completion>`
+
+export const E2E_VOICE_MOCK_API_RESPONSES = {
+	VOICE_SPEAK_REQUEST,
+	VOICE_SPEAK_COMPLETION,
+	VOICE_LISTEN_REQUEST,
+	VOICE_LISTEN_COMPLETION,
+}
+
 // ── IoT mock responses ────────────────────────────────────────────────────
 
 // ─ 1. discover_devices ───────────────────────────────────────────────────

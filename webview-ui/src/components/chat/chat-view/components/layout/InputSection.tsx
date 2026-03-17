@@ -1,6 +1,7 @@
-import React from "react"
+import React, { useCallback } from "react"
 import ChatTextArea from "@/components/chat/ChatTextArea"
 import QuotedMessagePreview from "@/components/chat/QuotedMessagePreview"
+import { useExtensionState } from "@/context/ExtensionStateContext"
 import { ChatState, MessageHandlers, ScrollBehavior } from "../../types/chatTypes"
 
 interface InputSectionProps {

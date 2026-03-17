@@ -9,6 +9,7 @@ import {
 	E2E_IOT_MOCK_API_RESPONSES,
 	E2E_MOCK_API_RESPONSES,
 	E2E_REGISTERED_MOCK_ENDPOINTS,
+	E2E_VOICE_MOCK_API_RESPONSES,
 } from "./api"
 import { ClineDataMock } from "./data"
 
@@ -615,6 +616,23 @@ export class ClineApiServerMock {
 								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_CONNECT
 							} else {
 								responseText = E2E_IOT_MOCK_API_RESPONSES.IOT_OPERATE_SSH_REGISTER
+							}
+						}
+						// ── Voice routing ────────────────────────────────────────────────
+						// 1. speak_text (TTS disabled by default in CI — tool still executes and returns message)
+						if (body.includes("voice_speak_request")) {
+							if (body.includes("</speak_text>")) {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_COMPLETION
+							} else {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_REQUEST
+							}
+						}
+						// 2. listen_for_speech (STT disabled by default in CI)
+						if (body.includes("voice_listen_request")) {
+							if (body.includes("</listen_for_speech>")) {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_COMPLETION
+							} else {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_REQUEST
 							}
 						}
 						const pidMatch = body.match(/kill_process_request\s+(\d+)/)

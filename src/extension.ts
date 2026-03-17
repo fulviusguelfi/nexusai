@@ -14,7 +14,7 @@ import { sendWorktreesButtonClickedEvent } from "./core/controller/ui/subscribeT
 import { WebviewProvider } from "./core/webview"
 import { createClineAPI } from "./exports"
 import { initializeTestMode } from "./services/test/TestMode"
-import "./utils/path" // necessary to have access to String.prototype.toPosix
+import "./utils/path"; // necessary to have access to String.prototype.toPosix
 import path from "node:path"
 import type { ExtensionContext } from "vscode"
 import { HostProvider } from "@/hosts/host-provider"
@@ -201,7 +201,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Register size testing commands in development mode
 	if (IS_DEV) {
-		vscode.commands.executeCommand("setContext", "cline.isDevMode", IS_DEV)
+		vscode.commands.executeCommand("setContext", "nexusai.isDevMode", IS_DEV)
 		// Use dynamic import to avoid loading the module in production
 		import("./dev/commands/tasks")
 			.then((module) => {

@@ -7,7 +7,7 @@ import { DIFF_VIEW_URI_SCHEME } from "../VscodeDiffViewProvider"
 /**
  * Cline's GitHub avatar URL
  */
-const CLINE_AVATAR_URL = "https://avatars.githubusercontent.com/u/184127137"
+const NEXUSAI_AVATAR_URL = "https://avatars.githubusercontent.com/u/184127137"
 
 /**
  * VS Code implementation of CommentReviewController.
@@ -25,17 +25,17 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 
 	/** The currently streaming comment thread */
 	private streamingThread: vscode.CommentThread | null = null
-	private streamingContent: string = ""
+	private streamingContent = ""
 
 	constructor() {
 		super()
 		// Create the comment controller
-		this.commentController = vscode.comments.createCommentController("cline-ai-review", "Cline AI Review")
+		this.commentController = vscode.comments.createCommentController("nexusai-ai-review", "NexusAI Review")
 
 		// Configure options for the reply input
 		this.commentController.options = {
 			placeHolder: "Ask a question about this code...",
-			prompt: "Reply to Cline",
+			prompt: "Reply to NexusAI",
 		}
 
 		// Configure the commenting range provider (optional - allows commenting on any line)
@@ -49,14 +49,14 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 
 		// Register reply command - this is called when user clicks the Reply button
 		this.disposables.push(
-			vscode.commands.registerCommand("cline.reviewComment.reply", async (reply: vscode.CommentReply) => {
+			vscode.commands.registerCommand("nexusai.reviewComment.reply", async (reply: vscode.CommentReply) => {
 				await this.handleReply(reply)
 			}),
 		)
 
 		// Register add to chat command - sends the conversation to Cline's main chat
 		this.disposables.push(
-			vscode.commands.registerCommand("cline.reviewComment.addToChat", async (thread: vscode.CommentThread) => {
+			vscode.commands.registerCommand("nexusai.reviewComment.addToChat", async (thread: vscode.CommentThread) => {
 				await this.handleAddToChat(thread)
 			}),
 		)
@@ -106,7 +106,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			mode: vscode.CommentMode.Preview,
 			author: {
 				name: "Cline",
-				iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
 
@@ -134,7 +134,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 		endLine: number,
 		relativePath?: string,
 		fileContent?: string,
-		revealComment: boolean = false,
+		revealComment = false,
 	): void {
 		// Use virtual diff URI if relativePath and fileContent are provided
 		let uri: vscode.Uri
@@ -153,7 +153,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			mode: vscode.CommentMode.Preview,
 			author: {
 				name: "Cline",
-				iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
 
@@ -219,7 +219,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			mode: vscode.CommentMode.Preview,
 			author: {
 				name: "Cline",
-				iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
 		// Create a new array to ensure VS Code detects the change
@@ -241,7 +241,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			mode: vscode.CommentMode.Preview,
 			author: {
 				name: "Cline",
-				iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
 		this.streamingThread.comments = [commentObj]
@@ -332,7 +332,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 					mode: vscode.CommentMode.Preview,
 					author: {
 						name: "Cline",
-						iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+						iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 					},
 				}
 				thread.comments = [...thread.comments.slice(0, -1), streamingComment]
@@ -344,7 +344,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 				mode: vscode.CommentMode.Preview,
 				author: {
 					name: "Cline",
-					iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+					iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 				},
 			}
 			thread.comments = [...thread.comments, thinkingComment]
@@ -370,7 +370,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 						mode: vscode.CommentMode.Preview,
 						author: {
 							name: "Cline",
-							iconPath: vscode.Uri.parse(CLINE_AVATAR_URL),
+							iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 						},
 					}
 					thread.comments = [...thread.comments.slice(0, -1), errorComment]
