@@ -111,10 +111,11 @@ export abstract class WebviewProvider {
 				<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 				<link href="${codiconsUrl}" rel="stylesheet" />
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none';
-					connect-src https://*.cline.bot; 
+					connect-src https://*.cline.bot https://*.nexusai.dev; 
 					font-src ${this.getCspSource()} data:; 
 					style-src ${this.getCspSource()} 'unsafe-inline'; 
 					img-src ${this.getCspSource()} https: data:; 
+					media-src 'self' blob:;
 					script-src 'nonce-${nonce}' 'unsafe-eval';">
 				<title>NexusAI</title>
 			</head>

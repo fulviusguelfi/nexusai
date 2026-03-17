@@ -205,13 +205,16 @@ const baseConfig = {
 // Extension-specific configuration
 const extensionConfig = {
 	...baseConfig,
-	entryPoints: ["src/extension.ts"],
-	outfile: `${destDir}/extension.js`,
+	entryPoints: [
+		{ in: "src/extension.ts", out: "extension" },
+		{ in: "src/services/voice/whisper.worker.ts", out: "whisper.worker" },
+	],
+	outdir: destDir,
 	// ssh2 ships optional native .node binaries (sshcrypto.node, cpufeatures.node).
 	// Bundle the JS parts of ssh2; esbuild marks the .node files as external automatically.
 	// At runtime those native requires are inside try/catch in ssh2, so they fail gracefully
 	// and ssh2 uses its pure-JS fallback — no VS Code process crash from ABI mismatches.
-	external: ["vscode"],
+	external: ["vscode", "@huggingface/transformers"],
 }
 
 // Standalone-specific configuration

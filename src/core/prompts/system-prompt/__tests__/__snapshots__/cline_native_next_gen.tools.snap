@@ -526,6 +526,46 @@
   {
     "type": "function",
     "function": {
+      "name": "speak_text",
+      "description": "Synthesize text to speech using the local Piper TTS engine and play it through the user's speakers. Use this to narrate responses, read results aloud, or provide audio confirmation of completed actions.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text to speak. Keep it concise (≤ 200 words) for best latency."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "listen_for_speech",
+      "description": "Activate the microphone and transcribe the user's speech using the local Whisper STT engine. Use this when you need clarification, additional input, or confirmation from the user via voice.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Optional prompt shown to the user before recording starts (≤ 80 chars)."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "read_file",
       "description": "Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files. Automatically extracts raw text from PDF and DOCX files. May not be suitable for other types of binary files, as it returns the raw content as a string. Do NOT use this tool to list the contents of a directory. Only use this tool on files.",
       "strict": false,

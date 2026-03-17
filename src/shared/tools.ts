@@ -51,6 +51,9 @@ export enum ClineDefaultTool {
 	GET_DEVICE_INFO = "get_device_info",
 	OPERATE_DEVICE = "operate_device",
 	HTTP_REQUEST = "http_request",
+	// Voice tools
+	SPEAK_TEXT = "speak_text",
+	LISTEN_FOR_SPEECH = "listen_for_speech",
 }
 
 // Array of all tool names for compatibility

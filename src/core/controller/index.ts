@@ -987,6 +987,11 @@ export class Controller {
 			doubleCheckCompletionEnabled,
 			openAiCodexIsAuthenticated,
 			activeSshSessions: SshSessionRegistry.getActiveSessions(),
+			voiceTtsEnabled: this.stateManager.getGlobalStateKey("voiceTtsEnabled"),
+			voiceSttEnabled: this.stateManager.getGlobalStateKey("voiceSttEnabled"),
+			voiceInputDeviceId: this.stateManager.getGlobalStateKey("voiceInputDeviceId"),
+			voiceOutputDeviceId: this.stateManager.getGlobalStateKey("voiceOutputDeviceId"),
+			voicePiperVoice: this.stateManager.getGlobalStateKey("voicePiperVoice"),
 		}
 	}
 

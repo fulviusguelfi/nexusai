@@ -10,6 +10,7 @@ import WelcomeView from "./components/welcome/WelcomeView"
 import WorktreesView from "./components/worktrees/WorktreesView"
 import { useClineAuth } from "./context/ClineAuthContext"
 import { useExtensionState } from "./context/ExtensionStateContext"
+import { useVoiceAudioPlayer } from "./hooks/useVoiceAudioPlayer"
 import { Providers } from "./Providers"
 import { UiServiceClient } from "./services/grpc-client"
 
@@ -39,6 +40,7 @@ const AppContent = () => {
 	} = useExtensionState()
 
 	const { clineUser, organizations, activeOrganization } = useClineAuth()
+	useVoiceAudioPlayer()
 
 	useEffect(() => {
 		if (shouldShowAnnouncement) {

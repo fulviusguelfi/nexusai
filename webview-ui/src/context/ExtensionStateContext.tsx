@@ -283,6 +283,11 @@ export const ExtensionStateContextProvider: React.FC<{
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
 		activeSshSessions: [],
+		voiceTtsEnabled: false,
+		voiceSttEnabled: false,
+		voiceInputDeviceId: undefined,
+		voiceOutputDeviceId: undefined,
+		voicePiperVoice: "en_US-lessac-medium",
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)

@@ -17,7 +17,7 @@ export const STEP_CONFIG = {
 		description: "Select an option below to get started.",
 		buttons: [
 			{ text: "Continue", action: "next", variant: "default" },
-			{ text: "Login to Cline", action: "signin", variant: "secondary" },
+			{ text: "Login to Nexus AI", action: "signin", variant: "secondary" },
 		],
 	},
 	[NEW_USER_TYPE.GITHUB]: {

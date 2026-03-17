@@ -69,6 +69,8 @@ export const config = createVariant(ModelFamily.NATIVE_GPT_5_1)
 		ClineDefaultTool.REGISTER_DEVICE,
 		ClineDefaultTool.GET_DEVICE_INFO,
 		ClineDefaultTool.OPERATE_DEVICE,
+		ClineDefaultTool.SPEAK_TEXT,
+		ClineDefaultTool.LISTEN_FOR_SPEECH,
 		ClineDefaultTool.FILE_READ,
 		// Should disable FILE_NEW and FILE_EDIT when enabled
 		ClineDefaultTool.APPLY_PATCH,

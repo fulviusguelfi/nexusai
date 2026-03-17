@@ -11,6 +11,10 @@ export interface ICheckpointManager {
 
 	commit(): Promise<string | undefined>
 
+	listCheckpoints(): Promise<string[]>
+
+	dispose(): Promise<void>
+
 	presentMultifileDiff?(messageTs: number, seeNewChangesSinceLastTaskCompletion: boolean): Promise<void>
 
 	// Optional method for multi-root specific initialization

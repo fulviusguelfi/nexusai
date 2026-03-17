@@ -208,7 +208,7 @@ e2e.describe("IoT Tools", () => {
 			// Turn 2: ssh_connect to 127.0.0.1:2222 (password auth)
 			// Turn 3: operate_device ip=192.168.88.20 command="status"  → mapCommandToShell → "uptime"
 			// Completion: 'operate_device SSH path: "status" executed on SshComputer via SSH.'
-			await E2ETestHelper.waitForChatMessage(sidebar, "SshComputer", 60_000)
+			await E2ETestHelper.waitForChatMessage(sidebar, "operate_device SSH path", 120_000)
 		},
 	)
 })

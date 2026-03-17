@@ -28,7 +28,7 @@ e2e.describe("GitHub Copilot Integration", () => {
 
 		// Navigation buttons must be present
 		await expect(sidebar.getByRole("button", { name: "Continue" })).toBeVisible()
-		await expect(sidebar.getByRole("button", { name: "Login to Cline" })).toBeVisible()
+		await expect(sidebar.getByRole("button", { name: "Login to Nexus AI" })).toBeVisible()
 	})
 
 	e2e("navigates from GitHub Copilot user type to connection step and back", async ({ sidebar }) => {

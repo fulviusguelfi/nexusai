@@ -17,6 +17,7 @@ import { GetDeviceInfoToolHandler } from "./handlers/GetDeviceInfoToolHandler"
 import { HttpRequestToolHandler } from "./handlers/HttpRequestToolHandler"
 import { KillProcessToolHandler } from "./handlers/KillProcessToolHandler"
 import { ListCodeDefinitionNamesToolHandler } from "./handlers/ListCodeDefinitionNamesToolHandler"
+import { ListenForSpeechToolHandler } from "./handlers/ListenForSpeechToolHandler"
 import { ListFilesToolHandler } from "./handlers/ListFilesToolHandler"
 import { ListProcessesToolHandler } from "./handlers/ListProcessesToolHandler"
 import { LoadMcpDocumentationHandler } from "./handlers/LoadMcpDocumentationHandler"
@@ -31,6 +32,7 @@ import { ReadFileToolHandler } from "./handlers/ReadFileToolHandler"
 import { RegisterDeviceToolHandler } from "./handlers/RegisterDeviceToolHandler"
 import { ReportBugHandler } from "./handlers/ReportBugHandler"
 import { SearchFilesToolHandler } from "./handlers/SearchFilesToolHandler"
+import { SpeakTextToolHandler } from "./handlers/SpeakTextToolHandler"
 import { SshConnectToolHandler } from "./handlers/SshConnectToolHandler"
 import { SshDisconnectToolHandler } from "./handlers/SshDisconnectToolHandler"
 import { SshDownloadToolHandler } from "./handlers/SshDownloadToolHandler"
@@ -140,6 +142,8 @@ export class ToolExecutorCoordinator {
 		[ClineDefaultTool.REGISTER_DEVICE]: (v: ToolValidator) => new RegisterDeviceToolHandler(v),
 		[ClineDefaultTool.GET_DEVICE_INFO]: (v: ToolValidator) => new GetDeviceInfoToolHandler(v),
 		[ClineDefaultTool.OPERATE_DEVICE]: (v: ToolValidator) => new OperateDeviceToolHandler(v),
+		[ClineDefaultTool.SPEAK_TEXT]: (v: ToolValidator) => new SpeakTextToolHandler(v),
+		[ClineDefaultTool.LISTEN_FOR_SPEECH]: (v: ToolValidator) => new ListenForSpeechToolHandler(v),
 	}
 
 	/**

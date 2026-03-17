@@ -106,6 +106,11 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 				client.connect(connectOpts)
 			})
 
+			// Attach a permanent no-op error listener after the promise settles so
+			// abrupt socket close after the test (ECONNRESET) does not propagate as
+			// an uncaught exception in the extension host on Linux (Ubuntu CI).
+			client.on("error", () => {})
+
 			SshSessionRegistry.set(config.cwd, client)
 			SshSessionRegistry.setMetadata(config.cwd, {
 				host: resolvedHost,
@@ -143,7 +148,13 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 			await config.callbacks.say("tool", sayContent, undefined, undefined, false)
 			return [{ type: "text", text: `Connected to ${resolvedUser}@${resolvedHost}:${resolvedPort} successfully.` }]
 		} catch (error: unknown) {
-			return formatResponse.toolError(`SSH connection failed: ${error instanceof Error ? error.message : String(error)}`)
+			// Surface the failure in the chat UI so Playwright recordings capture the
+			// exact error message, making future CI diagnosis trivial.
+			const errorMsg = error instanceof Error ? error.message : String(error)
+			await config.callbacks
+				.say("tool", JSON.stringify({ tool: "ssh_connect", content: `failed: ${errorMsg}` }), undefined, undefined, false)
+				.catch(() => {})
+			return formatResponse.toolError(`SSH connection failed: ${errorMsg}`)
 		}
 	}
 }

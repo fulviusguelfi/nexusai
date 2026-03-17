@@ -5,8 +5,7 @@
 	"version": "1.0.0-alpha",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
-		".",
-		"cli"
+		"."
 	],
 	"engines": {
 		"vscode": "^1.84.0"
@@ -52,8 +51,8 @@
 	"main": "./dist/extension.js",
 	"contributes": {
 		"icons": {
-			"cline-icon": {
-				"description": "cline",
+			"nexusai-icon": {
+				"description": "nexusai",
 				"default": {
 					"fontPath": "assets/icons/cline-bot.woff",
 					"fontCharacter": "\\e900"
@@ -62,7 +61,7 @@
 		},
 		"walkthroughs": [
 			{
-				"id": "ClineWalkthrough",
+				"id": "NexusAIWalkthrough",
 				"title": "Meet NexusAI, your new coding partner",
 				"description": "NexusAI codes like a developer because it thinks like one. Here are 5 ways to put it to work:",
 				"steps": [
@@ -154,115 +153,115 @@
 		},
 		"commands": [
 			{
-				"command": "cline.plusButtonClicked",
+				"command": "nexusai.plusButtonClicked",
 				"title": "New Task",
 				"icon": "$(add)"
 			},
 			{
-				"command": "cline.mcpButtonClicked",
+				"command": "nexusai.mcpButtonClicked",
 				"title": "MCP Servers",
 				"icon": "$(server)"
 			},
 			{
-				"command": "cline.historyButtonClicked",
+				"command": "nexusai.historyButtonClicked",
 				"title": "History",
 				"icon": "$(history)"
 			},
 			{
-				"command": "cline.accountButtonClicked",
+				"command": "nexusai.accountButtonClicked",
 				"title": "Account",
 				"icon": "$(account)"
 			},
 			{
-				"command": "cline.settingsButtonClicked",
+				"command": "nexusai.settingsButtonClicked",
 				"title": "Settings",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "cline.dev.createTestTasks",
+				"command": "nexusai.dev.createTestTasks",
 				"title": "Create Test Tasks",
 				"category": "NexusAI",
-				"when": "cline.isDevMode"
+				"when": "nexusai.isDevMode"
 			},
 			{
-				"command": "cline.dev.expireMcpOAuthTokens",
+				"command": "nexusai.dev.expireMcpOAuthTokens",
 				"title": "Expire MCP OAuth Tokens (for testing)",
 				"category": "NexusAI",
-				"when": "cline.isDevMode"
+				"when": "nexusai.isDevMode"
 			},
 			{
-				"command": "cline.addToChat",
+				"command": "nexusai.addToChat",
 				"title": "Add to NexusAI",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.addTerminalOutputToChat",
+				"command": "nexusai.addTerminalOutputToChat",
 				"title": "Add to NexusAI",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.focusChatInput",
+				"command": "nexusai.focusChatInput",
 				"title": "Jump to Chat Input",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.generateGitCommitMessage",
+				"command": "nexusai.generateGitCommitMessage",
 				"title": "Generate Commit Message with NexusAI",
 				"category": "NexusAI",
-				"icon": "$(cline-icon)"
+				"icon": "$(nexusai-icon)"
 			},
 			{
-				"command": "cline.abortGitCommitMessage",
+				"command": "nexusai.abortGitCommitMessage",
 				"title": "Generate Commit Message with NexusAI - Stop",
 				"category": "NexusAI",
 				"icon": "$(debug-stop)"
 			},
 			{
-				"command": "cline.explainCode",
+				"command": "nexusai.explainCode",
 				"title": "Explain with NexusAI",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.improveCode",
+				"command": "nexusai.improveCode",
 				"title": "Improve with NexusAI",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.jupyterGenerateCell",
+				"command": "nexusai.jupyterGenerateCell",
 				"title": "Generate Jupyter Cell with NexusAI",
 				"category": "NexusAI",
 				"icon": "$(sparkle)"
 			},
 			{
-				"command": "cline.jupyterExplainCell",
+				"command": "nexusai.jupyterExplainCell",
 				"title": "Explain Jupyter Cell with NexusAI",
 				"category": "NexusAI",
 				"icon": "$(question)"
 			},
 			{
-				"command": "cline.jupyterImproveCell",
+				"command": "nexusai.jupyterImproveCell",
 				"title": "Improve Jupyter Cell with NexusAI",
 				"category": "NexusAI",
 				"icon": "$(lightbulb)"
 			},
 			{
-				"command": "cline.openWalkthrough",
+				"command": "nexusai.openWalkthrough",
 				"title": "Open Walkthrough",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.reconstructTaskHistory",
+				"command": "nexusai.reconstructTaskHistory",
 				"title": "Reconstruct Task History",
 				"category": "NexusAI"
 			},
 			{
-				"command": "cline.reviewComment.reply",
+				"command": "nexusai.reviewComment.reply",
 				"title": "Reply",
 				"category": "NexusAI",
 				"enablement": "!commentIsEmpty"
 			},
 			{
-				"command": "cline.reviewComment.addToChat",
+				"command": "nexusai.reviewComment.addToChat",
 				"title": "Add to NexusAI Chat",
 				"category": "NexusAI",
 				"icon": "$(link-external)"
@@ -272,10 +271,10 @@
 			{
 				"command": "editor.action.submitComment",
 				"key": "enter",
-				"when": "commentEditorFocused && commentController == cline-ai-review && !commentIsEmpty"
+				"when": "commentEditorFocused && commentController == nexusai-ai-review && !commentIsEmpty"
 			},
 			{
-				"command": "cline.addToChat",
+				"command": "nexusai.addToChat",
 				"key": "cmd+'",
 				"mac": "cmd+'",
 				"win": "ctrl+'",
@@ -283,11 +282,11 @@
 				"when": "editorHasSelection"
 			},
 			{
-				"command": "cline.generateGitCommitMessage",
+				"command": "nexusai.generateGitCommitMessage",
 				"when": "config.git.enabled && scmProvider == git"
 			},
 			{
-				"command": "cline.focusChatInput",
+				"command": "nexusai.focusChatInput",
 				"key": "cmd+'",
 				"mac": "cmd+'",
 				"win": "ctrl+'",
@@ -298,101 +297,101 @@
 		"menus": {
 			"view/title": [
 				{
-					"command": "cline.plusButtonClicked",
+					"command": "nexusai.plusButtonClicked",
 					"group": "navigation@1",
 					"when": "view == nexusai.SidebarProvider"
 				},
 				{
-					"command": "cline.mcpButtonClicked",
+					"command": "nexusai.mcpButtonClicked",
 					"group": "navigation@2",
 					"when": "view == nexusai.SidebarProvider"
 				},
 				{
-					"command": "cline.historyButtonClicked",
+					"command": "nexusai.historyButtonClicked",
 					"group": "navigation@3",
 					"when": "view == nexusai.SidebarProvider"
 				},
 				{
-					"command": "cline.accountButtonClicked",
+					"command": "nexusai.accountButtonClicked",
 					"group": "navigation@5",
 					"when": "view == nexusai.SidebarProvider"
 				},
 				{
-					"command": "cline.settingsButtonClicked",
+					"command": "nexusai.settingsButtonClicked",
 					"group": "navigation@6",
 					"when": "view == nexusai.SidebarProvider"
 				}
 			],
 			"editor/context": [
 				{
-					"command": "cline.addToChat",
+					"command": "nexusai.addToChat",
 					"group": "navigation",
 					"when": "editorHasSelection"
 				}
 			],
 			"terminal/context": [
 				{
-					"command": "cline.addTerminalOutputToChat",
+					"command": "nexusai.addTerminalOutputToChat",
 					"group": "navigation"
 				}
 			],
 			"scm/title": [
 				{
-					"command": "cline.generateGitCommitMessage",
+					"command": "nexusai.generateGitCommitMessage",
 					"group": "navigation",
-					"when": "config.git.enabled && scmProvider == git && !cline.isGeneratingCommit"
+					"when": "config.git.enabled && scmProvider == git && !nexusai.isGeneratingCommit"
 				},
 				{
-					"command": "cline.abortGitCommitMessage",
+					"command": "nexusai.abortGitCommitMessage",
 					"group": "navigation",
-					"when": "config.git.enabled && scmProvider == git && cline.isGeneratingCommit"
+					"when": "config.git.enabled && scmProvider == git && nexusai.isGeneratingCommit"
 				}
 			],
 			"notebook/toolbar": [
 				{
-					"command": "cline.jupyterGenerateCell",
+					"command": "nexusai.jupyterGenerateCell",
 					"group": "navigation/add@1",
 					"when": "notebookType == 'jupyter-notebook'"
 				}
 			],
 			"notebook/cell/title": [
 				{
-					"command": "cline.jupyterExplainCell",
+					"command": "nexusai.jupyterExplainCell",
 					"group": "inline@1",
 					"when": "notebookType == 'jupyter-notebook'"
 				},
 				{
-					"command": "cline.jupyterImproveCell",
+					"command": "nexusai.jupyterImproveCell",
 					"group": "inline@2",
 					"when": "notebookType == 'jupyter-notebook'"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "cline.generateGitCommitMessage",
-					"when": "config.git.enabled && !cline.isGeneratingCommit"
+					"command": "nexusai.generateGitCommitMessage",
+					"when": "config.git.enabled && !nexusai.isGeneratingCommit"
 				},
 				{
-					"command": "cline.abortGitCommitMessage",
-					"when": "config.git.enabled && cline.isGeneratingCommit"
+					"command": "nexusai.abortGitCommitMessage",
+					"when": "config.git.enabled && nexusai.isGeneratingCommit"
 				},
 				{
-					"command": "cline.reviewComment.reply",
+					"command": "nexusai.reviewComment.reply",
 					"when": "false"
 				}
 			],
 			"comments/commentThread/context": [
 				{
-					"command": "cline.reviewComment.reply",
+					"command": "nexusai.reviewComment.reply",
 					"group": "inline",
-					"when": "commentController == cline-ai-review"
+					"when": "commentController == nexusai-ai-review"
 				}
 			],
 			"comments/commentThread/title": [
 				{
-					"command": "cline.reviewComment.addToChat",
+					"command": "nexusai.reviewComment.addToChat",
 					"group": "inline",
-					"when": "commentController == cline-ai-review"
+					"when": "commentController == nexusai-ai-review"
 				}
 			]
 		},
@@ -406,14 +405,7 @@
 		"compile": "npm run check-types && npm run lint && node esbuild.mjs",
 		"compile-standalone": "npm run check-types && npm run lint && node esbuild.mjs --standalone",
 		"compile-standalone-npm": "npm run protos && npm run check-types && npm run lint && node esbuild.mjs --standalone",
-		"cli:link": "cd cli && npm run link",
-		"cli:build": "npm run protos && cd cli && npm run build",
-		"cli:run": "node cli/dist/cli.mjs",
-		"cli:build:production": "cd cli && npm run build:production",
-		"cli:watch": "cd cli && npm run watch",
-		"cli:test": "cd cli && npm run test",
 		"test:install": "bash scripts/test-install.sh",
-		"cli:dev": "cd cli && npm run dev",
 		"postcompile-standalone": "node scripts/package-standalone.mjs",
 		"postcompile-standalone-npm": "node scripts/package-npm.mjs",
 		"dev": "npm run protos && npm run watch",
@@ -430,7 +422,7 @@
 		"clean:all": "npm run clean:build && npm run clean:deps",
 		"compile-tests": "node ./scripts/build-tests.js",
 		"watch-tests": "tsc -p . -w --outDir out",
-		"check-types": "npm run protos && npx tsc --noEmit && cd webview-ui && npx tsc --noEmit && cd ../cli && npx tsc --noEmit",
+		"check-types": "npm run protos && npx tsc --noEmit && cd webview-ui && npx tsc --noEmit",
 		"lint": "biome lint --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error && npm run lint:proto",
 		"lint:proto": "bash ./scripts/proto-lint.sh",
 		"format": "biome format --changed --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error",
@@ -462,12 +454,7 @@
 		"docs:check-links": "cd docs && npm run check",
 		"docs:rename-file": "cd docs && npm run rename",
 		"report-issue": "node scripts/report-issue.js",
-		"storybook": "cd webview-ui && npm run storybook",
-		"cli:unlink": "cd cli && npm run unlink",
-		"eval:smoke:build": "npm run cli:build && npm run cli:link",
-		"eval:smoke:run": "npx tsx evals/smoke-tests/run-smoke-tests.ts",
-		"eval:smoke": "npm run eval:smoke:build && npm run eval:smoke:run",
-		"eval:smoke:ci": "npm run eval:smoke:build && npm run eval:smoke:run -- --trials 1 --parallel"
+		"storybook": "cd webview-ui && npm run storybook"
 	},
 	"lint-staged": {
 		"src/shared/storage/state-keys.ts": [
@@ -538,6 +525,7 @@
 		"@google/genai": "^1.30.0",
 		"@grpc/grpc-js": "^1.9.15",
 		"@grpc/reflection": "^1.0.4",
+		"@huggingface/transformers": "^3.8.1",
 		"@mistralai/mistralai": "^1.5.0",
 		"@modelcontextprotocol/sdk": "^1.25.1",
 		"@opentelemetry/api": "^1.9.0",

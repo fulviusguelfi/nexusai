@@ -128,7 +128,7 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Login to Cline" }).click({ delay: 100 })
+		await webview.getByRole("button", { name: "Login to Nexus AI" }).click({ delay: 100 })
 
 		const chatInput = webview.getByTestId("chat-input")
 		const closeBtn = webview.getByRole("button", { name: "Close" }).first()

@@ -75,6 +75,8 @@ enum ClineSay {
   SUBAGENT_STATUS = 34;
   USE_SUBAGENTS_SAY = 35;
   SUBAGENT_USAGE = 36;
+  VOICE_SPEAK = 37;
+  VOICE_LISTEN = 38;
 }
 
 // Enum for ClineSayTool tool types

@@ -97,10 +97,18 @@ e2e.describe("SSH Tools", () => {
 			// causing stream.on("close") on the client side to never fire.
 			const s = ch as any
 			s.on("data", () => {})
-			s.on("end", () => {
-				ch.exit(0)
-				ch.end()
-			})
+			// done guard prevents double exit(0)+end() if both 'end' and 'close' fire.
+			// On Linux 'end' fires reliably; on Windows 'close' is the fallback.
+			let uploadDone = false
+			const uploadFinish = () => {
+				if (!uploadDone) {
+					uploadDone = true
+					ch.exit(0)
+					ch.end()
+				}
+			}
+			s.on("end", uploadFinish)
+			s.on("close", uploadFinish)
 		})
 
 		await helper.signin(sidebar)
