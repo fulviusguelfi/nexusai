@@ -1,5 +1,9 @@
 # Build and Pack CLI
 #
+# NOTE: The CLI package (`cli/`) was removed in the NexusAI rebranding.
+# This workflow is disabled until the CLI is re-implemented.
+# To re-enable, restore the `cli/` directory and remove this notice.
+#
 # Builds a CLI tarball from any branch/commit and publishes it as a GitHub Release.
 # Requires write access to the repository (maintainers/collaborators only).
 #
@@ -43,6 +47,7 @@ jobs:
   # ── Build job: runs untrusted ref code with ZERO permissions ──
   build:
     name: Build CLI
+    if: false  # CLI removed in NexusAI rebranding — re-enable when CLI is restored
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
