@@ -20,7 +20,7 @@ export const AccountWelcomeView = () => {
 			</p>
 
 			<VSCodeButton className="w-full mb-4" disabled={isLoginLoading} onClick={handleSignIn}>
-				Sign up with Cline
+				Sign up with Nexus AI
 				{isLoginLoading && (
 					<span className="ml-1 animate-spin">
 						<span className="codicon codicon-refresh" />
