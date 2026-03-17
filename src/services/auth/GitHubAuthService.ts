@@ -7,6 +7,7 @@ import { Logger } from "@/shared/services/Logger"
 
 const GITHUB_AUTH_PROVIDER_ID = "github"
 const GITHUB_SCOPES = ["read:user"]
+const GITHUB_ISSUE_SCOPES = ["read:user", "public_repo"]
 
 /**
  * Singleton service managing GitHub authentication state via VS Code's
@@ -66,6 +67,34 @@ export class GitHubAuthService {
 			return this.buildState(this._session)
 		}
 		return { isSignedIn: false }
+	}
+
+	/**
+	 * Get an access token with public_repo scope for creating GitHub issues.
+	 * Will silently try the existing session first; if scopes are insufficient,
+	 * prompts the user to re-authenticate.
+	 * Returns undefined if the user cancels.
+	 */
+	async getAccessTokenForIssues(): Promise<string | undefined> {
+		// Try silently first with the extended scopes
+		try {
+			const session = await vscode.authentication.getSession(GITHUB_AUTH_PROVIDER_ID, GITHUB_ISSUE_SCOPES, {
+				createIfNone: false,
+				silent: true,
+			})
+			if (session) return session.accessToken
+		} catch {
+			// fall through to interactive
+		}
+		// Interactive prompt
+		try {
+			const session = await vscode.authentication.getSession(GITHUB_AUTH_PROVIDER_ID, GITHUB_ISSUE_SCOPES, {
+				createIfNone: true,
+			})
+			return session?.accessToken
+		} catch {
+			return undefined
+		}
 	}
 
 	/** Check for an existing session silently (no UI). */

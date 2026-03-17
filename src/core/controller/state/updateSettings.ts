@@ -344,6 +344,26 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("doubleCheckCompletionEnabled", request.doubleCheckCompletionEnabled)
 		}
 
+		if (request.voiceTtsEnabled !== undefined) {
+			controller.stateManager.setGlobalState("voiceTtsEnabled", request.voiceTtsEnabled)
+		}
+
+		if (request.voiceSttEnabled !== undefined) {
+			controller.stateManager.setGlobalState("voiceSttEnabled", request.voiceSttEnabled)
+		}
+
+		if (request.voiceInputDeviceId !== undefined) {
+			controller.stateManager.setGlobalState("voiceInputDeviceId", request.voiceInputDeviceId || undefined)
+		}
+
+		if (request.voiceOutputDeviceId !== undefined) {
+			controller.stateManager.setGlobalState("voiceOutputDeviceId", request.voiceOutputDeviceId || undefined)
+		}
+
+		if (request.voicePiperVoice !== undefined) {
+			controller.stateManager.setGlobalState("voicePiperVoice", request.voicePiperVoice)
+		}
+
 		// Post updated state to webview
 		await controller.postStateToWebview()
 

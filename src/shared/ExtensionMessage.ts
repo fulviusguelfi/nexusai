@@ -27,8 +27,10 @@ import { TelemetrySetting } from "./TelemetrySetting"
 import { UserInfo } from "./UserInfo"
 // webview will hold state
 export interface ExtensionMessage {
-	type: "grpc_response" // New type for gRPC responses
+	type: "grpc_response" | "voice_audio_play" | "voice_transcription"
 	grpc_response?: GrpcResponse
+	voice_audio_play?: { wavBase64: string }
+	voice_transcription?: { text: string }
 }
 
 export type GrpcResponse = {
@@ -114,6 +116,12 @@ export interface ExtensionState {
 	doubleCheckCompletionEnabled?: boolean
 	openAiCodexIsAuthenticated?: boolean
 	activeSshSessions: SshSessionInfo[]
+	// Voice settings
+	voiceTtsEnabled: boolean
+	voiceSttEnabled: boolean
+	voiceInputDeviceId?: string
+	voiceOutputDeviceId?: string
+	voicePiperVoice: string
 }
 
 export interface ClineMessage {
@@ -194,6 +202,8 @@ export type ClineSay =
 	| "use_subagents"
 	| "subagent_usage"
 	| "conditional_rules_applied"
+	| "voice_speak"
+	| "voice_listen"
 
 export interface ClineSayTool {
 	tool:

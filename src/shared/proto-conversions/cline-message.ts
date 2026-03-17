@@ -109,6 +109,8 @@ function convertClineSayToProtoEnum(say: AppClineSay | undefined): ClineSay | un
 		use_subagents: ClineSay.USE_SUBAGENTS_SAY,
 		subagent_usage: ClineSay.SUBAGENT_USAGE,
 		generate_explanation: ClineSay.GENERATE_EXPLANATION,
+		voice_speak: ClineSay.VOICE_SPEAK,
+		voice_listen: ClineSay.VOICE_LISTEN,
 	}
 
 	const result = mapping[say]
@@ -160,6 +162,8 @@ function convertProtoEnumToClineSay(say: ClineSay): AppClineSay | undefined {
 		[ClineSay.SUBAGENT_STATUS]: "subagent",
 		[ClineSay.USE_SUBAGENTS_SAY]: "use_subagents",
 		[ClineSay.SUBAGENT_USAGE]: "subagent_usage",
+		[ClineSay.VOICE_SPEAK]: "voice_speak",
+		[ClineSay.VOICE_LISTEN]: "voice_listen",
 	}
 
 	return mapping[say]

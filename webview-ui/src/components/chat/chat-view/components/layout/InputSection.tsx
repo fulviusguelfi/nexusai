@@ -39,6 +39,14 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	} = chatState
 
 	const { isAtBottom, scrollToBottomAuto } = scrollBehavior
+	const { voiceSttEnabled } = useExtensionState()
+
+	const handleTranscription = useCallback(
+		(text: string) => {
+			setInputValue((prev) => (prev ? prev + " " + text : text))
+		},
+		[setInputValue],
+	)
 
 	return (
 		<>
@@ -63,6 +71,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 				}}
 				onSelectFilesAndImages={selectFilesAndImages}
 				onSend={() => messageHandlers.handleSendMessage(inputValue, selectedImages, selectedFiles)}
+				onTranscription={voiceSttEnabled ? handleTranscription : undefined}
 				placeholderText={placeholderText}
 				ref={textAreaRef}
 				selectedFiles={selectedFiles}

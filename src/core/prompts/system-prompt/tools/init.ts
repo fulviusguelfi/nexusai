@@ -17,6 +17,7 @@ import { kill_process_variants } from "./kill_process"
 import { list_code_definition_names_variants } from "./list_code_definition_names"
 import { list_files_variants } from "./list_files"
 import { list_processes_variants } from "./list_processes"
+import { listen_for_speech_variants } from "./listen_for_speech"
 import { load_mcp_documentation_variants } from "./load_mcp_documentation"
 import { mqtt_connect_variants } from "./mqtt_connect"
 import { mqtt_disconnect_variants } from "./mqtt_disconnect"
@@ -29,6 +30,7 @@ import { read_file_variants } from "./read_file"
 import { register_device_variants } from "./register_device"
 import { replace_in_file_variants } from "./replace_in_file"
 import { search_files_variants } from "./search_files"
+import { speak_text_variants } from "./speak_text"
 import { ssh_connect_variants } from "./ssh_connect"
 import { ssh_disconnect_variants } from "./ssh_disconnect"
 import { ssh_download_variants } from "./ssh_download"
@@ -89,6 +91,8 @@ export function registerClineToolSets(): void {
 		...register_device_variants,
 		...get_device_info_variants,
 		...operate_device_variants,
+		...speak_text_variants,
+		...listen_for_speech_variants,
 	]
 
 	// Register each variant

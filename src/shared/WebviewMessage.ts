@@ -1,7 +1,8 @@
 export interface WebviewMessage {
-	type: "grpc_request" | "grpc_request_cancel"
+	type: "grpc_request" | "grpc_request_cancel" | "voice_float32_audio"
 	grpc_request?: GrpcRequest
 	grpc_request_cancel?: GrpcCancel
+	voice_float32_audio?: { buffer: ArrayBuffer; sampleRate: number }
 }
 
 export type GrpcRequest = {

@@ -39,6 +39,7 @@ const AppContent = () => {
 	} = useExtensionState()
 
 	const { clineUser, organizations, activeOrganization } = useClineAuth()
+	useVoiceAudioPlayer()
 
 	useEffect(() => {
 		if (shouldShowAnnouncement) {

@@ -59,6 +59,8 @@ export const config = createVariant(ModelFamily.XS)
 		ClineDefaultTool.REGISTER_DEVICE,
 		ClineDefaultTool.GET_DEVICE_INFO,
 		ClineDefaultTool.OPERATE_DEVICE,
+		ClineDefaultTool.SPEAK_TEXT,
+		ClineDefaultTool.LISTEN_FOR_SPEECH,
 		ClineDefaultTool.FILE_READ,
 		ClineDefaultTool.FILE_NEW,
 		ClineDefaultTool.FILE_EDIT,

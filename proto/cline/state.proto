@@ -99,7 +99,7 @@ message Secrets {
   optional string oca_refresh_token = 42;
   optional string mcp_o_auth_secrets = 43;
   optional string cline_api_key = 44;
-  optional string openai_codex_oauth_credentials = 51;
+  optional string openai_codex_oauth_credentials = 53;
 }
 
 // NOTE: Add new fields under API_HANDLER_SETTINGS_FIELDS or USER_SETTINGS_FIELDS
@@ -420,6 +420,11 @@ message UpdateSettingsRequest {
   optional bool opt_out_of_remote_config = 39;
   optional bool worktrees_enabled = 40;
   optional bool double_check_completion_enabled = 41;
+  optional bool voice_tts_enabled = 42;
+  optional bool voice_stt_enabled = 43;
+  optional string voice_input_device_id = 44;
+  optional string voice_output_device_id = 45;
+  optional string voice_piper_voice = 46;
 }
 
 message UpdateTerminalConnectionTimeoutRequest {
