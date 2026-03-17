@@ -48,10 +48,8 @@ jobs:
         run: |
           # Transitional smoke suite: legacy eval runner depends on removed `cline` CLI.
           # Keep CI signal alive with deterministic, fast checks over critical runtime paths.
-          # Note: avoid platform-sensitive kill_process specs in Linux CI.
-          npm run test:unit -- \
-            src/core/task/tools/handlers/__tests__/ListProcessesToolHandler.test.ts \
-            src/integrations/checkpoints/__tests__/MultiRootCheckpointManager.test.ts
+          # Use grep to isolate smoke suites because the unit runner loads the full test tree.
+          npm run test:unit -- --grep "ListProcessesToolHandler|MultiRootCheckpointManager"
 
       - name: Generate summary
         if: always()
