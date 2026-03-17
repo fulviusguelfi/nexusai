@@ -116,7 +116,7 @@ const WelcomeView = memo(() => {
 				<div className="flex flex-col gap-2">
 					<p className="text-xs text-(--vscode-descriptionForeground) text-center m-0">
 						Or sign in to your{" "}
-						<VSCodeLink className="inline text-xs" href="https://cline.bot">
+						<VSCodeLink className="inline text-xs" href="https://nexusai.dev">
 							Nexus AI account
 						</VSCodeLink>{" "}
 						to use Nexus AI's free tier and frontier models

@@ -37,8 +37,8 @@ export class VercelAIGatewayHandler implements ApiHandler {
 					baseURL: "https://ai-gateway.vercel.sh/v1",
 					apiKey: this.options.vercelAiGatewayApiKey,
 					defaultHeaders: {
-						"http-referer": "https://cline.bot",
-						"x-title": "Cline",
+						"http-referer": "https://nexusai.dev",
+						"x-title": "NexusAI",
 					},
 				})
 			} catch (error: any) {

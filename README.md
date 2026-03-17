@@ -6,7 +6,8 @@ NexusAI e uma extensao de IA para VS Code baseada no projeto Cline, evoluida par
 
 - Versao: `1.0.0-alpha`
 - Branch principal de integracao: `develop`
-- Fase atual: `Fase 1 - Fundacao`
+- Fase atual: `Fase 5 - Voz (Piper TTS + Whisper STT)` ✅
+- EPIC em andamento: Rebranding Cline → NexusAI (A1–A10)
 
 ## Objetivos da v1.0
 
@@ -16,11 +17,13 @@ NexusAI e uma extensao de IA para VS Code baseada no projeto Cline, evoluida par
 
 ## Roadmap resumido
 
-- Fase 1: Fundacao (renomeacao, identidade, autores/licenca, documentacao)
-- Fase 2: Controle local (terminal e processos)
-- Fase 3: Conexao SSH
-- Fase 4: Voz (TTS/STT)
-- Fase 5: IoT
+- Fase 1: Fundacao (renomeacao, identidade, autores/licenca, documentacao) ✅
+- Fase 2: Controle local (terminal e processos) ✅
+- Fase 3: Conexao SSH ✅
+- Fase 4: IoT (dispositivos + MQTT) ✅
+- Fase 5: Voz (Piper TTS + Whisper STT) ✅
+- Fase 6: Agentes Autonomos (roadmap)
+- EPIC: Rebranding Cline → NexusAI com Compatibilidade (em andamento)
 
 Detalhes completos em:
 - `PLAN.md`

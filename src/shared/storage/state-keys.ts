@@ -304,11 +304,15 @@ const GLOBAL_STATE_AND_SETTINGS_FIELDS = { ...GLOBAL_STATE_FIELDS, ...SETTINGS_F
 // ============================================================================
 
 // Secret keys used in Api Configuration
+// MIGRATION NOTE (A5): "clineApiKey" and "clineAccountId" are legacy keys tied to the Cline
+// backend infrastructure. They must remain as-is until NexusAI deploys its own auth backend.
+// When NexusAI backend is ready, add new keys ("nexusai:apiKey", "nexusai:accountId") and
+// implement dual-read migration in state-migrations.ts: read new key first, fall back to old.
 const SECRETS_KEYS = [
 	"apiKey",
 	"clineApiKey",
-	"clineAccountId", // Cline Account ID for Firebase
-	"cline:clineAccountId",
+	"clineAccountId", // Cline Account ID for Firebase — see migration note above
+	"cline:clineAccountId", // see migration note above
 	"openRouterApiKey",
 	"awsAccessKey",
 	"awsSecretKey",

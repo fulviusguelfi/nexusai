@@ -1,5 +1,5 @@
 # JetBrains tests disabled - requires Cline-specific secrets
-name: Trigger Jetbrains Plugin <-> Cline Tests
+name: Trigger Jetbrains Plugin <-> NexusAI Tests
 on:
   pull_request_target:
     types: [opened, reopened]

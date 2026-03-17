@@ -52,7 +52,7 @@
 	"contributes": {
 		"icons": {
 			"nexusai-icon": {
-				"description": "cline",
+				"description": "nexusai",
 				"default": {
 					"fontPath": "assets/icons/cline-bot.woff",
 					"fontCharacter": "\\e900"

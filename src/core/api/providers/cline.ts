@@ -57,8 +57,8 @@ export class ClineHandler implements ApiHandler {
 		if (!this.client) {
 			try {
 				const defaultHeaders: Record<string, string> = {
-					"HTTP-Referer": "https://cline.bot",
-					"X-Title": "Cline",
+					"HTTP-Referer": "https://nexusai.dev",
+					"X-Title": "NexusAI",
 					"X-Task-ID": this.options.ulid || "",
 				}
 				Object.assign(defaultHeaders, await buildClineExtraHeaders())
