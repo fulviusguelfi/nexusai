@@ -1,7 +1,7 @@
 import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { ApiHandler, ApiProviderInfo, buildApiHandler } from "@core/api"
 import { ApiStream } from "@core/api/transform/stream"
-import { AssistantMessageContent, parseAssistantMessageV2, ToolUse } from "@core/assistant-message"
+import { parseAssistantMessageV2 } from "@core/assistant-message"
 import { ContextManager } from "@core/context/context-management/ContextManager"
 import { checkContextWindowExceededError } from "@core/context/context-management/context-error-handling"
 import { getContextWindowInfo } from "@core/context/context-management/context-window-utils"
@@ -22,7 +22,6 @@ import {
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
-import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
 import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
 import { parseMentions } from "@core/mentions"
 import { CommandPermissionController } from "@core/permissions"
@@ -117,6 +116,8 @@ import { FocusChainManager } from "./focus-chain"
 import { MessageStateHandler } from "./message-state"
 import { StreamChunkCoordinator } from "./StreamChunkCoordinator"
 import { StreamResponseHandler } from "./StreamResponseHandler"
+import { ContextCompactor } from "./services/ContextCompactor"
+import { NativeToolCallProcessor } from "./services/NativeToolCallProcessor"
 import { TaskState } from "./TaskState"
 import { ToolExecutor } from "./ToolExecutor"
 import { detectAvailableCliTools, extractProviderDomainFromUrl, updateApiReqMsg } from "./utils"
@@ -256,6 +257,10 @@ export class Task {
 
 	// Command executor for running shell commands (extracted from executeCommandTool)
 	private commandExecutor!: CommandExecutor
+
+	// Extracted services
+	private nativeToolCallProcessor: NativeToolCallProcessor
+	private contextCompactor: ContextCompactor
 
 	constructor(params: TaskParams) {
 		const {
@@ -530,6 +535,23 @@ export class Task {
 		}
 
 		this.commandExecutor = new CommandExecutor(commandExecutorConfig, commandExecutorCallbacks)
+
+		// Extracted services
+		this.nativeToolCallProcessor = new NativeToolCallProcessor(this.taskState, this.messageStateHandler)
+		this.contextCompactor = new ContextCompactor({
+			taskId: this.taskId,
+			ulid: this.ulid,
+			taskState: this.taskState,
+			messageStateHandler: this.messageStateHandler,
+			stateManager: this.stateManager,
+			contextManager: this.contextManager,
+			api: this.api,
+			say: this.say.bind(this),
+			setActiveHookExecution: this.setActiveHookExecution.bind(this),
+			clearActiveHookExecution: this.clearActiveHookExecution.bind(this),
+			postStateToWebview: this.postStateToWebview.bind(this),
+			cancelTask: this.cancelTask.bind(this),
+		})
 
 		this.toolExecutor = new ToolExecutor(
 			this.taskState,
@@ -909,21 +931,6 @@ export class Task {
 
 		// Log for debugging/telemetry
 		Logger.log(`[Task ${this.taskId}] ${hookName} hook cancelled (userInitiated: ${wasCancelled})`)
-	}
-
-	/**
-	 * Calculate the new deleted range for PreCompact hook
-	 * @param apiConversationHistory The full API conversation history
-	 * @returns Tuple with start and end indices for the deleted range
-	 */
-	private calculatePreCompactDeletedRange(apiConversationHistory: ClineStorageMessage[]): [number, number] {
-		const newDeletedRange = this.contextManager.getNextTruncationRange(
-			apiConversationHistory,
-			this.taskState.conversationHistoryDeletedRange,
-			"quarter", // Force aggressive truncation on error
-		)
-
-		return newDeletedRange || [0, 0]
 	}
 
 	private async runUserPromptSubmitHook(
@@ -1720,70 +1727,6 @@ export class Task {
 		return apiLike.getLastRequestId?.() ?? apiLike.lastGenerationId
 	}
 
-	private async handleContextWindowExceededError(): Promise<void> {
-		const apiConversationHistory = this.messageStateHandler.getApiConversationHistory()
-
-		// Run PreCompact hook before truncation
-		const hooksEnabled = getHooksEnabledSafe(this.stateManager.getGlobalSettingsKey("hooksEnabled"))
-		if (hooksEnabled) {
-			try {
-				// Calculate what the new deleted range will be
-				const deletedRange = this.calculatePreCompactDeletedRange(apiConversationHistory)
-
-				// Execute hook - throws HookCancellationError if cancelled
-				await executePreCompactHookWithCleanup({
-					taskId: this.taskId,
-					ulid: this.ulid,
-					modelContext: getHookModelContext(this.api, this.stateManager),
-					apiConversationHistory,
-					conversationHistoryDeletedRange: this.taskState.conversationHistoryDeletedRange,
-					contextManager: this.contextManager,
-					clineMessages: this.messageStateHandler.getClineMessages(),
-					messageStateHandler: this.messageStateHandler,
-					compactionStrategy: "standard-truncation-lastquarter",
-					deletedRange,
-					say: this.say.bind(this),
-					setActiveHookExecution: async (hookExecution: HookExecution | undefined) => {
-						if (hookExecution) {
-							await this.setActiveHookExecution(hookExecution)
-						}
-					},
-					clearActiveHookExecution: this.clearActiveHookExecution.bind(this),
-					postStateToWebview: this.postStateToWebview.bind(this),
-					taskState: this.taskState,
-					cancelTask: this.cancelTask.bind(this),
-					hooksEnabled,
-				})
-			} catch (error) {
-				// If hook was cancelled, re-throw to stop compaction
-				if (error instanceof HookCancellationError) {
-					throw error
-				}
-
-				// Graceful degradation: Log error but continue with truncation
-				Logger.error("[PreCompact] Hook execution failed:", error)
-			}
-		}
-
-		// Proceed with standard truncation
-		const newDeletedRange = this.contextManager.getNextTruncationRange(
-			apiConversationHistory,
-			this.taskState.conversationHistoryDeletedRange,
-			"quarter", // Force aggressive truncation
-		)
-
-		this.taskState.conversationHistoryDeletedRange = newDeletedRange
-
-		await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
-		await this.contextManager.triggerApplyStandardContextTruncationNoticeChange(
-			Date.now(),
-			await ensureTaskDirectoryExists(this.taskId),
-			apiConversationHistory,
-		)
-
-		this.taskState.didAutomaticallyRetryFailedApiRequest = true
-	}
-
 	async *attemptApiRequest(previousApiReqIndex: number): ApiStream {
 		// Wait for MCP servers to be connected before generating system prompt
 		await pWaitFor(() => this.mcpHub.isConnecting !== true, {
@@ -1954,7 +1897,7 @@ export class Task {
 			ErrorService.get().logMessage(clineError.message)
 
 			if (isContextWindowExceededError && !this.taskState.didAutomaticallyRetryFailedApiRequest) {
-				await this.handleContextWindowExceededError()
+				await this.contextCompactor.handleContextWindowExceededError()
 			} else {
 				// request failed after retrying automatically once, ask user if they want to retry again
 				// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
@@ -2801,7 +2744,10 @@ export class Task {
 								this.taskState.toolUseIdMap.set(chunk.tool_call.call_id, chunk.tool_call.function.id)
 							}
 
-							await this.processNativeToolCalls(assistantTextOnly, toolUseHandler.getPartialToolUsesAsContent())
+							await this.nativeToolCallProcessor.process(
+								assistantTextOnly,
+								toolUseHandler.getPartialToolUsesAsContent(),
+							)
 							break
 						}
 						case "text": {
@@ -3060,7 +3006,7 @@ export class Task {
 			})
 			// in case there are native tool calls pending
 			const partialToolBlocks = toolUseHandler.getPartialToolUsesAsContent()?.map((block) => ({ ...block, partial: false }))
-			await this.processNativeToolCalls(assistantTextOnly, partialToolBlocks)
+			await this.nativeToolCallProcessor.process(assistantTextOnly, partialToolBlocks)
 
 			if (partialBlocks.length > 0) {
 				await this.presentAssistantMessage() // if there is content to update then it will complete and update this.userMessageContentReady to true, which we pwaitfor before making the next request. all this is really doing is presenting the last partial message that we just set to complete
@@ -3326,53 +3272,6 @@ export class Task {
 		}
 
 		return [processedUserContent, environmentDetails, clinerulesError]
-	}
-
-	async processNativeToolCalls(assistantTextOnly: string, toolBlocks: ToolUse[]) {
-		if (!toolBlocks?.length) {
-			return
-		}
-		// For native tool calls, mark all pending tool uses as complete
-		const prevLength = this.taskState.assistantMessageContent.length
-
-		// Get finalized tool uses and mark them as complete
-		const textContent = assistantTextOnly.trim()
-		const textBlocks: AssistantMessageContent[] = textContent ? [{ type: "text", content: textContent, partial: false }] : []
-
-		// IMPORTANT: Finalize any partial text ClineMessage before we skip over it.
-		//
-		// When native tool calls are processed, we set currentStreamingContentIndex to skip
-		// the text block (line below sets it to textBlocks.length). This means presentAssistantMessage
-		// will never call say("text", content, false) for this text block.
-		//
-		// Without this fix, the partial text ClineMessage remains with partial=true. In the UI
-		// (ChatView), partial messages that are not the last message don't get displayed anywhere:
-		// - Not in completedMessages (because partial=true)
-		// - Not in currentMessage (because it's not the last message - tool message came after)
-		//
-		// The text appears to "disappear" when tool calls start, even though it's still in the array.
-		const clineMessages = this.messageStateHandler.getClineMessages()
-		const lastMessage = clineMessages.at(-1)
-		const shouldFinalizePartialText = textBlocks.length > 0
-		if (shouldFinalizePartialText && lastMessage?.partial && lastMessage.type === "say" && lastMessage.say === "text") {
-			lastMessage.text = textContent
-			lastMessage.partial = false
-			await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
-			const protoMessage = convertClineMessageToProto(lastMessage)
-			await sendPartialMessageEvent(protoMessage)
-		}
-
-		this.taskState.assistantMessageContent = [...textBlocks, ...toolBlocks]
-
-		// Reset index to the first tool block position so they can be executed
-		// This fixes the issue where tools remain unexecuted because the index
-		// advanced past them or was out of bounds during streaming
-		if (toolBlocks.length > 0) {
-			this.taskState.currentStreamingContentIndex = textBlocks.length
-			this.taskState.userMessageContentReady = false
-		} else if (this.taskState.assistantMessageContent.length > prevLength) {
-			this.taskState.userMessageContentReady = false
-		}
 	}
 
 	/**
