@@ -1173,8 +1173,9 @@ export const ChatRowContent = memo(
 										<div className="text-foreground opacity-80">
 											{isFailed ? (
 												<span>
-													Auto-retry failed after <strong>{maxAttempts}</strong> attempts. Manual
-													intervention required.
+													Auto-retry failed after <strong>{maxAttempts}</strong> attempts. Try switching
+													to a different model, reducing context size, or checking your API provider
+													status.
 												</span>
 											) : (
 												<span>

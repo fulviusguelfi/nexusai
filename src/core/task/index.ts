@@ -2288,66 +2288,53 @@ export class Task {
 		// Save checkpoint if this is the first API request
 		const isFirstRequest = this.messageStateHandler.getClineMessages().filter((m) => m.say === "api_req_started").length === 0
 
-		// Initialize checkpointManager first if enabled and it's the first request
-		if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			this.checkpointManager && // TODO REVIEW: may be able to implement a replacement for the 15s timer
-			!this.taskState.checkpointManagerErrorMessage
-		) {
-			try {
-				await ensureCheckpointInitialized({ checkpointManager: this.checkpointManager })
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : "Unknown error"
-				Logger.error("Failed to initialize checkpoint manager:", errorMessage)
-				this.taskState.checkpointManagerErrorMessage = errorMessage // will be displayed right away since we saveClineMessages next which posts state to webview
-				HostProvider.window.showMessage({
-					type: ShowMessageType.ERROR,
-					message: `Checkpoint initialization timed out: ${errorMessage}`,
-				})
-			}
-		}
-
-		// Now, if it's the first request AND checkpoints are enabled AND tracker was successfully initialized,
-		// then say "checkpoint_created" and perform the commit.
+		// Initialize checkpointManager in the background (non-blocking) if enabled and it's the first request.
+		// This allows the API request to proceed while checkpoints initialize, avoiding a 15s hang.
 		if (
 			isFirstRequest &&
 			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
 			this.checkpointManager &&
 			!this.taskState.checkpointManagerErrorMessage
 		) {
-			await this.say("checkpoint_created") // Now this is conditional
-			const lastCheckpointMessageIndex = findLastIndex(
-				this.messageStateHandler.getClineMessages(),
-				(m) => m.say === "checkpoint_created",
-			)
-			if (lastCheckpointMessageIndex !== -1) {
-				const commitPromise = this.checkpointManager?.commit()
-				this.initialCheckpointCommitPromise = commitPromise
-				commitPromise
-					?.then(async (commitHash) => {
-						if (commitHash) {
-							await this.messageStateHandler.updateClineMessage(lastCheckpointMessageIndex, {
-								lastCheckpointHash: commitHash,
+			const checkpointInitPromise = ensureCheckpointInitialized({ checkpointManager: this.checkpointManager })
+				.then(async () => {
+					// Checkpoint initialized successfully — create initial checkpoint
+					await this.say("checkpoint_created")
+					const lastCheckpointMessageIndex = findLastIndex(
+						this.messageStateHandler.getClineMessages(),
+						(m) => m.say === "checkpoint_created",
+					)
+					if (lastCheckpointMessageIndex !== -1) {
+						const commitPromise = this.checkpointManager?.commit()
+						this.initialCheckpointCommitPromise = commitPromise
+						commitPromise
+							?.then(async (commitHash) => {
+								if (commitHash) {
+									await this.messageStateHandler.updateClineMessage(lastCheckpointMessageIndex, {
+										lastCheckpointHash: commitHash,
+									})
+								}
 							})
-							// saveClineMessagesAndUpdateHistory will be called later after API response,
-							// so no need to call it here unless this is the only modification to this message.
-							// For now, assuming it's handled later.
-						}
+							.catch((error) => {
+								Logger.error(
+									`[TaskCheckpointManager] Failed to create checkpoint commit for task ${this.taskId}:`,
+									error,
+								)
+							})
+					}
+				})
+				.catch((error) => {
+					const errorMessage = error instanceof Error ? error.message : "Unknown error"
+					Logger.error("Failed to initialize checkpoint manager:", errorMessage)
+					this.taskState.checkpointManagerErrorMessage = errorMessage
+					HostProvider.window.showMessage({
+						type: ShowMessageType.WARNING,
+						message: `Checkpoint initialization timed out: ${errorMessage}`,
 					})
-					.catch((error) => {
-						Logger.error(`[TaskCheckpointManager] Failed to create checkpoint commit for task ${this.taskId}:`, error)
-					})
-			}
-		} else if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			!this.checkpointManager &&
-			this.taskState.checkpointManagerErrorMessage
-		) {
-			// Checkpoints are enabled, but tracker failed to initialize.
-			// checkpointManagerErrorMessage is already set and will be part of the state.
-			// No explicit UI message here, error message will be in ExtensionState.
+				})
+
+			// Store for later await if needed (e.g. saveCheckpoint)
+			this.initialCheckpointCommitPromise = checkpointInitPromise.then(() => undefined)
 		}
 
 		// Determine if we should compact context window
@@ -3092,7 +3079,9 @@ export class Task {
 
 				let response: ClineAskResponse
 
-				const noResponseErrorMessage = "No assistant message was received. Would you like to retry the request?"
+				const noResponseErrorMessage =
+					"No assistant message was received. " +
+					"Possible fixes: try a different model, reduce context size, or check your API provider status."
 
 				if (this.taskState.autoRetryAttempts < 3) {
 					// Auto-retry enabled with max 3 attempts: automatically approve the retry
