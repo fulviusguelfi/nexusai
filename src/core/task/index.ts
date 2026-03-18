@@ -2072,6 +2072,8 @@ export class Task {
 								delaySeconds: 0,
 								failed: true, // Special flag to indicate retries exhausted
 								errorMessage: streamingFailedMessage,
+								actionableMessage:
+									"Try switching to a different model, reducing the context size by starting a new task, or waiting before retrying.",
 							}),
 						)
 					}
@@ -2345,24 +2347,19 @@ export class Task {
 		// Save checkpoint if this is the first API request
 		const isFirstRequest = this.messageStateHandler.getClineMessages().filter((m) => m.say === "api_req_started").length === 0
 
-		// Initialize checkpointManager first if enabled and it's the first request
+		// Initialize checkpoint manager in the background — do NOT block the task loop.
+		// commit() below handles lazy-init internally; errors surface as dismissible warnings in the webview.
 		if (
 			isFirstRequest &&
 			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			this.checkpointManager && // TODO REVIEW: may be able to implement a replacement for the 15s timer
+			this.checkpointManager &&
 			!this.taskState.checkpointManagerErrorMessage
 		) {
-			try {
-				await ensureCheckpointInitialized({ checkpointManager: this.checkpointManager })
-			} catch (error) {
+			ensureCheckpointInitialized({ checkpointManager: this.checkpointManager }).catch((error) => {
 				const errorMessage = error instanceof Error ? error.message : "Unknown error"
 				Logger.error("Failed to initialize checkpoint manager:", errorMessage)
-				this.taskState.checkpointManagerErrorMessage = errorMessage // will be displayed right away since we saveClineMessages next which posts state to webview
-				HostProvider.window.showMessage({
-					type: ShowMessageType.ERROR,
-					message: `Checkpoint initialization timed out: ${errorMessage}`,
-				})
-			}
+				this.taskState.checkpointManagerErrorMessage = errorMessage
+			})
 		}
 
 		// Now, if it's the first request AND checkpoints are enabled AND tracker was successfully initialized,
@@ -3175,9 +3172,13 @@ export class Task {
 							delaySeconds: 0,
 							failed: true, // Special flag to indicate retries exhausted
 							errorMessage: noResponseErrorMessage,
+							actionableMessage:
+								"Try switching to a different model, reducing the context size by starting a new task, or waiting before retrying.",
 						}),
 					)
-					const askResult = await this.ask("api_req_failed", noResponseErrorMessage)
+					const exhaustedErrorMessage =
+						"All retry attempts exhausted: the provider returned no response. Try switching the model, reducing context size, or starting a new task."
+					const askResult = await this.ask("api_req_failed", exhaustedErrorMessage)
 					response = askResult.response
 					// Reset retry counter if user chooses to manually retry
 					if (response === "yesButtonClicked") {
