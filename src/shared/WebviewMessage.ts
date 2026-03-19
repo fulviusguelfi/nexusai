@@ -1,8 +1,17 @@
 export interface WebviewMessage {
-	type: "grpc_request" | "grpc_request_cancel" | "voice_float32_audio"
+	type: "grpc_request" | "grpc_request_cancel" | "voice_float32_audio" | "debug_voice_error"
 	grpc_request?: GrpcRequest
 	grpc_request_cancel?: GrpcCancel
 	voice_float32_audio?: { buffer: ArrayBuffer; sampleRate: number }
+	debug_voice_error?: {
+		source: string // "VoiceRecorder" | "VoiceSettingsSection"
+		stage: string // "device_enumeration" | "permission_request" | "stream_setup"
+		errorName: string // "NotAllowedError" | "NotFoundError" | "AbortError"
+		errorMessage: string // full error.message
+		deviceId: string // selected deviceId or "default"
+		userAgent: string // navigator.userAgent
+		timestamp: string // ISO 8601
+	}
 }
 
 export type GrpcRequest = {

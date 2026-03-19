@@ -213,6 +213,55 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				}
 				break
 			}
+			case "debug_voice_error": {
+				const errorData = message.debug_voice_error
+				if (errorData) {
+					const output = [
+						"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+						"🎙️ VOICE PERMISSION ERROR",
+						"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+						`Time: ${errorData.timestamp}`,
+						`Stage: ${errorData.stage}`,
+						`Error: ${errorData.errorName}: ${errorData.errorMessage}`,
+						`Device: ${errorData.deviceId}`,
+						"",
+					]
+
+					// OS-specific instructions
+					if (process.platform === "win32") {
+						output.push(
+							"📍 FIX FOR WINDOWS:",
+							`1. Open Settings → Privacy & Security → Microphone`,
+							`2. Toggle "Let desktop apps access your microphone" ON`,
+							`3. Scroll down and ensure VSCode is in the "Allow" list`,
+							`4. Restart VSCode and try again`,
+							"",
+						)
+					} else if (process.platform === "darwin") {
+						output.push(
+							"📍 FIX FOR MACOS:",
+							"1. Go to System Settings → Privacy & Security → Microphone",
+							"2. Ensure VSCode is in the list with permission granted",
+							"3. If VSCode isn't listed, restart VSCode to trigger prompt",
+							"4. Grant permission when prompt appears",
+							"",
+						)
+					} else {
+						output.push(
+							"📍 FIX FOR LINUX:",
+							"1. Check PulseAudio/PipeWire permissions",
+							`2. Run: pactl list clients | grep Code`,
+							"3. Ensure microphone device is accessible in system settings",
+							"",
+						)
+					}
+
+					output.push("For more details, check the NexusAI output panel below.")
+
+					Logger.info(`[VoiceDebug] ${output.join("\n")}`)
+				}
+				break
+			}
 			default: {
 				Logger.error("Received unhandled WebviewMessage type:", JSON.stringify(message))
 			}

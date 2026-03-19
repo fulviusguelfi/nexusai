@@ -92,12 +92,21 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (sess) {
 			sess.setPermissionRequestHandler(
 				(_webContents: unknown, permission: string, callback: (granted: boolean) => void) => {
-					callback(permission === "media" || permission === "microphone" || permission === "camera")
+					const isGranted = permission === "media" || permission === "microphone" || permission === "camera"
+					if (isGranted && (permission === "microphone" || permission === "camera")) {
+						Logger.info(`[Extension] Electron permission handler: granted '${permission}' (OS level may still block)`)
+					}
+					callback(isGranted)
 				},
 			)
 			sess.setPermissionCheckHandler((_webContents: unknown, permission: string) => {
-				return permission === "media" || permission === "microphone" || permission === "camera"
+				const isAllowed = permission === "media" || permission === "microphone" || permission === "camera"
+				if ((permission === "microphone" || permission === "camera") && isAllowed) {
+					Logger.info(`[Extension] Electron permission check: '${permission}' allowed (OS: ${process.platform})`)
+				}
+				return isAllowed
 			})
+			Logger.info("[Extension] Electron permission handlers registered successfully")
 		}
 	} catch {
 		// Not in a local Electron context (remote SSH, Dev Containers, tests) — skip.

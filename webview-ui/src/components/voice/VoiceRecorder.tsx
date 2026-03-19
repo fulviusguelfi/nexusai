@@ -38,6 +38,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	const streamRef = useRef<MediaStream | null>(null)
 	const isPressingRef = useRef(false)
 	const pendingStopRef = useRef(false)
+	const audioStreamLockRef = useRef(false)
+	const abortControllerRef = useRef<AbortController | null>(null)
 
 	// Listen for transcription results from the extension host
 	useEffect(() => {
@@ -70,6 +72,9 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 
 	const endPress = useCallback(() => {
 		isPressingRef.current = false
+		// Cancela qualquer getUserMedia pendente se lock ainda ativo
+		abortControllerRef.current?.abort()
+
 		const recorder = recorderRef.current
 		if (recorder && recorder.state !== "inactive") {
 			void stopAndTranscribe()
@@ -82,24 +87,55 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	}, [stopAndTranscribe])
 
 	const startRecording = useCallback(async () => {
+		// Async lock PRIMEIRA coisa - antes de qualquer check
+		if (audioStreamLockRef.current) {
+			console.debug("[VoiceRecorder] getUserMedia already in progress, ignoring duplicate call")
+			return
+		}
+
 		if (disabled || !voiceSttEnabled || isProcessing) return
+
+		// Acquire lock ANTES de await
+		audioStreamLockRef.current = true
 		isPressingRef.current = true
 		pendingStopRef.current = false
 
+		// Setup abort controller para permitir cancelamento de endPress
+		abortControllerRef.current = new AbortController()
+
 		try {
 			let stream: MediaStream
+			const constraintsWithSignal = (constraints: MediaStreamConstraints) => {
+				// Enable abort signal for user cancellation during permission dialog
+				return Object.assign(constraints, {
+					signal: abortControllerRef.current!.signal,
+				}) as any
+			}
+
 			if (voiceInputDeviceId) {
 				try {
-					stream = await navigator.mediaDevices.getUserMedia({
-						audio: { deviceId: { exact: voiceInputDeviceId } },
-						video: false,
-					})
+					stream = await navigator.mediaDevices.getUserMedia(
+						constraintsWithSignal({
+							audio: { deviceId: { exact: voiceInputDeviceId } },
+							video: false,
+						}),
+					)
 				} catch {
 					// Selected device may no longer exist. Fall back to default input device.
-					stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+					stream = await navigator.mediaDevices.getUserMedia(
+						constraintsWithSignal({
+							audio: true,
+							video: false,
+						}),
+					)
 				}
 			} else {
-				stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+				stream = await navigator.mediaDevices.getUserMedia(
+					constraintsWithSignal({
+						audio: true,
+						video: false,
+					}),
+				)
 			}
 
 			streamRef.current = stream
@@ -166,7 +202,26 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				void stopAndTranscribe()
 			}
 		} catch (err: unknown) {
-			console.error("[VoiceRecorder] Could not start recording:", err)
+			// Ignorar AbortError (esperado quando user clica parada)
+			if ((err as Error).name !== "AbortError") {
+				const errorPayload = {
+					source: "VoiceRecorder",
+					stage: "permission_request",
+					errorName: (err as Error).name || "UnknownError",
+					errorMessage: (err as Error).message || String(err),
+					deviceId: voiceInputDeviceId || "default",
+					userAgent: navigator.userAgent,
+					timestamp: new Date().toISOString(),
+				}
+
+				console.error("[VoiceRecorder] Permission/setup failed:", errorPayload)
+
+				// Enviar para extension via postMessage
+				PLATFORM_CONFIG.postMessage({
+					type: "debug_voice_error",
+					debug_voice_error: errorPayload,
+				})
+			}
 			isPressingRef.current = false
 			const name = err instanceof DOMException ? err.name : ""
 			const msg =
@@ -174,11 +229,16 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					? "Mic access denied – enable Windows microphone privacy toggles, then reload VS Code window"
 					: name === "NotFoundError"
 						? "No microphone found"
-						: !navigator.mediaDevices
-							? "Microphone API unavailable in this context"
-							: "Could not access microphone"
+						: name === "AbortError"
+							? "Microphone access cancelled"
+							: !navigator.mediaDevices
+								? "Microphone API unavailable in this context"
+								: "Could not access microphone"
 			setStartError(msg)
 			setTimeout(() => setStartError(null), 6_000)
+		} finally {
+			audioStreamLockRef.current = false
+			abortControllerRef.current = null
 		}
 	}, [disabled, voiceSttEnabled, isProcessing, voiceInputDeviceId, stopAndTranscribe])
 

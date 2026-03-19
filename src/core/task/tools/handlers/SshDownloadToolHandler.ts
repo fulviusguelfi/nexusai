@@ -45,14 +45,45 @@ export class SshDownloadToolHandler implements IFullyManagedTool {
 				client.exec(`cat '${remotePath.replace(/'/g, "'\\''")}' `, (err: Error | undefined, stream: any) => {
 					if (err) return reject(err)
 					let data = ""
+
+					// Guard flag to prevent double-resolution
+					let downloadDone = false
+					const finalize = (code: number | null, error?: Error) => {
+						if (downloadDone) return
+						downloadDone = true
+						if (error) {
+							reject(error)
+						} else if (code === 0 || code === undefined) {
+							resolveFn(data)
+						} else {
+							reject(new Error(`cat exited with code ${code}`))
+						}
+					}
+
 					stream.on("data", (chunk: Buffer) => {
 						data += chunk.toString()
 					})
-					stream.on("close", (code: number) => {
-						if (code && code !== 0) return reject(new Error(`cat exited with code ${code}`))
-						resolveFn(data)
+
+					stream.on("end", () => {
+						// Windows behavior: 'end' fires but NO exit code available
+						// Wait for 'close' with actual code. If only 'end' fires, timeout after 2s
+						if (!downloadDone) {
+							const timeoutId = setTimeout(() => {
+								finalize(1, new Error("SSH download stream ended without exit code (Windows timeout)"))
+							}, 2000)
+							stream.once("close", (code: number) => {
+								clearTimeout(timeoutId)
+								finalize(code)
+							})
+						}
 					})
-					stream.on("error", reject)
+
+					stream.on("close", (code: number) => {
+						finalize(code)
+					})
+					stream.on("error", (err: Error) => {
+						finalize(1, err)
+					})
 				})
 			})
 
