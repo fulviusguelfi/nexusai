@@ -17,6 +17,17 @@ export type StreamingResponseHandler<TResponse> = (
 
 export type PostMessageToWebview = (message: ExtensionMessage) => Thenable<boolean | undefined>
 
+function formatErrorForLog(error: unknown): string {
+	if (error instanceof Error) {
+		return `${error.name}: ${error.message}${error.stack ? `\n${error.stack}` : ""}`
+	}
+	try {
+		return JSON.stringify(error)
+	} catch {
+		return String(error)
+	}
+}
+
 /**
  * Creates a middleware wrapper for recording gRPC requests and responses
  */
@@ -92,7 +103,7 @@ async function handleUnaryRequest(
 		})
 	} catch (error) {
 		// Send error response
-		Logger.log("Protobus error:", error)
+		Logger.log(`Protobus error: ${formatErrorForLog(error)}`)
 		await postMessageToWebview({
 			type: "grpc_response",
 			grpc_response: {
@@ -116,11 +127,7 @@ async function handleStreamingRequest(
 	request: GrpcRequest,
 ): Promise<void> {
 	// Create a response stream function
-	const responseStream: StreamingResponseHandler<any> = async (
-		response: any,
-		isLast: boolean = false,
-		sequenceNumber?: number,
-	) => {
+	const responseStream: StreamingResponseHandler<any> = async (response: any, isLast = false, sequenceNumber?: number) => {
 		await postMessageToWebview({
 			type: "grpc_response",
 			grpc_response: {
@@ -143,7 +150,7 @@ async function handleStreamingRequest(
 		// The stream will be closed when the client disconnects or when the service explicitly ends it
 	} catch (error) {
 		// Send error response
-		Logger.log("Protobus error:", error)
+		Logger.log(`Protobus error: ${formatErrorForLog(error)}`)
 		await postMessageToWebview({
 			type: "grpc_response",
 			grpc_response: {

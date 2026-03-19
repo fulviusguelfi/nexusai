@@ -216,7 +216,7 @@ export const InteractiveSignIn: Story = {
 		const canvas = within(canvasElement)
 
 		// Find the sign in button
-		const signInButton = canvas.getByRole("button", { name: /sign in to nexus ai/i })
+		const signInButton = canvas.getByRole("button", { name: /sign in to cline/i })
 		await expect(signInButton).toBeInTheDocument()
 
 		// Test button is clickable

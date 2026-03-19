@@ -619,7 +619,7 @@ export class ClineApiServerMock {
 							}
 						}
 						// ── Voice routing ────────────────────────────────────────────────
-						// 1. speak_text (TTS disabled by default in CI — tool still executes and returns message)
+						// 1. speak_text (TTS enabled by default)
 						if (body.includes("voice_speak_request")) {
 							if (body.includes("</speak_text>")) {
 								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_COMPLETION
@@ -627,7 +627,7 @@ export class ClineApiServerMock {
 								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_REQUEST
 							}
 						}
-						// 2. listen_for_speech (STT disabled by default in CI)
+						// 2. listen_for_speech (STT enabled by default)
 						if (body.includes("voice_listen_request")) {
 							if (body.includes("</listen_for_speech>")) {
 								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_COMPLETION

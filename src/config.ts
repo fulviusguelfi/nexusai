@@ -36,7 +36,7 @@ class ClineEndpoint {
 	private onPremiseConfig: EndpointsFileSchema | null = null
 	private environment: Environment = Environment.production
 	// Track if config came from bundled file (enterprise distribution)
-	private isBundled: boolean = false
+	private isBundled = false
 
 	private constructor() {
 		// Set environment at module load. Use override if provided.
@@ -315,10 +315,20 @@ class ClineEndpoint {
 					mcpBaseUrl: "https://core-api.staging.int.cline.bot/v1/mcp",
 				}
 			case Environment.local:
+				// In local extension profile, default to Cline cloud services.
+				// Set CLINE_USE_LOCAL_SERVICES=true only when intentionally running local backends.
+				if (process?.env?.CLINE_USE_LOCAL_SERVICES === "true") {
+					return {
+						environment: Environment.local,
+						appBaseUrl: "http://localhost:3000",
+						apiBaseUrl: "http://localhost:7777",
+						mcpBaseUrl: "http://localhost:8080/mcp",
+					}
+				}
 				return {
 					environment: Environment.local,
-					appBaseUrl: "http://localhost:3000",
-					apiBaseUrl: "http://localhost:7777",
+					appBaseUrl: "https://app.cline.bot",
+					apiBaseUrl: "https://api.cline.bot",
 					mcpBaseUrl: "https://api.cline.bot/v1/mcp",
 				}
 			default:

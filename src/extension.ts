@@ -14,7 +14,7 @@ import { sendWorktreesButtonClickedEvent } from "./core/controller/ui/subscribeT
 import { WebviewProvider } from "./core/webview"
 import { createClineAPI } from "./exports"
 import { initializeTestMode } from "./services/test/TestMode"
-import "./utils/path"; // necessary to have access to String.prototype.toPosix
+import "./utils/path" // necessary to have access to String.prototype.toPosix
 import path from "node:path"
 import type { ExtensionContext } from "vscode"
 import { HostProvider } from "@/hosts/host-provider"
@@ -71,6 +71,37 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 1. Set up HostProvider for VSCode
 	// IMPORTANT: This must be done before any service can be registered
 	setupHostProvider(context)
+
+	// 1.1 Grant media (microphone/camera) permissions for webview panels so that
+	// navigator.mediaDevices.getUserMedia() works inside the extension's sidebar webview.
+	// This is only possible when running locally inside VS Code (Electron). In remote or
+	// CI environments `require('electron')` either throws or doesn't expose `session`.
+	try {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const electron = require("electron") as {
+			session?: {
+				defaultSession?: {
+					setPermissionRequestHandler: (
+						handler: (webContents: unknown, permission: string, callback: (granted: boolean) => void) => void,
+					) => void
+					setPermissionCheckHandler: (handler: (webContents: unknown, permission: string) => boolean) => void
+				}
+			}
+		}
+		const sess = electron?.session?.defaultSession
+		if (sess) {
+			sess.setPermissionRequestHandler(
+				(_webContents: unknown, permission: string, callback: (granted: boolean) => void) => {
+					callback(permission === "media" || permission === "microphone" || permission === "camera")
+				},
+			)
+			sess.setPermissionCheckHandler((_webContents: unknown, permission: string) => {
+				return permission === "media" || permission === "microphone" || permission === "camera"
+			})
+		}
+	} catch {
+		// Not in a local Electron context (remote SSH, Dev Containers, tests) — skip.
+	}
 
 	// 2. Clean up legacy data patterns within VSCode's native storage.
 	// Moves workspace→global keys, task history→file, custom instructions→rules, etc.

@@ -23,7 +23,11 @@ export function useVoiceAudioPlayer() {
 
 				const audioCtx = new AudioContext()
 				if (voiceOutputDeviceId && typeof (audioCtx as any).setSinkId === "function") {
-					await (audioCtx as any).setSinkId(voiceOutputDeviceId)
+					try {
+						await (audioCtx as any).setSinkId(voiceOutputDeviceId)
+					} catch (sinkErr) {
+						console.warn("[VoiceAudioPlayer] Selected output device unavailable, using default:", sinkErr)
+					}
 				}
 
 				const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer)

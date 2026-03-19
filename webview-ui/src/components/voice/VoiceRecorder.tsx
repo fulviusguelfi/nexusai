@@ -26,15 +26,18 @@ const SAMPLE_RATE_HZ = 16_000
 const HOLD_MIN_MS = 300 // ignore taps shorter than this
 
 const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
-	const { voiceSttEnabled } = useExtensionState()
+	const { voiceSttEnabled, voiceInputDeviceId } = useExtensionState()
 
 	const [isRecording, setIsRecording] = useState(false)
 	const [isProcessing, setIsProcessing] = useState(false)
+	const [startError, setStartError] = useState<string | null>(null)
 
 	const recorderRef = useRef<MediaRecorder | null>(null)
 	const chunksRef = useRef<Blob[]>([])
 	const pressStartMs = useRef<number>(0)
 	const streamRef = useRef<MediaStream | null>(null)
+	const isPressingRef = useRef(false)
+	const pendingStopRef = useRef(false)
 
 	// Listen for transcription results from the extension host
 	useEffect(() => {
@@ -65,11 +68,40 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		recorder.stop()
 	}, [])
 
+	const endPress = useCallback(() => {
+		isPressingRef.current = false
+		const recorder = recorderRef.current
+		if (recorder && recorder.state !== "inactive") {
+			void stopAndTranscribe()
+			return
+		}
+
+		// If release happens before recorder initialization completes
+		// (for example while permission prompt is visible), stop as soon as start finishes.
+		pendingStopRef.current = true
+	}, [stopAndTranscribe])
+
 	const startRecording = useCallback(async () => {
 		if (disabled || !voiceSttEnabled || isProcessing) return
+		isPressingRef.current = true
+		pendingStopRef.current = false
 
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+			let stream: MediaStream
+			if (voiceInputDeviceId) {
+				try {
+					stream = await navigator.mediaDevices.getUserMedia({
+						audio: { deviceId: { exact: voiceInputDeviceId } },
+						video: false,
+					})
+				} catch {
+					// Selected device may no longer exist. Fall back to default input device.
+					stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+				}
+			} else {
+				stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+			}
+
 			streamRef.current = stream
 			chunksRef.current = []
 			pressStartMs.current = Date.now()
@@ -127,34 +159,61 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 
 			recorder.start()
 			setIsRecording(true)
-		} catch (err) {
+			setStartError(null)
+
+			if (!isPressingRef.current || pendingStopRef.current) {
+				pendingStopRef.current = false
+				void stopAndTranscribe()
+			}
+		} catch (err: unknown) {
 			console.error("[VoiceRecorder] Could not start recording:", err)
+			isPressingRef.current = false
+			const name = err instanceof DOMException ? err.name : ""
+			const msg =
+				name === "NotAllowedError"
+					? "Mic access denied – enable Windows microphone privacy toggles, then reload VS Code window"
+					: name === "NotFoundError"
+						? "No microphone found"
+						: !navigator.mediaDevices
+							? "Microphone API unavailable in this context"
+							: "Could not access microphone"
+			setStartError(msg)
+			setTimeout(() => setStartError(null), 6_000)
 		}
-	}, [disabled, voiceSttEnabled, isProcessing])
+	}, [disabled, voiceSttEnabled, isProcessing, voiceInputDeviceId, stopAndTranscribe])
 
 	if (!voiceSttEnabled) return null
 
-	const title = isProcessing ? "Transcribing…" : isRecording ? "Recording… (release to send)" : "Hold to record voice"
+	const title = startError
+		? startError
+		: isProcessing
+			? "Transcribing…"
+			: isRecording
+				? "Recording… (release to send)"
+				: "Hold to record voice"
 
 	return (
 		<button
 			aria-label={title}
 			className={[
 				"codicon p-0 m-0 flex items-center justify-center",
-				isRecording
-					? "codicon-record-keys text-error"
-					: isProcessing
-						? "codicon-loading animate-spin text-vscode-descriptionForeground"
-						: "codicon-mic text-vscode-descriptionForeground hover:text-vscode-foreground",
+				startError
+					? "codicon-warning text-error"
+					: isRecording
+						? "codicon-record-keys text-error"
+						: isProcessing
+							? "codicon-loading animate-spin text-vscode-descriptionForeground"
+							: "codicon-mic text-vscode-descriptionForeground hover:text-vscode-foreground",
 				disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
 			]
 				.filter(Boolean)
 				.join(" ")}
 			disabled={disabled || isProcessing}
 			onMouseDown={startRecording}
-			onMouseLeave={isRecording ? stopAndTranscribe : undefined}
-			onMouseUp={isRecording ? stopAndTranscribe : undefined}
-			onTouchEnd={isRecording ? stopAndTranscribe : undefined}
+			onMouseLeave={endPress}
+			onMouseUp={endPress}
+			onTouchCancel={endPress}
+			onTouchEnd={endPress}
 			onTouchStart={startRecording}
 			style={{ fontSize: 14, width: 20, height: 20, background: "none", border: "none" }}
 			title={title}

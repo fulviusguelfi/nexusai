@@ -96,7 +96,7 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 								{/* The user is signed in or not using cline provider */}
 								{isClineProvider && !clineUser ? (
 									<Button className="w-full mb-4" disabled={isLoginLoading} onClick={handleSignIn}>
-										Sign in to Nexus AI
+										Sign in to Cline
 										{isLoginLoading && (
 											<span className="ml-1 animate-spin">
 												<span className="codicon codicon-refresh" />

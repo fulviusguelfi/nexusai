@@ -312,11 +312,6 @@
 					"when": "view == nexusai.SidebarProvider"
 				},
 				{
-					"command": "nexusai.accountButtonClicked",
-					"group": "navigation@5",
-					"when": "view == nexusai.SidebarProvider"
-				},
-				{
 					"command": "nexusai.settingsButtonClicked",
 					"group": "navigation@6",
 					"when": "view == nexusai.SidebarProvider"

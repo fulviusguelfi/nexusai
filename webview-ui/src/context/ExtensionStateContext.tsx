@@ -200,12 +200,14 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [setShowSettings, closeMcpView, setShowAccount, setShowWorktrees, setShowHistory])
 
 	const navigateToAccount = useCallback(() => {
-		setShowSettings(false)
-		closeMcpView()
 		setShowHistory(false)
+		closeMcpView()
 		setShowWorktrees(false)
-		setShowAccount(true)
-	}, [setShowSettings, closeMcpView, setShowHistory, setShowWorktrees, setShowAccount])
+		setShowAccount(false)
+		setSettingsTargetSection("api-config")
+		setSettingsInitialModelTab(undefined)
+		setShowSettings(true)
+	}, [closeMcpView, setShowHistory, setShowWorktrees, setShowAccount, setSettingsTargetSection, setSettingsInitialModelTab])
 
 	const navigateToWorktrees = useCallback(() => {
 		setShowSettings(false)
@@ -283,8 +285,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
 		activeSshSessions: [],
-		voiceTtsEnabled: false,
-		voiceSttEnabled: false,
+		voiceTtsEnabled: true,
+		voiceSttEnabled: true,
 		voiceInputDeviceId: undefined,
 		voiceOutputDeviceId: undefined,
 		voicePiperVoice: "en_US-lessac-medium",
@@ -591,9 +593,9 @@ export const ExtensionStateContextProvider: React.FC<{
 		// Set up account button clicked subscription
 		accountButtonClickedSubscriptionRef.current = UiServiceClient.subscribeToAccountButtonClicked(EmptyRequest.create(), {
 			onResponse: () => {
-				// When account button is clicked, navigate to account view
+				// Route account actions into API settings; standalone account view is deprecated.
 				console.log("[DEBUG] Received account button clicked event from gRPC stream")
-				navigateToAccount()
+				navigateToSettings("api-config")
 			},
 			onError: (error) => {
 				console.error("Error in account button clicked subscription:", error)

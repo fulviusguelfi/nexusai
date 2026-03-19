@@ -1,6 +1,6 @@
 import axios from "axios"
 import { type JwtPayload } from "jwt-decode"
-import { ClineEnv, EnvironmentConfig } from "@/config"
+import { ClineEnv, Environment, EnvironmentConfig } from "@/config"
 import { Controller } from "@/core/controller"
 import { HostProvider } from "@/hosts/host-provider"
 import { buildBasicClineHeaders } from "@/services/EnvUtils"
@@ -51,21 +51,21 @@ type TokenData = JwtPayload & {
 	external_id?: string
 }
 
-export interface NexusAuthApiTokenExchangeResponse {
+export interface ClineAuthApiTokenExchangeResponse {
 	success: boolean
 	data: ClineAuthResponseData
 }
 
-export interface NexusAuthApiTokenRefreshResponse {
+export interface ClineAuthApiTokenRefreshResponse {
 	success: boolean
 	data: ClineAuthResponseData
 }
 
 // Backward compat aliases
-export type ClineAuthApiTokenExchangeResponse = NexusAuthApiTokenExchangeResponse
-export type ClineAuthApiTokenRefreshResponse = NexusAuthApiTokenRefreshResponse
+export type NexusAuthApiTokenExchangeResponse = ClineAuthApiTokenExchangeResponse
+export type NexusAuthApiTokenRefreshResponse = ClineAuthApiTokenRefreshResponse
 
-export class NexusAuthProvider {
+export class ClineAuthProvider {
 	readonly name = "cline"
 	private refreshRetryCount = 0
 	private lastRefreshAttempt = 0
@@ -74,6 +74,23 @@ export class NexusAuthProvider {
 
 	get config(): EnvironmentConfig {
 		return ClineEnv.config()
+	}
+
+	/**
+	 * In local extension profile we still want Cline cloud auth by default.
+	 * Set CLINE_USE_LOCAL_AUTH=true only when intentionally testing a local auth backend.
+	 */
+	private getAuthApiBaseUrl(): string {
+		const apiBaseUrl = this.config.apiBaseUrl
+		const useLocalAuth = process.env.CLINE_USE_LOCAL_AUTH === "true"
+		const isLocalEnv = this.config.environment === Environment.local
+		const looksLocalHost = /(^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?)/i.test(apiBaseUrl)
+
+		if (isLocalEnv && looksLocalHost && !useLocalAuth) {
+			return "https://api.cline.bot"
+		}
+
+		return apiBaseUrl
 	}
 
 	/**
@@ -251,8 +268,14 @@ export class NexusAuthProvider {
 						throw refreshError
 					}
 
-					// For network errors, return stored data - let the API request fail later
-					// when the user actually tries to use Cline, not at startup
+					// For transient network errors, keep session only if the current token
+					// is still valid. Returning an expired token creates a stale "logged in"
+					// state and causes follow-up RPC failures during startup.
+					if (this.timeUntilExpiry(storedAuthData.idToken) <= 0) {
+						Logger.warn("Token refresh failed and stored token is expired. Returning null auth info.")
+						return null
+					}
+
 					return storedAuthData
 				}
 			}
@@ -296,7 +319,7 @@ export class NexusAuthProvider {
 	 */
 	async refreshToken(refreshToken: string, storedData: ClineAuthInfo): Promise<ClineAuthInfo> {
 		try {
-			const endpoint = new URL(CLINE_API_ENDPOINT.REFRESH_TOKEN, this.config.apiBaseUrl)
+			const endpoint = new URL(CLINE_API_ENDPOINT.REFRESH_TOKEN, this.getAuthApiBaseUrl())
 			const response = await fetch(endpoint.toString(), {
 				method: "POST",
 				headers: await this.headers(),
@@ -348,45 +371,17 @@ export class NexusAuthProvider {
 	}
 
 	async getAuthRequest(callbackUrl: string): Promise<string> {
-		const authUrl = new URL(CLINE_API_ENDPOINT.AUTH, this.config.apiBaseUrl)
+		const authUrl = new URL(CLINE_API_ENDPOINT.AUTH, this.getAuthApiBaseUrl())
 		authUrl.searchParams.set("client_type", "extension")
 		authUrl.searchParams.set("callback_url", callbackUrl)
 		// Ensure the redirect_uri is properly encoded and included
 		authUrl.searchParams.set("redirect_uri", callbackUrl)
 
-		// The server will respond with a 302 redirect to the OAuth provider
-		// We need to follow the redirect and get the final URL
-		let response: Response
-		try {
-			// Set redirect: 'manual' to handle the redirect manually
-			response = await fetch(authUrl.toString(), {
-				method: "GET",
-				redirect: "manual",
-				credentials: "include", // Important for cookies if needed
-				headers: await this.headers(),
-			})
-
-			// If we get a redirect status (3xx), get the Location header
-			if (response.status >= 300 && response.status < 400) {
-				const redirectUrl = response.headers.get("Location")
-				if (!redirectUrl) {
-					throw new Error("No redirect URL found in the response")
-				}
-
-				return redirectUrl
-			}
-
-			// If we didn't get a redirect, try to parse the response as JSON
-			const responseData = await response.json()
-			if (responseData.redirect_url) {
-				return responseData.redirect_url
-			}
-
-			throw new Error("Unexpected response from auth server")
-		} catch (error) {
-			Logger.error("Error during authentication request:", error)
-			throw new Error(`Authentication failed: ${error instanceof Error ? error.message : "Unknown error"}`)
-		}
+		// Open the authorization endpoint directly in the browser.
+		// Avoid pre-fetching/redirect inspection here because in dev/local hosts the
+		// auth endpoint may return non-JSON intermediary responses or provider-specific
+		// redirects that are valid in a real browser but fail in the extension runtime.
+		return authUrl.toString()
 	}
 
 	async signIn(controller: Controller, authorizationCode: string, provider: string): Promise<ClineAuthInfo | null> {
@@ -395,7 +390,7 @@ export class NexusAuthProvider {
 			const callbackUrl = await HostProvider.get().getCallbackUrl("/auth")
 
 			// Exchange the authorization code for tokens
-			const tokenUrl = new URL(CLINE_API_ENDPOINT.TOKEN_EXCHANGE, this.config.apiBaseUrl)
+			const tokenUrl = new URL(CLINE_API_ENDPOINT.TOKEN_EXCHANGE, this.getAuthApiBaseUrl())
 
 			const response = await fetch(tokenUrl.toString(), {
 				method: "POST",
@@ -445,7 +440,7 @@ export class NexusAuthProvider {
 
 	private async fetchRemoteUserInfo(tokenData: NexusAuthApiTokenExchangeResponse["data"]): Promise<ClineAccountUserInfo> {
 		try {
-			const userResponse = await axios.get(`${ClineEnv.config().apiBaseUrl}/api/v1/users/me`, {
+			const userResponse = await axios.get(`${this.getAuthApiBaseUrl()}/api/v1/users/me`, {
 				headers: {
 					Authorization: `Bearer workos:${tokenData.accessToken}`,
 					...(await this.headers()),
@@ -476,3 +471,6 @@ export class NexusAuthProvider {
 		}
 	}
 }
+
+// Backward compatibility aliases for code still importing NexusAuthProvider symbols.
+export { ClineAuthProvider as NexusAuthProvider }

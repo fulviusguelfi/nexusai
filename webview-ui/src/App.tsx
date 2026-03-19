@@ -1,6 +1,5 @@
 import type { Boolean, EmptyRequest } from "@shared/proto/cline/common"
 import { useEffect } from "react"
-import AccountView from "./components/account/AccountView"
 import ChatView from "./components/chat/ChatView"
 import HistoryView from "./components/history/HistoryView"
 import McpView from "./components/mcp/configuration/McpConfigurationView"
@@ -24,7 +23,6 @@ const AppContent = () => {
 		showSettings,
 		settingsTargetSection,
 		showHistory,
-		showAccount,
 		showWorktrees,
 		showAnnouncement,
 		onboardingModels,
@@ -34,12 +32,11 @@ const AppContent = () => {
 		navigateToHistory,
 		hideSettings,
 		hideHistory,
-		hideAccount,
 		hideWorktrees,
 		hideAnnouncement,
 	} = useExtensionState()
 
-	const { clineUser, organizations, activeOrganization } = useClineAuth()
+	useClineAuth()
 	useVoiceAudioPlayer()
 
 	useEffect(() => {
@@ -70,19 +67,11 @@ const AppContent = () => {
 			{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
 			{showHistory && <HistoryView onDone={hideHistory} />}
 			{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
-			{showAccount && (
-				<AccountView
-					activeOrganization={activeOrganization}
-					clineUser={clineUser}
-					onDone={hideAccount}
-					organizations={organizations}
-				/>
-			)}
 			{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
 			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose (user input, disableInput, askResponse promise, etc.) */}
 			<ChatView
 				hideAnnouncement={hideAnnouncement}
-				isHidden={showSettings || showHistory || showMcp || showAccount || showWorktrees}
+				isHidden={showSettings || showHistory || showMcp || showWorktrees}
 				showAnnouncement={showAnnouncement}
 				showHistoryView={navigateToHistory}
 			/>

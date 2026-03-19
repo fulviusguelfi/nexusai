@@ -18,7 +18,9 @@ const PLATFORM_ASSETS: Record<string, { archive: string; binary: string; isZip: 
 }
 
 const DEFAULT_VOICE_ID = "en_US-lessac-medium"
-const VOICE_MODEL_URL_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium"
+const VOICE_MODEL_URL_ROOT = "https://huggingface.co/rhasspy/piper-voices/resolve/main"
+
+const SUPPORTED_VOICE_IDS = new Set(["en_US-lessac-medium", "en_US-ryan-medium", "pt_BR-faber-medium", "pt_BR-cadu-medium"])
 
 /**
  * PiperService
@@ -85,13 +87,24 @@ export class PiperService {
 	 * Synthesize text to WAV audio using the Piper binary.
 	 * Returns a Buffer containing WAV-format audio data.
 	 */
-	synthesize(text: string, voiceId = DEFAULT_VOICE_ID): Promise<Buffer> {
+	async synthesize(text: string, voiceId = DEFAULT_VOICE_ID): Promise<Buffer> {
+		const requestedVoiceId = this._resolveVoiceId(voiceId)
+		let effectiveVoiceId = requestedVoiceId
+
+		try {
+			await this.ensureBinary(effectiveVoiceId)
+		} catch (error) {
+			Logger.warn(`[PiperService] Failed to prepare voice "${effectiveVoiceId}", falling back to default:`, error)
+			effectiveVoiceId = DEFAULT_VOICE_ID
+			await this.ensureBinary(effectiveVoiceId)
+		}
+
 		return new Promise<Buffer>((resolve, reject) => {
-			const modelFile = path.join(this._voicesDir, `${voiceId}.onnx`)
-			const configFile = path.join(this._voicesDir, `${voiceId}.onnx.json`)
+			const modelFile = path.join(this._voicesDir, `${effectiveVoiceId}.onnx`)
+			const configFile = path.join(this._voicesDir, `${effectiveVoiceId}.onnx.json`)
 
 			if (!fs.existsSync(modelFile) || !fs.existsSync(configFile)) {
-				reject(new Error(`Voice model not found: ${voiceId}. Call ensureBinary() first.`))
+				reject(new Error(`Voice model not found after preparation: ${effectiveVoiceId}`))
 				return
 			}
 
@@ -173,26 +186,22 @@ export class PiperService {
 	}
 
 	private async _ensureVoiceModel(voiceId: string): Promise<void> {
-		const modelFile = path.join(this._voicesDir, `${voiceId}.onnx`)
-		const configFile = path.join(this._voicesDir, `${voiceId}.onnx.json`)
+		const resolvedVoiceId = this._resolveVoiceId(voiceId)
+		const modelFile = path.join(this._voicesDir, `${resolvedVoiceId}.onnx`)
+		const configFile = path.join(this._voicesDir, `${resolvedVoiceId}.onnx.json`)
 
 		if (fs.existsSync(modelFile) && fs.existsSync(configFile)) {
 			return
 		}
 
-		// Only en_US-lessac-medium is bundled in this release
-		if (voiceId !== DEFAULT_VOICE_ID) {
-			Logger.warn(`[PiperService] Only "${DEFAULT_VOICE_ID}" voice is supported in this release.`)
-			return
-		}
-
-		Logger.log(`[PiperService] Downloading voice model ${voiceId}…`)
+		const voicePath = this._getVoicePath(resolvedVoiceId)
+		Logger.log(`[PiperService] Downloading voice model ${resolvedVoiceId}…`)
 
 		for (const [suffix, filePath] of [
 			[".onnx", modelFile],
 			[".onnx.json", configFile],
 		] as const) {
-			const url = `${VOICE_MODEL_URL_BASE}/${DEFAULT_VOICE_ID}${suffix}`
+			const url = `${VOICE_MODEL_URL_ROOT}/${voicePath}/${resolvedVoiceId}${suffix}`
 			const response = await fetch(url)
 			if (!response.ok) {
 				throw new Error(`Failed to download voice model ${suffix}: HTTP ${response.status}`)
@@ -201,7 +210,34 @@ export class PiperService {
 			fs.writeFileSync(filePath, Buffer.from(buf))
 		}
 
-		Logger.log(`[PiperService] Voice model ${voiceId} installed.`)
+		Logger.log(`[PiperService] Voice model ${resolvedVoiceId} installed.`)
+	}
+
+	private _resolveVoiceId(voiceId: string | undefined): string {
+		if (!voiceId) {
+			return DEFAULT_VOICE_ID
+		}
+
+		if (!SUPPORTED_VOICE_IDS.has(voiceId)) {
+			Logger.warn(`[PiperService] Unsupported voice "${voiceId}". Falling back to ${DEFAULT_VOICE_ID}.`)
+			return DEFAULT_VOICE_ID
+		}
+
+		return voiceId
+	}
+
+	private _getVoicePath(voiceId: string): string {
+		const parts = voiceId.split("-")
+		if (parts.length < 3) {
+			throw new Error(`Invalid voice id format: ${voiceId}`)
+		}
+
+		const languageCode = parts[0]
+		const speaker = parts[1]
+		const quality = parts.slice(2).join("-")
+		const languageFamily = languageCode.split("_")[0]
+
+		return `${languageFamily}/${languageCode}/${speaker}/${quality}`
 	}
 
 	private async _extractZip(archivePath: string, destDir: string): Promise<void> {
