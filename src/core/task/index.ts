@@ -114,6 +114,7 @@ import { AssistantResponseBuilder } from "./services/AssistantResponseBuilder"
 import { CheckpointOrchestrator } from "./services/CheckpointOrchestrator"
 import { CompactionDecisionEngine } from "./services/CompactionDecisionEngine"
 import { ContextCompactor } from "./services/ContextCompactor"
+import { EmptyResponseHandler } from "./services/EmptyResponseHandler"
 import { NativeToolCallProcessor } from "./services/NativeToolCallProcessor"
 import { StreamMetricsCollector } from "./services/StreamMetricsCollector"
 import { TaskState } from "./TaskState"
@@ -263,6 +264,7 @@ export class Task {
 	private contextCompactor: ContextCompactor
 	private compactionDecisionEngine: CompactionDecisionEngine
 	private assistantResponseBuilder: AssistantResponseBuilder
+	private emptyResponseHandler: EmptyResponseHandler
 
 	constructor(params: TaskParams) {
 		const {
@@ -531,6 +533,15 @@ export class Task {
 		})
 
 		this.assistantResponseBuilder = new AssistantResponseBuilder()
+		this.emptyResponseHandler = new EmptyResponseHandler({
+			ulid: this.ulid,
+			useNativeToolCalls: () => this.useNativeToolCalls,
+			getCurrentProviderInfo: () => this.getCurrentProviderInfo(),
+			getApiRequestIdSafe: () => this.getApiRequestIdSafe(),
+			say: this.say.bind(this),
+			ask: this.ask.bind(this),
+			messageStateHandler: this.messageStateHandler,
+		})
 
 		this.toolExecutor = new ToolExecutor(
 			this.taskState,
@@ -2811,96 +2822,13 @@ export class Task {
 				const recDidEndLoop = await this.recursivelyMakeClineRequests(this.taskState.userMessageContent)
 				didEndLoop = recDidEndLoop
 			} else {
-				// if there's no assistant_responses, that means we got no text or tool_use content blocks from API which we should assume is an error
-				const { model, providerId } = this.getCurrentProviderInfo()
-				const reqId = this.getApiRequestIdSafe()
-
-				// Minimal diagnostics: structured log and telemetry
-				telemetryService.captureProviderApiError({
-					ulid: this.ulid,
-					model: model.id,
-					provider: providerId,
-					errorMessage: "empty_assistant_message",
-					requestId: reqId,
-					isNativeToolCall: this.useNativeToolCalls,
-				})
-
-				const baseErrorMessage =
-					"Invalid API Response: The provider returned an empty or unparsable response. This is a provider-side issue where the model failed to generate valid output or returned tool calls that Cline cannot process. Retrying the request may help resolve this issue."
-				const errorText = reqId ? `${baseErrorMessage} (Request ID: ${reqId})` : baseErrorMessage
-
-				await this.say("error", errorText)
-				await this.messageStateHandler.addToApiConversationHistory({
-					role: "assistant",
-					content: [
-						{
-							type: "text",
-							text: "Failure: I did not provide a response.",
-						},
-					],
+				// if there's no assistant response, treat as provider-side invalid/empty output
+				return await this.emptyResponseHandler.handle({
+					taskState: this.taskState,
 					modelInfo,
-					id: this.streamHandler.requestId,
-					metrics: {
-						tokens: {
-							prompt: taskMetrics.inputTokens,
-							completion: taskMetrics.outputTokens,
-							cached: (taskMetrics.cacheWriteTokens ?? 0) + (taskMetrics.cacheReadTokens ?? 0),
-						},
-						cost: taskMetrics.totalCost,
-					},
-					ts: Date.now(),
+					requestId: this.streamHandler.requestId,
+					taskMetrics,
 				})
-
-				let response: NexusAIAskResponse
-
-				const noResponseErrorMessage =
-					"No assistant message was received. " +
-					"Possible fixes: try a different model, reduce context size, or check your API provider status."
-
-				if (this.taskState.autoRetryAttempts < 3) {
-					// Auto-retry enabled with max 3 attempts: automatically approve the retry
-					this.taskState.autoRetryAttempts++
-
-					// Calculate delay: 2s, 4s, 8s
-					const delay = 2000 * 2 ** (this.taskState.autoRetryAttempts - 1)
-					response = "yesButtonClicked"
-					await this.say(
-						"error_retry",
-						JSON.stringify({
-							attempt: this.taskState.autoRetryAttempts,
-							maxAttempts: 3,
-							delaySeconds: delay / 1000,
-							errorMessage: noResponseErrorMessage,
-						}),
-					)
-					await setTimeoutPromise(delay)
-				} else {
-					// Max retries exhausted (>= 3 attempts), ask user
-					await this.say(
-						"error_retry",
-						JSON.stringify({
-							attempt: 3,
-							maxAttempts: 3,
-							delaySeconds: 0,
-							failed: true, // Special flag to indicate retries exhausted
-							errorMessage: noResponseErrorMessage,
-						}),
-					)
-					const askResult = await this.ask("api_req_failed", noResponseErrorMessage)
-					response = askResult.response
-					// Reset retry counter if user chooses to manually retry
-					if (response === "yesButtonClicked") {
-						this.taskState.autoRetryAttempts = 0
-					}
-				}
-
-				if (response === "yesButtonClicked") {
-					// Signal the loop to continue (i.e., do not end), so it will attempt again
-					return false
-				}
-
-				// Returns early to avoid retry since user dismissed
-				return true
 			}
 
 			return didEndLoop // will always be false for now
