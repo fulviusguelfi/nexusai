@@ -62,7 +62,6 @@ import { NexusAIAskResponse } from "@shared/WebviewMessage"
 import {
 	isClaude4PlusModelFamily,
 	isGPT5ModelFamily,
-	isLocalModel,
 	isNextGenModelFamily,
 	isParallelToolCallingEnabled,
 } from "@utils/model-utils"
@@ -113,6 +112,7 @@ import { MessageStateHandler } from "./message-state"
 import { StreamChunkCoordinator } from "./StreamChunkCoordinator"
 import { StreamResponseHandler } from "./StreamResponseHandler"
 import { CheckpointOrchestrator } from "./services/CheckpointOrchestrator"
+import { CompactionDecisionEngine } from "./services/CompactionDecisionEngine"
 import { ContextCompactor } from "./services/ContextCompactor"
 import { NativeToolCallProcessor } from "./services/NativeToolCallProcessor"
 import { TaskState } from "./TaskState"
@@ -260,6 +260,7 @@ export class Task {
 	// Extracted services
 	private nativeToolCallProcessor: NativeToolCallProcessor
 	private contextCompactor: ContextCompactor
+	private compactionDecisionEngine: CompactionDecisionEngine
 
 	constructor(params: TaskParams) {
 		const {
@@ -515,6 +516,16 @@ export class Task {
 			clearActiveHookExecution: this.clearActiveHookExecution.bind(this),
 			postStateToWebview: this.postStateToWebview.bind(this),
 			cancelTask: this.cancelTask.bind(this),
+		})
+
+		this.compactionDecisionEngine = new CompactionDecisionEngine({
+			taskId: this.taskId,
+			taskState: this.taskState,
+			messageStateHandler: this.messageStateHandler,
+			contextManager: this.contextManager,
+			stateManager: this.stateManager,
+			api: this.api,
+			getCurrentProviderInfo: this.getCurrentProviderInfo.bind(this),
 		})
 
 		this.toolExecutor = new ToolExecutor(
@@ -2169,7 +2180,7 @@ export class Task {
 		this.taskState.apiRequestsSinceLastTodoUpdate++
 
 		// Used to know what models were used in the task if user wants to export metadata for error reporting purposes
-		const { model, providerId, customPrompt, mode } = this.getCurrentProviderInfo()
+		const { model, providerId, mode } = this.getCurrentProviderInfo()
 		if (providerId && model.id) {
 			try {
 				await this.modelContextTracker.recordModelUsage(providerId, model.id, mode)
@@ -2249,61 +2260,7 @@ export class Task {
 
 		// Determine if we should compact context window
 		// Note: We delay context loading until we know if we're compacting (performance optimization)
-		const useCompactPrompt = customPrompt === "compact" && isLocalModel(this.getCurrentProviderInfo())
-		let shouldCompact = false
-		const useAutoCondense = this.stateManager.getGlobalSettingsKey("useAutoCondense")
-
-		if (useAutoCondense && isNextGenModelFamily(this.api.getModel().id)) {
-			// When we initially trigger context cleanup, we increase the context window size, so we need state `currentlySummarizing`
-			// to track if we've already started the context summarization flow. After summarizing, we increment
-			// conversationHistoryDeletedRange to mask out the summarization-trigger user & assistant response messages
-			if (this.taskState.currentlySummarizing) {
-				this.taskState.currentlySummarizing = false
-
-				if (this.taskState.conversationHistoryDeletedRange) {
-					const [start, end] = this.taskState.conversationHistoryDeletedRange
-					const apiHistory = this.messageStateHandler.getApiConversationHistory()
-
-					// we want to increment the deleted range to remove the pre-summarization tool call output, with additional safety check
-					const safeEnd = Math.min(end + 2, apiHistory.length - 1)
-					if (end + 2 <= safeEnd) {
-						this.taskState.conversationHistoryDeletedRange = [start, end + 2]
-						await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
-					}
-				}
-			} else {
-				shouldCompact = this.contextManager.shouldCompactContextWindow(
-					this.messageStateHandler.getClineMessages(),
-					this.api,
-					previousApiReqIndex,
-				)
-
-				// Edge case: summarize_task tool call completes but user cancels next request before it finishes.
-				// This results in currentlySummarizing being false, and we fail to update the context window token estimate.
-				// Check active message count to avoid summarizing a summary (bad UX but doesn't break logic).
-				if (shouldCompact && this.taskState.conversationHistoryDeletedRange) {
-					const apiHistory = this.messageStateHandler.getApiConversationHistory()
-					const activeMessageCount = apiHistory.length - this.taskState.conversationHistoryDeletedRange[1] - 1
-
-					// IMPORTANT: We haven't appended the next user message yet, so the last message is an assistant message.
-					// That's why we compare to even numbers (0, 2) rather than odd (1, 3).
-					if (activeMessageCount <= 2) {
-						shouldCompact = false
-					}
-				}
-
-				// Determine whether we can save enough tokens from context rewriting to skip auto-compact
-				if (shouldCompact) {
-					shouldCompact = await this.contextManager.attemptFileReadOptimization(
-						this.messageStateHandler.getApiConversationHistory(),
-						this.taskState.conversationHistoryDeletedRange,
-						this.messageStateHandler.getClineMessages(),
-						previousApiReqIndex,
-						await ensureTaskDirectoryExists(this.taskId),
-					)
-				}
-			}
-		}
+		const { shouldCompact, useCompactPrompt } = await this.compactionDecisionEngine.decide(previousApiReqIndex)
 
 		// NOW load context based on compaction decision
 		// This optimization avoids expensive context loading when using summarize_task
