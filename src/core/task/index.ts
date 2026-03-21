@@ -115,6 +115,7 @@ import { CheckpointOrchestrator } from "./services/CheckpointOrchestrator"
 import { CompactionDecisionEngine } from "./services/CompactionDecisionEngine"
 import { ContextCompactor } from "./services/ContextCompactor"
 import { NativeToolCallProcessor } from "./services/NativeToolCallProcessor"
+import { StreamMetricsCollector } from "./services/StreamMetricsCollector"
 import { TaskState } from "./TaskState"
 import { ToolExecutor } from "./ToolExecutor"
 import { detectAvailableCliTools, extractProviderDomainFromUrl, updateApiReqMsg } from "./utils"
@@ -2349,72 +2350,23 @@ export class Task {
 		await this.postStateToWebview()
 
 		try {
-			const taskMetrics: {
-				cacheWriteTokens: number
-				cacheReadTokens: number
-				inputTokens: number
-				outputTokens: number
-				totalCost: number | undefined
-			} = { cacheWriteTokens: 0, cacheReadTokens: 0, inputTokens: 0, outputTokens: 0, totalCost: undefined }
-			let didFinalizeApiReqMsg = false
-			let usageChunkSideEffectsQueue = Promise.resolve()
+			const streamMetricsCollector = new StreamMetricsCollector({
+				taskId: this.taskId,
+				ulid: this.ulid,
+				modelId: model.id,
+				api: this.api,
+				messageStateHandler: this.messageStateHandler,
+				lastApiReqIndex,
+				postStateToWebview: this.postStateToWebview.bind(this),
+				isTaskAborted: () => this.taskState.abort,
+			})
+			const taskMetrics = streamMetricsCollector.metrics
 			/*
 				Usage side effects run as soon as a usage chunk arrives.
-				queueUsageChunkSideEffects() appends work to this promise chain, and each appended step starts immediately
-				(once the previous step finishes). We only await usageChunkSideEffectsQueue at stream end to flush any in-flight
+				The collector appends side effects to an internal promise chain, and each appended step starts immediately
+				(once the previous step finishes). We only flush this chain at stream end to apply any in-flight
 				updates before finalizing api_req_started, not to start processing.
 			*/
-
-			const updateApiReqMsgFromMetrics = async (
-				cancelReason?: NexusAIApiReqCancelReason,
-				streamingFailedMessage?: string,
-			) => {
-				await updateApiReqMsg({
-					messageStateHandler: this.messageStateHandler,
-					lastApiReqIndex,
-					inputTokens: taskMetrics.inputTokens,
-					outputTokens: taskMetrics.outputTokens,
-					cacheWriteTokens: taskMetrics.cacheWriteTokens,
-					cacheReadTokens: taskMetrics.cacheReadTokens,
-					api: this.api,
-					totalCost: taskMetrics.totalCost,
-					cancelReason,
-					streamingFailedMessage,
-				})
-			}
-
-			const queueUsageChunkSideEffects = (
-				usageInputTokens: number,
-				usageOutputTokens: number,
-				chunkOptions?: { cacheWriteTokens?: number; cacheReadTokens?: number; totalCost?: number },
-			) => {
-				usageChunkSideEffectsQueue = usageChunkSideEffectsQueue
-					// This executes immediately after enqueue (microtask if already resolved), not at stream end.
-					.then(async () => {
-						if (didFinalizeApiReqMsg || this.taskState.abort) {
-							return
-						}
-
-						await updateApiReqMsgFromMetrics()
-						await this.postStateToWebview()
-						await telemetryService.captureTokenUsage(
-							this.ulid,
-							usageInputTokens,
-							usageOutputTokens,
-							model.id,
-							chunkOptions,
-						)
-					})
-					.catch((error) => {
-						Logger.debug(`[Task ${this.taskId}] Failed to process usage chunk side effects: ${error}`)
-					})
-			}
-
-			const finalizeApiReqMsg = async (cancelReason?: NexusAIApiReqCancelReason, streamingFailedMessage?: string) => {
-				didFinalizeApiReqMsg = true
-				await usageChunkSideEffectsQueue
-				await updateApiReqMsgFromMetrics(cancelReason, streamingFailedMessage)
-			}
 
 			const abortStream = async (cancelReason: NexusAIApiReqCancelReason, streamingFailedMessage?: string) => {
 				Session.get().finalizeRequest()
@@ -2433,7 +2385,7 @@ export class Task {
 					// await this.saveClineMessagesAndUpdateHistory()
 				}
 				// update api_req_started to have cancelled and cost, so that we can display the cost of the partial stream
-				await finalizeApiReqMsg(cancelReason, streamingFailedMessage)
+				await streamMetricsCollector.finalizeApiReqMsg(cancelReason, streamingFailedMessage)
 				await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 
 				// Let assistant know their response was interrupted for when task is resumed
@@ -2501,7 +2453,6 @@ export class Task {
 			let assistantTextSignature: string | undefined
 
 			this.taskState.isStreaming = true
-			let didReceiveUsageChunk = false
 			let didFinalizeReasoningForUi = false
 
 			const finalizePendingReasoningMessage = async (thinking: string): Promise<boolean> => {
@@ -2533,17 +2484,7 @@ export class Task {
 				streamCoordinator = new StreamChunkCoordinator(stream, {
 					onUsageChunk: (chunk) => {
 						this.streamHandler.setRequestId(chunk.id)
-						didReceiveUsageChunk = true
-						taskMetrics.inputTokens += chunk.inputTokens
-						taskMetrics.outputTokens += chunk.outputTokens
-						taskMetrics.cacheWriteTokens += chunk.cacheWriteTokens ?? 0
-						taskMetrics.cacheReadTokens += chunk.cacheReadTokens ?? 0
-						taskMetrics.totalCost = chunk.totalCost ?? taskMetrics.totalCost
-						queueUsageChunkSideEffects(chunk.inputTokens, chunk.outputTokens, {
-							cacheWriteTokens: chunk.cacheWriteTokens,
-							cacheReadTokens: chunk.cacheReadTokens,
-							totalCost: chunk.totalCost,
-						})
+						streamMetricsCollector.handleUsageChunk(chunk)
 					},
 				})
 
@@ -2677,7 +2618,7 @@ export class Task {
 					await streamCoordinator.waitForCompletion()
 				}
 				// Flush any usage updates that were already executing/queued during streaming.
-				await usageChunkSideEffectsQueue
+				await streamMetricsCollector.flushQueuedSideEffects()
 
 				if (!this.taskState.abort && !didFinalizeReasoningForUi) {
 					const finalReasoning = reasonsHandler.getCurrentReasoning()
@@ -2752,24 +2693,15 @@ export class Task {
 
 			// OpenRouter/Cline may not return token usage as part of the stream (since it may abort early), so we fetch after the stream is finished
 			// (updateApiReq below will update the api_req_started message with the usage details. we do this async so it updates the api_req_started message in the background)
-			if (!didReceiveUsageChunk) {
+			if (!streamMetricsCollector.hasReceivedUsageChunk()) {
 				const apiStreamUsage = await this.api.getApiStreamUsage?.()
 				if (apiStreamUsage) {
-					taskMetrics.inputTokens += apiStreamUsage.inputTokens
-					taskMetrics.outputTokens += apiStreamUsage.outputTokens
-					taskMetrics.cacheWriteTokens += apiStreamUsage.cacheWriteTokens ?? 0
-					taskMetrics.cacheReadTokens += apiStreamUsage.cacheReadTokens ?? 0
-					taskMetrics.totalCost = apiStreamUsage.totalCost ?? taskMetrics.totalCost
-					queueUsageChunkSideEffects(apiStreamUsage.inputTokens, apiStreamUsage.outputTokens, {
-						cacheWriteTokens: apiStreamUsage.cacheWriteTokens,
-						cacheReadTokens: apiStreamUsage.cacheReadTokens,
-						totalCost: apiStreamUsage.totalCost,
-					})
+					streamMetricsCollector.handleUsageChunk(apiStreamUsage)
 				}
 			}
 
 			// Update the api_req_started message with final usage and cost details
-			await finalizeApiReqMsg()
+			await streamMetricsCollector.finalizeApiReqMsg()
 			await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 			await this.postStateToWebview()
 
