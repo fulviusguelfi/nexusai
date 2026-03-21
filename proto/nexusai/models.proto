@@ -5,7 +5,7 @@ package nexusai;
 import "nexusai/common.proto";
 import "google/protobuf/field_mask.proto";
 
-option go_package = "github.com/fulviusguelfi/grpc-go/cline";
+option go_package = "github.com/fulviusguelfi/grpc-go/nexusai";
 option java_multiple_files = true;
 option java_package = "ai.nexusai.proto";
 
