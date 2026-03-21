@@ -8,7 +8,7 @@ import { sendAddToInputEvent } from "../ui/subscribeToAddToInput"
 
 // 'Add to Cline' context menu in editor and code action
 // Inserts the selected code into the chat.
-export async function addToCline(controller: Controller, request: CommandContext, notebookContext?: string): Promise<Empty> {
+export async function addToNexusAI(controller: Controller, request: CommandContext, notebookContext?: string): Promise<Empty> {
 	if (!request.selectedText?.trim() && !notebookContext) {
 		Logger.log("❌ No text selected and no notebook context - returning early")
 		return {}

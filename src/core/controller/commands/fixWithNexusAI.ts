@@ -5,7 +5,7 @@ import { CommandContext, Empty } from "@/shared/proto/index.nexusai"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from "../index"
 
-export async function fixWithCline(controller: Controller, request: CommandContext): Promise<Empty> {
+export async function fixWithNexusAI(controller: Controller, request: CommandContext): Promise<Empty> {
 	const filePath = request.filePath || ""
 	const fileMention = await getFileMentionFromPath(filePath)
 	const problemsString = await singleFileDiagnosticsToProblemsString(filePath, request.diagnostics)

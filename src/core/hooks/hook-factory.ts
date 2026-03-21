@@ -207,7 +207,7 @@ export abstract class HookRunner<Name extends HookName> {
 		}
 
 		return {
-			clineVersion,
+			nexusaiVersion: clineVersion,
 			hookName: this.hookName,
 			timestamp: Date.now().toString(),
 			workspaceRoots,

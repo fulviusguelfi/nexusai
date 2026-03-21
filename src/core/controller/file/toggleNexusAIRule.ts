@@ -1,6 +1,6 @@
 import { getWorkspaceBasename } from "@core/workspace"
-import type { ToggleClineRuleRequest } from "@shared/proto/nexusai/file"
-import { RuleScope, ToggleClineRules } from "@shared/proto/nexusai/file"
+import type { ToggleNexusAIRuleRequest } from "@shared/proto/nexusai/file"
+import { RuleScope, ToggleNexusAIRules } from "@shared/proto/nexusai/file"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"
@@ -11,16 +11,16 @@ import type { Controller } from "../index"
  * @param request The toggle request
  * @returns The updated Cline rule toggles
  */
-export async function toggleClineRule(controller: Controller, request: ToggleClineRuleRequest): Promise<ToggleClineRules> {
+export async function toggleNexusAIRule(controller: Controller, request: ToggleNexusAIRuleRequest): Promise<ToggleNexusAIRules> {
 	const { scope, rulePath, enabled } = request
 
 	if (!rulePath || typeof enabled !== "boolean" || scope === undefined) {
-		Logger.error("toggleClineRule: Missing or invalid parameters", {
+		Logger.error("toggleNexusAIRule: Missing or invalid parameters", {
 			rulePath,
 			scope,
 			enabled: typeof enabled === "boolean" ? enabled : `Invalid: ${typeof enabled}`,
 		})
-		throw new Error("Missing or invalid parameters for toggleClineRule")
+		throw new Error("Missing or invalid parameters for toggleNexusAIRule")
 	}
 
 	// Handle the three different scopes
@@ -60,9 +60,9 @@ export async function toggleClineRule(controller: Controller, request: ToggleCli
 	const localToggles = controller.stateManager.getWorkspaceStateKey("localClineRulesToggles")
 	const remoteToggles = controller.stateManager.getGlobalStateKey("remoteRulesToggles")
 
-	return ToggleClineRules.create({
-		globalClineRulesToggles: { toggles: globalToggles },
-		localClineRulesToggles: { toggles: localToggles },
+	return ToggleNexusAIRules.create({
+		globalNexusaiRulesToggles: { toggles: globalToggles },
+		localNexusaiRulesToggles: { toggles: localToggles },
 		remoteRulesToggles: { toggles: remoteToggles },
 	})
 }

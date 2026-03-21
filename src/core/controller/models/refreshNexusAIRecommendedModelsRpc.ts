@@ -3,7 +3,7 @@ import { NexusAIRecommendedModel, NexusAIRecommendedModelsResponse } from "@shar
 import type { Controller } from "../index"
 import { refreshClineRecommendedModels } from "./refreshClineRecommendedModels"
 
-export async function refreshClineRecommendedModelsRpc(
+export async function refreshNexusAIRecommendedModelsRpc(
 	_controller: Controller,
 	_request: EmptyRequest,
 ): Promise<NexusAIRecommendedModelsResponse> {

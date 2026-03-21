@@ -6,7 +6,7 @@ import { CommandContext, Empty } from "@/shared/proto/index.nexusai"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from "../index"
 
-export async function explainWithCline(
+export async function explainWithNexusAI(
 	controller: Controller,
 	request: CommandContext,
 	notebookContext?: string,

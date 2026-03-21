@@ -22,10 +22,10 @@ import { vscodeHostBridgeClient } from "@/hosts/vscode/hostbridge/client/host-gr
 import { createStorageContext } from "@/shared/storage/storage-context"
 import { readTextFromClipboard, writeTextToClipboard } from "@/utils/env"
 import { initialize, tearDown } from "./common"
-import { addToCline } from "./core/controller/commands/addToCline"
-import { explainWithCline } from "./core/controller/commands/explainWithCline"
-import { fixWithCline } from "./core/controller/commands/fixWithCline"
-import { improveWithCline } from "./core/controller/commands/improveWithCline"
+import { addToNexusAI } from "./core/controller/commands/addToNexusAI"
+import { explainWithNexusAI } from "./core/controller/commands/explainWithNexusAI"
+import { fixWithNexusAI } from "./core/controller/commands/fixWithNexusAI"
+import { improveWithNexusAI } from "./core/controller/commands/improveWithNexusAI"
 import { sendAddToInputEvent } from "./core/controller/ui/subscribeToAddToInput"
 import { sendShowWebviewEvent } from "./core/controller/ui/subscribeToShowWebview"
 import { HookDiscoveryCache } from "./core/hooks/HookDiscoveryCache"
@@ -401,7 +401,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await addToCline(context.controller, context.commandContext)
+			await addToNexusAI(context.controller, context.commandContext)
 		}),
 	)
 	context.subscriptions.push(
@@ -410,7 +410,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await fixWithCline(context.controller, context.commandContext)
+			await fixWithNexusAI(context.controller, context.commandContext)
 		}),
 	)
 	context.subscriptions.push(
@@ -419,7 +419,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await explainWithCline(context.controller, context.commandContext)
+			await explainWithNexusAI(context.controller, context.commandContext)
 		}),
 	)
 	context.subscriptions.push(
@@ -428,7 +428,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!context) {
 				return
 			}
-			await improveWithCline(context.controller, context.commandContext)
+			await improveWithNexusAI(context.controller, context.commandContext)
 		}),
 	)
 
@@ -508,7 +508,7 @@ Current Notebook Cell Context (JSON, sanitized of image data):
 ${ctx.cellJson || "{}"}
 \`\`\``
 
-				await addToCline(ctx.controller, ctx.commandContext, notebookContext)
+				await addToNexusAI(ctx.controller, ctx.commandContext, notebookContext)
 			},
 		),
 	)
@@ -524,7 +524,7 @@ ${ctx.cellJson || "{}"}
 					? `\n\nCurrent Notebook Cell Context (JSON, sanitized of image data):\n\`\`\`json\n${ctx.cellJson}\n\`\`\``
 					: undefined
 
-				await explainWithCline(ctx.controller, ctx.commandContext, notebookContext)
+				await explainWithNexusAI(ctx.controller, ctx.commandContext, notebookContext)
 			},
 		),
 	)
@@ -550,7 +550,7 @@ Current Notebook Cell Context (JSON, sanitized of image data):
 ${ctx.cellJson || "{}"}
 \`\`\``
 
-				await improveWithCline(ctx.controller, ctx.commandContext, notebookContext)
+				await improveWithNexusAI(ctx.controller, ctx.commandContext, notebookContext)
 			},
 		),
 	)

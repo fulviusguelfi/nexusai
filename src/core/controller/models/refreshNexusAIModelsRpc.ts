@@ -10,7 +10,7 @@ import { refreshClineModels } from "./refreshClineModels"
  * @param request Empty request (unused but required for gRPC signature)
  * @returns OpenRouterCompatibleModelInfo with protobuf types (reusing the same proto type)
  */
-export async function refreshClineModelsRpc(
+export async function refreshNexusAIModelsRpc(
 	controller: Controller,
 	_request: EmptyRequest,
 ): Promise<OpenRouterCompatibleModelInfo> {

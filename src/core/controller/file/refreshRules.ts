@@ -24,8 +24,8 @@ export async function refreshRules(controller: Controller, _request: EmptyReques
 		const { localWorkflowToggles, globalWorkflowToggles } = await refreshWorkflowToggles(controller, cwd)
 
 		return RefreshedRules.create({
-			globalClineRulesToggles: { toggles: globalToggles },
-			localClineRulesToggles: { toggles: localToggles },
+			globalNexusaiRulesToggles: { toggles: globalToggles },
+			localNexusaiRulesToggles: { toggles: localToggles },
 			localCursorRulesToggles: { toggles: cursorLocalToggles },
 			localWindsurfRulesToggles: { toggles: windsurfLocalToggles },
 			localAgentsRulesToggles: { toggles: agentsLocalToggles },

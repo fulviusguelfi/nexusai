@@ -42,7 +42,6 @@ export class MqttConnectToolHandler implements IFullyManagedTool {
 		try {
 			// biome-ignore lint/suspicious/noExplicitAny: mqtt dynamic import
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-expect-error
 			const mqtt: any = await import("mqtt")
 			const mqttLib = mqtt.default ?? mqtt
 
