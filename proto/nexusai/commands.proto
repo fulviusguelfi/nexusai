@@ -14,10 +14,10 @@ option java_package = "ai.nexusai.proto";
 // intended to be called by the IDE directly instead of through the webview,
 // because they are triggered by interactions in the IDE.
 service CommandsService {
-  rpc addToCline(CommandContext) returns (Empty);
-  rpc fixWithCline(CommandContext) returns (Empty);
-  rpc explainWithCline(CommandContext) returns (Empty);
-  rpc improveWithCline(CommandContext) returns (Empty);
+  rpc addToNexusAI(CommandContext) returns (Empty);
+  rpc fixWithNexusAI(CommandContext) returns (Empty);
+  rpc explainWithNexusAI(CommandContext) returns (Empty);
+  rpc improveWithNexusAI(CommandContext) returns (Empty);
 }
 
 message CommandContext {

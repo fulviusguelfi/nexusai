@@ -8,7 +8,7 @@ option java_package = "ai.nexusai.proto";
 
 // Input message for all hooks
 message HookInput {
-  string cline_version = 1;
+  string nexusai_version = 1;
   string hook_name = 2;
   string timestamp = 3;
   string task_id = 4;
@@ -107,7 +107,7 @@ message PreCompactData {
   string compaction_strategy = 4;
 
   // API request tracking
-  int64 previous_api_req_index = 5; // Index of last API request in clineMessages
+  int64 previous_api_req_index = 5; // Index of last API request in nexusAIMessages
 
   // Token usage data from last API request
   int64 tokens_in = 6;

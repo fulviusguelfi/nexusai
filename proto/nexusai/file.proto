@@ -40,8 +40,8 @@ service FileService {
   // Search for files in the workspace with fuzzy matching
   rpc searchFiles(FileSearchRequest) returns (FileSearchResults);
 
-  // Toggle a Cline rule (enable or disable)
-  rpc toggleClineRule(ToggleClineRuleRequest) returns (ToggleClineRules);
+  // Toggle a NexusAI rule (enable or disable)
+  rpc toggleNexusAIRule(ToggleNexusAIRuleRequest) returns (ToggleNexusAIRules);
 
   // Toggle a Cursor rule (enable or disable)
   rpc toggleCursorRule(ToggleCursorRuleRequest) returns (NexusAIRulesToggles);
@@ -97,8 +97,8 @@ service FileService {
 
 // Response for refreshRules operation
 message RefreshedRules {
-  NexusAIRulesToggles global_cline_rules_toggles = 1;
-  NexusAIRulesToggles local_cline_rules_toggles = 2;
+  NexusAIRulesToggles global_nexusai_rules_toggles = 1;
+  NexusAIRulesToggles local_nexusai_rules_toggles = 2;
   NexusAIRulesToggles local_cursor_rules_toggles = 3;
   NexusAIRulesToggles local_windsurf_rules_toggles = 4;
   NexusAIRulesToggles local_agents_rules_toggles = 5;
@@ -198,8 +198,8 @@ enum RuleScope {
   REMOTE = 2;
 }
 
-// Request to toggle a Cline rule
-message ToggleClineRuleRequest {
+// Request to toggle a NexusAI rule
+message ToggleNexusAIRuleRequest {
   Metadata metadata = 1;
   RuleScope scope = 2; // Scope of the rule (local, global, or remote)
   string rule_path = 3; // Path to the rule file
@@ -211,10 +211,10 @@ message NexusAIRulesToggles {
   map<string, bool> toggles = 1;
 }
 
-// Response for toggleClineRule operation
-message ToggleClineRules {
-  NexusAIRulesToggles global_cline_rules_toggles = 1;
-  NexusAIRulesToggles local_cline_rules_toggles = 2;
+// Response for toggleNexusAIRule operation
+message ToggleNexusAIRules {
+  NexusAIRulesToggles global_nexusai_rules_toggles = 1;
+  NexusAIRulesToggles local_nexusai_rules_toggles = 2;
   NexusAIRulesToggles remote_rules_toggles = 3;
 }
 

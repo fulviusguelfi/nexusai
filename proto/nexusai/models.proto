@@ -19,10 +19,10 @@ service ModelsService {
   rpc getVsCodeLmModels(EmptyRequest) returns (VsCodeLmModelsArray);
   // Refreshes and returns OpenRouter models
   rpc refreshOpenRouterModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
-  // Refreshes and returns recommended and free Cline models
-  rpc refreshClineRecommendedModelsRpc(EmptyRequest) returns (NexusAIRecommendedModelsResponse);
-  // Refreshes and returns Cline provider models
-  rpc refreshClineModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
+  // Refreshes and returns recommended and free NexusAI models
+  rpc refreshNexusAIRecommendedModelsRpc(EmptyRequest) returns (NexusAIRecommendedModelsResponse);
+  // Refreshes and returns NexusAI provider models
+  rpc refreshNexusAIModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns Hugging Face models
   rpc refreshHuggingFaceModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns OpenAI models
@@ -436,7 +436,7 @@ enum ApiProvider {
   DOUBAO = 13;
   MISTRAL = 14;
   VSCODE_LM = 15;
-  CLINE = 16;
+  NEXUSAI = 16;
   LITELLM = 17;
   NEBIUS = 18;
   FIREWORKS = 19;

@@ -25,7 +25,7 @@ service StateService {
   rpc updateTelemetrySetting(TelemetrySettingRequest) returns (Empty);
   rpc captureOnboardingProgress(OnboardingProgressRequest) returns (Empty);
   rpc setWelcomeViewCompleted(BooleanRequest) returns (Empty);
-  rpc installClineCli(EmptyRequest) returns (Empty);
+  rpc installNexusAICli(EmptyRequest) returns (Empty);
   rpc checkCliInstallation(EmptyRequest) returns (Boolean);
   rpc getProcessInfo(EmptyRequest) returns (ProcessInfo);
   rpc flushPendingState(EmptyRequest) returns (Empty);
