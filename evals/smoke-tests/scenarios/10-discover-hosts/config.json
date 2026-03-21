@@ -1,0 +1,15 @@
+{
+	"name": "Discover network hosts",
+	"description": "Tests the discover_network_hosts tool by asking the AI to scan the local network and save discovered hosts to a file",
+	"prompt": "Use the discover_network_hosts tool to scan the local network for available hosts. Save the list of discovered hosts (or a message indicating no hosts were found) to a file called hosts.txt.",
+	"expectedFiles": [
+		"hosts.txt"
+	],
+	"expectedContent": [
+		{
+			"file": "hosts.txt",
+			"matchesRegex": "\\S+"
+		}
+	],
+	"timeout": 90
+}

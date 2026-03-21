@@ -1,0 +1,15 @@
+{
+	"name": "Speak text aloud",
+	"description": "Tests the speak_text tool by asking the AI to speak a message and confirm it was spoken in a log file",
+	"prompt": "Use the speak_text tool to say: 'NexusAI smoke test complete.' After speaking, create a file called speech.log with the content: 'spoke: NexusAI smoke test complete.'",
+	"expectedFiles": [
+		"speech.log"
+	],
+	"expectedContent": [
+		{
+			"file": "speech.log",
+			"contains": "spoke:"
+		}
+	],
+	"timeout": 60
+}
