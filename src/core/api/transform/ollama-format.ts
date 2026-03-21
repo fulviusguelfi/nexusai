@@ -1,13 +1,13 @@
 import { Message } from "ollama"
 import {
-	ClineAssistantToolUseBlock,
-	ClineImageContentBlock,
-	ClineStorageMessage,
-	ClineTextContentBlock,
-	ClineUserToolResultContentBlock,
+	NexusAIAssistantToolUseBlock,
+	NexusAIImageContentBlock,
+	NexusAIStorageMessage,
+	NexusAITextContentBlock,
+	NexusAIUserToolResultContentBlock,
 } from "@/shared/messages/content"
 
-export function convertToOllamaMessages(anthropicMessages: Omit<ClineStorageMessage, "modelInfo">[]): Message[] {
+export function convertToOllamaMessages(anthropicMessages: Omit<NexusAIStorageMessage, "modelInfo">[]): Message[] {
 	const ollamaMessages: Message[] = []
 
 	for (const anthropicMessage of anthropicMessages) {
@@ -19,8 +19,8 @@ export function convertToOllamaMessages(anthropicMessages: Omit<ClineStorageMess
 		} else {
 			if (anthropicMessage.role === "user") {
 				const { nonToolMessages, toolMessages } = anthropicMessage.content.reduce<{
-					nonToolMessages: (ClineTextContentBlock | ClineImageContentBlock)[]
-					toolMessages: ClineUserToolResultContentBlock[]
+					nonToolMessages: (NexusAITextContentBlock | NexusAIImageContentBlock)[]
+					toolMessages: NexusAIUserToolResultContentBlock[]
 				}>(
 					(acc, part) => {
 						if (part.type === "tool_result") {
@@ -76,8 +76,8 @@ export function convertToOllamaMessages(anthropicMessages: Omit<ClineStorageMess
 				}
 			} else if (anthropicMessage.role === "assistant") {
 				const { nonToolMessages, toolMessages } = anthropicMessage.content.reduce<{
-					nonToolMessages: (ClineTextContentBlock | ClineImageContentBlock)[]
-					toolMessages: ClineAssistantToolUseBlock[]
+					nonToolMessages: (NexusAITextContentBlock | NexusAIImageContentBlock)[]
+					toolMessages: NexusAIAssistantToolUseBlock[]
 				}>(
 					(acc, part) => {
 						if (part.type === "tool_use") {
@@ -91,7 +91,7 @@ export function convertToOllamaMessages(anthropicMessages: Omit<ClineStorageMess
 				)
 
 				// Process non-tool messages
-				let content: string = ""
+				let content = ""
 				if (nonToolMessages.length > 0) {
 					content = nonToolMessages
 						.map((part) => {

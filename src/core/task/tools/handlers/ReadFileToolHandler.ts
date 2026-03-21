@@ -5,8 +5,8 @@ import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
 import { extractFileContent } from "@integrations/misc/extract-file-content"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
-import { ClineSayTool } from "@/shared/ExtensionMessage"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAISayTool } from "@/shared/ExtensionMessage"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -16,7 +16,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class ReadFileToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.FILE_READ
+	readonly name = NexusAIDefaultTool.FILE_READ
 
 	constructor(private validator: ToolValidator) {}
 
@@ -98,7 +98,7 @@ export class ReadFileToolHandler implements IFullyManagedTool {
 			path: getReadablePath(config.cwd, displayPath),
 			content: absolutePath,
 			operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath!),
-		} satisfies ClineSayTool
+		} satisfies NexusAISayTool
 
 		const completeMessage = JSON.stringify(sharedMessageProps)
 

@@ -1,5 +1,5 @@
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { fetch } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { ModelInfo } from "../../../shared/api"
@@ -99,7 +99,7 @@ export class DifyHandler implements ApiHandler {
 		}
 	}
 
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[]): ApiStream {
 		Logger.log("[DIFY DEBUG] createMessage called with:", {
 			systemPromptLength: systemPrompt?.length || 0,
 			messagesCount: messages?.length || 0,
@@ -383,7 +383,7 @@ export class DifyHandler implements ApiHandler {
 		}
 	}
 
-	private convertMessagesToQuery(systemPrompt: string, messages: ClineStorageMessage[]): string {
+	private convertMessagesToQuery(systemPrompt: string, messages: NexusAIStorageMessage[]): string {
 		// Dify's context is managed by `conversation_id`. The `query` should be the last user message.
 		// The system prompt is typically configured in the Dify App itself.
 		const lastUserMessage = messages.filter((m) => m.role === "user").pop()
@@ -429,7 +429,7 @@ export class DifyHandler implements ApiHandler {
 	 * @param user User identifier (defaults to "cline-user")
 	 * @returns Promise with file upload response
 	 */
-	async uploadFile(file: Buffer, filename: string, user: string = "cline-user"): Promise<DifyFileResponse> {
+	async uploadFile(file: Buffer, filename: string, user = "cline-user"): Promise<DifyFileResponse> {
 		const formData = new FormData()
 		formData.append("file", new Blob([new Uint8Array(file)]), filename)
 		formData.append("user", user)
@@ -454,7 +454,7 @@ export class DifyHandler implements ApiHandler {
 	 * @param user User identifier (defaults to "cline-user")
 	 * @returns Promise that resolves when generation is stopped
 	 */
-	async stopGeneration(taskId: string, user: string = "cline-user"): Promise<void> {
+	async stopGeneration(taskId: string, user = "cline-user"): Promise<void> {
 		const response = await fetch(`${this.baseUrl}/chat-messages/${taskId}/stop`, {
 			method: "POST",
 			headers: this.jsonHeaders(),
@@ -477,9 +477,9 @@ export class DifyHandler implements ApiHandler {
 	 */
 	async getConversationHistory(
 		conversationId: string,
-		user: string = "cline-user",
+		user = "cline-user",
 		firstId?: string,
-		limit: number = 20,
+		limit = 20,
 	): Promise<DifyHistoryResponse> {
 		const params = new URLSearchParams({ user, limit: limit.toString() })
 		if (firstId) {
@@ -507,10 +507,10 @@ export class DifyHandler implements ApiHandler {
 	 * @returns Promise with conversations list
 	 */
 	async getConversations(
-		user: string = "cline-user",
+		user = "cline-user",
 		lastId?: string,
-		limit: number = 20,
-		sortBy: string = "-updated_at",
+		limit = 20,
+		sortBy = "-updated_at",
 	): Promise<DifyConversationsResponse> {
 		const params = new URLSearchParams({
 			user,
@@ -539,7 +539,7 @@ export class DifyHandler implements ApiHandler {
 	 * @param user User identifier (defaults to "cline-user")
 	 * @returns Promise that resolves when conversation is deleted
 	 */
-	async deleteConversation(conversationId: string, user: string = "cline-user"): Promise<void> {
+	async deleteConversation(conversationId: string, user = "cline-user"): Promise<void> {
 		const response = await fetch(`${this.baseUrl}/conversations/${conversationId}`, {
 			method: "DELETE",
 			headers: this.jsonHeaders(),
@@ -562,9 +562,9 @@ export class DifyHandler implements ApiHandler {
 	 */
 	async renameConversation(
 		conversationId: string,
-		user: string = "cline-user",
+		user = "cline-user",
 		name?: string,
-		autoGenerate: boolean = false,
+		autoGenerate = false,
 	): Promise<DifyConversationResponse> {
 		const body: any = { user, auto_generate: autoGenerate }
 		if (name) {
@@ -597,7 +597,7 @@ export class DifyHandler implements ApiHandler {
 		messageId: string,
 		rating: "like" | "dislike",
 		content?: string,
-		user: string = "cline-user",
+		user = "cline-user",
 	): Promise<void> {
 		const body: any = { rating, user }
 		if (content) {

@@ -3,7 +3,7 @@ import "should"
 import should from "should"
 import { MessageStateHandler } from "../core/task/message-state"
 import { TaskState } from "../core/task/TaskState"
-import { ClineMessage } from "../shared/ExtensionMessage"
+import { NexusAIMessage } from "../shared/ExtensionMessage"
 
 /**
  * Unit tests for MessageStateHandler's mutex protection (RC-4)
@@ -25,9 +25,9 @@ describe("MessageStateHandler Mutex Protection", () => {
 	}
 
 	/**
-	 * Helper to create a test ClineMessage
+	 * Helper to create a test NexusAIMessage
 	 */
-	function createTestMessage(text: string): ClineMessage {
+	function createTestMessage(text: string): NexusAIMessage {
 		return {
 			ts: Date.now(),
 			type: "say",

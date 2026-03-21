@@ -7,7 +7,7 @@
  *
  * Usage: node scripts/generate-state-proto.mjs
  *
- * The generated proto content is written to proto/cline/state.proto,
+ * The generated proto content is written to proto/nexusai/state.proto,
  * replacing only the Secrets and Settings messages while preserving
  * the rest of the file (services, enums, other messages).
  */
@@ -16,7 +16,7 @@ import * as fs from "node:fs/promises"
 import { Project, SyntaxKind } from "ts-morph"
 
 const STATE_KEYS_PATH = "src/shared/storage/state-keys.ts"
-const STATE_PROTO_PATH = "proto/cline/state.proto"
+const STATE_PROTO_PATH = "proto/nexusai/state.proto"
 
 /**
  * Convert field name to valid snake_case proto field name.

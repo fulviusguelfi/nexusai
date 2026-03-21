@@ -6,7 +6,7 @@ import axios from "axios"
 import cloneDeep from "clone-deep"
 import fs from "fs/promises"
 import path from "path"
-import { ClineEnv } from "@/config"
+import { NexusAIEnv } from "@/config"
 import { StateManager } from "@/core/storage/StateManager"
 import { featureFlagsService } from "@/services/feature-flags"
 import {
@@ -24,7 +24,7 @@ import { Logger } from "@/shared/services/Logger"
 import type { Controller } from ".."
 import { refreshOpenRouterModels } from "./refreshOpenRouterModels"
 
-type ClineSupportedParams =
+type NexusAISupportedParams =
 	| "frequency_penalty"
 	| "include_reasoning"
 	| "logit_bias"
@@ -47,7 +47,7 @@ type ClineSupportedParams =
 /**
  * The raw model information returned by the Cline API to list models
  */
-interface ClineRawModelInfo {
+interface NexusAIRawModelInfo {
 	id: string
 	name: string
 	description: string | null
@@ -77,14 +77,14 @@ interface ClineRawModelInfo {
 	} | null
 	supports_global_endpoint?: boolean | null
 	tiers?: any[] | null
-	supported_parameters?: ClineSupportedParams[] | null
+	supported_parameters?: NexusAISupportedParams[] | null
 }
 
 // Track pending refresh promise to prevent duplicate concurrent fetches
 let pendingRefresh: Promise<Record<string, ModelInfo>> | null = null
 
-async function fetchRawClineModels(): Promise<ClineRawModelInfo[]> {
-	const apiBaseUrl = ClineEnv.config().apiBaseUrl
+async function fetchRawClineModels(): Promise<NexusAIRawModelInfo[]> {
+	const apiBaseUrl = NexusAIEnv.config().apiBaseUrl
 	const response = await axios.get(`${apiBaseUrl}/api/v1/ai/cline/models`, getAxiosSettings())
 
 	if (!Array.isArray(response.data?.data)) {
@@ -92,7 +92,7 @@ async function fetchRawClineModels(): Promise<ClineRawModelInfo[]> {
 	}
 
 	Logger.log("Cline models source: Cline API")
-	return response.data.data as ClineRawModelInfo[]
+	return response.data.data as NexusAIRawModelInfo[]
 }
 
 /**

@@ -1,6 +1,6 @@
 import { COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/combineCommandSequences"
-import { ClineMessage } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/cline/common"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
+import { StringRequest } from "@shared/proto/nexusai/common"
 import { memo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -119,7 +119,7 @@ export const CommandOutputRow = memo(
 		isOutputFullyExpanded,
 		setIsOutputFullyExpanded,
 	}: {
-		message: ClineMessage
+		message: NexusAIMessage
 		isCommandExecuting?: boolean
 		isCommandPending?: boolean
 		isCommandCompleted?: boolean

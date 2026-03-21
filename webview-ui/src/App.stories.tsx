@@ -1,9 +1,9 @@
 import { HeroUIProvider } from "@heroui/react"
 import { DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
 import { type ApiConfiguration, bedrockModels } from "@shared/api"
-import { CLINE_ONBOARDING_MODELS } from "@shared/cline/onboarding"
-import type { ClineMessage, ClineSayTool } from "@shared/ExtensionMessage"
+import type { NexusAIMessage, NexusAISayTool } from "@shared/ExtensionMessage"
 import type { HistoryItem } from "@shared/HistoryItem"
+import { NEXUSAI_ONBOARDING_MODELS } from "@shared/nexusai/onboarding"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useEffect, useMemo, useState } from "react"
 import { expect, userEvent, within } from "storybook/test"
@@ -145,11 +145,11 @@ const mockTaskHistory: HistoryItem[] = [
 
 const createMessage = (
 	minutesAgo: number,
-	type: ClineMessage["type"],
-	say: ClineMessage["say"],
+	type: NexusAIMessage["type"],
+	say: NexusAIMessage["say"],
 	text: string,
-	overrides: Partial<ClineMessage> = {},
-): ClineMessage => ({
+	overrides: Partial<NexusAIMessage> = {},
+): NexusAIMessage => ({
 	ts: Date.now() - minutesAgo * 60000,
 	type,
 	say,
@@ -159,9 +159,9 @@ const createMessage = (
 
 const createSayToolMessage = (
 	minutesAgo: number,
-	sayTool: ClineSayTool,
-	overrides: Partial<ClineMessage> = {},
-): ClineMessage => ({
+	sayTool: NexusAISayTool,
+	overrides: Partial<NexusAIMessage> = {},
+): NexusAIMessage => ({
 	ts: Date.now() - minutesAgo * 60000,
 	type: "say",
 	say: "tool",
@@ -189,7 +189,7 @@ const createApiReqMessage = (minutesAgo: number, request: string, metrics: any =
 		}),
 	)
 
-const mockActiveMessages: ClineMessage[] = [
+const mockActiveMessages: NexusAIMessage[] = [
 	createMessage(5, "say", "task", "Help me create a responsive navigation component for a React application"),
 	createApiReqMessage(4.9, "Initial analysis request"),
 	createMessage(
@@ -225,7 +225,7 @@ const mockActiveMessages: ClineMessage[] = [
 	),
 ]
 
-const mockStreamingMessages: ClineMessage[] = [
+const mockStreamingMessages: NexusAIMessage[] = [
 	...mockActiveMessages,
 	createMessage(
 		0.17,
@@ -298,7 +298,7 @@ export const Onboarding: Story = {
 			welcomeViewCompleted: false,
 			showWelcome: true,
 			clineMessages: [],
-			onboardingModels: { models: CLINE_ONBOARDING_MODELS },
+			onboardingModels: { models: NEXUSAI_ONBOARDING_MODELS },
 		}),
 	],
 	parameters: {
@@ -309,7 +309,7 @@ export const Onboarding: Story = {
 		},
 	},
 	args: {
-		onboardingModels: { models: CLINE_ONBOARDING_MODELS },
+		onboardingModels: { models: NEXUSAI_ONBOARDING_MODELS },
 	},
 	argTypes: {
 		onboardingModels: {
@@ -428,7 +428,7 @@ export const StreamingResponse: Story = {
 	},
 }
 
-const createLongMessages = (): ClineMessage[] => [
+const createLongMessages = (): NexusAIMessage[] => [
 	createMessage(30, "say", "task", "Help me build a complete e-commerce application with React, Node.js, and MongoDB"),
 	createMessage(
 		29.7,
@@ -1084,7 +1084,7 @@ export const DiffEditNewFormat: Story = {
 export const DiffEditNewFormatStreaming: Story = {
 	decorators: [
 		(Story) => {
-			const [messages, setMessages] = useState<ClineMessage[]>([
+			const [messages, setMessages] = useState<NexusAIMessage[]>([
 				createMessage(5, "say", "task", "Add TypeScript types to the user module"),
 				createMessage(4.7, "say", "text", "I'll add TypeScript types to improve type safety."),
 			])
@@ -1115,7 +1115,7 @@ export const DiffEditNewFormatStreaming: Story = {
 
 				// Add initial partial message
 				const timer1 = setTimeout(() => {
-					setMessages((prev: ClineMessage[]) => [
+					setMessages((prev: NexusAIMessage[]) => [
 						...prev,
 						createSayToolMessage(
 							4.3,
@@ -1131,7 +1131,7 @@ export const DiffEditNewFormatStreaming: Story = {
 
 				// Add more content
 				const timer2 = setTimeout(() => {
-					setMessages((prev: ClineMessage[]) => {
+					setMessages((prev: NexusAIMessage[]) => {
 						const updated = [...prev]
 						updated[updated.length - 1] = createSayToolMessage(
 							4.3,
@@ -1148,7 +1148,7 @@ export const DiffEditNewFormatStreaming: Story = {
 
 				// Complete the patch
 				const timer3 = setTimeout(() => {
-					setMessages((prev: ClineMessage[]) => {
+					setMessages((prev: NexusAIMessage[]) => {
 						const updated = [...prev]
 						updated[updated.length - 1] = createSayToolMessage(
 							4.3,
@@ -1224,7 +1224,7 @@ export const DiffEditReplaceDiffFormat: Story = {
 export const DiffEditReplaceDiffFormatStreaming: Story = {
 	decorators: [
 		(Story) => {
-			const [messages, setMessages] = useState<ClineMessage[]>([
+			const [messages, setMessages] = useState<NexusAIMessage[]>([
 				createMessage(5, "say", "task", "Update error handling"),
 				createMessage(4.7, "say", "text", "I'll improve the error handling in the API client."),
 			])
@@ -1260,7 +1260,7 @@ try {
 						return
 					}
 
-					setMessages((prev: ClineMessage[]) => {
+					setMessages((prev: NexusAIMessage[]) => {
 						const updated = [...prev]
 						updated[updated.length - 1] = createSayToolMessage(
 							4.3,

@@ -4,7 +4,7 @@ import { parseSourceCodeForDefinitionsTopLevel } from "@services/tree-sitter"
 import { getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { formatResponse } from "@/core/prompts/responses"
 import { telemetryService } from "@/services/telemetry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -14,7 +14,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class ListCodeDefinitionNamesToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.LIST_CODE_DEF
+	readonly name = NexusAIDefaultTool.LIST_CODE_DEF
 
 	constructor(private validator: ToolValidator) {}
 

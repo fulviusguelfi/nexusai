@@ -1,5 +1,5 @@
-import { ClineStorageMessage } from "@/shared/messages/content"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import { convertApplyPatchToolCalls, convertWriteToFileToolCalls } from "./diff-editors"
 
 /**
@@ -11,9 +11,9 @@ import { convertApplyPatchToolCalls, convertWriteToFileToolCalls } from "./diff-
  * @returns Transformed messages array, or original if no transformation needed
  */
 export function transformToolCallMessages(
-	clineMessages: ClineStorageMessage[],
-	nativeTools?: ClineDefaultTool[],
-): ClineStorageMessage[] {
+	clineMessages: NexusAIStorageMessage[],
+	nativeTools?: NexusAIDefaultTool[],
+): NexusAIStorageMessage[] {
 	// Early return if no messages or native tools provided
 	if (!clineMessages?.length || !nativeTools?.length) {
 		return clineMessages
@@ -40,11 +40,11 @@ export function transformToolCallMessages(
 	}
 
 	// Determine which conversion to apply
-	const hasApplyPatchNative = nativeToolSet.has(ClineDefaultTool.APPLY_PATCH)
-	const hasFileEditNative = nativeToolSet.has(ClineDefaultTool.FILE_EDIT) || nativeToolSet.has(ClineDefaultTool.FILE_NEW)
+	const hasApplyPatchNative = nativeToolSet.has(NexusAIDefaultTool.APPLY_PATCH)
+	const hasFileEditNative = nativeToolSet.has(NexusAIDefaultTool.FILE_EDIT) || nativeToolSet.has(NexusAIDefaultTool.FILE_NEW)
 
-	const hasApplyPatchUsed = usedToolSet.has(ClineDefaultTool.APPLY_PATCH)
-	const hasFileEditUsed = usedToolSet.has(ClineDefaultTool.FILE_EDIT) || usedToolSet.has(ClineDefaultTool.FILE_NEW)
+	const hasApplyPatchUsed = usedToolSet.has(NexusAIDefaultTool.APPLY_PATCH)
+	const hasFileEditUsed = usedToolSet.has(NexusAIDefaultTool.FILE_EDIT) || usedToolSet.has(NexusAIDefaultTool.FILE_NEW)
 
 	// Convert write_to_file/replace_in_file → apply_patch
 	if (hasApplyPatchNative && hasFileEditUsed) {

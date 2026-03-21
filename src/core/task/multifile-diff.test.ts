@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, it } from "mocha"
 import sinon from "sinon"
 import { HostProvider } from "@/hosts/host-provider"
 import CheckpointTracker from "@/integrations/checkpoints/CheckpointTracker"
-import { ClineMessage } from "@/shared/ExtensionMessage"
+import { NexusAIMessage } from "@/shared/ExtensionMessage"
 import { ShowMessageType } from "@/shared/proto/index.host"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
 
@@ -44,7 +44,7 @@ describe("multifile-diff", () => {
 	describe("showChangedFilesDiff", () => {
 		const mockMessageTs = 1234567890
 		const mockHash = "abc123def456"
-		const mockMessages: ClineMessage[] = [
+		const mockMessages: NexusAIMessage[] = [
 			{
 				ts: mockMessageTs,
 				type: "say",
@@ -76,7 +76,7 @@ describe("multifile-diff", () => {
 			]
 
 			// Mock finding last completion message
-			const messagesWithCompletion: ClineMessage[] = [
+			const messagesWithCompletion: NexusAIMessage[] = [
 				{
 					ts: 1234567000,
 					type: "say",
@@ -169,7 +169,7 @@ describe("multifile-diff", () => {
 
 		it("should handle missing checkpoint hash", async () => {
 			// Arrange
-			const messagesWithoutHash: ClineMessage[] = [
+			const messagesWithoutHash: NexusAIMessage[] = [
 				{
 					ts: mockMessageTs,
 					type: "say",
@@ -225,7 +225,7 @@ describe("multifile-diff", () => {
 
 		it("should use first checkpoint when no last completion found", async () => {
 			// Arrange
-			const messagesWithFirstCheckpoint: ClineMessage[] = [
+			const messagesWithFirstCheckpoint: NexusAIMessage[] = [
 				{
 					ts: 1234567000,
 					type: "say",

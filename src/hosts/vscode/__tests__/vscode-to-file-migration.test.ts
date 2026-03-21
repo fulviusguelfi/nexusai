@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "mocha"
 import "should"
-import { ClineFileStorage } from "@shared/storage/ClineFileStorage"
+import { NexusAIFileStorage } from "@shared/storage/NexusAIFileStorage"
 import { createStorageContext, type StorageContext } from "@shared/storage/storage-context"
 import fs from "fs"
 import os from "os"
@@ -404,9 +404,9 @@ describe("createStorageContext", () => {
 	it("should create all three stores", () => {
 		const ctx = createStorageContext({ clineDir: tempDir, workspacePath: "/fake/workspace" })
 
-		ctx.globalState.should.be.instanceOf(ClineFileStorage)
-		ctx.secrets.should.be.instanceOf(ClineFileStorage)
-		ctx.workspaceState.should.be.instanceOf(ClineFileStorage)
+		ctx.globalState.should.be.instanceOf(NexusAIFileStorage)
+		ctx.secrets.should.be.instanceOf(NexusAIFileStorage)
+		ctx.workspaceState.should.be.instanceOf(NexusAIFileStorage)
 	})
 
 	it("should create directories", () => {

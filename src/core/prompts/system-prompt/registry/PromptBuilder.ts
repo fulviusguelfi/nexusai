@@ -1,7 +1,7 @@
 import { Logger } from "@/shared/services/Logger"
-import type { ClineDefaultTool } from "@/shared/tools"
-import { ClineToolSet } from "../registry/ClineToolSet"
-import { type ClineToolSpec, resolveInstruction } from "../spec"
+import type { NexusAIDefaultTool } from "@/shared/tools"
+import { NexusAIToolSet } from "../registry/NexusAIToolSet"
+import { type NexusAIToolSpec, resolveInstruction } from "../spec"
 import { STANDARD_PLACEHOLDERS } from "../templates/placeholders"
 import { TemplateEngine } from "../templates/TemplateEngine"
 import type { ComponentRegistry, PromptVariant, SystemPromptContext } from "../types"
@@ -132,8 +132,8 @@ export class PromptBuilder {
 		}
 	}
 
-	private static getEnabledTools(variant: PromptVariant, context: SystemPromptContext): ClineToolSpec[] {
-		return ClineToolSet.getEnabledToolSpecs(variant, context)
+	private static getEnabledTools(variant: PromptVariant, context: SystemPromptContext): NexusAIToolSpec[] {
+		return NexusAIToolSet.getEnabledToolSpecs(variant, context)
 	}
 
 	public static async getToolsPrompts(variant: PromptVariant, context: SystemPromptContext) {
@@ -143,7 +143,7 @@ export class PromptBuilder {
 		return Promise.all(enabledTools.map((tool) => PromptBuilder.tool(tool, ids, context)))
 	}
 
-	public static tool(config: ClineToolSpec, registry: ClineDefaultTool[], context: SystemPromptContext): string {
+	public static tool(config: NexusAIToolSpec, registry: NexusAIDefaultTool[], context: SystemPromptContext): string {
 		// Skip tools without parameters or description - those are placeholder tools
 		if (!config.parameters?.length && !config.description?.length) {
 			return ""

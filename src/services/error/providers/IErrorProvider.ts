@@ -3,7 +3,7 @@
  * Allows switching between different error tracking providers (PostHog, Sentry, etc.)
  */
 
-import type { ClineError } from "../ClineError"
+import type { NexusAIError } from "../NexusAIError"
 
 /**
  * Error settings that control when and how errors are logged
@@ -27,14 +27,14 @@ export interface IErrorProvider {
 	 * @param error The error to log
 	 * @param properties  Optional additional properties to attach to the error
 	 */
-	captureException(error: Error | ClineError, properties?: Record<string, unknown>): Promise<void>
+	captureException(error: Error | NexusAIError, properties?: Record<string, unknown>): Promise<void>
 
 	/**
 	 * Sends a log message an error and optional properties
-	 * @param error The error to log (Error or ClineError)
+	 * @param error The error to log (Error or NexusAIError)
 	 * @param properties Optional additional properties to attach
 	 */
-	logException(error: Error | ClineError, properties?: Record<string, unknown>): void
+	logException(error: Error | NexusAIError, properties?: Record<string, unknown>): void
 
 	/**
 	 * Log a message with specified level

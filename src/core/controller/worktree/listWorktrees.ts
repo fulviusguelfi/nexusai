@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { WorktreeList } from "@shared/proto/cline/worktree"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { WorktreeList } from "@shared/proto/nexusai/worktree"
 import { getGitRootPath, listWorktrees as listWorktreesUtil } from "@utils/git-worktree"
 import { arePathsEqual, getWorkspacePath } from "@utils/path"
 import { HostProvider } from "@/hosts/host-provider"

@@ -1,6 +1,6 @@
-import { AuthState, UserInfo } from "@shared/proto/cline/account"
-import { type EmptyRequest, String } from "@shared/proto/cline/common"
-import { ClineEnv } from "@/config"
+import { AuthState, UserInfo } from "@shared/proto/nexusai/account"
+import { type EmptyRequest, String } from "@shared/proto/nexusai/common"
+import { NexusAIEnv } from "@/config"
 import { Controller } from "@/core/controller"
 import { getRequestRegistry, type StreamingResponseHandler } from "@/core/controller/grpc-handler"
 import { setWelcomeViewCompleted } from "@/core/controller/state/setWelcomeViewCompleted"
@@ -8,9 +8,9 @@ import { HostProvider } from "@/hosts/host-provider"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import { openExternal } from "@/utils/env"
-import { AuthInvalidTokenError, AuthNetworkError } from "../error/ClineError"
+import { AuthInvalidTokenError, AuthNetworkError } from "../error/NexusAIError"
 import { featureFlagsService } from "../feature-flags"
-import { ClineAuthProvider } from "./providers/ClineAuthProvider"
+import { NexusAIAuthProvider } from "./providers/NexusAIAuthProvider"
 import { LogoutReason } from "./types"
 
 export type ServiceConfig = {
@@ -18,7 +18,7 @@ export type ServiceConfig = {
 	[key: string]: any
 }
 
-export interface ClineAuthInfo {
+export interface NexusAIAuthInfo {
 	/**
 	 * accessToken
 	 */
@@ -32,17 +32,17 @@ export interface ClineAuthInfo {
 	 * When expired, the access token needs to be refreshed using the refresh token.
 	 */
 	expiresAt?: number
-	userInfo: ClineAccountUserInfo
+	userInfo: NexusAIAccountUserInfo
 	provider: string
 	startedAt?: number
 }
 
-export interface ClineAccountUserInfo {
+export interface NexusAIAccountUserInfo {
 	createdAt: string
 	displayName: string
 	email: string
 	id: string
-	organizations: ClineAccountOrganization[]
+	organizations: NexusAIAccountOrganization[]
 	/**
 	 * Cline app base URL, used for webview UI and other client-side operations
 	 */
@@ -53,7 +53,7 @@ export interface ClineAccountUserInfo {
 	subject?: string
 }
 
-export interface ClineAccountOrganization {
+export interface NexusAIAccountOrganization {
 	active: boolean
 	memberId: string
 	name: string
@@ -64,8 +64,8 @@ export interface ClineAccountOrganization {
 export class AuthService {
 	protected static instance: AuthService | null = null
 	protected _authenticated = false
-	protected _clineAuthInfo: ClineAuthInfo | null = null
-	protected _provider: ClineAuthProvider
+	protected _clineAuthInfo: NexusAIAuthInfo | null = null
+	protected _provider: NexusAIAuthProvider
 	protected _activeAuthStatusUpdateHandlers = new Set<StreamingResponseHandler<AuthState>>()
 	protected _handlerToController = new Map<StreamingResponseHandler<AuthState>, Controller>()
 	protected _controller: Controller
@@ -76,7 +76,7 @@ export class AuthService {
 	 * @param controller - Optional reference to the Controller instance.
 	 */
 	protected constructor(controller: Controller) {
-		this._provider = new ClineAuthProvider()
+		this._provider = new NexusAIAuthProvider()
 		this._controller = controller
 	}
 
@@ -146,11 +146,11 @@ export class AuthService {
 	 * Gets all organizations from the authenticated user's info
 	 * @returns Array of organizations, or undefined if not available
 	 */
-	getUserOrganizations(): ClineAccountOrganization[] | undefined {
+	getUserOrganizations(): NexusAIAccountOrganization[] | undefined {
 		return this._clineAuthInfo?.userInfo?.organizations
 	}
 
-	private async internalGetAuthToken(provider: ClineAuthProvider): Promise<string | null> {
+	private async internalGetAuthToken(provider: NexusAIAuthProvider): Promise<string | null> {
 		try {
 			let clineAccountAuthToken = this._clineAuthInfo?.idToken
 			if (!this._clineAuthInfo || !clineAccountAuthToken || this._clineAuthInfo.provider !== provider.name) {
@@ -232,7 +232,7 @@ export class AuthService {
 		let user: any = null
 		if (this._clineAuthInfo && this._authenticated) {
 			const userInfo = this._clineAuthInfo.userInfo
-			this._clineAuthInfo.userInfo.appBaseUrl = ClineEnv.config()?.appBaseUrl
+			this._clineAuthInfo.userInfo.appBaseUrl = NexusAIEnv.config()?.appBaseUrl
 
 			user = UserInfo.create({
 				// TODO: create proto for new user info type
@@ -329,7 +329,7 @@ export class AuthService {
 		}
 	}
 
-	private async retrieveAuthInfo(): Promise<ClineAuthInfo | null> {
+	private async retrieveAuthInfo(): Promise<NexusAIAuthInfo | null> {
 		// If a refresh is already in progress, wait for it to complete
 		if (this._refreshPromise) {
 			Logger.info("Token refresh already in progress, waiting for completion")

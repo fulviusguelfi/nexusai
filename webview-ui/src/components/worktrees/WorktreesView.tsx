@@ -1,12 +1,12 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { NewTaskRequest } from "@shared/proto/cline/task"
-import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/cline/worktree"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { NewTaskRequest } from "@shared/proto/nexusai/task"
+import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/nexusai/worktree"
 import {
 	CreateWorktreeIncludeRequest,
 	DeleteWorktreeRequest,
 	MergeWorktreeRequest,
 	SwitchWorktreeRequest,
-} from "@shared/proto/cline/worktree"
+} from "@shared/proto/nexusai/worktree"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { AlertCircle, Check, ExternalLink, FolderOpen, GitBranch, GitMerge, Loader2, Plus, Trash2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useState } from "react"

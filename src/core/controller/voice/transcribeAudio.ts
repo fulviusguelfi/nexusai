@@ -1,6 +1,6 @@
 import type { Controller } from "@core/controller"
-import type { AudioChunk } from "@shared/proto/cline/voice"
-import { TranscriptionResult } from "@shared/proto/cline/voice"
+import type { AudioChunk } from "@shared/proto/nexusai/voice"
+import { TranscriptionResult } from "@shared/proto/nexusai/voice"
 import { VoiceSessionManager } from "@/services/voice/VoiceSessionManager"
 import { WhisperService } from "@/services/voice/WhisperService"
 

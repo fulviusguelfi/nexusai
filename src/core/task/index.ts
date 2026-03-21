@@ -9,20 +9,20 @@ import { EnvironmentContextTracker } from "@core/context/context-tracking/Enviro
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
 import { ModelContextTracker } from "@core/context/context-tracking/ModelContextTracker"
 import {
-	getGlobalClineRules,
-	getLocalClineRules,
-	refreshClineRulesToggles,
-} from "@core/context/instructions/user-instructions/cline-rules"
-import {
 	getLocalAgentsRules,
 	getLocalCursorRules,
 	getLocalWindsurfRules,
 	refreshExternalRulesToggles,
 } from "@core/context/instructions/user-instructions/external-rules"
+import {
+	getGlobalClineRules,
+	getLocalClineRules,
+	refreshClineRulesToggles,
+} from "@core/context/instructions/user-instructions/nexusai-rules"
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
-import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
+import { NexusAIIgnoreController } from "@core/ignore/NexusAIIgnoreController"
 import { parseMentions } from "@core/mentions"
 import { CommandPermissionController } from "@core/permissions"
 import { summarizeTask } from "@core/prompts/contextManagement"
@@ -55,13 +55,13 @@ import { ApiConfiguration } from "@shared/api"
 import { findLast, findLastIndex } from "@shared/array"
 import { combineApiRequests } from "@shared/combineApiRequests"
 import { combineCommandSequences } from "@shared/combineCommandSequences"
-import { ClineApiReqCancelReason, ClineApiReqInfo, ClineAsk, ClineMessage, ClineSay } from "@shared/ExtensionMessage"
+import { NexusAIApiReqCancelReason, NexusAIApiReqInfo, NexusAIAsk, NexusAIMessage, NexusAISay } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import { DEFAULT_LANGUAGE_SETTINGS, getLanguageKey, LanguageDisplay } from "@shared/Languages"
 import { USER_CONTENT_TAGS } from "@shared/messages/constants"
-import { convertClineMessageToProto } from "@shared/proto-conversions/cline-message"
-import { ClineDefaultTool, READ_ONLY_TOOLS } from "@shared/tools"
-import { ClineAskResponse } from "@shared/WebviewMessage"
+import { convertClineMessageToProto } from "@shared/proto-conversions/nexusai-message"
+import { NexusAIDefaultTool, READ_ONLY_TOOLS } from "@shared/tools"
+import { NexusAIAskResponse } from "@shared/WebviewMessage"
 import {
 	isClaude4PlusModelFamily,
 	isGPT5ModelFamily,
@@ -88,21 +88,21 @@ import {
 	FullCommandExecutorConfig,
 	StandaloneTerminalManager,
 } from "@/integrations/terminal"
-import { ClineError, ClineErrorType, ErrorService } from "@/services/error"
+import { ErrorService, NexusAIError, NexusAIErrorType } from "@/services/error"
 import { telemetryService } from "@/services/telemetry"
-import { ClineClient } from "@/shared/cline"
 import {
-	ClineAssistantContent,
-	ClineContent,
-	ClineImageContentBlock,
-	ClineMessageModelInfo,
-	ClineStorageMessage,
-	ClineTextContentBlock,
-	ClineToolResponseContent,
-	ClineUserContent,
+	NexusAIAssistantContent,
+	NexusAIContent,
+	NexusAIImageContentBlock,
+	NexusAIMessageModelInfo,
+	NexusAIStorageMessage,
+	NexusAITextContentBlock,
+	NexusAIToolResponseContent,
+	NexusAIUserContent,
 } from "@/shared/messages"
-import { ApiFormat } from "@/shared/proto/cline/models"
+import { NexusAIClient } from "@/shared/nexusai"
 import { ShowMessageType } from "@/shared/proto/index.host"
+import { ApiFormat } from "@/shared/proto/nexusai/models"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
 import { RuleContextBuilder } from "../context/instructions/user-instructions/RuleContextBuilder"
@@ -123,7 +123,7 @@ import { ToolExecutor } from "./ToolExecutor"
 import { detectAvailableCliTools, extractProviderDomainFromUrl, updateApiReqMsg } from "./utils"
 import { buildUserFeedbackContent } from "./utils/buildUserFeedbackContent"
 
-export type ToolResponse = ClineToolResponseContent
+export type ToolResponse = NexusAIToolResponseContent
 
 type TaskParams = {
 	controller: Controller
@@ -215,7 +215,7 @@ export class Task {
 	private diffViewProvider: DiffViewProvider
 	public checkpointManager?: ICheckpointManager
 	private initialCheckpointCommitPromise?: Promise<string | undefined>
-	private clineIgnoreController: ClineIgnoreController
+	private clineIgnoreController: NexusAIIgnoreController
 	private commandPermissionController: CommandPermissionController
 	private toolExecutor: ToolExecutor
 	/**
@@ -294,7 +294,7 @@ export class Task {
 		this.postStateToWebview = postStateToWebview
 		this.reinitExistingTaskFromId = reinitExistingTaskFromId
 		this.cancelTask = cancelTask
-		this.clineIgnoreController = new ClineIgnoreController(cwd)
+		this.clineIgnoreController = new NexusAIIgnoreController(cwd)
 		this.commandPermissionController = new CommandPermissionController()
 		this.taskLockAcquired = taskLockAcquired
 		// Determine terminal execution mode and create appropriate terminal manager
@@ -442,7 +442,9 @@ export class Task {
 				const lastApiReqStartedIndex = findLastIndex(clineMessages, (m) => m.say === "api_req_started")
 				if (lastApiReqStartedIndex !== -1) {
 					try {
-						const currentApiReqInfo: ClineApiReqInfo = JSON.parse(clineMessages[lastApiReqStartedIndex].text || "{}")
+						const currentApiReqInfo: NexusAIApiReqInfo = JSON.parse(
+							clineMessages[lastApiReqStartedIndex].text || "{}",
+						)
 						currentApiReqInfo.retryStatus = {
 							attempt: attempt, // attempt is already 1-indexed from retry.ts
 							maxAttempts: maxRetries, // total attempts
@@ -514,7 +516,7 @@ export class Task {
 		const commandExecutorCallbacks: CommandExecutorCallbacks = {
 			say: this.say.bind(this) as CommandExecutorCallbacks["say"],
 			ask: async (type: string, text?: string, partial?: boolean) => {
-				const result = await this.ask(type as ClineAsk, text, partial)
+				const result = await this.ask(type as NexusAIAsk, text, partial)
 				return {
 					response: result.response,
 					text: result.text,
@@ -529,8 +531,8 @@ export class Task {
 			},
 			getClineMessages: () => this.messageStateHandler.getClineMessages() as Array<{ ask?: string; say?: string }>,
 			addToUserMessageContent: (content: { type: string; text: string }) => {
-				// Cast to ClineTextContentBlock which is compatible with ClineContent
-				this.taskState.userMessageContent.push({ type: "text", text: content.text } as ClineTextContentBlock)
+				// Cast to NexusAITextContentBlock which is compatible with NexusAIContent
+				this.taskState.userMessageContent.push({ type: "text", text: content.text } as NexusAITextContentBlock)
 			},
 		}
 
@@ -595,11 +597,11 @@ export class Task {
 
 	// partial has three valid states true (partial message), false (completion of partial message), undefined (individual complete message)
 	async ask(
-		type: ClineAsk,
+		type: NexusAIAsk,
 		text?: string,
 		partial?: boolean,
 	): Promise<{
-		response: ClineAskResponse
+		response: NexusAIAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -761,7 +763,7 @@ export class Task {
 		}
 	}
 
-	async handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[], files?: string[]) {
+	async handleWebviewAskResponse(askResponse: NexusAIAskResponse, text?: string, images?: string[], files?: string[]) {
 		this.taskState.askResponse = askResponse
 		this.taskState.askResponseText = text
 		this.taskState.askResponseImages = images
@@ -769,7 +771,7 @@ export class Task {
 	}
 
 	async say(
-		type: ClineSay,
+		type: NexusAISay,
 		text?: string,
 		images?: string[],
 		files?: string[],
@@ -781,7 +783,7 @@ export class Task {
 		}
 
 		const providerInfo = this.getCurrentProviderInfo()
-		const modelInfo: ClineMessageModelInfo = {
+		const modelInfo: NexusAIMessageModelInfo = {
 			providerId: providerInfo.providerId,
 			modelId: providerInfo.model.id,
 			mode: providerInfo.mode,
@@ -871,7 +873,7 @@ export class Task {
 		return sayTs
 	}
 
-	async sayAndCreateMissingParamError(toolName: ClineDefaultTool, paramName: string, relPath?: string) {
+	async sayAndCreateMissingParamError(toolName: NexusAIDefaultTool, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
 			`Cline tried to use ${toolName}${
@@ -881,7 +883,7 @@ export class Task {
 		return formatResponse.toolError(formatResponse.missingToolParameterError(paramName))
 	}
 
-	async removeLastPartialMessageIfExistsWithType(type: "ask" | "say", askOrSay: ClineAsk | ClineSay) {
+	async removeLastPartialMessageIfExistsWithType(type: "ask" | "say", askOrSay: NexusAIAsk | NexusAISay) {
 		const clineMessages = this.messageStateHandler.getClineMessages()
 		const lastMessage = clineMessages.at(-1)
 		if (lastMessage?.partial && lastMessage.type === type && (lastMessage.ask === askOrSay || lastMessage.say === askOrSay)) {
@@ -934,7 +936,7 @@ export class Task {
 	}
 
 	private async runUserPromptSubmitHook(
-		userContent: ClineContent[],
+		userContent: NexusAIContent[],
 		_context: "initial_task" | "resume" | "feedback",
 	): Promise<{ cancel?: boolean; wasCancelled?: boolean; contextModification?: string; errorMessage?: string }> {
 		const hooksEnabled = getHooksEnabledSafe(this.stateManager.getGlobalSettingsKey("hooksEnabled"))
@@ -989,7 +991,7 @@ export class Task {
 		try {
 			await this.clineIgnoreController.initialize()
 		} catch (error) {
-			Logger.error("Failed to initialize ClineIgnoreController:", error)
+			Logger.error("Failed to initialize NexusAIIgnoreController:", error)
 			// Optionally, inform the user or handle the error appropriately
 		}
 		// conversationHistory (for API) and clineMessages (for webview) need to be in sync
@@ -1003,9 +1005,9 @@ export class Task {
 
 		this.taskState.isInitialized = true
 
-		const imageBlocks: ClineImageContentBlock[] = formatResponse.imageBlocks(images)
+		const imageBlocks: NexusAIImageContentBlock[] = formatResponse.imageBlocks(images)
 
-		const userContent: ClineUserContent[] = [
+		const userContent: NexusAIUserContent[] = [
 			{
 				type: "text",
 				text: `<task>\n${task}\n</task>`,
@@ -1112,7 +1114,7 @@ export class Task {
 		try {
 			await this.clineIgnoreController.initialize()
 		} catch (error) {
-			Logger.error("Failed to initialize ClineIgnoreController:", error)
+			Logger.error("Failed to initialize NexusAIIgnoreController:", error)
 			// Optionally, inform the user or handle the error appropriately
 		}
 
@@ -1132,7 +1134,7 @@ export class Task {
 		const lastApiReqStartedIndex = findLastIndex(savedClineMessages, (m) => m.type === "say" && m.say === "api_req_started")
 		if (lastApiReqStartedIndex !== -1) {
 			const lastApiReqStarted = savedClineMessages[lastApiReqStartedIndex]
-			const { cost, cancelReason }: ClineApiReqInfo = JSON.parse(lastApiReqStarted.text || "{}")
+			const { cost, cancelReason }: NexusAIApiReqInfo = JSON.parse(lastApiReqStarted.text || "{}")
 			if (cost === undefined && cancelReason === undefined) {
 				savedClineMessages.splice(lastApiReqStartedIndex, 1)
 			}
@@ -1157,7 +1159,7 @@ export class Task {
 			.reverse()
 			.find((m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task")) // could be multiple resume tasks
 
-		let askType: ClineAsk
+		let askType: NexusAIAsk
 		if (lastClineMessage?.ask === "completion_result") {
 			askType = "resume_completed_task"
 		} else {
@@ -1170,7 +1172,7 @@ export class Task {
 		const { response, text, images, files } = await this.ask(askType) // calls poststatetowebview
 
 		// Initialize newUserContent array for hook context
-		const newUserContent: ClineContent[] = []
+		const newUserContent: NexusAIContent[] = []
 
 		// Run TaskResume hook AFTER user clicks resume button
 		const hooksEnabled = getHooksEnabledSafe(this.stateManager.getGlobalSettingsKey("hooksEnabled"))
@@ -1244,15 +1246,15 @@ export class Task {
 		const existingApiConversationHistory = this.messageStateHandler.getApiConversationHistory()
 
 		// Remove the last user message so we can update it with the resume message
-		let modifiedOldUserContent: ClineContent[] // either the last message if its user message, or the user message before the last (assistant) message
-		let modifiedApiConversationHistory: ClineStorageMessage[] // need to remove the last user message to replace with new modified user message
+		let modifiedOldUserContent: NexusAIContent[] // either the last message if its user message, or the user message before the last (assistant) message
+		let modifiedApiConversationHistory: NexusAIStorageMessage[] // need to remove the last user message to replace with new modified user message
 		if (existingApiConversationHistory.length > 0) {
 			const lastMessage = existingApiConversationHistory[existingApiConversationHistory.length - 1]
 			if (lastMessage.role === "assistant") {
 				modifiedApiConversationHistory = [...existingApiConversationHistory]
 				modifiedOldUserContent = []
 			} else if (lastMessage.role === "user") {
-				const existingUserContent: ClineContent[] = Array.isArray(lastMessage.content)
+				const existingUserContent: NexusAIContent[] = Array.isArray(lastMessage.content)
 					? lastMessage.content
 					: [{ type: "text", text: lastMessage.content }]
 				modifiedApiConversationHistory = existingApiConversationHistory.slice(0, -1)
@@ -1380,7 +1382,7 @@ export class Task {
 		await this.initiateTaskLoop(newUserContent)
 	}
 
-	private async initiateTaskLoop(userContent: ClineContent[]): Promise<void> {
+	private async initiateTaskLoop(userContent: NexusAIContent[]): Promise<void> {
 		let nextUserContent = userContent
 		let includeFileDetails = true
 		while (!this.taskState.abort) {
@@ -1529,7 +1531,7 @@ export class Task {
 						.reverse()
 						.find((m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"))
 
-					let askType: ClineAsk
+					let askType: NexusAIAsk
 					if (lastClineMessage?.ask === "completion_result") {
 						askType = "resume_completed_task"
 					} else {
@@ -1610,7 +1612,7 @@ export class Task {
 		command: string,
 		timeoutSeconds: number | undefined,
 		options?: CommandExecutionOptions,
-	): Promise<[boolean, ClineToolResponseContent]> {
+	): Promise<[boolean, NexusAIToolResponseContent]> {
 		return this.commandExecutor.execute(command, timeoutSeconds, options)
 	}
 
@@ -1675,14 +1677,14 @@ export class Task {
 	}
 
 	private async writePromptMetadataArtifacts(params: { systemPrompt: string; providerInfo: ApiProviderInfo }): Promise<void> {
-		const enabledFlag = process.env.CLINE_WRITE_PROMPT_ARTIFACTS?.toLowerCase()
+		const enabledFlag = process.env.NEXUSAI_WRITE_PROMPT_ARTIFACTS?.toLowerCase()
 		const enabled = enabledFlag === "1" || enabledFlag === "true" || enabledFlag === "yes"
 		if (!enabled) {
 			return
 		}
 
 		try {
-			const configuredDir = process.env.CLINE_PROMPT_ARTIFACT_DIR?.trim()
+			const configuredDir = process.env.NEXUSAI_PROMPT_ARTIFACT_DIR?.trim()
 			const artifactDir = configuredDir
 				? path.isAbsolute(configuredDir)
 					? configuredDir
@@ -1738,7 +1740,7 @@ export class Task {
 		const providerInfo = this.getCurrentProviderInfo()
 		const host = await HostProvider.env.getHostVersion({})
 		const ide = host?.platform || "Unknown"
-		const isCliEnvironment = host.clineType === ClineClient.Cli
+		const isCliEnvironment = host.clineType === NexusAIClient.Cli
 		const browserSettings = this.stateManager.getGlobalSettingsKey("browserSettings")
 		const disableBrowserTool = browserSettings.disableToolUse ?? false
 		// cline browser tool uses image recognition for navigation (requires model image support).
@@ -1925,7 +1927,7 @@ export class Task {
 				)
 				if (lastApiReqStartedIndex !== -1) {
 					const clineMessages = this.messageStateHandler.getClineMessages()
-					const currentApiReqInfo: ClineApiReqInfo = JSON.parse(clineMessages[lastApiReqStartedIndex].text || "{}")
+					const currentApiReqInfo: NexusAIApiReqInfo = JSON.parse(clineMessages[lastApiReqStartedIndex].text || "{}")
 					delete currentApiReqInfo.retryStatus
 
 					await this.messageStateHandler.updateClineMessage(lastApiReqStartedIndex, {
@@ -1933,12 +1935,12 @@ export class Task {
 							...currentApiReqInfo, // Spread the modified info (with retryStatus removed)
 							// cancelReason: "retries_exhausted", // Indicate that automatic retries failed
 							streamingFailedMessage,
-						} satisfies ClineApiReqInfo),
+						} satisfies NexusAIApiReqInfo),
 					})
 					// this.ask will trigger postStateToWebview, so this change should be picked up.
 				}
 
-				const isAuthError = clineError.isErrorType(ClineErrorType.Auth)
+				const isAuthError = clineError.isErrorType(NexusAIErrorType.Auth)
 
 				// Check if this is a Cline provider insufficient credits error - don't auto-retry these
 				const isClineProviderInsufficientCredits = (() => {
@@ -1946,14 +1948,14 @@ export class Task {
 						return false
 					}
 					try {
-						const parsedError = ClineError.transform(error, model.id, providerId)
-						return parsedError.isErrorType(ClineErrorType.Balance)
+						const parsedError = NexusAIError.transform(error, model.id, providerId)
+						return parsedError.isErrorType(NexusAIErrorType.Balance)
 					} catch {
 						return false
 					}
 				})()
 
-				let response: ClineAskResponse
+				let response: NexusAIAskResponse
 				// Skip auto-retry for Cline provider insufficient credits or auth errors
 				if (!isClineProviderInsufficientCredits && !isAuthError && this.taskState.autoRetryAttempts < 3) {
 					// Auto-retry enabled with max 3 attempts: automatically approve the retry
@@ -1996,7 +1998,7 @@ export class Task {
 					)
 					if (autoRetryApiReqIndex !== -1) {
 						const clineMessages = this.messageStateHandler.getClineMessages()
-						const currentApiReqInfo: ClineApiReqInfo = JSON.parse(clineMessages[autoRetryApiReqIndex].text || "{}")
+						const currentApiReqInfo: NexusAIApiReqInfo = JSON.parse(clineMessages[autoRetryApiReqIndex].text || "{}")
 						delete currentApiReqInfo.streamingFailedMessage
 						await this.messageStateHandler.updateClineMessage(autoRetryApiReqIndex, {
 							text: JSON.stringify(currentApiReqInfo),
@@ -2037,7 +2039,7 @@ export class Task {
 				)
 				if (manualRetryApiReqIndex !== -1) {
 					const clineMessages = this.messageStateHandler.getClineMessages()
-					const currentApiReqInfo: ClineApiReqInfo = JSON.parse(clineMessages[manualRetryApiReqIndex].text || "{}")
+					const currentApiReqInfo: NexusAIApiReqInfo = JSON.parse(clineMessages[manualRetryApiReqIndex].text || "{}")
 					delete currentApiReqInfo.streamingFailedMessage
 					await this.messageStateHandler.updateClineMessage(manualRetryApiReqIndex, {
 						text: JSON.stringify(currentApiReqInfo),
@@ -2202,7 +2204,7 @@ export class Task {
 		}
 	}
 
-	async recursivelyMakeClineRequests(userContent: ClineContent[], includeFileDetails = false): Promise<boolean> {
+	async recursivelyMakeClineRequests(userContent: NexusAIContent[], includeFileDetails = false): Promise<boolean> {
 		// Check abort flag at the very start to prevent any execution after cancellation
 		if (this.taskState.abort) {
 			throw new Error("Task instance aborted")
@@ -2220,7 +2222,7 @@ export class Task {
 			} catch {}
 		}
 
-		const modelInfo: ClineMessageModelInfo = {
+		const modelInfo: NexusAIMessageModelInfo = {
 			modelId: model.id,
 			providerId: providerId,
 			mode: mode,
@@ -2255,7 +2257,7 @@ export class Task {
 				await this.say("user_feedback", text, images, files)
 
 				// This userContent is for the *next* API call.
-				const feedbackUserContent: ClineUserContent[] = []
+				const feedbackUserContent: NexusAIUserContent[] = []
 				feedbackUserContent.push({
 					type: "text",
 					text: formatResponse.tooManyMistakes(text),
@@ -2397,7 +2399,7 @@ export class Task {
 
 		// NOW load context based on compaction decision
 		// This optimization avoids expensive context loading when using summarize_task
-		let parsedUserContent: ClineContent[]
+		let parsedUserContent: NexusAIContent[]
 		let environmentDetails: string
 		let clinerulesError: boolean
 
@@ -2477,7 +2479,7 @@ export class Task {
 		await this.messageStateHandler.updateClineMessage(lastApiReqIndex, {
 			text: JSON.stringify({
 				request: userContent.map((block) => formatContentBlockToMarkdown(block)).join("\n\n"),
-			} satisfies ClineApiReqInfo),
+			} satisfies NexusAIApiReqInfo),
 		})
 		await this.postStateToWebview()
 
@@ -2499,7 +2501,7 @@ export class Task {
 			*/
 
 			const updateApiReqMsgFromMetrics = async (
-				cancelReason?: ClineApiReqCancelReason,
+				cancelReason?: NexusAIApiReqCancelReason,
 				streamingFailedMessage?: string,
 			) => {
 				await updateApiReqMsg({
@@ -2543,13 +2545,13 @@ export class Task {
 					})
 			}
 
-			const finalizeApiReqMsg = async (cancelReason?: ClineApiReqCancelReason, streamingFailedMessage?: string) => {
+			const finalizeApiReqMsg = async (cancelReason?: NexusAIApiReqCancelReason, streamingFailedMessage?: string) => {
 				didFinalizeApiReqMsg = true
 				await usageChunkSideEffectsQueue
 				await updateApiReqMsgFromMetrics(cancelReason, streamingFailedMessage)
 			}
 
-			const abortStream = async (cancelReason: ClineApiReqCancelReason, streamingFailedMessage?: string) => {
+			const abortStream = async (cancelReason: NexusAIApiReqCancelReason, streamingFailedMessage?: string) => {
 				Session.get().finalizeRequest()
 
 				if (this.diffViewProvider.isEditing) {
@@ -2930,7 +2932,7 @@ export class Task {
 				const requestId = this.streamHandler.requestId
 
 				// Build content array with thinking blocks, text (if any), and tool use blocks
-				const assistantContent: Array<ClineAssistantContent> = [
+				const assistantContent: Array<NexusAIAssistantContent> = [
 					// This is critical for maintaining the model's reasoning flow and conversation integrity.
 					// "When providing thinking blocks, the entire sequence of consecutive thinking blocks must match the outputs generated by the model during the original request; you cannot rearrange or modify the sequence of these blocks." The signature_delta is used to verify that the thinking was generated by Claude, and the thinking blocks will be ignored if it's incorrect or missing.
 					// https://docs.claude.com/en/docs/build-with-claude/extended-thinking#preserving-thinking-blocks
@@ -3077,7 +3079,7 @@ export class Task {
 					ts: Date.now(),
 				})
 
-				let response: ClineAskResponse
+				let response: NexusAIAskResponse
 
 				const noResponseErrorMessage =
 					"No assistant message was received. " +
@@ -3137,10 +3139,10 @@ export class Task {
 	}
 
 	async loadContext(
-		userContent: ClineContent[],
+		userContent: NexusAIContent[],
 		includeFileDetails = false,
 		useCompactPrompt = false,
-	): Promise<[ClineContent[], string, boolean]> {
+	): Promise<[NexusAIContent[], string, boolean]> {
 		let needsClinerulesFileCheck = false
 
 		// Pre-fetch necessary data to avoid redundant calls within loops
@@ -3191,7 +3193,7 @@ export class Task {
 			return processedText
 		}
 
-		const processTextContent = async (block: ClineTextContentBlock): Promise<ClineTextContentBlock> => {
+		const processTextContent = async (block: NexusAITextContentBlock): Promise<NexusAITextContentBlock> => {
 			if (block.type !== "text" || !hasUserContentTag(block.text)) {
 				return block
 			}
@@ -3200,7 +3202,7 @@ export class Task {
 			return { ...block, text: processedText }
 		}
 
-		const processContentBlock = async (block: ClineContent): Promise<ClineContent> => {
+		const processContentBlock = async (block: NexusAIContent): Promise<NexusAIContent> => {
 			if (block.type === "text") {
 				return processTextContent(block)
 			}
@@ -3479,7 +3481,7 @@ export class Task {
 		const { contextWindow } = getContextWindowInfo(this.api)
 
 		// Get the token count from the most recent API request to accurately reflect context management
-		const getTotalTokensFromApiReqMessage = (msg: ClineMessage) => {
+		const getTotalTokensFromApiReqMessage = (msg: NexusAIMessage) => {
 			if (!msg.text) {
 				return 0
 			}

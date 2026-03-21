@@ -1,5 +1,5 @@
 import React from "react"
-import { ClineError, ClineErrorType } from "../../../../src/services/error/ClineError"
+import { NexusAIError, NexusAIErrorType } from "../../../../src/services/error/NexusAIError"
 import { ProgressIndicator } from "./ChatRow"
 
 interface ErrorBlockTitleProps {
@@ -22,7 +22,7 @@ export const ErrorBlockTitle = ({
 }: ErrorBlockTitleProps): [React.ReactElement, React.ReactElement] => {
 	const getIconSpan = (iconName: string, colorClass: string) => (
 		<div className="w-4 h-4 flex items-center justify-center">
-			<span className={`codicon codicon-${iconName} text-base -mb-0.5 ${colorClass}`}></span>
+			<span className={`codicon codicon-${iconName} text-base -mb-0.5 ${colorClass}`} />
 		</div>
 	)
 
@@ -57,8 +57,8 @@ export const ErrorBlockTitle = ({
 			details.classNames.push("text-(--vscode-foreground)")
 		} else if (apiRequestFailedMessage) {
 			// Handle failed request
-			const clineError = ClineError.parse(apiRequestFailedMessage)
-			const titleText = clineError?.isErrorType(ClineErrorType.Balance) ? "Credit Limit Reached" : "API Request Failed"
+			const clineError = NexusAIError.parse(apiRequestFailedMessage)
+			const titleText = clineError?.isErrorType(NexusAIErrorType.Balance) ? "Credit Limit Reached" : "API Request Failed"
 			details.title = titleText
 			details.classNames.push("font-bold text-(--vscode-errorForeground)")
 		} else if (retryStatus) {

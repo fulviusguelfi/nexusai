@@ -1,8 +1,8 @@
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 import { toolSpecFunctionDeclarations, toolSpecInputSchema } from "../spec"
 import type { SystemPromptContext } from "../types"
 
@@ -17,9 +17,9 @@ const mockContext: SystemPromptContext = {
 	isTesting: true,
 }
 
-const makeTool = (overrides?: Partial<ClineToolSpec>): ClineToolSpec => ({
+const makeTool = (overrides?: Partial<NexusAIToolSpec>): NexusAIToolSpec => ({
 	variant: ModelFamily.GENERIC,
-	id: ClineDefaultTool.FILE_READ,
+	id: NexusAIDefaultTool.FILE_READ,
 	name: "read_file",
 	description: "Read a file",
 	parameters: [

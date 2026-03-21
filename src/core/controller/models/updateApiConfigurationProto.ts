@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/cline/common"
-import { UpdateApiConfigurationRequest } from "@shared/proto/cline/models"
+import { Empty } from "@shared/proto/nexusai/common"
+import { UpdateApiConfigurationRequest } from "@shared/proto/nexusai/models"
 import { convertProtoToApiProvider } from "@shared/proto-conversions/models/api-configuration-conversion"
 import {
 	fromProtobufLiteLLMModelInfo,

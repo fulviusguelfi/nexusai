@@ -13,17 +13,17 @@ import { describe, it } from "mocha"
 import "should"
 import OpenAI from "openai"
 import {
-	ClineAssistantToolUseBlock,
-	ClineStorageMessage,
-	ClineTextContentBlock,
-	ClineUserToolResultContentBlock,
+	NexusAIAssistantToolUseBlock,
+	NexusAIStorageMessage,
+	NexusAITextContentBlock,
+	NexusAIUserToolResultContentBlock,
 } from "@/shared/messages/content"
 import { convertToAnthropicMessage, convertToOpenAiMessages } from "../openai-format"
 
 describe("Tool Call Parsing", () => {
 	describe("convertToOpenAiMessages - Tool Calls", () => {
 		it("should convert Anthropic tool_use to OpenAI tool_calls format", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -32,7 +32,7 @@ describe("Tool Call Parsing", () => {
 							id: "toolu_abc123",
 							name: "read_file",
 							input: { path: "/test/file.ts" },
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 					],
 				},
 			]
@@ -50,7 +50,7 @@ describe("Tool Call Parsing", () => {
 
 		it("should truncate long tool IDs to 40 characters", () => {
 			const longId = "a".repeat(50)
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -59,7 +59,7 @@ describe("Tool Call Parsing", () => {
 							id: longId,
 							name: "test_tool",
 							input: {},
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 					],
 				},
 			]
@@ -73,7 +73,7 @@ describe("Tool Call Parsing", () => {
 		it("should transform OpenAI Responses API tool IDs (fc_ prefix)", () => {
 			// OpenAI Responses API uses fc_ prefix with 53 char length
 			const responsesApiId = "fc_" + "x".repeat(50)
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -82,7 +82,7 @@ describe("Tool Call Parsing", () => {
 							id: responsesApiId,
 							name: "test_tool",
 							input: {},
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 					],
 				},
 			]
@@ -97,7 +97,7 @@ describe("Tool Call Parsing", () => {
 
 		it("should match tool_call_id with tool_calls id for tool results", () => {
 			const toolId = "toolu_abc123"
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -106,7 +106,7 @@ describe("Tool Call Parsing", () => {
 							id: toolId,
 							name: "read_file",
 							input: { path: "/test.ts" },
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 					],
 				},
 				{
@@ -116,7 +116,7 @@ describe("Tool Call Parsing", () => {
 							type: "tool_result",
 							tool_use_id: toolId,
 							content: "file contents here",
-						} as ClineUserToolResultContentBlock,
+						} as NexusAIUserToolResultContentBlock,
 					],
 				},
 			]
@@ -135,26 +135,26 @@ describe("Tool Call Parsing", () => {
 		})
 
 		it("should handle multiple tool calls in a single message", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
 						{
 							type: "text",
 							text: "I'll read both files",
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 						{
 							type: "tool_use",
 							id: "tool_1",
 							name: "read_file",
 							input: { path: "/file1.ts" },
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 						{
 							type: "tool_use",
 							id: "tool_2",
 							name: "read_file",
 							input: { path: "/file2.ts" },
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 					],
 				},
 			]
@@ -169,7 +169,7 @@ describe("Tool Call Parsing", () => {
 		})
 
 		it("should handle tool results with array content", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "user",
 					content: [
@@ -180,7 +180,7 @@ describe("Tool Call Parsing", () => {
 								{ type: "text", text: "Line 1" },
 								{ type: "text", text: "Line 2" },
 							],
-						} as ClineUserToolResultContentBlock,
+						} as NexusAIUserToolResultContentBlock,
 					],
 				},
 			]
@@ -194,7 +194,7 @@ describe("Tool Call Parsing", () => {
 		})
 
 		it("should set content to null when only tool_calls present", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -203,7 +203,7 @@ describe("Tool Call Parsing", () => {
 							id: "tool_1",
 							name: "test",
 							input: {},
-						} as ClineAssistantToolUseBlock,
+						} as NexusAIAssistantToolUseBlock,
 					],
 				},
 			]

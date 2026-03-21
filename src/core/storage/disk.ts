@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { EnvironmentMetadataEntry, TaskMetadata } from "@core/context/context-tracking/ContextTrackerTypes"
 import { execa } from "@packages/execa"
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import { RemoteConfig } from "@shared/remote-config/schema"
 import { GlobalState, Settings } from "@shared/storage/state-keys"
@@ -45,19 +45,19 @@ export const GlobalFileNames = {
 	apiConversationHistory: "api_conversation_history.json",
 	contextHistory: "context_history.json",
 	uiMessages: "ui_messages.json",
-	clineRecommendedModels: "cline_recommended_models.json",
-	clineModels: "cline_models.json",
+	clineRecommendedModels: "nexusai_recommended_models.json",
+	clineModels: "nexusai_models.json",
 	openRouterModels: "openrouter_models.json",
 	vercelAiGatewayModels: "vercel_ai_gateway_models.json",
 	groqModels: "groq_models.json",
 	basetenModels: "baseten_models.json",
 	hicapModels: "hicap_models.json",
-	mcpSettings: "cline_mcp_settings.json",
+	mcpSettings: "nexusai_mcp_settings.json",
 	clineRules: ".clinerules",
 	workflows: ".clinerules/workflows",
 	hooksDir: ".clinerules/hooks",
 	clineruleSkillsDir: ".clinerules/skills",
-	clineSkillsDir: ".cline/skills",
+	clineSkillsDir: ".nexusai/skills",
 	claudeSkillsDir: ".claude/skills",
 	agentsSkillsDir: ".agents/skills",
 	cursorRulesDir: ".cursor/rules",
@@ -106,16 +106,16 @@ export async function getDocumentsPath(): Promise<string> {
 }
 
 /**
- * Returns the cross-platform path to the Cline home directory (~/.cline).
+ * Returns the cross-platform path to the NexusAI home directory (~/.nexusai).
  * This works on macOS, Linux, and Windows:
- * - macOS: /Users/username/.cline
- * - Linux: /home/username/.cline
- * - Windows: C:\Users\username\.cline
+ * - macOS: /Users/username/.nexusai
+ * - Linux: /home/username/.nexusai
+ * - Windows: C:\Users\username\.nexusai
  *
  * This is intended to eventually replace ~/Documents/Cline as the global config location.
  */
 export function getClineHomePath(): string {
-	return path.join(os.homedir(), ".cline")
+	return path.join(os.homedir(), ".nexusai")
 }
 
 export async function ensureTaskDirectoryExists(taskId: string): Promise<string> {
@@ -259,7 +259,7 @@ export async function saveApiConversationHistory(taskId: string, apiConversation
 	}
 }
 
-export async function getSavedClineMessages(taskId: string): Promise<ClineMessage[]> {
+export async function getSavedClineMessages(taskId: string): Promise<NexusAIMessage[]> {
 	const filePath = path.join(await ensureTaskDirectoryExists(taskId), GlobalFileNames.uiMessages)
 	if (await fileExistsAtPath(filePath)) {
 		return JSON.parse(await fs.readFile(filePath, "utf8"))
@@ -274,7 +274,7 @@ export async function getSavedClineMessages(taskId: string): Promise<ClineMessag
 	return []
 }
 
-export async function saveClineMessages(taskId: string, uiMessages: ClineMessage[]) {
+export async function saveClineMessages(taskId: string, uiMessages: NexusAIMessage[]) {
 	try {
 		const taskDir = await ensureTaskDirectoryExists(taskId)
 		const filePath = path.join(taskDir, GlobalFileNames.uiMessages)

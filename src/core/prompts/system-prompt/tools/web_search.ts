@@ -1,11 +1,11 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
-const GENERIC: ClineToolSpec = {
+const GENERIC: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
-	id: ClineDefaultTool.WEB_SEARCH,
+	id: NexusAIDefaultTool.WEB_SEARCH,
 	name: "web_search",
 	description: `Performs a web search and returns relevant results
 - Takes a search query as input and returns search results with titles and URLs
@@ -40,9 +40,9 @@ const GENERIC: ClineToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: ClineToolSpec = {
+const NATIVE_NEXT_GEN: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_NEXT_GEN,
-	id: ClineDefaultTool.WEB_SEARCH,
+	id: NexusAIDefaultTool.WEB_SEARCH,
 	name: "web_search",
 	description:
 		"Performs a web search and returns relevant results with titles and URLs. IMPORTANT: If an MCP-provided web search tool is available, prefer using that tool instead of this one, as it may have fewer restrictions.",
@@ -67,7 +67,7 @@ const NATIVE_NEXT_GEN: ClineToolSpec = {
 	],
 }
 
-const NATIVE_GPT_5: ClineToolSpec = {
+const NATIVE_GPT_5: NexusAIToolSpec = {
 	...NATIVE_NEXT_GEN,
 	variant: ModelFamily.NATIVE_GPT_5,
 }

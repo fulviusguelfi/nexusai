@@ -1,9 +1,9 @@
 import "should"
 import { openRouterDefaultModelInfo } from "@shared/api"
 import sinon from "sinon"
-import { ClineHandler } from "../cline"
+import { NexusAIHandler } from "../cline"
 
-describe("ClineHandler", () => {
+describe("NexusAIHandler", () => {
 	afterEach(() => {
 		sinon.restore()
 	})
@@ -15,7 +15,7 @@ describe("ClineHandler", () => {
 	})
 
 	it("should handle usage-only chunks when delta is missing", async () => {
-		const handler = Object.create(ClineHandler.prototype) as ClineHandler
+		const handler = Object.create(NexusAIHandler.prototype) as NexusAIHandler
 		;(handler as any).options = {}
 		const fakeClient = {
 			chat: {

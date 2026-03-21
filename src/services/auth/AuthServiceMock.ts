@@ -1,10 +1,10 @@
-import { String } from "@shared/proto/cline/common"
-import { ClineEnv } from "@/config"
+import { String } from "@shared/proto/nexusai/common"
+import { NexusAIEnv } from "@/config"
 import { Controller } from "@/core/controller"
 import { setWelcomeViewCompleted } from "@/core/controller/state/setWelcomeViewCompleted"
 import { WebviewProvider } from "@/core/webview"
-import { CLINE_API_ENDPOINT } from "@/shared/cline/api"
 import { fetch } from "@/shared/net"
+import { NEXUSAI_API_ENDPOINT } from "@/shared/nexusai/api"
 import { Logger } from "@/shared/services/Logger"
 import { buildBasicClineHeaders } from "../EnvUtils"
 import { AuthService } from "./AuthService"
@@ -13,7 +13,7 @@ export class AuthServiceMock extends AuthService {
 	protected constructor(controller: Controller) {
 		super(controller)
 
-		if (process?.env?.CLINE_ENVIRONMENT !== "local") {
+		if (process?.env?.NEXUSAI_ENVIRONMENT !== "local") {
 			throw new Error("AuthServiceMock should only be used in local environment for testing purposes.")
 		}
 
@@ -47,7 +47,7 @@ export class AuthServiceMock extends AuthService {
 
 	override async createAuthRequest(): Promise<String> {
 		// Use URL object for more graceful query construction
-		const authUrl = new URL(ClineEnv.config().apiBaseUrl)
+		const authUrl = new URL(NexusAIEnv.config().apiBaseUrl)
 		const authUrlString = authUrl.toString()
 		// Call the parent implementation
 		if (this._authenticated && this._clineAuthInfo) {
@@ -56,8 +56,8 @@ export class AuthServiceMock extends AuthService {
 		}
 
 		try {
-			// Use token exchange endpoint like ClineAuthProvider
-			const tokenExchangeUri = new URL(CLINE_API_ENDPOINT.TOKEN_EXCHANGE, ClineEnv.config().apiBaseUrl)
+			// Use token exchange endpoint like NexusAIAuthProvider
+			const tokenExchangeUri = new URL(NEXUSAI_API_ENDPOINT.TOKEN_EXCHANGE, NexusAIEnv.config().apiBaseUrl)
 			const tokenType = "personal"
 			const testCode = `test-${tokenType}-token`
 
@@ -85,7 +85,7 @@ export class AuthServiceMock extends AuthService {
 
 			const authData = responseData.data
 
-			// Convert to ClineAuthInfo format matching ClineAuthProvider
+			// Convert to NexusAIAuthInfo format matching NexusAIAuthProvider
 			this._clineAuthInfo = {
 				idToken: authData.accessToken,
 				refreshToken: authData.refreshToken,
@@ -96,7 +96,7 @@ export class AuthServiceMock extends AuthService {
 					displayName: authData.userInfo.name,
 					createdAt: new Date().toISOString(),
 					organizations: authData.organizations,
-					appBaseUrl: ClineEnv.config().appBaseUrl,
+					appBaseUrl: NexusAIEnv.config().appBaseUrl,
 					subject: authData.userInfo.subject,
 				},
 				provider: this._provider?.name || "mock",

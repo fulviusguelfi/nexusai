@@ -1,5 +1,5 @@
-import { UserOrganization, UserOrganizationsResponse } from "@shared/proto/cline/account"
-import type { EmptyRequest } from "@shared/proto/cline/common"
+import { UserOrganization, UserOrganizationsResponse } from "@shared/proto/nexusai/account"
+import type { EmptyRequest } from "@shared/proto/nexusai/common"
 import type { Controller } from "../index"
 
 /**

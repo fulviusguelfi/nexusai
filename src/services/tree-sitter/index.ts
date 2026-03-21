@@ -1,4 +1,4 @@
-import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
+import { NexusAIIgnoreController } from "@core/ignore/NexusAIIgnoreController"
 import { listFiles } from "@services/glob/list-files"
 import { fileExistsAtPath, isDirectory } from "@utils/fs"
 import * as fs from "fs/promises"
@@ -9,7 +9,7 @@ import { LanguageParser, loadRequiredLanguageParsers } from "./languageParser"
 // TODO: implement caching behavior to avoid having to keep analyzing project for new tasks.
 export async function parseSourceCodeForDefinitionsTopLevel(
 	dirPath: string,
-	clineIgnoreController?: ClineIgnoreController,
+	clineIgnoreController?: NexusAIIgnoreController,
 ): Promise<string> {
 	// ensure input is a directory before listing files
 	const resolvedPath = path.resolve(dirPath)
@@ -115,7 +115,7 @@ This approach allows us to focus on the most relevant parts of the code (defined
 async function parseFile(
 	filePath: string,
 	languageParsers: LanguageParser,
-	clineIgnoreController?: ClineIgnoreController,
+	clineIgnoreController?: NexusAIIgnoreController,
 ): Promise<string | null> {
 	if (clineIgnoreController && !clineIgnoreController.validateAccess(filePath)) {
 		return null

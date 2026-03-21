@@ -1,7 +1,7 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import { isGptOssModelFamily, isGPT5ModelFamily } from "@/utils/model-utils"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import { isGPT5ModelFamily, isGptOssModelFamily } from "@/utils/model-utils"
+import type { NexusAIToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
 // {
@@ -76,9 +76,9 @@ apply_patch <<"EOF"
 *** End Patch
 EOF`
 
-const NATIVE_GPT_5: ClineToolSpec = {
+const NATIVE_GPT_5: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_GPT_5,
-	id: ClineDefaultTool.APPLY_PATCH,
+	id: NexusAIDefaultTool.APPLY_PATCH,
 	name: "apply_patch",
 	description: APPLY_PATCH_TOOL_DESC,
 	contextRequirements: (context) =>
@@ -93,7 +93,7 @@ const NATIVE_GPT_5: ClineToolSpec = {
 	],
 }
 
-const GPT_5: ClineToolSpec = {
+const GPT_5: NexusAIToolSpec = {
 	...NATIVE_GPT_5,
 	variant: ModelFamily.GPT_5,
 }

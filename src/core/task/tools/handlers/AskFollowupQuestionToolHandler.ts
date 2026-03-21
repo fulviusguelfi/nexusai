@@ -1,8 +1,8 @@
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { findLast, parsePartialArrayString } from "@shared/array"
-import { ClineAsk, ClineAskQuestion } from "@shared/ExtensionMessage"
-import { ClineDefaultTool } from "@shared/tools"
+import { NexusAIAsk, NexusAIAskQuestion } from "@shared/ExtensionMessage"
+import { NexusAIDefaultTool } from "@shared/tools"
 import { telemetryService } from "@/services/telemetry"
 import { ToolUse } from "../../../assistant-message"
 import { formatResponse } from "../../../prompts/responses"
@@ -12,7 +12,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = ClineDefaultTool.ASK
+	readonly name = NexusAIDefaultTool.ASK
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name} for '${block.params.question}']`
@@ -24,9 +24,9 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		const sharedMessage = {
 			question: uiHelpers.removeClosingTag(block, "question", question),
 			options: parsePartialArrayString(uiHelpers.removeClosingTag(block, "options", optionsRaw)),
-		} satisfies ClineAskQuestion
+		} satisfies NexusAIAskQuestion
 
-		await uiHelpers.ask("followup" as ClineAsk, JSON.stringify(sharedMessage), block.partial).catch(() => {})
+		await uiHelpers.ask("followup" as NexusAIAsk, JSON.stringify(sharedMessage), block.partial).catch(() => {})
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
@@ -64,7 +64,7 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		const sharedMessage = {
 			question: question,
 			options: parsePartialArrayString(optionsRaw || "[]"),
-		} satisfies ClineAskQuestion
+		} satisfies NexusAIAskQuestion
 
 		const options = parsePartialArrayString(optionsRaw || "[]")
 
@@ -86,7 +86,7 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 				lastFollowupMessage.text = JSON.stringify({
 					...sharedMessage,
 					selected: text,
-				} satisfies ClineAskQuestion)
+				} satisfies NexusAIAskQuestion)
 				await config.messageState.saveClineMessagesAndUpdateHistory()
 			}
 		} else {

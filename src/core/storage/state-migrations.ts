@@ -122,11 +122,15 @@ export async function migrateTaskHistoryToFile(context: vscode.ExtensionContext)
 }
 
 export async function migrateMcpMarketplaceEnableSetting(mcpMarketplaceEnabledRaw: boolean | undefined): Promise<boolean> {
-	const config = vscode.workspace.getConfiguration("cline")
-	const mcpMarketplaceEnabled = config.get<boolean>("mcpMarketplace.enabled")
+	// Read from new nexusai config first, then fall back to legacy cline config
+	const config = vscode.workspace.getConfiguration("nexusai")
+	const legacyConfig = vscode.workspace.getConfiguration("cline")
+	const mcpMarketplaceEnabled =
+		config.get<boolean>("mcpMarketplace.enabled") ?? legacyConfig.get<boolean>("mcpMarketplace.enabled")
 	if (mcpMarketplaceEnabled !== undefined) {
-		// Remove from VSCode configuration
+		// Remove from both VSCode configurations
 		await config.update("mcpMarketplace.enabled", undefined, true)
+		await legacyConfig.update("mcpMarketplace.enabled", undefined, true)
 
 		return !mcpMarketplaceEnabled
 	}
@@ -134,11 +138,14 @@ export async function migrateMcpMarketplaceEnableSetting(mcpMarketplaceEnabledRa
 }
 
 export async function migrateEnableCheckpointsSetting(enableCheckpointsSettingRaw: boolean | undefined): Promise<boolean> {
-	const config = vscode.workspace.getConfiguration("cline")
-	const enableCheckpoints = config.get<boolean>("enableCheckpoints")
+	// Read from new nexusai config first, then fall back to legacy cline config
+	const config = vscode.workspace.getConfiguration("nexusai")
+	const legacyConfig = vscode.workspace.getConfiguration("cline")
+	const enableCheckpoints = config.get<boolean>("enableCheckpoints") ?? legacyConfig.get<boolean>("enableCheckpoints")
 	if (enableCheckpoints !== undefined) {
-		// Remove from VSCode configuration
+		// Remove from both VSCode configurations
 		await config.update("enableCheckpoints", undefined, true)
+		await legacyConfig.update("enableCheckpoints", undefined, true)
 		return enableCheckpoints
 	}
 	return enableCheckpointsSettingRaw ?? true

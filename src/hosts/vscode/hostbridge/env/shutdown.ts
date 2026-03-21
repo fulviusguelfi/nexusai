@@ -1,4 +1,4 @@
-import { Empty, EmptyRequest } from "@shared/proto/cline/common"
+import { Empty, EmptyRequest } from "@shared/proto/nexusai/common"
 
 export async function shutdown(request: EmptyRequest): Promise<Empty> {
 	// VSCode extensions cannot shutdown the host process (VSCode itself)

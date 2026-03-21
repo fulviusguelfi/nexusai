@@ -1,6 +1,6 @@
 import type { HookOutputStreamMeta } from "@shared/ExtensionMessage"
-import { ClineMessage } from "@shared/ExtensionMessage"
-import type { HookOutput } from "@shared/proto/cline/hooks"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
+import type { HookOutput } from "@shared/proto/nexusai/hooks"
 import { Logger } from "@/shared/services/Logger"
 import { MessageStateHandler } from "../task/message-state"
 import { HookExecutionError } from "./HookError"
@@ -265,7 +265,7 @@ async function updateHookMessage(
 	metadata: Record<string, any>,
 ): Promise<void> {
 	const clineMessages = messageStateHandler.getClineMessages()
-	const hookMessageIndex = clineMessages.findIndex((m: ClineMessage) => m.ts === hookMessageTs)
+	const hookMessageIndex = clineMessages.findIndex((m: NexusAIMessage) => m.ts === hookMessageTs)
 	if (hookMessageIndex !== -1) {
 		await messageStateHandler.updateClineMessage(hookMessageIndex, {
 			text: JSON.stringify(metadata),

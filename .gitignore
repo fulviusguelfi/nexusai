@@ -28,6 +28,12 @@ coverage-unit
 !.github/scripts/coverage/
 
 *evals.env
+
+# Test output artifacts
+playwright-results.txt
+
+# Go workspace files (no Go code in this project)
+go.work.sum
 .env
 .secrets
 .github/act/.secrets

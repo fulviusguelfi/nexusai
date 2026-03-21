@@ -1,4 +1,4 @@
-import { ApiFormat } from "./proto/cline/models"
+import { ApiFormat } from "./proto/nexusai/models"
 import type { ApiHandlerSettings } from "./storage/state-keys"
 
 export type ApiProvider =

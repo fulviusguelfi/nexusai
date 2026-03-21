@@ -1,4 +1,4 @@
-import { Empty, StringRequest } from "@shared/proto/cline/common"
+import { Empty, StringRequest } from "@shared/proto/nexusai/common"
 import { openExternal } from "@utils/env"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."

@@ -1,4 +1,4 @@
-import { ClineRulesToggles, RuleScope, ToggleWorkflowRequest } from "@shared/proto/cline/file"
+import { NexusAIRulesToggles, RuleScope, ToggleWorkflowRequest } from "@shared/proto/nexusai/file"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."
 
@@ -8,7 +8,7 @@ import { Controller } from ".."
  * @param request The request containing the workflow path and enabled state
  * @returns The updated workflow toggles
  */
-export async function toggleWorkflow(controller: Controller, request: ToggleWorkflowRequest): Promise<ClineRulesToggles> {
+export async function toggleWorkflow(controller: Controller, request: ToggleWorkflowRequest): Promise<NexusAIRulesToggles> {
 	const { workflowPath, enabled, scope } = request
 
 	if (!workflowPath || typeof enabled !== "boolean" || scope === undefined) {
@@ -49,5 +49,5 @@ export async function toggleWorkflow(controller: Controller, request: ToggleWork
 	await controller.postStateToWebview()
 
 	// Return the updated toggles
-	return ClineRulesToggles.create({ toggles: toggles })
+	return NexusAIRulesToggles.create({ toggles: toggles })
 }

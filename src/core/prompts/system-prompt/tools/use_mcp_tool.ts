@@ -1,6 +1,6 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
 /**
@@ -31,9 +31,9 @@ Checklist here (optional)
 </use_mcp_tool>
  */
 
-const generic: ClineToolSpec = {
+const generic: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
-	id: ClineDefaultTool.MCP_USE,
+	id: NexusAIDefaultTool.MCP_USE,
 	name: "use_mcp_tool",
 	description:
 		"Request to use a tool provided by a connected MCP server. Each MCP server can provide multiple tools with different capabilities. Tools have defined input schemas that specify required and optional parameters.",

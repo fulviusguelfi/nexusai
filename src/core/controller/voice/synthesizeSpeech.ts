@@ -1,6 +1,6 @@
 import type { Controller } from "@core/controller"
-import type { SynthesizeRequest } from "@shared/proto/cline/voice"
-import { SpeechResult } from "@shared/proto/cline/voice"
+import type { SynthesizeRequest } from "@shared/proto/nexusai/voice"
+import { SpeechResult } from "@shared/proto/nexusai/voice"
 import { PiperService } from "@/services/voice/PiperService"
 
 /**

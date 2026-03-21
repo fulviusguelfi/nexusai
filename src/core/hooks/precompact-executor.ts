@@ -1,6 +1,6 @@
 import { findLastIndex } from "@shared/array"
-import type { ClineMessage } from "@shared/ExtensionMessage"
-import type { ClineStorageMessage } from "@shared/messages/content"
+import type { NexusAIMessage } from "@shared/ExtensionMessage"
+import type { NexusAIStorageMessage } from "@shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import type { ContextManager } from "../context/context-management/ContextManager"
 import type { MessageStateHandler } from "../task/message-state"
@@ -46,7 +46,7 @@ export interface TokenUsage {
  * @param message The API request message to parse
  * @returns Token usage information, or zeros if parsing fails
  */
-export function extractTokenUsageFromMessage(message: ClineMessage | undefined): TokenUsage {
+export function extractTokenUsageFromMessage(message: NexusAIMessage | undefined): TokenUsage {
 	const defaultUsage: TokenUsage = {
 		tokensIn: 0,
 		tokensOut: 0,
@@ -89,7 +89,7 @@ export interface PreCompactContextFiles {
  */
 export async function writePreCompactContextFiles(
 	taskId: string,
-	currentContext: ClineStorageMessage[],
+	currentContext: NexusAIStorageMessage[],
 ): Promise<PreCompactContextFiles> {
 	const { writeConversationHistoryJson, writeConversationHistoryText } = await import("../storage/disk")
 
@@ -125,11 +125,11 @@ export interface PreCompactHookParams {
 
 	// Conversation state
 	/** API conversation history */
-	apiConversationHistory: ClineStorageMessage[]
+	apiConversationHistory: NexusAIStorageMessage[]
 	/** Current deleted range (if any) */
 	conversationHistoryDeletedRange?: [number, number]
 	/** Cline messages for extracting token usage */
-	clineMessages: ClineMessage[]
+	clineMessages: NexusAIMessage[]
 
 	// Services
 	/** Context manager for getting truncated messages */

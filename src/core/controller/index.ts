@@ -6,7 +6,7 @@ import { detectWorkspaceRoots } from "@core/workspace/detection"
 import { setupWorkspaceManager } from "@core/workspace/setup"
 import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { cleanupLegacyCheckpoints } from "@integrations/checkpoints/CheckpointMigration"
-import { ClineAccountService } from "@services/account/ClineAccountService"
+import { NexusAIAccountService } from "@services/account/NexusAIAccountService"
 import { McpHub } from "@services/mcp/McpHub"
 import { SshSessionRegistry } from "@services/ssh/SshSessionRegistry"
 import type { ApiProvider, ModelInfo } from "@shared/api"
@@ -24,7 +24,7 @@ import fs from "fs/promises"
 import open from "open"
 import pWaitFor from "p-wait-for"
 import * as path from "path"
-import { ClineEnv } from "@/config"
+import { NexusAIEnv } from "@/config"
 import type { FolderLockWithRetryResult } from "@/core/locks/types"
 import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
@@ -34,8 +34,8 @@ import { LogoutReason } from "@/services/auth/types"
 import { featureFlagsService } from "@/services/feature-flags"
 import { getDistinctId } from "@/services/logging/distinctId"
 import { telemetryService } from "@/services/telemetry"
-import { ClineExtensionContext } from "@/shared/cline"
 import { getAxiosSettings } from "@/shared/net"
+import { NexusAIExtensionContext } from "@/shared/nexusai"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
@@ -70,7 +70,7 @@ export class Controller {
 	task?: Task
 
 	mcpHub: McpHub
-	accountService: ClineAccountService
+	accountService: NexusAIAccountService
 	authService: AuthService
 	ocaAuthService: OcaAuthService
 	readonly stateManager: StateManager
@@ -117,7 +117,7 @@ export class Controller {
 		this.remoteConfigTimer = setInterval(() => fetchRemoteConfig(this), 3600000) // 1 hour
 	}
 
-	constructor(readonly context: ClineExtensionContext) {
+	constructor(readonly context: NexusAIExtensionContext) {
 		Session.reset() // Reset session on controller initialization
 		PromptRegistry.getInstance() // Ensure prompts and tools are registered
 		this.stateManager = StateManager.get()
@@ -134,7 +134,7 @@ export class Controller {
 		})
 		this.authService = AuthService.getInstance(this)
 		this.ocaAuthService = OcaAuthService.initialize(this)
-		this.accountService = ClineAccountService.getInstance()
+		this.accountService = NexusAIAccountService.getInstance()
 
 		this.authService.restoreRefreshTokenAndRetrieveAuthInfo().then(() => {
 			this.startRemoteConfigTimer()
@@ -155,7 +155,7 @@ export class Controller {
 		// Check CLI installation status once on startup
 		checkCliInstallation(this)
 
-		Logger.log("[Controller] ClineProvider instantiated")
+		Logger.log("[Controller] NexusAIProvider instantiated")
 	}
 
 	/*
@@ -636,7 +636,7 @@ export class Controller {
 
 	// MCP Marketplace
 	private async fetchMcpMarketplaceFromApi(): Promise<McpMarketplaceCatalog> {
-		const response = await axios.get(`${ClineEnv.config().mcpBaseUrl}/marketplace`, {
+		const response = await axios.get(`${NexusAIEnv.config().mcpBaseUrl}/marketplace`, {
 			headers: {
 				"Content-Type": "application/json",
 				"User-Agent": "cline-vscode-extension",
@@ -904,7 +904,7 @@ export class Controller {
 		const platform = process.platform as Platform
 		const distinctId = getDistinctId()
 		const version = ExtensionRegistryInfo.version
-		const clineConfig = ClineEnv.config()
+		const clineConfig = NexusAIEnv.config()
 		const environment = clineConfig.environment
 		// Check OpenAI Codex authentication status
 		const { openAiCodexOAuthManager } = await import("@/integrations/openai-codex/oauth")
@@ -1009,10 +1009,10 @@ export class Controller {
 	/*
 	Now that we use retainContextWhenHidden, we don't have to store a cache of cline messages in the user's state, but we could to reduce memory footprint in long conversations.
 
-	- We have to be careful of what state is shared between ClineProvider instances since there could be multiple instances of the extension running at once. For example when we cached cline messages using the same key, two instances of the extension could end up using the same key and overwriting each other's messages.
+	- We have to be careful of what state is shared between NexusAIProvider instances since there could be multiple instances of the extension running at once. For example when we cached cline messages using the same key, two instances of the extension could end up using the same key and overwriting each other's messages.
 	- Some state does need to be shared between the instances, i.e. the API key--however there doesn't seem to be a good way to notify the other instances that the API key has changed.
 
-	We need to use a unique identifier for each ClineProvider instance's message cache since we could be running several instances of the extension outside of just the sidebar i.e. in editor panels.
+	We need to use a unique identifier for each NexusAIProvider instance's message cache since we could be running several instances of the extension outside of just the sidebar i.e. in editor panels.
 
 	// conversation history to send in API requests
 

@@ -23,10 +23,10 @@ export class TerminalRegistry {
 	static createTerminal(cwd?: string | vscode.Uri | undefined, shellPath?: string): TerminalInfo {
 		const terminalOptions: vscode.TerminalOptions = {
 			cwd,
-			name: "Cline",
-			iconPath: new vscode.ThemeIcon("cline-icon"),
+			name: "NexusAI",
+			iconPath: new vscode.ThemeIcon("nexusai-icon"),
 			env: {
-				CLINE_ACTIVE: "true",
+				NEXUSAI_ACTIVE: "true",
 			},
 		}
 

@@ -10,7 +10,7 @@ import { executeHook } from "../core/hooks/hook-executor"
 import { StateManager } from "../core/storage/StateManager"
 import { MessageStateHandler } from "../core/task/message-state"
 import { TaskState } from "../core/task/TaskState"
-import { ClineMessage } from "../shared/ExtensionMessage"
+import { NexusAIMessage } from "../shared/ExtensionMessage"
 
 /**
  * Unit tests for the hook-executor module
@@ -22,7 +22,7 @@ describe("Hook Executor", () => {
 	let tempDir: string
 	let baseTempDir: string // Store base directory for cleanup
 	let testHandler: MessageStateHandler
-	let mockMessages: ClineMessage[]
+	let mockMessages: NexusAIMessage[]
 	let stateManagerStub: sinon.SinonStub
 
 	/**
@@ -355,14 +355,14 @@ setTimeout(() => {
 
 			await createHookScript("TaskStart", {}, 1) // Exit with error
 
-			const messages: ClineMessage[] = []
+			const messages: NexusAIMessage[] = []
 			const mockHandler = {
 				...testHandler,
 				getClineMessages: () => messages,
-				addToClineMessages: async (msg: ClineMessage) => {
+				addToClineMessages: async (msg: NexusAIMessage) => {
 					messages.push(msg)
 				},
-				updateClineMessage: async (index: number, updates: Partial<ClineMessage>) => {
+				updateClineMessage: async (index: number, updates: Partial<NexusAIMessage>) => {
 					if (messages[index]) {
 						Object.assign(messages[index], updates)
 					}
@@ -382,7 +382,7 @@ setTimeout(() => {
 				},
 				isCancellable: true,
 				say: async (type: any, text?: string) => {
-					const msg: ClineMessage = {
+					const msg: NexusAIMessage = {
 						ts: Date.now(),
 						type: "say",
 						say: type,
@@ -409,7 +409,7 @@ setTimeout(() => {
 				cancel: false,
 			})
 
-			const messages: ClineMessage[] = []
+			const messages: NexusAIMessage[] = []
 
 			await executeHook({
 				hookName: "TaskStart",
@@ -424,7 +424,7 @@ setTimeout(() => {
 				},
 				isCancellable: true,
 				say: async (type: any, text?: string) => {
-					const msg: ClineMessage = {
+					const msg: NexusAIMessage = {
 						ts: Date.now(),
 						type: "say",
 						say: type,
@@ -451,11 +451,11 @@ setTimeout(() => {
 				cancel: false,
 			})
 
-			const messages: ClineMessage[] = []
+			const messages: NexusAIMessage[] = []
 			const mockHandler = {
 				...testHandler,
 				getClineMessages: () => messages,
-				updateClineMessage: async (index: number, updates: Partial<ClineMessage>) => {
+				updateClineMessage: async (index: number, updates: Partial<NexusAIMessage>) => {
 					if (messages[index]) {
 						Object.assign(messages[index], updates)
 					}
@@ -475,7 +475,7 @@ setTimeout(() => {
 				},
 				isCancellable: true,
 				say: async (type: any, text?: string) => {
-					const msg: ClineMessage = {
+					const msg: NexusAIMessage = {
 						ts: Date.now(),
 						type: "say",
 						say: type,

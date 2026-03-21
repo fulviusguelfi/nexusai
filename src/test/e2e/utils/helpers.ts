@@ -4,7 +4,7 @@ import * as path from "node:path"
 import { type ElectronApplication, expect, type Frame, type Page, test } from "@playwright/test"
 import { downloadAndUnzipVSCode, SilentReporter } from "@vscode/test-electron"
 import { _electron } from "playwright"
-import { ClineApiServerMock } from "../fixtures/server"
+import { NexusAIApiServerMock } from "../fixtures/server"
 
 interface E2ETestDirectories {
 	workspaceDir: string
@@ -196,7 +196,7 @@ export class E2ETestHelper {
  * @extends test - Base Playwright test with multiple fixture extensions
  *
  * Fixtures provided:
- * - `server`: Shared ClineApiServerMock instance for API mocking (reused across all tests)
+ * - `server`: Shared NexusAIApiServerMock instance for API mocking (reused across all tests)
  * - `workspaceDir`: Path to the test workspace directory
  * - `userDataDir`: Temporary directory for VS Code user data
  * - `extensionsDir`: Temporary directory for VS Code extensions
@@ -207,7 +207,7 @@ export class E2ETestHelper {
  * - `sidebar`: Playwright Frame object representing the Cline extension's sidebar iframe
  *
  * @returns Extended test object with all fixtures available for E2E test scenarios:
- * - **server**: Automatically starts and manages a ClineApiServerMock instance
+ * - **server**: Automatically starts and manages a NexusAIApiServerMock instance
  * - **workspaceDir**: Sets up a test workspace directory from fixtures
  * - **userDataDir**: Creates a temporary directory for VS Code user data
  * - **extensionsDir**: Creates a temporary directory for VS Code extensions
@@ -232,13 +232,13 @@ export class E2ETestHelper {
  * - Configures VS Code with disabled updates, workspace trust, and welcome screens
  */
 export const e2e = test
-	.extend<{ server: ClineApiServerMock | null }>({
+	.extend<{ server: NexusAIApiServerMock | null }>({
 		server: async ({}, use) => {
 			// Start server if it doesn't exist
-			if (!ClineApiServerMock.globalSharedServer) {
-				await ClineApiServerMock.startGlobalServer()
+			if (!NexusAIApiServerMock.globalSharedServer) {
+				await NexusAIApiServerMock.startGlobalServer()
 			}
-			await use(ClineApiServerMock.globalSharedServer)
+			await use(NexusAIApiServerMock.globalSharedServer)
 		},
 	})
 	.extend<E2ETestDirectories>({
@@ -283,8 +283,8 @@ export const e2e = test
 						...safeEnv,
 						TEMP_PROFILE: "true",
 						E2E_TEST: "true",
-						CLINE_ENVIRONMENT: "local",
-						CLINE_DIR: clineTestDir, // Isolate test data from user's ~/.cline
+						NEXUSAI_ENVIRONMENT: "local",
+						NEXUSAI_DIR: clineTestDir, // Isolate test data from user's ~/.cline
 						GRPC_RECORDER_FILE_NAME: E2ETestHelper.generateTestFileName(testInfo.title, testInfo.project.name),
 						// GRPC_RECORDER_ENABLED: "true",
 						// GRPC_RECORDER_TESTS_FILTERS_ENABLED: "true"

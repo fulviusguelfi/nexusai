@@ -1,7 +1,7 @@
 {
 	"name": "nexusai",
 	"displayName": "NexusAI",
-	"description": "Assistente de IA para VS Code baseado no Cline, com foco em automacao de desenvolvimento e futura expansao para voz, SSH e IoT.",
+	"description": "Assistente de IA para VS Code com suporte a desenvolvimento autônomo, controle SSH, IoT (MQTT/mDNS), voz (TTS/STT) e modelos de linguagem de última geração.",
 	"version": "1.0.0-alpha",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
@@ -29,7 +29,7 @@
 		"Testing"
 	],
 	"keywords": [
-		"cline",
+		"nexusai",
 		"claude",
 		"dev",
 		"mcp",
@@ -54,7 +54,7 @@
 			"nexusai-icon": {
 				"description": "nexusai",
 				"default": {
-					"fontPath": "assets/icons/cline-bot.woff",
+					"fontPath": "assets/icons/nexusai-bot.woff",
 					"fontCharacter": "\\e900"
 				}
 			}
@@ -454,7 +454,7 @@
 	"lint-staged": {
 		"src/shared/storage/state-keys.ts": [
 			"node scripts/generate-state-proto.mjs",
-			"git add proto/cline/state.proto"
+			"git add proto/nexusai/state.proto"
 		],
 		"*": [
 			"biome check --write --staged --no-errors-on-unmatched --files-ignore-unknown=true"

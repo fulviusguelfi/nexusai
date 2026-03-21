@@ -9,7 +9,7 @@ import { ExtensionRegistryInfo } from "@/registry"
 import { GitHubAuthService } from "@/services/auth/GitHubAuthService"
 import { GitHubIssueService } from "@/services/github/GitHubIssueService"
 import { Logger } from "@/shared/services/Logger"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
@@ -19,7 +19,7 @@ const BUG_REPO_OWNER = "fulviusguelfi"
 const BUG_REPO_NAME = "nexusai"
 
 export class ReportBugHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = ClineDefaultTool.REPORT_BUG
+	readonly name = NexusAIDefaultTool.REPORT_BUG
 
 	constructor() {}
 

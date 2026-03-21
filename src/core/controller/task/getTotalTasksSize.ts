@@ -1,4 +1,4 @@
-import { EmptyRequest, Int64 } from "@shared/proto/cline/common"
+import { EmptyRequest, Int64 } from "@shared/proto/nexusai/common"
 import { getTotalTasksSize as calculateTotalTasksSize } from "../../../utils/storage"
 import { Controller } from ".."
 

@@ -1,6 +1,6 @@
-import { Empty, EmptyRequest } from "@shared/proto/cline/common"
 import { ShowMessageType } from "@shared/proto/host/window"
 import { ExecuteCommandInTerminalRequest } from "@shared/proto/host/workspace"
+import { Empty, EmptyRequest } from "@shared/proto/nexusai/common"
 import { HostProvider } from "@/hosts/host-provider"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."

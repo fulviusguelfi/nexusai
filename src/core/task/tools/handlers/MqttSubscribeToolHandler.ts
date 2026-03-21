@@ -1,7 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { MqttConnectionRegistry } from "@services/iot/MqttConnectionRegistry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -12,7 +12,7 @@ const DEFAULT_TIMEOUT_MS = 5_000
 const MAX_MESSAGES = 50
 
 export class MqttSubscribeToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.MQTT_SUBSCRIBE
+	readonly name = NexusAIDefaultTool.MQTT_SUBSCRIBE
 
 	constructor(_validator: ToolValidator) {}
 

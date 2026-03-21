@@ -1,4 +1,4 @@
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo } from "react"
 import { expect, userEvent, within } from "storybook/test"
@@ -6,7 +6,7 @@ import { createStorybookDecorator } from "@/config/StorybookDecorator"
 import ErrorRow from "./ErrorRow"
 
 // Mock data factories
-const createMockMessage = (overrides: Partial<ClineMessage> = {}): ClineMessage => ({
+const createMockMessage = (overrides: Partial<NexusAIMessage> = {}): NexusAIMessage => ({
 	ts: Date.now(),
 	type: "say",
 	say: "error",
@@ -121,7 +121,7 @@ export const ApiStreamingFailed: Story = {
 }
 
 // Cline-specific errors
-export const ClineBalanceError: Story = {
+export const NexusAIBalanceError: Story = {
 	args: {
 		message: createMockMessage(),
 		errorType: "error",
@@ -141,7 +141,7 @@ export const ClineBalanceError: Story = {
 	},
 }
 
-export const ClineRateLimitError: Story = {
+export const NexusAIRateLimitError: Story = {
 	args: {
 		message: createMockMessage(),
 		errorType: "error",

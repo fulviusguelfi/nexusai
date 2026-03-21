@@ -1,4 +1,4 @@
-import { HookInfo, HooksToggles, WorkspaceHooks } from "@shared/proto/cline/file"
+import { HookInfo, HooksToggles, WorkspaceHooks } from "@shared/proto/nexusai/file"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"

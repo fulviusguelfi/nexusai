@@ -1,6 +1,6 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import ClineLogoSanta from "@/assets/ClineLogoSanta"
-import ClineLogoVariable from "@/assets/ClineLogoVariable"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import NexusAILogoSanta from "@/assets/NexusAILogoSanta"
+import NexusAILogoVariable from "@/assets/NexusAILogoVariable"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { UiServiceClient } from "@/services/grpc-client"
 
@@ -21,7 +21,7 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 
 	// Check if it's December for festive logo
 	const isDecember = new Date().getMonth() === 11 // 11 = December (0-indexed)
-	const LogoComponent = isDecember ? ClineLogoSanta : ClineLogoVariable
+	const LogoComponent = isDecember ? NexusAILogoSanta : NexusAILogoVariable
 
 	return (
 		<div className="flex flex-col items-center mb-5">
@@ -38,7 +38,7 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 						onClick={handleTakeATour}
 						type="button">
 						Take a Tour
-						<span className="codicon codicon-play scale-90"></span>
+						<span className="codicon codicon-play scale-90" />
 					</button>
 				</div>
 			)}

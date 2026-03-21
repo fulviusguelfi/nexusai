@@ -5,7 +5,7 @@ import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/com
 import * as os from "os"
 import * as path from "path"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { fetch } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
@@ -175,14 +175,13 @@ export class QwenCodeHandler implements ApiHandler {
 				client.apiKey = this.credentials.access_token
 				client.baseURL = this.getBaseUrl(this.credentials)
 				return await apiCall()
-			} else {
-				throw error
 			}
+			throw error
 		}
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: OpenAITool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		await this.ensureAuthenticated()
 		const client = this.ensureClient()
 		const model = this.getModel()

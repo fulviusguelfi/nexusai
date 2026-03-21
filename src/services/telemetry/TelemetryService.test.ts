@@ -9,7 +9,7 @@
 
 import * as assert from "assert"
 import * as sinon from "sinon"
-import { ClineEndpoint } from "@/config"
+import { NexusAIEndpoint } from "@/config"
 import { HostProvider } from "@/hosts/host-provider"
 import * as otelConfigModule from "@/shared/services/config/otel-config"
 import { setVscodeHostProviderMock } from "@/test/host-provider-test-utils"
@@ -251,8 +251,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 		})
 
 		it("should NOT include build-time OTEL config when in selfHosted mode", () => {
-			// Stub ClineEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(ClineEndpoint, "isSelfHosted").returns(true)
+			// Stub NexusAIEndpoint.isSelfHosted() to return true (selfHosted mode)
+			const isSelfHostedStub = sinon.stub(NexusAIEndpoint, "isSelfHosted").returns(true)
 			// Even if build-time OTEL config is valid, it should be skipped
 			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns({
 				enabled: true,
@@ -274,8 +274,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 		})
 
 		it("should include build-time OTEL config when NOT in selfHosted mode", () => {
-			// Stub ClineEndpoint.isSelfHosted() to return false (normal mode)
-			const isSelfHostedStub = sinon.stub(ClineEndpoint, "isSelfHosted").returns(false)
+			// Stub NexusAIEndpoint.isSelfHosted() to return false (normal mode)
+			const isSelfHostedStub = sinon.stub(NexusAIEndpoint, "isSelfHosted").returns(false)
 			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns({
 				enabled: true,
 				metricsExporter: "otlp",
@@ -296,8 +296,8 @@ describe("Telemetry system is abstracted and can easily switch between providers
 		})
 
 		it("should STILL include runtime env OTEL config even in selfHosted mode", () => {
-			// Stub ClineEndpoint.isSelfHosted() to return true (selfHosted mode)
-			const isSelfHostedStub = sinon.stub(ClineEndpoint, "isSelfHosted").returns(true)
+			// Stub NexusAIEndpoint.isSelfHosted() to return true (selfHosted mode)
+			const isSelfHostedStub = sinon.stub(NexusAIEndpoint, "isSelfHosted").returns(true)
 			// Disable build-time OTEL
 			const getValidOtelConfigStub = sinon.stub(otelConfigModule, "getValidOpenTelemetryConfig").returns(null)
 			// Enable runtime OTEL (user explicitly configured it)

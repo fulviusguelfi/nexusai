@@ -1,8 +1,8 @@
 import { mentionRegex, mentionRegexGlobal } from "@shared/context-mentions"
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
-import { FileSearchRequest, FileSearchType, RelativePathsRequest } from "@shared/proto/cline/file"
-import { type LanguageModelChatSelector } from "@shared/proto/cline/models"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/cline/state"
+import { EmptyRequest, StringRequest } from "@shared/proto/nexusai/common"
+import { FileSearchRequest, FileSearchType, RelativePathsRequest } from "@shared/proto/nexusai/file"
+import { type LanguageModelChatSelector } from "@shared/proto/nexusai/models"
+import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/nexusai/state"
 import { type SlashCommand } from "@shared/slashCommands"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
@@ -43,7 +43,7 @@ import {
 	slashCommandRegexGlobal,
 	validateSlashCommand,
 } from "@/utils/slash-commands"
-import ClineRulesToggleModal from "../cline-rules/ClineRulesToggleModal"
+import NexusAIRulesToggleModal from "../cline-rules/NexusAIRulesToggleModal"
 import ServersToggleModal from "./ServersToggleModal"
 
 const { MAX_IMAGES_AND_FILES_PER_MESSAGE } = CHAT_CONSTANTS
@@ -1594,7 +1594,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 							<ServersToggleModal />
 
-							<ClineRulesToggleModal />
+							<NexusAIRulesToggleModal />
 
 							<ModelContainer>
 								<ModelButtonWrapper>

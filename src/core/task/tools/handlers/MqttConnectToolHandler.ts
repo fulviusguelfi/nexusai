@@ -1,7 +1,7 @@
-import type { ToolUse } from "@core/assistant-message"
+﻿import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { MqttConnectionRegistry } from "@services/iot/MqttConnectionRegistry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -9,7 +9,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class MqttConnectToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.MQTT_CONNECT
+	readonly name = NexusAIDefaultTool.MQTT_CONNECT
 
 	constructor(_validator: ToolValidator) {}
 
@@ -41,6 +41,8 @@ export class MqttConnectToolHandler implements IFullyManagedTool {
 
 		try {
 			// biome-ignore lint/suspicious/noExplicitAny: mqtt dynamic import
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
 			const mqtt: any = await import("mqtt")
 			const mqttLib = mqtt.default ?? mqtt
 

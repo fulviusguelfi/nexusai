@@ -8,24 +8,24 @@ import {
 	OpenAiCompatibleModelInfo,
 } from "@shared/api"
 import { BrowserSettings, DEFAULT_BROWSER_SETTINGS } from "@shared/BrowserSettings"
-import { ClineRulesToggles } from "@shared/cline-rules"
 import { DEFAULT_FOCUS_CHAIN_SETTINGS, FocusChainSettings } from "@shared/FocusChainSettings"
 import { HistoryItem } from "@shared/HistoryItem"
 import { DEFAULT_MCP_DISPLAY_MODE, McpDisplayMode } from "@shared/McpDisplayMode"
 import { WorkspaceRoot } from "@shared/multi-root/types"
+import { NexusAIRulesToggles } from "@shared/nexusai-rules"
 import { GlobalInstructionsFile } from "@shared/remote-config/schema"
 import { Mode } from "@shared/storage/types"
 import { TelemetrySetting } from "@shared/TelemetrySetting"
 import { UserInfo } from "@shared/UserInfo"
 import { LanguageModelChatSelector } from "vscode"
-import { BlobStoreSettings } from "./ClineBlobStorage"
+import { BlobStoreSettings } from "./NexusAIBlobStorage"
 
 // ============================================================================
 // SINGLE SOURCE OF TRUTH FOR STORAGE KEYS
 //
 // Property definitions with types, default values, and metadata
 // NOTE: When adding a new field, the scripts/generate-state-proto.mjs will be
-// executed automatically to regenerate the proto/cline/state.proto file with the
+// executed automatically to regenerate the proto/nexusai/state.proto file with the
 // new fields once the file is staged and committed.
 // ============================================================================
 
@@ -83,8 +83,8 @@ const GLOBAL_STATE_FIELDS = {
 	primaryRootIndex: { default: 0 as number },
 	multiRootEnabled: { default: true as boolean },
 	nativeToolCallEnabled: { default: true as boolean },
-	remoteRulesToggles: { default: {} as ClineRulesToggles },
-	remoteWorkflowToggles: { default: {} as ClineRulesToggles },
+	remoteRulesToggles: { default: {} as NexusAIRulesToggles },
+	remoteWorkflowToggles: { default: {} as NexusAIRulesToggles },
 	// Path to worktree that should auto-open Cline sidebar when launched
 	worktreeAutoOpenPath: { default: undefined as string | undefined },
 	// IoT Device Registry — persisted across sessions
@@ -248,8 +248,8 @@ const USER_SETTINGS_FIELDS = {
 	autoApprovalSettings: {
 		default: DEFAULT_AUTO_APPROVAL_SETTINGS as AutoApprovalSettings,
 	},
-	globalClineRulesToggles: { default: {} as ClineRulesToggles },
-	globalWorkflowToggles: { default: {} as ClineRulesToggles },
+	globalClineRulesToggles: { default: {} as NexusAIRulesToggles },
+	globalWorkflowToggles: { default: {} as NexusAIRulesToggles },
 	globalSkillsToggles: { default: {} as Record<string, boolean> },
 	browserSettings: {
 		default: DEFAULT_BROWSER_SETTINGS as BrowserSettings,
@@ -388,7 +388,7 @@ export type RemoteConfigFields = GlobalStateAndSettings & RemoteConfigExtra
 // ============================================================================
 
 export type Secrets = { [K in (typeof SecretKeys)[number]]: string | undefined }
-export type LocalState = { [K in (typeof LocalStateKeys)[number]]: ClineRulesToggles }
+export type LocalState = { [K in (typeof LocalStateKeys)[number]]: NexusAIRulesToggles }
 export type SecretKey = (typeof SecretKeys)[number]
 export type GlobalStateKey = keyof GlobalState
 export type LocalStateKey = keyof LocalState

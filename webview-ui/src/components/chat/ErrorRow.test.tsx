@@ -1,10 +1,10 @@
-import type { ClineMessage } from "@shared/ExtensionMessage"
+import type { NexusAIMessage } from "@shared/ExtensionMessage"
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import ErrorRow from "./ErrorRow"
 
 // Mock the auth context
-vi.mock("@/context/ClineAuthContext", () => ({
+vi.mock("@/context/NexusAIAuthContext", () => ({
 	useClineAuth: () => ({
 		clineUser: null,
 	}),
@@ -19,12 +19,12 @@ vi.mock("@/components/chat/CreditLimitError", () => ({
 	default: ({ message }: { message: string }) => <div data-testid="credit-limit-error">{message}</div>,
 }))
 
-// Mock ClineError
-vi.mock("../../../../src/services/error/ClineError", () => ({
-	ClineError: {
+// Mock NexusAIError
+vi.mock("../../../../src/services/error/NexusAIError", () => ({
+	NexusAIError: {
 		parse: vi.fn(),
 	},
-	ClineErrorType: {
+	NexusAIErrorType: {
 		Balance: "balance",
 		RateLimit: "rateLimit",
 		Auth: "auth",
@@ -32,7 +32,7 @@ vi.mock("../../../../src/services/error/ClineError", () => ({
 }))
 
 describe("ErrorRow", () => {
-	const mockMessage: ClineMessage = {
+	const mockMessage: NexusAIMessage = {
 		ts: 123456789,
 		type: "say",
 		say: "error",
@@ -88,8 +88,8 @@ describe("ErrorRow", () => {
 				},
 			}
 
-			const { ClineError } = await import("../../../../src/services/error/ClineError")
-			vi.mocked(ClineError.parse).mockReturnValue(mockClineError as any)
+			const { NexusAIError } = await import("../../../../src/services/error/NexusAIError")
+			vi.mocked(NexusAIError.parse).mockReturnValue(mockClineError as any)
 
 			render(<ErrorRow apiRequestFailedMessage="Insufficient credits error" errorType="error" message={mockMessage} />)
 
@@ -106,8 +106,8 @@ describe("ErrorRow", () => {
 				},
 			}
 
-			const { ClineError } = await import("../../../../src/services/error/ClineError")
-			vi.mocked(ClineError.parse).mockReturnValue(mockClineError as any)
+			const { NexusAIError } = await import("../../../../src/services/error/NexusAIError")
+			vi.mocked(NexusAIError.parse).mockReturnValue(mockClineError as any)
 
 			render(<ErrorRow apiRequestFailedMessage="Rate limit exceeded" errorType="error" message={mockMessage} />)
 
@@ -123,8 +123,8 @@ describe("ErrorRow", () => {
 				_error: {},
 			}
 
-			const { ClineError } = await import("../../../../src/services/error/ClineError")
-			vi.mocked(ClineError.parse).mockReturnValue(mockClineError as any)
+			const { NexusAIError } = await import("../../../../src/services/error/NexusAIError")
+			vi.mocked(NexusAIError.parse).mockReturnValue(mockClineError as any)
 
 			render(<ErrorRow apiRequestFailedMessage="Authentication failed" errorType="error" message={mockMessage} />)
 
@@ -139,8 +139,8 @@ describe("ErrorRow", () => {
 				_error: {},
 			}
 
-			const { ClineError } = await import("../../../../src/services/error/ClineError")
-			vi.mocked(ClineError.parse).mockReturnValue(mockClineError as any)
+			const { NexusAIError } = await import("../../../../src/services/error/NexusAIError")
+			vi.mocked(NexusAIError.parse).mockReturnValue(mockClineError as any)
 
 			render(
 				<ErrorRow
@@ -165,21 +165,21 @@ describe("ErrorRow", () => {
 				_error: {},
 			}
 
-			const { ClineError } = await import("../../../../src/services/error/ClineError")
-			vi.mocked(ClineError.parse).mockReturnValue(mockClineError as any)
+			const { NexusAIError } = await import("../../../../src/services/error/NexusAIError")
+			vi.mocked(NexusAIError.parse).mockReturnValue(mockClineError as any)
 
 			render(<ErrorRow apiReqStreamingFailedMessage="Streaming failed" errorType="error" message={mockMessage} />)
 
 			expect(screen.getByText("Streaming failed")).toBeInTheDocument()
 		})
 
-		it("falls back to regular error message when ClineError.parse returns null", async () => {
-			const { ClineError } = await import("../../../../src/services/error/ClineError")
-			vi.mocked(ClineError.parse).mockReturnValue(undefined)
+		it("falls back to regular error message when NexusAIError.parse returns null", async () => {
+			const { NexusAIError } = await import("../../../../src/services/error/NexusAIError")
+			vi.mocked(NexusAIError.parse).mockReturnValue(undefined)
 
 			render(<ErrorRow apiRequestFailedMessage="Some API error" errorType="error" message={mockMessage} />)
 
-			// When ClineError.parse returns null, we display the raw error message for non-Cline providers
+			// When NexusAIError.parse returns null, we display the raw error message for non-Cline providers
 			// Since clineError is undefined, isClineProvider is false, so we show the raw apiRequestFailedMessage
 			expect(screen.getByText("Some API error")).toBeInTheDocument()
 		})

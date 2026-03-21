@@ -1,7 +1,7 @@
-# Cline
+# NexusAI
 
 <p align="center">
-    <img src="https://media.githubusercontent.com/media/cline/cline/main/assets/docs/demo.gif" width="100%" />
+    <img src="https://media.githubusercontent.com/media/NexusAI/NexusAI/main/assets/docs/demo.gif" width="100%" />
 </p>
 
 <div align="center">
@@ -11,16 +11,16 @@
 <a href="https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev" target="_blank"><strong>VS Marketplaceでダウンロード</strong></a>
 </td>
 <td align="center">
-<a href="https://discord.gg/cline" target="_blank"><strong>Discord</strong></a>
+<a href="https://discord.gg/NexusAI" target="_blank"><strong>Discord</strong></a>
 </td>
 <td align="center">
-<a href="https://www.reddit.com/r/cline/" target="_blank"><strong>r/cline</strong></a>
+<a href="https://www.reddit.com/r/NexusAI/" target="_blank"><strong>r/NexusAI</strong></a>
 </td>
 <td align="center">
-<a href="https://github.com/cline/cline/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop" target="_blank"><strong>機能リクエスト</strong></a>
+<a href="https://github.com/NexusAI/NexusAI/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop" target="_blank"><strong>機能リクエスト</strong></a>
 </td>
 <td align="center">
-<a href="https://cline.bot/join-us" target="_blank"><strong>採用情報</strong></a>
+<a href="https://NexusAI.bot/join-us" target="_blank"><strong>採用情報</strong></a>
 </td>
 </tbody>
 </table>
@@ -135,18 +135,18 @@ Clineがタスクを進める中で、拡張機能は各ステップでワーク
 
 ## 貢献
 
-プロジェクトに貢献するには、[貢献ガイド](CONTRIBUTING.md)から基本を学び始めてください。また、[Discord](https://discord.gg/cline)に参加して、`#contributors`チャンネルで他の貢献者とチャットすることもできます。フルタイムの仕事を探している場合は、[採用ページ](https://cline.bot/join-us)でオープンポジションを確認してください。
+プロジェクトに貢献するには、[貢献ガイド](CONTRIBUTING.md)から基本を学び始めてください。また、[Discord](https://discord.gg/NexusAI)に参加して、`#contributors`チャンネルで他の貢献者とチャットすることもできます。フルタイムの仕事を探している場合は、[採用ページ](https://NexusAI.bot/join-us)でオープンポジションを確認してください。
 
 <details>
 <summary>ローカル開発の手順</summary>
 
 1. リポジトリをクローンします _(Requires [git-lfs](https://git-lfs.com/))_：
         ```bash
-        git clone https://github.com/cline/cline.git
+        git clone https://github.com/NexusAI/NexusAI.git
         ```
 2. プロジェクトをVSCodeで開きます：
         ```bash
-        code cline
+        code NexusAI
         ```
 3. 拡張機能とwebview-guiの必要な依存関係をインストールします：
         ```bash
@@ -158,4 +158,5 @@ Clineがタスクを進める中で、拡張機能は各ステップでワーク
 
 ## ライセンス
 
-[Apache 2.0 © 2025 Cline Bot Inc.](./LICENSE)
+[Apache 2.0 © 2025 NexusAI Bot Inc.](./LICENSE)
+

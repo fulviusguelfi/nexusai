@@ -6,7 +6,7 @@ import {
 	ApiProvider as ProtoApiProvider,
 	OcaModelInfo as ProtoOcaModelInfo,
 	ThinkingConfig,
-} from "@shared/proto/cline/models"
+} from "@shared/proto/nexusai/models"
 import {
 	ApiConfiguration,
 	ApiProvider,

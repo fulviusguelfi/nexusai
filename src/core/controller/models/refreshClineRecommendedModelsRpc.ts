@@ -1,16 +1,16 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { ClineRecommendedModel, ClineRecommendedModelsResponse } from "@shared/proto/cline/models"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { NexusAIRecommendedModel, NexusAIRecommendedModelsResponse } from "@shared/proto/nexusai/models"
 import type { Controller } from "../index"
 import { refreshClineRecommendedModels } from "./refreshClineRecommendedModels"
 
 export async function refreshClineRecommendedModelsRpc(
 	_controller: Controller,
 	_request: EmptyRequest,
-): Promise<ClineRecommendedModelsResponse> {
+): Promise<NexusAIRecommendedModelsResponse> {
 	const models = await refreshClineRecommendedModels()
-	return ClineRecommendedModelsResponse.create({
+	return NexusAIRecommendedModelsResponse.create({
 		recommended: models.recommended.map((model) =>
-			ClineRecommendedModel.create({
+			NexusAIRecommendedModel.create({
 				id: model.id,
 				name: model.name,
 				description: model.description,
@@ -18,7 +18,7 @@ export async function refreshClineRecommendedModelsRpc(
 			}),
 		),
 		free: models.free.map((model) =>
-			ClineRecommendedModel.create({
+			NexusAIRecommendedModel.create({
 				id: model.id,
 				name: model.name,
 				description: model.description,

@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { LanguageModelChatSelector } from "@shared/proto/cline/models"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { LanguageModelChatSelector } from "@shared/proto/nexusai/models"
 import { Mode } from "@shared/storage/types"
 import { useCallback, useEffect, useRef, useState } from "react"
 // isOpenRef lets requestVsCodeLmModels see the current isOpen without being a dependency

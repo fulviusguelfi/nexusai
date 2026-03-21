@@ -12,7 +12,7 @@ import { GeminiModelId, geminiDefaultModelId, geminiModels, ModelInfo } from "@s
 import { GEMINI_FLASH_MAX_OUTPUT_TOKENS, isGeminiFlashModel } from "@utils/model-utils"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
 import { telemetryService } from "@/services/telemetry"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
 import { RetriableError, withRetry } from "../retry"
@@ -145,7 +145,7 @@ export class GeminiHandler implements ApiHandler {
 		baseDelay: 2000,
 		maxDelay: 15000,
 	})
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: GoogleTool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[], tools?: GoogleTool[]): ApiStream {
 		const client = this.ensureClient()
 		const { id: modelId, info } = this.getModel()
 		const contents = messages.map(convertAnthropicMessageToGemini)

@@ -1,10 +1,10 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 
-const id = ClineDefaultTool.BROWSER
+const id = NexusAIDefaultTool.BROWSER
 
-const GENERIC: ClineToolSpec = {
+const GENERIC: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
 	id,
 	name: "browser_action",
@@ -57,7 +57,7 @@ const GENERIC: ClineToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: ClineToolSpec = {
+const NATIVE_NEXT_GEN: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_NEXT_GEN,
 	id,
 	name: "browser_action",

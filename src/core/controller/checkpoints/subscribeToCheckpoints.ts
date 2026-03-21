@@ -1,5 +1,5 @@
-import { CheckpointEvent, CheckpointEvent_OperationType, CheckpointSubscriptionRequest } from "@shared/proto/cline/checkpoints"
 import { Timestamp } from "@shared/proto/google/protobuf/timestamp"
+import { CheckpointEvent, CheckpointEvent_OperationType, CheckpointSubscriptionRequest } from "@shared/proto/nexusai/checkpoints"
 import { Logger } from "@/shared/services/Logger"
 import { getRequestRegistry, StreamingResponseHandler } from "../grpc-handler"
 import { Controller } from "../index"

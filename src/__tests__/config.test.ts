@@ -4,9 +4,9 @@ import fs from "fs/promises"
 import os from "os"
 import path from "path"
 import sinon from "sinon"
-import { ClineConfigurationError, ClineEndpoint, ClineEnv, Environment } from "../config"
+import { Environment, NexusAIConfigurationError, NexusAIEndpoint, NexusAIEnv } from "../config"
 
-describe("ClineEndpoint configuration", () => {
+describe("NexusAIEndpoint configuration", () => {
 	let sandbox: sinon.SinonSandbox
 	let tempDir: string
 	let originalHomedir: typeof os.homedir
@@ -21,21 +21,19 @@ describe("ClineEndpoint configuration", () => {
 
 		// Stub os.homedir to return our temp directory
 		originalHomedir = os.homedir
-		sandbox
-			.stub(os, "homedir")
-			.returns(tempDir)
+		sandbox.stub(os, "homedir").returns(tempDir)
 
 		// Reset the singleton state using internal method
-		;(ClineEndpoint as any)._instance = null
-		;(ClineEndpoint as any)._initialized = false
-		;(ClineEndpoint as any)._extensionFsPath = undefined
+		;(NexusAIEndpoint as any)._instance = null
+		;(NexusAIEndpoint as any)._initialized = false
+		;(NexusAIEndpoint as any)._extensionFsPath = undefined
 	})
 
 	afterEach(async () => {
 		sandbox.restore()
 		// Reset singleton state
-		;(ClineEndpoint as any)._instance = null
-		;(ClineEndpoint as any)._initialized = false
+		;(NexusAIEndpoint as any)._instance = null
+		;(NexusAIEndpoint as any)._initialized = false
 		try {
 			await fs.rm(tempDir, { recursive: true, force: true })
 		} catch {
@@ -53,9 +51,9 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(validConfig), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("https://app.enterprise.com")
 			config.apiBaseUrl.should.equal("https://api.enterprise.com")
 			config.mcpBaseUrl.should.equal("https://mcp.enterprise.com")
@@ -65,9 +63,9 @@ describe("ClineEndpoint configuration", () => {
 		it("should work without endpoints.json (standard mode)", async () => {
 			// No endpoints.json file exists
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.environment.should.not.equal(Environment.selfHosted)
 			// Should use production defaults
 			config.appBaseUrl.should.equal("https://app.cline.bot")
@@ -83,9 +81,9 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(validConfig), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("http://localhost:3000")
 			config.apiBaseUrl.should.equal("http://localhost:7777")
 			config.mcpBaseUrl.should.equal("http://localhost:8080/mcp")
@@ -100,89 +98,89 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(validConfig), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("https://proxy.enterprise.com/cline/app")
 		})
 	})
 
 	describe("invalid JSON handling", () => {
-		it("should throw ClineConfigurationError for invalid JSON syntax", async () => {
+		it("should throw NexusAIConfigurationError for invalid JSON syntax", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), "{ invalid json }", "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("Invalid JSON")
 			}
 		})
 
-		it("should throw ClineConfigurationError for truncated JSON", async () => {
+		it("should throw NexusAIConfigurationError for truncated JSON", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), '{"appBaseUrl": "https://test.com"', "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("Invalid JSON")
 			}
 		})
 
-		it("should throw ClineConfigurationError for empty file", async () => {
+		it("should throw NexusAIConfigurationError for empty file", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), "", "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 			}
 		})
 
-		it("should throw ClineConfigurationError for non-object JSON", async () => {
+		it("should throw NexusAIConfigurationError for non-object JSON", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), '"just a string"', "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must contain a JSON object")
 			}
 		})
 
-		it("should throw ClineConfigurationError for array JSON", async () => {
+		it("should throw NexusAIConfigurationError for array JSON", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), "[]", "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				// Arrays pass the object check but fail on required fields
 				error.message.should.containEql("Missing required field")
 			}
 		})
 
-		it("should throw ClineConfigurationError for null JSON", async () => {
+		it("should throw NexusAIConfigurationError for null JSON", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), "null", "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must contain a JSON object")
 			}
 		})
 	})
 
 	describe("missing required fields", () => {
-		it("should throw ClineConfigurationError when appBaseUrl is missing", async () => {
+		it("should throw NexusAIConfigurationError when appBaseUrl is missing", async () => {
 			const config = {
 				apiBaseUrl: "https://api.enterprise.com",
 				mcpBaseUrl: "https://mcp.enterprise.com",
@@ -191,15 +189,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql('Missing required field "appBaseUrl"')
 			}
 		})
 
-		it("should throw ClineConfigurationError when apiBaseUrl is missing", async () => {
+		it("should throw NexusAIConfigurationError when apiBaseUrl is missing", async () => {
 			const config = {
 				appBaseUrl: "https://app.enterprise.com",
 				mcpBaseUrl: "https://mcp.enterprise.com",
@@ -208,15 +206,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql('Missing required field "apiBaseUrl"')
 			}
 		})
 
-		it("should throw ClineConfigurationError when mcpBaseUrl is missing", async () => {
+		it("should throw NexusAIConfigurationError when mcpBaseUrl is missing", async () => {
 			const config = {
 				appBaseUrl: "https://app.enterprise.com",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -225,27 +223,27 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql('Missing required field "mcpBaseUrl"')
 			}
 		})
 
-		it("should throw ClineConfigurationError when all fields are missing", async () => {
+		it("should throw NexusAIConfigurationError when all fields are missing", async () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), "{}", "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("Missing required field")
 			}
 		})
 
-		it("should throw ClineConfigurationError when field is null", async () => {
+		it("should throw NexusAIConfigurationError when field is null", async () => {
 			const config = {
 				appBaseUrl: null,
 				apiBaseUrl: "https://api.enterprise.com",
@@ -255,15 +253,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql('Missing required field "appBaseUrl"')
 			}
 		})
 
-		it("should throw ClineConfigurationError when field is empty string", async () => {
+		it("should throw NexusAIConfigurationError when field is empty string", async () => {
 			const config = {
 				appBaseUrl: "",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -273,15 +271,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("cannot be empty")
 			}
 		})
 
-		it("should throw ClineConfigurationError when field is whitespace only", async () => {
+		it("should throw NexusAIConfigurationError when field is whitespace only", async () => {
 			const config = {
 				appBaseUrl: "   ",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -291,15 +289,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("cannot be empty")
 			}
 		})
 
-		it("should throw ClineConfigurationError when field is non-string", async () => {
+		it("should throw NexusAIConfigurationError when field is non-string", async () => {
 			const config = {
 				appBaseUrl: 12345,
 				apiBaseUrl: "https://api.enterprise.com",
@@ -309,17 +307,17 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must be a string")
 			}
 		})
 	})
 
 	describe("invalid URL detection", () => {
-		it("should throw ClineConfigurationError for invalid URL format", async () => {
+		it("should throw NexusAIConfigurationError for invalid URL format", async () => {
 			const config = {
 				appBaseUrl: "not-a-valid-url",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -329,15 +327,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must be a valid URL")
 			}
 		})
 
-		it("should throw ClineConfigurationError for URL without protocol", async () => {
+		it("should throw NexusAIConfigurationError for URL without protocol", async () => {
 			const config = {
 				appBaseUrl: "app.enterprise.com",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -347,15 +345,15 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must be a valid URL")
 			}
 		})
 
-		it("should throw ClineConfigurationError for malformed URL", async () => {
+		it("should throw NexusAIConfigurationError for malformed URL", async () => {
 			const config = {
 				appBaseUrl: "https://",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -365,10 +363,10 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must be a valid URL")
 			}
 		})
@@ -384,10 +382,10 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(tempDir)
+				await NexusAIEndpoint.initialize(tempDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql(invalidUrl)
 			}
 		})
@@ -403,14 +401,14 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
 			// Verify we're in self-hosted mode
-			ClineEndpoint.config.environment.should.equal(Environment.selfHosted)
+			NexusAIEndpoint.config.environment.should.equal(Environment.selfHosted)
 
 			// Try to change environment - should throw
 			try {
-				ClineEnv.setEnvironment("staging")
+				NexusAIEnv.setEnvironment("staging")
 				throw new Error("Should have thrown")
 			} catch (error: any) {
 				error.message.should.containEql("Cannot change environment in on-premise mode")
@@ -426,12 +424,12 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
 			const environments = ["staging", "local", "production", "anything"]
 			for (const env of environments) {
 				try {
-					ClineEnv.setEnvironment(env)
+					NexusAIEnv.setEnvironment(env)
 					throw new Error(`Should have thrown for environment: ${env}`)
 				} catch (error: any) {
 					error.message.should.containEql("Cannot change environment in on-premise mode")
@@ -442,20 +440,20 @@ describe("ClineEndpoint configuration", () => {
 		it("should allow environment switching in standard mode", async () => {
 			// No endpoints.json file - standard mode
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
 			// Verify we're NOT in self-hosted mode
-			ClineEndpoint.config.environment.should.not.equal(Environment.selfHosted)
+			NexusAIEndpoint.config.environment.should.not.equal(Environment.selfHosted)
 
 			// Should be able to change environment
-			ClineEnv.setEnvironment("staging")
-			ClineEnv.getEnvironment().environment.should.equal("staging")
+			NexusAIEnv.setEnvironment("staging")
+			NexusAIEnv.getEnvironment().environment.should.equal("staging")
 
-			ClineEnv.setEnvironment("local")
-			ClineEnv.getEnvironment().environment.should.equal("local")
+			NexusAIEnv.setEnvironment("local")
+			NexusAIEnv.getEnvironment().environment.should.equal("local")
 
-			ClineEnv.setEnvironment("production")
-			ClineEnv.getEnvironment().environment.should.equal("production")
+			NexusAIEnv.setEnvironment("production")
+			NexusAIEnv.getEnvironment().environment.should.equal("production")
 		})
 	})
 
@@ -469,9 +467,9 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			const envConfig = ClineEndpoint.config
+			const envConfig = NexusAIEndpoint.config
 			envConfig.environment.should.equal(Environment.selfHosted)
 		})
 
@@ -484,9 +482,9 @@ describe("ClineEndpoint configuration", () => {
 
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(customConfig), "utf8")
 
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("https://custom-app.internal")
 			config.apiBaseUrl.should.equal("https://custom-api.internal")
 			config.mcpBaseUrl.should.equal("https://custom-mcp.internal/v1")
@@ -495,18 +493,18 @@ describe("ClineEndpoint configuration", () => {
 
 	describe("initialization behavior", () => {
 		it("should only initialize once", async () => {
-			await ClineEndpoint.initialize(tempDir)
-			ClineEndpoint.isInitialized().should.be.true()
+			await NexusAIEndpoint.initialize(tempDir)
+			NexusAIEndpoint.isInitialized().should.be.true()
 
 			// Second initialize should be a no-op
-			await ClineEndpoint.initialize(tempDir)
-			ClineEndpoint.isInitialized().should.be.true()
+			await NexusAIEndpoint.initialize(tempDir)
+			NexusAIEndpoint.isInitialized().should.be.true()
 		})
 
 		it("should throw error when accessing config before initialization", async () => {
 			// Already reset in beforeEach, so accessing should throw
 			try {
-				const _ = ClineEndpoint.config
+				const _ = NexusAIEndpoint.config
 				throw new Error("Should have thrown")
 			} catch (error: any) {
 				error.message.should.containEql("not initialized")
@@ -517,8 +515,8 @@ describe("ClineEndpoint configuration", () => {
 	describe("isSelfHosted() method", () => {
 		it("should return true when not initialized (safety fallback)", async () => {
 			// Reset singleton state - already done in beforeEach, not initialized
-			ClineEndpoint.isInitialized().should.be.false()
-			ClineEndpoint.isSelfHosted().should.be.true()
+			NexusAIEndpoint.isInitialized().should.be.false()
+			NexusAIEndpoint.isSelfHosted().should.be.true()
 		})
 
 		it("should return true when in self-hosted mode", async () => {
@@ -528,16 +526,16 @@ describe("ClineEndpoint configuration", () => {
 				mcpBaseUrl: "https://mcp.enterprise.com",
 			}
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(config), "utf8")
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			ClineEndpoint.isSelfHosted().should.be.true()
+			NexusAIEndpoint.isSelfHosted().should.be.true()
 		})
 
 		it("should return false when in normal mode (no endpoints.json)", async () => {
 			// No endpoints.json file exists
-			await ClineEndpoint.initialize(tempDir)
+			await NexusAIEndpoint.initialize(tempDir)
 
-			ClineEndpoint.isSelfHosted().should.be.false()
+			NexusAIEndpoint.isSelfHosted().should.be.false()
 		})
 	})
 
@@ -573,9 +571,9 @@ describe("ClineEndpoint configuration", () => {
 			// Set up bundled config
 			await fs.writeFile(path.join(bundledDir, "endpoints.json"), JSON.stringify(bundledConfig), "utf8")
 
-			await ClineEndpoint.initialize(bundledDir)
+			await NexusAIEndpoint.initialize(bundledDir)
 
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("https://bundled.enterprise.com")
 			config.apiBaseUrl.should.equal("https://bundled-api.enterprise.com")
 			config.mcpBaseUrl.should.equal("https://bundled-mcp.enterprise.com")
@@ -599,10 +597,10 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(bundledDir, "endpoints.json"), JSON.stringify(bundledConfig), "utf8")
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(userConfig), "utf8")
 
-			await ClineEndpoint.initialize(bundledDir)
+			await NexusAIEndpoint.initialize(bundledDir)
 
 			// Should use bundled config, not user config
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("https://bundled.enterprise.com")
 			config.apiBaseUrl.should.equal("https://bundled-api.enterprise.com")
 			config.mcpBaseUrl.should.equal("https://bundled-mcp.enterprise.com")
@@ -618,10 +616,10 @@ describe("ClineEndpoint configuration", () => {
 			// Only create user config, no bundled config
 			await fs.writeFile(path.join(tempDir, ".cline", "endpoints.json"), JSON.stringify(userConfig), "utf8")
 
-			await ClineEndpoint.initialize(bundledDir)
+			await NexusAIEndpoint.initialize(bundledDir)
 
 			// Should use user config
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.appBaseUrl.should.equal("https://user.enterprise.com")
 			config.apiBaseUrl.should.equal("https://user-api.enterprise.com")
 			config.mcpBaseUrl.should.equal("https://user-mcp.enterprise.com")
@@ -630,16 +628,16 @@ describe("ClineEndpoint configuration", () => {
 		it("should use standard mode when neither bundled nor user file exists", async () => {
 			// No config files at all
 
-			await ClineEndpoint.initialize(bundledDir)
+			await NexusAIEndpoint.initialize(bundledDir)
 
 			// Should use production defaults
-			const config = ClineEndpoint.config
+			const config = NexusAIEndpoint.config
 			config.environment.should.not.equal(Environment.selfHosted)
 			config.appBaseUrl.should.equal("https://app.cline.bot")
 			config.apiBaseUrl.should.equal("https://api.cline.bot")
 		})
 
-		it("should throw ClineConfigurationError for invalid bundled file", async () => {
+		it("should throw NexusAIConfigurationError for invalid bundled file", async () => {
 			const invalidConfig = {
 				appBaseUrl: "not-a-url",
 				apiBaseUrl: "https://api.enterprise.com",
@@ -650,24 +648,24 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(bundledDir, "endpoints.json"), JSON.stringify(invalidConfig), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(bundledDir)
+				await NexusAIEndpoint.initialize(bundledDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("must be a valid URL")
 				error.message.should.containEql("bundled")
 			}
 		})
 
-		it("should throw ClineConfigurationError for invalid JSON in bundled file", async () => {
+		it("should throw NexusAIConfigurationError for invalid JSON in bundled file", async () => {
 			// Set up invalid JSON in bundled file
 			await fs.writeFile(path.join(bundledDir, "endpoints.json"), "{ invalid json }", "utf8")
 
 			try {
-				await ClineEndpoint.initialize(bundledDir)
+				await NexusAIEndpoint.initialize(bundledDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("Invalid JSON")
 				error.message.should.containEql("bundled")
 			}
@@ -682,10 +680,10 @@ describe("ClineEndpoint configuration", () => {
 			await fs.writeFile(path.join(bundledDir, "endpoints.json"), JSON.stringify(incompleteConfig), "utf8")
 
 			try {
-				await ClineEndpoint.initialize(bundledDir)
+				await NexusAIEndpoint.initialize(bundledDir)
 				throw new Error("Should have thrown")
 			} catch (error: any) {
-				error.should.be.instanceof(ClineConfigurationError)
+				error.should.be.instanceof(NexusAIConfigurationError)
 				error.message.should.containEql("Missing required field")
 				error.message.should.containEql(path.join(bundledDir, "endpoints.json"))
 			}

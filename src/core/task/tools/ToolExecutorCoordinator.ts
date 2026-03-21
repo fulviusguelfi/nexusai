@@ -1,6 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
-import { CLINE_MCP_TOOL_IDENTIFIER } from "@/shared/mcp"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NEXUSAI_MCP_TOOL_IDENTIFIER } from "@/shared/mcp"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../index"
 import { AccessMcpResourceHandler } from "./handlers/AccessMcpResourceHandler"
 import { ActModeRespondHandler } from "./handlers/ActModeRespondHandler"
@@ -51,7 +51,7 @@ import type { TaskConfig } from "./types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "./types/UIHelpers"
 
 export interface IToolHandler {
-	readonly name: ClineDefaultTool
+	readonly name: NexusAIDefaultTool
 	execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse>
 	getDescription(block: ToolUse): string
 }
@@ -70,7 +70,7 @@ export interface IFullyManagedTool extends IToolHandler, IPartialBlockHandler {
  */
 export class SharedToolHandler implements IFullyManagedTool {
 	constructor(
-		public readonly name: ClineDefaultTool,
+		public readonly name: NexusAIDefaultTool,
 		private baseHandler: IFullyManagedTool,
 	) {}
 
@@ -95,55 +95,55 @@ export class ToolExecutorCoordinator {
 	private handlers = new Map<string, IToolHandler>()
 	private dynamicSubagentHandlers = new Map<string, IToolHandler>()
 
-	private readonly toolHandlersMap: Record<ClineDefaultTool, (v: ToolValidator) => IToolHandler | undefined> = {
-		[ClineDefaultTool.ASK]: (_v: ToolValidator) => new AskFollowupQuestionToolHandler(),
-		[ClineDefaultTool.ATTEMPT]: (_v: ToolValidator) => new AttemptCompletionHandler(),
-		[ClineDefaultTool.BASH]: (v: ToolValidator) => new ExecuteCommandToolHandler(v),
-		[ClineDefaultTool.FILE_EDIT]: (v: ToolValidator) =>
-			new SharedToolHandler(ClineDefaultTool.FILE_EDIT, new WriteToFileToolHandler(v)),
-		[ClineDefaultTool.FILE_READ]: (v: ToolValidator) => new ReadFileToolHandler(v),
-		[ClineDefaultTool.FILE_NEW]: (v: ToolValidator) => new WriteToFileToolHandler(v),
-		[ClineDefaultTool.SEARCH]: (v: ToolValidator) => new SearchFilesToolHandler(v),
-		[ClineDefaultTool.LIST_FILES]: (v: ToolValidator) => new ListFilesToolHandler(v),
-		[ClineDefaultTool.LIST_CODE_DEF]: (v: ToolValidator) => new ListCodeDefinitionNamesToolHandler(v),
-		[ClineDefaultTool.BROWSER]: (_v: ToolValidator) => new BrowserToolHandler(),
-		[ClineDefaultTool.MCP_USE]: (_v: ToolValidator) => new UseMcpToolHandler(),
-		[ClineDefaultTool.MCP_ACCESS]: (_v: ToolValidator) => new AccessMcpResourceHandler(),
-		[ClineDefaultTool.MCP_DOCS]: (_v: ToolValidator) => new LoadMcpDocumentationHandler(),
-		[ClineDefaultTool.NEW_TASK]: (_v: ToolValidator) => new NewTaskHandler(),
-		[ClineDefaultTool.PLAN_MODE]: (_v: ToolValidator) => new PlanModeRespondHandler(),
-		[ClineDefaultTool.ACT_MODE]: (_v: ToolValidator) => new ActModeRespondHandler(),
-		[ClineDefaultTool.TODO]: (_v: ToolValidator) => undefined,
-		[ClineDefaultTool.WEB_FETCH]: (_v: ToolValidator) => new WebFetchToolHandler(),
-		[ClineDefaultTool.WEB_SEARCH]: (_v: ToolValidator) => new WebSearchToolHandler(),
-		[ClineDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
-		[ClineDefaultTool.SUMMARIZE_TASK]: (_v: ToolValidator) => new SummarizeTaskHandler(_v),
-		[ClineDefaultTool.REPORT_BUG]: (_v: ToolValidator) => new ReportBugHandler(),
-		[ClineDefaultTool.NEW_RULE]: (v: ToolValidator) =>
-			new SharedToolHandler(ClineDefaultTool.NEW_RULE, new WriteToFileToolHandler(v)),
-		[ClineDefaultTool.APPLY_PATCH]: (_v: ToolValidator) => new ApplyPatchHandler(_v),
-		[ClineDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
-		[ClineDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
-		[ClineDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
-		[ClineDefaultTool.LIST_PROCESSES]: (v: ToolValidator) => new ListProcessesToolHandler(v),
-		[ClineDefaultTool.KILL_PROCESS]: (v: ToolValidator) => new KillProcessToolHandler(v),
-		[ClineDefaultTool.DISCOVER_NETWORK_HOSTS]: (v: ToolValidator) => new DiscoverNetworkHostsToolHandler(v),
-		[ClineDefaultTool.SSH_CONNECT]: (v: ToolValidator) => new SshConnectToolHandler(v),
-		[ClineDefaultTool.SSH_EXECUTE]: (v: ToolValidator) => new SshExecuteToolHandler(v),
-		[ClineDefaultTool.SSH_UPLOAD]: (v: ToolValidator) => new SshUploadToolHandler(v),
-		[ClineDefaultTool.SSH_DOWNLOAD]: (v: ToolValidator) => new SshDownloadToolHandler(v),
-		[ClineDefaultTool.SSH_DISCONNECT]: (v: ToolValidator) => new SshDisconnectToolHandler(v),
-		[ClineDefaultTool.HTTP_REQUEST]: (v: ToolValidator) => new HttpRequestToolHandler(v),
-		[ClineDefaultTool.MQTT_CONNECT]: (v: ToolValidator) => new MqttConnectToolHandler(v),
-		[ClineDefaultTool.MQTT_PUBLISH]: (v: ToolValidator) => new MqttPublishToolHandler(v),
-		[ClineDefaultTool.MQTT_SUBSCRIBE]: (v: ToolValidator) => new MqttSubscribeToolHandler(v),
-		[ClineDefaultTool.MQTT_DISCONNECT]: (v: ToolValidator) => new MqttDisconnectToolHandler(v),
-		[ClineDefaultTool.DISCOVER_DEVICES]: (v: ToolValidator) => new DiscoverDevicesToolHandler(v),
-		[ClineDefaultTool.REGISTER_DEVICE]: (v: ToolValidator) => new RegisterDeviceToolHandler(v),
-		[ClineDefaultTool.GET_DEVICE_INFO]: (v: ToolValidator) => new GetDeviceInfoToolHandler(v),
-		[ClineDefaultTool.OPERATE_DEVICE]: (v: ToolValidator) => new OperateDeviceToolHandler(v),
-		[ClineDefaultTool.SPEAK_TEXT]: (v: ToolValidator) => new SpeakTextToolHandler(v),
-		[ClineDefaultTool.LISTEN_FOR_SPEECH]: (v: ToolValidator) => new ListenForSpeechToolHandler(v),
+	private readonly toolHandlersMap: Record<NexusAIDefaultTool, (v: ToolValidator) => IToolHandler | undefined> = {
+		[NexusAIDefaultTool.ASK]: (_v: ToolValidator) => new AskFollowupQuestionToolHandler(),
+		[NexusAIDefaultTool.ATTEMPT]: (_v: ToolValidator) => new AttemptCompletionHandler(),
+		[NexusAIDefaultTool.BASH]: (v: ToolValidator) => new ExecuteCommandToolHandler(v),
+		[NexusAIDefaultTool.FILE_EDIT]: (v: ToolValidator) =>
+			new SharedToolHandler(NexusAIDefaultTool.FILE_EDIT, new WriteToFileToolHandler(v)),
+		[NexusAIDefaultTool.FILE_READ]: (v: ToolValidator) => new ReadFileToolHandler(v),
+		[NexusAIDefaultTool.FILE_NEW]: (v: ToolValidator) => new WriteToFileToolHandler(v),
+		[NexusAIDefaultTool.SEARCH]: (v: ToolValidator) => new SearchFilesToolHandler(v),
+		[NexusAIDefaultTool.LIST_FILES]: (v: ToolValidator) => new ListFilesToolHandler(v),
+		[NexusAIDefaultTool.LIST_CODE_DEF]: (v: ToolValidator) => new ListCodeDefinitionNamesToolHandler(v),
+		[NexusAIDefaultTool.BROWSER]: (_v: ToolValidator) => new BrowserToolHandler(),
+		[NexusAIDefaultTool.MCP_USE]: (_v: ToolValidator) => new UseMcpToolHandler(),
+		[NexusAIDefaultTool.MCP_ACCESS]: (_v: ToolValidator) => new AccessMcpResourceHandler(),
+		[NexusAIDefaultTool.MCP_DOCS]: (_v: ToolValidator) => new LoadMcpDocumentationHandler(),
+		[NexusAIDefaultTool.NEW_TASK]: (_v: ToolValidator) => new NewTaskHandler(),
+		[NexusAIDefaultTool.PLAN_MODE]: (_v: ToolValidator) => new PlanModeRespondHandler(),
+		[NexusAIDefaultTool.ACT_MODE]: (_v: ToolValidator) => new ActModeRespondHandler(),
+		[NexusAIDefaultTool.TODO]: (_v: ToolValidator) => undefined,
+		[NexusAIDefaultTool.WEB_FETCH]: (_v: ToolValidator) => new WebFetchToolHandler(),
+		[NexusAIDefaultTool.WEB_SEARCH]: (_v: ToolValidator) => new WebSearchToolHandler(),
+		[NexusAIDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
+		[NexusAIDefaultTool.SUMMARIZE_TASK]: (_v: ToolValidator) => new SummarizeTaskHandler(_v),
+		[NexusAIDefaultTool.REPORT_BUG]: (_v: ToolValidator) => new ReportBugHandler(),
+		[NexusAIDefaultTool.NEW_RULE]: (v: ToolValidator) =>
+			new SharedToolHandler(NexusAIDefaultTool.NEW_RULE, new WriteToFileToolHandler(v)),
+		[NexusAIDefaultTool.APPLY_PATCH]: (_v: ToolValidator) => new ApplyPatchHandler(_v),
+		[NexusAIDefaultTool.GENERATE_EXPLANATION]: (_v: ToolValidator) => new GenerateExplanationToolHandler(),
+		[NexusAIDefaultTool.USE_SKILL]: (_v: ToolValidator) => new UseSkillToolHandler(),
+		[NexusAIDefaultTool.USE_SUBAGENTS]: (_v: ToolValidator) => new UseSubagentsToolHandler(),
+		[NexusAIDefaultTool.LIST_PROCESSES]: (v: ToolValidator) => new ListProcessesToolHandler(v),
+		[NexusAIDefaultTool.KILL_PROCESS]: (v: ToolValidator) => new KillProcessToolHandler(v),
+		[NexusAIDefaultTool.DISCOVER_NETWORK_HOSTS]: (v: ToolValidator) => new DiscoverNetworkHostsToolHandler(v),
+		[NexusAIDefaultTool.SSH_CONNECT]: (v: ToolValidator) => new SshConnectToolHandler(v),
+		[NexusAIDefaultTool.SSH_EXECUTE]: (v: ToolValidator) => new SshExecuteToolHandler(v),
+		[NexusAIDefaultTool.SSH_UPLOAD]: (v: ToolValidator) => new SshUploadToolHandler(v),
+		[NexusAIDefaultTool.SSH_DOWNLOAD]: (v: ToolValidator) => new SshDownloadToolHandler(v),
+		[NexusAIDefaultTool.SSH_DISCONNECT]: (v: ToolValidator) => new SshDisconnectToolHandler(v),
+		[NexusAIDefaultTool.HTTP_REQUEST]: (v: ToolValidator) => new HttpRequestToolHandler(v),
+		[NexusAIDefaultTool.MQTT_CONNECT]: (v: ToolValidator) => new MqttConnectToolHandler(v),
+		[NexusAIDefaultTool.MQTT_PUBLISH]: (v: ToolValidator) => new MqttPublishToolHandler(v),
+		[NexusAIDefaultTool.MQTT_SUBSCRIBE]: (v: ToolValidator) => new MqttSubscribeToolHandler(v),
+		[NexusAIDefaultTool.MQTT_DISCONNECT]: (v: ToolValidator) => new MqttDisconnectToolHandler(v),
+		[NexusAIDefaultTool.DISCOVER_DEVICES]: (v: ToolValidator) => new DiscoverDevicesToolHandler(v),
+		[NexusAIDefaultTool.REGISTER_DEVICE]: (v: ToolValidator) => new RegisterDeviceToolHandler(v),
+		[NexusAIDefaultTool.GET_DEVICE_INFO]: (v: ToolValidator) => new GetDeviceInfoToolHandler(v),
+		[NexusAIDefaultTool.OPERATE_DEVICE]: (v: ToolValidator) => new OperateDeviceToolHandler(v),
+		[NexusAIDefaultTool.SPEAK_TEXT]: (v: ToolValidator) => new SpeakTextToolHandler(v),
+		[NexusAIDefaultTool.LISTEN_FOR_SPEECH]: (v: ToolValidator) => new ListenForSpeechToolHandler(v),
 	}
 
 	/**
@@ -153,7 +153,7 @@ export class ToolExecutorCoordinator {
 		this.handlers.set(handler.name, handler)
 	}
 
-	registerByName(toolName: ClineDefaultTool, validator: ToolValidator): void {
+	registerByName(toolName: NexusAIDefaultTool, validator: ToolValidator): void {
 		const handler = this.toolHandlersMap[toolName]?.(validator)
 		if (handler) {
 			this.register(handler)
@@ -172,8 +172,8 @@ export class ToolExecutorCoordinator {
 	 */
 	getHandler(toolName: string): IToolHandler | undefined {
 		// HACK: Normalize MCP tool names to the standard handler
-		if (toolName.includes(CLINE_MCP_TOOL_IDENTIFIER)) {
-			toolName = ClineDefaultTool.MCP_USE
+		if (toolName.includes(NEXUSAI_MCP_TOOL_IDENTIFIER)) {
+			toolName = NexusAIDefaultTool.MCP_USE
 		}
 
 		const staticHandler = this.handlers.get(toolName)
@@ -186,7 +186,7 @@ export class ToolExecutorCoordinator {
 			if (existingHandler) {
 				return existingHandler
 			}
-			const handler = new SharedToolHandler(toolName as ClineDefaultTool, new UseSubagentsToolHandler())
+			const handler = new SharedToolHandler(toolName as NexusAIDefaultTool, new UseSubagentsToolHandler())
 			this.dynamicSubagentHandlers.set(toolName, handler)
 			return handler
 		}

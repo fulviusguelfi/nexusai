@@ -1,5 +1,5 @@
-import { PathHashMap } from "@shared/proto/cline/checkpoints"
-import { StringArrayRequest } from "@shared/proto/cline/common"
+import { PathHashMap } from "@shared/proto/nexusai/checkpoints"
+import { StringArrayRequest } from "@shared/proto/nexusai/common"
 import { hashWorkingDir } from "@/integrations/checkpoints/CheckpointUtils"
 import { Controller } from ".."
 

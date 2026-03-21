@@ -5,7 +5,7 @@ import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
 import { ensureTaskDirectoryExists } from "@core/storage/disk"
 import { Logger } from "@shared/services/Logger"
-import type { ClineStorageMessage } from "@/shared/messages"
+import type { NexusAIStorageMessage } from "@/shared/messages"
 import type { StateManager } from "../../storage/StateManager"
 import type { MessageStateHandler } from "../message-state"
 import type { TaskState } from "../TaskState"
@@ -28,7 +28,7 @@ export interface ContextCompactorDeps {
 export class ContextCompactor {
 	constructor(private deps: ContextCompactorDeps) {}
 
-	calculatePreCompactDeletedRange(apiConversationHistory: ClineStorageMessage[]): [number, number] {
+	calculatePreCompactDeletedRange(apiConversationHistory: NexusAIStorageMessage[]): [number, number] {
 		const newDeletedRange = this.deps.contextManager.getNextTruncationRange(
 			apiConversationHistory,
 			this.deps.taskState.conversationHistoryDeletedRange,

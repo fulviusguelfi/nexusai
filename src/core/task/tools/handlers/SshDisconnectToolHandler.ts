@@ -1,7 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { SshSessionRegistry } from "@services/ssh/SshSessionRegistry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -9,7 +9,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class SshDisconnectToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.SSH_DISCONNECT
+	readonly name = NexusAIDefaultTool.SSH_DISCONNECT
 
 	constructor(_validator: ToolValidator) {}
 

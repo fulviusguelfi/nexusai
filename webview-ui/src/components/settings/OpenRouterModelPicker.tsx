@@ -1,5 +1,5 @@
 import { CLAUDE_SONNET_1M_SUFFIX, openRouterDefaultModelId } from "@shared/api"
-import { StringRequest } from "@shared/proto/cline/common"
+import { StringRequest } from "@shared/proto/nexusai/common"
 import type { Mode } from "@shared/storage/types"
 import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"

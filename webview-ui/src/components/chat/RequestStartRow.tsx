@@ -1,4 +1,4 @@
-import type { ClineMessage, ClineSayTool } from "@shared/ExtensionMessage"
+import type { NexusAIMessage, NexusAISayTool } from "@shared/ExtensionMessage"
 import type { Mode } from "@shared/storage/types"
 import type { LucideIcon } from "lucide-react"
 import type React from "react"
@@ -11,13 +11,13 @@ import { ThinkingRow } from "./ThinkingRow"
 import { TypewriterText } from "./TypewriterText"
 
 interface RequestStartRowProps {
-	message: ClineMessage
+	message: NexusAIMessage
 	apiRequestFailedMessage?: string
 	apiReqStreamingFailedMessage?: string
 	cost?: number
 	reasoningContent?: string
 	responseStarted?: boolean
-	clineMessages: ClineMessage[]
+	clineMessages: NexusAIMessage[]
 	mode?: Mode
 	classNames?: string
 	isExpanded: boolean
@@ -38,7 +38,7 @@ const formatSearchRegex = (regex: string, path: string, filePattern?: string): s
 	return filePattern && filePattern !== "*" ? `"${terms}" in ${cleanedPath}/ (${filePattern})` : `"${terms}" in ${cleanedPath}/`
 }
 // Format activity text based on tool type
-const getActivityText = (tool: ClineSayTool): string | null => {
+const getActivityText = (tool: NexusAISayTool): string | null => {
 	const cleanedPath = cleanPathPrefix(tool.path || "")
 	switch (tool.tool) {
 		case "readFile":
@@ -57,10 +57,10 @@ const getActivityText = (tool: ClineSayTool): string | null => {
 
 // Collect tools in a given range, with optional stop condition
 const collectToolsInRange = (
-	messages: ClineMessage[],
+	messages: NexusAIMessage[],
 	startIdx: number,
 	endIdx: number,
-	stopCondition?: (msg: ClineMessage) => boolean,
+	stopCondition?: (msg: NexusAIMessage) => boolean,
 ): { icon: LucideIcon; text: string }[] => {
 	const activities: { icon: LucideIcon; text: string }[] = []
 
@@ -78,7 +78,7 @@ const collectToolsInRange = (
 		}
 
 		try {
-			const tool = JSON.parse(msg.text || "{}") as ClineSayTool
+			const tool = JSON.parse(msg.text || "{}") as NexusAISayTool
 			const activityText = getActivityText(tool)
 			if (activityText) {
 				const toolIcon = getIconByToolName(tool.tool)
@@ -92,7 +92,7 @@ const collectToolsInRange = (
 }
 
 // Find current api_req and determine if it has cost
-const findCurrentApiReq = (messages: ClineMessage[]): { index: number; hasCost: boolean } | null => {
+const findCurrentApiReq = (messages: NexusAIMessage[]): { index: number; hasCost: boolean } | null => {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const msg = messages[i]
 		if (msg.say === "api_req_started" && msg.text) {
@@ -108,7 +108,7 @@ const findCurrentApiReq = (messages: ClineMessage[]): { index: number; hasCost: 
 }
 
 // Find the most recent completed api_req before the given index
-const findPrevCompletedApiReq = (messages: ClineMessage[], beforeIdx: number): number => {
+const findPrevCompletedApiReq = (messages: NexusAIMessage[], beforeIdx: number): number => {
 	for (let i = beforeIdx - 1; i >= 0; i--) {
 		const msg = messages[i]
 		if (msg.say === "api_req_started" && msg.text) {

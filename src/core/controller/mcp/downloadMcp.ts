@@ -1,8 +1,8 @@
 import { McpServer } from "@shared/mcp"
-import { StringRequest } from "@shared/proto/cline/common"
-import { McpDownloadResponse } from "@shared/proto/cline/mcp"
+import { StringRequest } from "@shared/proto/nexusai/common"
+import { McpDownloadResponse } from "@shared/proto/nexusai/mcp"
 import axios from "axios"
-import { ClineEnv } from "@/config"
+import { NexusAIEnv } from "@/config"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { Controller } from ".."
@@ -33,7 +33,7 @@ export async function downloadMcp(controller: Controller, request: StringRequest
 
 		// Fetch server details from marketplace
 		const response = await axios.post<McpDownloadResponse>(
-			`${ClineEnv.config().mcpBaseUrl}/download`,
+			`${NexusAIEnv.config().mcpBaseUrl}/download`,
 			{ mcpId },
 			{
 				headers: { "Content-Type": "application/json" },

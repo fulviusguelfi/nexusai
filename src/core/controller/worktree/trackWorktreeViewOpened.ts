@@ -1,5 +1,5 @@
-import { Empty } from "@shared/proto/cline/common"
-import { TrackWorktreeViewOpenedRequest } from "@shared/proto/cline/worktree"
+import { Empty } from "@shared/proto/nexusai/common"
+import { TrackWorktreeViewOpenedRequest } from "@shared/proto/nexusai/worktree"
 import { telemetryService } from "@/services/telemetry"
 import { Controller } from ".."
 

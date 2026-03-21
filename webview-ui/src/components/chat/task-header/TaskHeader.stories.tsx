@@ -1,4 +1,4 @@
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { createStorybookDecorator } from "@/config/StorybookDecorator"
 import { Environment } from "../../../../../src/config"
@@ -31,7 +31,7 @@ export default meta
 type Story = StoryObj<typeof TaskHeader>
 
 // Helper to create mock task messages
-const createTask = (text: string, images?: string[], files?: string[]): ClineMessage => ({
+const createTask = (text: string, images?: string[], files?: string[]): NexusAIMessage => ({
 	ts: Date.now(),
 	type: "say",
 	say: "task",
@@ -41,7 +41,7 @@ const createTask = (text: string, images?: string[], files?: string[]): ClineMes
 })
 
 // Helper to create mock messages for timeline
-const createMessages = (): ClineMessage[] => [
+const createMessages = (): NexusAIMessage[] => [
 	{
 		ts: Date.now() - 300000,
 		type: "say",

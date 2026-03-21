@@ -1,6 +1,6 @@
 import { featureFlagsService } from "@/services/feature-flags"
-import { CLINE_ONBOARDING_MODELS } from "@/shared/cline/onboarding"
-import { OnboardingModel, OnboardingModelGroup } from "@/shared/proto/cline/state"
+import { NEXUSAI_ONBOARDING_MODELS } from "@/shared/nexusai/onboarding"
+import { OnboardingModel, OnboardingModelGroup } from "@/shared/proto/nexusai/state"
 
 type OnboardingModelOverride = OnboardingModel & { hidden?: boolean }
 
@@ -12,7 +12,7 @@ export function getClineOnboardingModels(): OnboardingModelGroup {
 	}
 
 	const remoteOverrides = featureFlagsService.getOnboardingOverrides()
-	const models = [...CLINE_ONBOARDING_MODELS]
+	const models = [...NEXUSAI_ONBOARDING_MODELS]
 
 	// Apply remote overrides if available
 	if (remoteOverrides) {

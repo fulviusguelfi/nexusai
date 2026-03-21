@@ -1,4 +1,4 @@
-import type { ClineMessage } from "@shared/ExtensionMessage"
+import type { NexusAIMessage } from "@shared/ExtensionMessage"
 import type React from "react"
 import { useCallback, useMemo } from "react"
 import { Virtuoso } from "react-virtuoso"
@@ -10,9 +10,9 @@ import { isToolGroup } from "../../utils/messageUtils"
 import { createMessageRenderer } from "../messages/MessageRenderer"
 
 interface MessagesAreaProps {
-	task: ClineMessage
-	groupedMessages: (ClineMessage | ClineMessage[])[]
-	modifiedMessages: ClineMessage[]
+	task: NexusAIMessage
+	groupedMessages: (NexusAIMessage | NexusAIMessage[])[]
+	modifiedMessages: NexusAIMessage[]
 	scrollBehavior: ScrollBehavior
 	chatState: ChatState
 	messageHandlers: MessageHandlers
@@ -153,11 +153,11 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 		return isWaitingForResponse || handoffToReasoningPending
 	}, [isWaitingForResponse, lastRawMessage, lastVisibleMessage?.say])
 
-	const displayedGroupedMessages = useMemo<(ClineMessage | ClineMessage[])[]>(() => {
+	const displayedGroupedMessages = useMemo<(NexusAIMessage | NexusAIMessage[])[]>(() => {
 		if (!showThinkingLoaderRow) {
 			return groupedMessages
 		}
-		const waitingRow: ClineMessage = {
+		const waitingRow: NexusAIMessage = {
 			ts: Number.MIN_SAFE_INTEGER,
 			type: "say",
 			say: "reasoning",

@@ -2,39 +2,39 @@ import { ensureCacheDirectoryExists, GlobalFileNames } from "@core/storage/disk"
 import axios from "axios"
 import fs from "fs/promises"
 import path from "path"
-import { ClineEnv } from "@/config"
+import { NexusAIEnv } from "@/config"
 import { featureFlagsService } from "@/services/feature-flags"
-import { CLINE_RECOMMENDED_MODELS_FALLBACK } from "@/shared/cline/recommended-models"
 import { getAxiosSettings } from "@/shared/net"
+import { NEXUSAI_RECOMMENDED_MODELS_FALLBACK } from "@/shared/nexusai/recommended-models"
 import { FeatureFlag } from "@/shared/services/feature-flags/feature-flags"
 import { Logger } from "@/shared/services/Logger"
 
-export interface ClineRecommendedModelData {
+export interface NexusAIRecommendedModelData {
 	id: string
 	name: string
 	description: string
 	tags: string[]
 }
 
-export interface ClineRecommendedModelsData {
-	recommended: ClineRecommendedModelData[]
-	free: ClineRecommendedModelData[]
+export interface NexusAIRecommendedModelsData {
+	recommended: NexusAIRecommendedModelData[]
+	free: NexusAIRecommendedModelData[]
 }
 
 const RECOMMENDED_MODELS_CACHE_TTL_MS = 60 * 60 * 1000
 
-let pendingRefresh: Promise<ClineRecommendedModelsData> | null = null
-let inMemoryCache: { data: ClineRecommendedModelsData; timestamp: number } | null = null
+let pendingRefresh: Promise<NexusAIRecommendedModelsData> | null = null
+let inMemoryCache: { data: NexusAIRecommendedModelsData; timestamp: number } | null = null
 
-function getHardcodedRecommendedModels(): ClineRecommendedModelsData {
-	return CLINE_RECOMMENDED_MODELS_FALLBACK
+function getHardcodedRecommendedModels(): NexusAIRecommendedModelsData {
+	return NEXUSAI_RECOMMENDED_MODELS_FALLBACK
 }
 
 function useUpstreamRecommendedModels(): boolean {
-	return featureFlagsService.getBooleanFlagEnabled(FeatureFlag.CLINE_RECOMMENDED_MODELS_UPSTREAM)
+	return featureFlagsService.getBooleanFlagEnabled(FeatureFlag.NEXUSAI_RECOMMENDED_MODELS_UPSTREAM)
 }
 
-function normalizeRecommendedModel(raw: unknown): ClineRecommendedModelData | null {
+function normalizeRecommendedModel(raw: unknown): NexusAIRecommendedModelData | null {
 	if (!raw || typeof raw !== "object") {
 		return null
 	}
@@ -52,7 +52,7 @@ function normalizeRecommendedModel(raw: unknown): ClineRecommendedModelData | nu
 	}
 }
 
-function normalizeRecommendedModelsResponse(raw: unknown): ClineRecommendedModelsData | null {
+function normalizeRecommendedModelsResponse(raw: unknown): NexusAIRecommendedModelsData | null {
 	if (!raw || typeof raw !== "object") {
 		return null
 	}
@@ -70,16 +70,16 @@ function normalizeRecommendedModelsResponse(raw: unknown): ClineRecommendedModel
 
 	const recommended = recommendedRaw
 		.map((model) => normalizeRecommendedModel(model))
-		.filter((model): model is ClineRecommendedModelData => model !== null)
+		.filter((model): model is NexusAIRecommendedModelData => model !== null)
 
 	const free = freeRaw
 		.map((model) => normalizeRecommendedModel(model))
-		.filter((model): model is ClineRecommendedModelData => model !== null)
+		.filter((model): model is NexusAIRecommendedModelData => model !== null)
 
 	return { recommended, free }
 }
 
-export async function refreshClineRecommendedModels(): Promise<ClineRecommendedModelsData> {
+export async function refreshClineRecommendedModels(): Promise<NexusAIRecommendedModelsData> {
 	if (!useUpstreamRecommendedModels()) {
 		return getHardcodedRecommendedModels()
 	}
@@ -108,12 +108,12 @@ export function resetClineRecommendedModelsCacheForTests(): void {
 	inMemoryCache = null
 }
 
-async function fetchAndCacheClineRecommendedModels(): Promise<ClineRecommendedModelsData> {
+async function fetchAndCacheClineRecommendedModels(): Promise<NexusAIRecommendedModelsData> {
 	const clineRecommendedModelsFilePath = path.join(await ensureCacheDirectoryExists(), GlobalFileNames.clineRecommendedModels)
-	let result: ClineRecommendedModelsData = { recommended: [], free: [] }
+	let result: NexusAIRecommendedModelsData = { recommended: [], free: [] }
 
 	try {
-		const apiBaseUrl = ClineEnv.config().apiBaseUrl
+		const apiBaseUrl = NexusAIEnv.config().apiBaseUrl
 		const response = await axios.get(`${apiBaseUrl}/api/v1/ai/cline/recommended-models`, getAxiosSettings())
 		const normalized = normalizeRecommendedModelsResponse(response.data)
 		if (!normalized) {

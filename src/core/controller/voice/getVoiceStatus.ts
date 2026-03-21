@@ -1,6 +1,6 @@
 import type { Controller } from "@core/controller"
-import type { EmptyRequest } from "@shared/proto/cline/common"
-import { VoiceStatus } from "@shared/proto/cline/voice"
+import type { EmptyRequest } from "@shared/proto/nexusai/common"
+import { VoiceStatus } from "@shared/proto/nexusai/voice"
 import { PiperService } from "@/services/voice/PiperService"
 import { VoiceSessionManager } from "@/services/voice/VoiceSessionManager"
 import { WhisperService } from "@/services/voice/WhisperService"

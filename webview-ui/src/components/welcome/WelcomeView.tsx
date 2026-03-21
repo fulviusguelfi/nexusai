@@ -1,7 +1,7 @@
-import { BooleanRequest, EmptyRequest } from "@shared/proto/cline/common"
+import { BooleanRequest, EmptyRequest } from "@shared/proto/nexusai/common"
 import { VSCodeButton, VSCodeDivider, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
-import ClineLogoWhite from "@/assets/ClineLogoWhite"
+import NexusAILogoWhite from "@/assets/NexusAILogoWhite"
 import ApiOptions from "@/components/settings/ApiOptions"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { useExtensionState } from "@/context/ExtensionStateContext"
@@ -70,7 +70,7 @@ const WelcomeView = memo(() => {
 			<div className="h-full px-5 overflow-auto flex flex-col gap-3">
 				{/* Header */}
 				<div className="flex flex-col items-center gap-2 mt-6 mb-2">
-					<ClineLogoWhite className="size-12" />
+					<NexusAILogoWhite className="size-12" />
 					<h2 className="text-lg font-semibold m-0">Welcome to NexusAI</h2>
 					<p className="text-(--vscode-descriptionForeground) text-sm text-center m-0">
 						Your AI coding assistant. Connect GitHub Copilot to get started instantly.

@@ -1,7 +1,7 @@
 import { isLocalModel } from "@utils/model-utils"
 import { ModelFamily } from "@/shared/prompts"
 import { Logger } from "@/shared/services/Logger"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import { SystemPromptSection } from "../../templates/placeholders"
 import { createVariant } from "../variant-builder"
 import { validateVariant } from "../variant-validator"
@@ -41,34 +41,34 @@ export const config = createVariant(ModelFamily.XS)
 		SystemPromptSection.SKILLS,
 	)
 	.tools(
-		ClineDefaultTool.BASH,
-		ClineDefaultTool.LIST_PROCESSES,
-		ClineDefaultTool.KILL_PROCESS,
-		ClineDefaultTool.DISCOVER_NETWORK_HOSTS,
-		ClineDefaultTool.SSH_CONNECT,
-		ClineDefaultTool.SSH_EXECUTE,
-		ClineDefaultTool.SSH_UPLOAD,
-		ClineDefaultTool.SSH_DOWNLOAD,
-		ClineDefaultTool.SSH_DISCONNECT,
-		ClineDefaultTool.HTTP_REQUEST,
-		ClineDefaultTool.MQTT_CONNECT,
-		ClineDefaultTool.MQTT_PUBLISH,
-		ClineDefaultTool.MQTT_SUBSCRIBE,
-		ClineDefaultTool.MQTT_DISCONNECT,
-		ClineDefaultTool.DISCOVER_DEVICES,
-		ClineDefaultTool.REGISTER_DEVICE,
-		ClineDefaultTool.GET_DEVICE_INFO,
-		ClineDefaultTool.OPERATE_DEVICE,
-		ClineDefaultTool.SPEAK_TEXT,
-		ClineDefaultTool.LISTEN_FOR_SPEECH,
-		ClineDefaultTool.FILE_READ,
-		ClineDefaultTool.FILE_NEW,
-		ClineDefaultTool.FILE_EDIT,
-		ClineDefaultTool.SEARCH,
-		ClineDefaultTool.ASK,
-		ClineDefaultTool.ATTEMPT,
-		ClineDefaultTool.PLAN_MODE,
-		ClineDefaultTool.USE_SUBAGENTS,
+		NexusAIDefaultTool.BASH,
+		NexusAIDefaultTool.LIST_PROCESSES,
+		NexusAIDefaultTool.KILL_PROCESS,
+		NexusAIDefaultTool.DISCOVER_NETWORK_HOSTS,
+		NexusAIDefaultTool.SSH_CONNECT,
+		NexusAIDefaultTool.SSH_EXECUTE,
+		NexusAIDefaultTool.SSH_UPLOAD,
+		NexusAIDefaultTool.SSH_DOWNLOAD,
+		NexusAIDefaultTool.SSH_DISCONNECT,
+		NexusAIDefaultTool.HTTP_REQUEST,
+		NexusAIDefaultTool.MQTT_CONNECT,
+		NexusAIDefaultTool.MQTT_PUBLISH,
+		NexusAIDefaultTool.MQTT_SUBSCRIBE,
+		NexusAIDefaultTool.MQTT_DISCONNECT,
+		NexusAIDefaultTool.DISCOVER_DEVICES,
+		NexusAIDefaultTool.REGISTER_DEVICE,
+		NexusAIDefaultTool.GET_DEVICE_INFO,
+		NexusAIDefaultTool.OPERATE_DEVICE,
+		NexusAIDefaultTool.SPEAK_TEXT,
+		NexusAIDefaultTool.LISTEN_FOR_SPEECH,
+		NexusAIDefaultTool.FILE_READ,
+		NexusAIDefaultTool.FILE_NEW,
+		NexusAIDefaultTool.FILE_EDIT,
+		NexusAIDefaultTool.SEARCH,
+		NexusAIDefaultTool.ASK,
+		NexusAIDefaultTool.ATTEMPT,
+		NexusAIDefaultTool.PLAN_MODE,
+		NexusAIDefaultTool.USE_SUBAGENTS,
 	)
 	.placeholders({
 		MODEL_FAMILY: ModelFamily.XS,

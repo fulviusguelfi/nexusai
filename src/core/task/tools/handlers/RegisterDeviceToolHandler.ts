@@ -3,7 +3,7 @@ import { formatResponse } from "@core/prompts/responses"
 import { DeviceRegistry } from "@services/iot/DeviceRegistry"
 import type { DeviceProfile } from "@shared/iot/DeviceProfile"
 import { DeviceProtocol, DeviceType } from "@shared/iot/DeviceProfile"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -11,7 +11,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class RegisterDeviceToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.REGISTER_DEVICE
+	readonly name = NexusAIDefaultTool.REGISTER_DEVICE
 
 	constructor(_validator: ToolValidator) {}
 

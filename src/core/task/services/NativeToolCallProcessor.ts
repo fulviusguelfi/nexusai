@@ -1,6 +1,6 @@
 import { AssistantMessageContent, ToolUse } from "@core/assistant-message"
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
-import { convertClineMessageToProto } from "@shared/proto-conversions/cline-message"
+import { convertClineMessageToProto } from "@shared/proto-conversions/nexusai-message"
 import type { MessageStateHandler } from "../message-state"
 import type { TaskState } from "../TaskState"
 
@@ -21,13 +21,13 @@ export class NativeToolCallProcessor {
 		const textContent = assistantTextOnly.trim()
 		const textBlocks: AssistantMessageContent[] = textContent ? [{ type: "text", content: textContent, partial: false }] : []
 
-		// IMPORTANT: Finalize any partial text ClineMessage before we skip over it.
+		// IMPORTANT: Finalize any partial text NexusAIMessage before we skip over it.
 		//
 		// When native tool calls are processed, we set currentStreamingContentIndex to skip
 		// the text block (line below sets it to textBlocks.length). This means presentAssistantMessage
 		// will never call say("text", content, false) for this text block.
 		//
-		// Without this fix, the partial text ClineMessage remains with partial=true. In the UI
+		// Without this fix, the partial text NexusAIMessage remains with partial=true. In the UI
 		// (ChatView), partial messages that are not the last message don't get displayed anywhere:
 		// - Not in completedMessages (because partial=true)
 		// - Not in currentMessage (because it's not the last message - tool message came after)

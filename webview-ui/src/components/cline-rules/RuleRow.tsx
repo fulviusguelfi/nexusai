@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/cline/common"
-import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.cline"
+import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.nexusai"
+import { StringRequest } from "@shared/proto/nexusai/common"
 import { REMOTE_URI_SCHEME } from "@shared/remote-config/constants"
 import { EyeIcon, InfoIcon, PenIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"

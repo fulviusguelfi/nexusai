@@ -5,13 +5,13 @@ import "../../src/index.css"
 import { cn } from "@heroui/react"
 import type { Decorator } from "@storybook/react-vite"
 import React from "react"
-import { ClineAuthContext, ClineAuthContextType, ClineAuthProvider, useClineAuth } from "@/context/ClineAuthContext"
 import {
 	ExtensionStateContext,
 	ExtensionStateContextProvider,
 	ExtensionStateContextType,
 	useExtensionState,
 } from "@/context/ExtensionStateContext"
+import { NexusAIAuthContext, NexusAIAuthContextType, NexusAIAuthProvider, useClineAuth } from "@/context/NexusAIAuthContext"
 import { StorybookThemes } from "../../.storybook/themes"
 
 // Component that handles theme switching
@@ -45,9 +45,9 @@ function StorybookDecoratorProvider(className = "relative"): Decorator {
 		return (
 			<div className={className}>
 				<ExtensionStateContextProvider>
-					<ClineAuthProvider>
+					<NexusAIAuthProvider>
 						<ThemeHandler theme={parameters?.globals?.theme}>{React.createElement(story)}</ThemeHandler>
-					</ClineAuthProvider>
+					</NexusAIAuthProvider>
 				</ExtensionStateContextProvider>
 			</div>
 		)
@@ -63,23 +63,23 @@ const ExtensionStateProviderWithOverrides: React.FC<{
 	return <ExtensionStateContext.Provider value={{ ...extensionState, ...overrides }}>{children}</ExtensionStateContext.Provider>
 }
 
-const ClineAuthProviderWithOverrides: React.FC<{
-	overrides?: Partial<ClineAuthContextType>
+const NexusAIAuthProviderWithOverrides: React.FC<{
+	overrides?: Partial<NexusAIAuthContextType>
 	children: React.ReactNode
 }> = ({ overrides, children }) => {
 	const authContext = useClineAuth()
-	return <ClineAuthContext.Provider value={{ ...authContext, ...overrides }}>{children}</ClineAuthContext.Provider>
+	return <NexusAIAuthContext.Provider value={{ ...authContext, ...overrides }}>{children}</NexusAIAuthContext.Provider>
 }
 
 export const createStorybookDecorator =
-	(overrideStates?: Partial<ExtensionStateContextType>, classNames?: string, authOverrides?: Partial<ClineAuthContextType>) =>
+	(overrideStates?: Partial<ExtensionStateContextType>, classNames?: string, authOverrides?: Partial<NexusAIAuthContextType>) =>
 	(Story: any) => (
 		<ExtensionStateProviderWithOverrides overrides={overrideStates}>
-			<ClineAuthProviderWithOverrides overrides={authOverrides}>
+			<NexusAIAuthProviderWithOverrides overrides={authOverrides}>
 				<div className={cn("max-w-lg mx-auto", classNames)}>
 					<Story />
 				</div>
-			</ClineAuthProviderWithOverrides>
+			</NexusAIAuthProviderWithOverrides>
 		</ExtensionStateProviderWithOverrides>
 	)
 

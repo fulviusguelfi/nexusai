@@ -1,6 +1,6 @@
 import { McpViewTab } from "@shared/mcp"
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { McpServers } from "@shared/proto/cline/mcp"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { McpServers } from "@shared/proto/nexusai/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { useEffect, useState } from "react"
 import styled from "styled-components"

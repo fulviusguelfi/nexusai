@@ -1,6 +1,6 @@
 import { requestyDefaultModelId, requestyDefaultModelInfo } from "@shared/api"
 import { toRequestyServiceUrl } from "@shared/clients/requesty"
-import { EmptyRequest } from "@shared/proto/cline/common"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"

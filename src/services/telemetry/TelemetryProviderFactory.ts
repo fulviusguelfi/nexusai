@@ -1,4 +1,4 @@
-import { ClineEndpoint } from "@/config"
+import { NexusAIEndpoint } from "@/config"
 import {
 	getValidOpenTelemetryConfig,
 	getValidRuntimeOpenTelemetryConfig,
@@ -22,7 +22,7 @@ export type TelemetryProviderConfig =
 	 * @param config - Config for this specific collector
 	 * @param bypassUserSettings - When true, telemetry is sent regardless of the user's Cline telemetry opt-in/opt-out settings.
 	 * This is used for:
-	 * 	- User-controlled collectors configured via environment variables (e.g., CLINE_OTEL_TELEMETRY_ENABLED).
+	 * 	- User-controlled collectors configured via environment variables (e.g., NEXUSAI_OTEL_TELEMETRY_ENABLED).
 	 * 	- Organization-controlled collectors configured via remote config.
 	 */
 	{ type: "opentelemetry"; config: OpenTelemetryClientValidConfig; bypassUserSettings: boolean } | { type: "no-op" }
@@ -97,7 +97,7 @@ export class TelemetryProviderFactory {
 		// Skip build-time OTEL in selfHosted mode - enterprise customers should not send telemetry to Cline's collector
 		// Note: Runtime env OTEL and remote config OTEL are still allowed (user/org explicitly configured them)
 		const otelConfig = getValidOpenTelemetryConfig()
-		if (!ClineEndpoint.isSelfHosted() && otelConfig) {
+		if (!NexusAIEndpoint.isSelfHosted() && otelConfig) {
 			configs.push({
 				type: "opentelemetry",
 				config: otelConfig,
@@ -110,7 +110,7 @@ export class TelemetryProviderFactory {
 			configs.push({
 				type: "opentelemetry",
 				config: runtimeOtelConfig,
-				// If the user has `CLINE_OTEL_TELEMETRY_ENABLED` in his environment, enable
+				// If the user has `NEXUSAI_OTEL_TELEMETRY_ENABLED` in his environment, enable
 				// OTEL regardless of his Cline telemetry settings
 				bypassUserSettings: true,
 			})

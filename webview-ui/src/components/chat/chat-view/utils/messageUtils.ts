@@ -4,7 +4,7 @@
 
 import { combineApiRequests } from "@shared/combineApiRequests"
 import { combineCommandSequences } from "@shared/combineCommandSequences"
-import type { ClineMessage, ClineSayBrowserAction, ClineSayTool } from "@shared/ExtensionMessage"
+import type { NexusAIMessage, NexusAISayBrowserAction, NexusAISayTool } from "@shared/ExtensionMessage"
 import { FileIcon, FolderOpenDotIcon, FolderOpenIcon, SearchIcon, ShapesIcon, WrenchIcon } from "lucide-react"
 
 /**
@@ -21,12 +21,12 @@ const LOW_STAKES_TOOLS = new Set([
 /**
  * Check if a tool message is a low-stakes tool
  */
-export function isLowStakesTool(message: ClineMessage): boolean {
+export function isLowStakesTool(message: NexusAIMessage): boolean {
 	if (message.say !== "tool" && message.ask !== "tool") {
 		return false
 	}
 	try {
-		const tool = JSON.parse(message.text || "{}") as ClineSayTool
+		const tool = JSON.parse(message.text || "{}") as NexusAISayTool
 		return LOW_STAKES_TOOLS.has(tool.tool)
 	} catch {
 		return false
@@ -36,21 +36,21 @@ export function isLowStakesTool(message: ClineMessage): boolean {
 /**
  * Check if a message group is a tool group (array with _isToolGroup marker)
  */
-export function isToolGroup(item: ClineMessage | ClineMessage[]): item is ClineMessage[] & { _isToolGroup: true } {
+export function isToolGroup(item: NexusAIMessage | NexusAIMessage[]): item is NexusAIMessage[] & { _isToolGroup: true } {
 	return Array.isArray(item) && (item as any)._isToolGroup === true
 }
 
 /**
  * Combine API requests and command sequences in messages
  */
-export function processMessages(messages: ClineMessage[]): ClineMessage[] {
+export function processMessages(messages: NexusAIMessage[]): NexusAIMessage[] {
 	return combineApiRequests(combineCommandSequences(messages))
 }
 
 /**
  * Filter messages that should be visible in the chat
  */
-export function filterVisibleMessages(messages: ClineMessage[]): ClineMessage[] {
+export function filterVisibleMessages(messages: NexusAIMessage[]): NexusAIMessage[] {
 	return messages.filter((message, index, arr) => {
 		switch (message.ask) {
 			case "completion_result":
@@ -112,7 +112,7 @@ export function filterVisibleMessages(messages: ClineMessage[]): ClineMessage[] 
 /**
  * Check if a message is part of a browser session
  */
-export function isBrowserSessionMessage(message: ClineMessage): boolean {
+export function isBrowserSessionMessage(message: NexusAIMessage): boolean {
 	if (message.type === "ask") {
 		return ["browser_action_launch"].includes(message.ask!)
 	}
@@ -134,9 +134,9 @@ export function isBrowserSessionMessage(message: ClineMessage): boolean {
 /**
  * Group messages, combining browser session messages into arrays
  */
-export function groupMessages(visibleMessages: ClineMessage[]): (ClineMessage | ClineMessage[])[] {
-	const result: (ClineMessage | ClineMessage[])[] = []
-	let currentGroup: ClineMessage[] = []
+export function groupMessages(visibleMessages: NexusAIMessage[]): (NexusAIMessage | NexusAIMessage[])[] {
+	const result: (NexusAIMessage | NexusAIMessage[])[] = []
+	let currentGroup: NexusAIMessage[] = []
 	let isInBrowserSession = false
 
 	const endBrowserSession = () => {
@@ -175,7 +175,7 @@ export function groupMessages(visibleMessages: ClineMessage[]): (ClineMessage | 
 
 				// Check if this is a close action
 				if (message.say === "browser_action") {
-					const browserAction = JSON.parse(message.text || "{}") as ClineSayBrowserAction
+					const browserAction = JSON.parse(message.text || "{}") as NexusAISayBrowserAction
 					if (browserAction.action === "close") {
 						endBrowserSession()
 					}
@@ -201,7 +201,7 @@ export function groupMessages(visibleMessages: ClineMessage[]): (ClineMessage | 
 /**
  * Get the task message from the messages array
  */
-export function getTaskMessage(messages: ClineMessage[]): ClineMessage | undefined {
+export function getTaskMessage(messages: NexusAIMessage[]): NexusAIMessage | undefined {
 	return messages.at(0)
 }
 
@@ -218,7 +218,7 @@ export function shouldShowScrollButton(disableAutoScroll: boolean, isAtBottom: b
  */
 export function findReasoningForApiReq(
 	apiReqTs: number,
-	allMessages: ClineMessage[],
+	allMessages: NexusAIMessage[],
 ): { reasoning: string | undefined; responseStarted: boolean } {
 	const apiReqIndex = allMessages.findIndex((m) => m.ts === apiReqTs && m.say === "api_req_started")
 	if (apiReqIndex === -1) {
@@ -258,7 +258,7 @@ export function findReasoningForApiReq(
  */
 export function findApiReqInfoForCheckpoint(
 	checkpointTs: number,
-	allMessages: ClineMessage[],
+	allMessages: NexusAIMessage[],
 ): { cost: number | undefined; request: string | undefined } {
 	const checkpointIndex = allMessages.findIndex((m) => m.ts === checkpointTs && m.say === "checkpoint_created")
 	if (checkpointIndex === -1) {
@@ -288,7 +288,7 @@ export function findApiReqInfoForCheckpoint(
  * A checkpoint is absorbed if it's PRECEDED by low-stakes tools (meaning we're in a tool group).
  * A checkpoint is displayed if it's preceded by non-tool content (meaning no active tool group).
  */
-function isDisplayedCheckpoint(checkpointIndex: number, allMessages: ClineMessage[]): boolean {
+function isDisplayedCheckpoint(checkpointIndex: number, allMessages: NexusAIMessage[]): boolean {
 	// Look BACKWARDS to see if we're in a tool group
 	// A checkpoint is absorbed if the previous meaningful content was a low-stakes tool
 	for (let i = checkpointIndex - 1; i >= 0; i--) {
@@ -312,7 +312,7 @@ function isDisplayedCheckpoint(checkpointIndex: number, allMessages: ClineMessag
 		// If preceded by a low-stakes tool, this checkpoint is in the tool group (absorbed)
 		if (msg.say === "tool" || msg.ask === "tool") {
 			try {
-				const tool = JSON.parse(msg.text || "{}") as ClineSayTool
+				const tool = JSON.parse(msg.text || "{}") as NexusAISayTool
 				if (LOW_STAKES_TOOLS.has(tool.tool)) {
 					return false // absorbed into tool group
 				}
@@ -335,7 +335,7 @@ function isDisplayedCheckpoint(checkpointIndex: number, allMessages: ClineMessag
  * Sums all api_req_started costs in between.
  * Returns undefined if the segment is incomplete (no next displayed checkpoint yet).
  */
-export function findNextSegmentCost(checkpointTs: number, allMessages: ClineMessage[]): number | undefined {
+export function findNextSegmentCost(checkpointTs: number, allMessages: NexusAIMessage[]): number | undefined {
 	const checkpointIndex = allMessages.findIndex((m) => m.ts === checkpointTs && m.say === "checkpoint_created")
 	if (checkpointIndex === -1) {
 		return undefined
@@ -378,7 +378,7 @@ export function findNextSegmentCost(checkpointTs: number, allMessages: ClineMess
  * Check if a text message's associated API request is still in progress.
  * Returns true if there's no cost yet on the parent api_req_started.
  */
-export function isTextMessagePendingToolCall(textTs: number, allMessages: ClineMessage[]): boolean {
+export function isTextMessagePendingToolCall(textTs: number, allMessages: NexusAIMessage[]): boolean {
 	// Find the api_req_started that precedes this text message
 	const textIndex = allMessages.findIndex((m) => m.ts === textTs)
 	if (textIndex === -1) {
@@ -414,13 +414,13 @@ export function isTextMessagePendingToolCall(textTs: number, allMessages: ClineM
  * This mirrors the ChatRow currentActivities logic - we only hide tools that are
  * actively being shown in the loading state, not older tool groups.
  */
-export function isToolGroupInFlight(toolGroupMessages: ClineMessage[], allMessages: ClineMessage[]): boolean {
+export function isToolGroupInFlight(toolGroupMessages: NexusAIMessage[], allMessages: NexusAIMessage[]): boolean {
 	if (toolGroupMessages.length === 0) {
 		return false
 	}
 
 	// Step 1: Find the MOST RECENT api_req_started overall (search backwards)
-	let mostRecentApiReq: ClineMessage | null = null
+	let mostRecentApiReq: NexusAIMessage | null = null
 	let mostRecentApiReqIndex = -1
 	for (let i = allMessages.length - 1; i >= 0; i--) {
 		if (allMessages[i].say === "api_req_started") {
@@ -500,7 +500,10 @@ export function isToolGroupInFlight(toolGroupMessages: ClineMessage[], allMessag
  * - (Case A) Tools between a previous completed api_req and the current incomplete api_req
  * - (Case B) Tools after the most recent api_req overall (either because it's complete, or no loading state is active yet)
  */
-export function getToolsNotInCurrentActivities(toolGroupMessages: ClineMessage[], allMessages: ClineMessage[]): ClineMessage[] {
+export function getToolsNotInCurrentActivities(
+	toolGroupMessages: NexusAIMessage[],
+	allMessages: NexusAIMessage[],
+): NexusAIMessage[] {
 	// Build a Map of timestamp -> index for O(1) lookups instead of O(n) findIndex calls
 	const tsToIndex = new Map<number, number>()
 	for (let i = 0; i < allMessages.length; i++) {
@@ -509,7 +512,7 @@ export function getToolsNotInCurrentActivities(toolGroupMessages: ClineMessage[]
 
 	// Step 1: Find the MOST RECENT api_req_started overall (search backwards)
 	let mostRecentApiReqIndex = -1
-	let mostRecentApiReq: ClineMessage | null = null
+	let mostRecentApiReq: NexusAIMessage | null = null
 	for (let i = allMessages.length - 1; i >= 0; i--) {
 		if (allMessages[i].say === "api_req_started") {
 			mostRecentApiReqIndex = i
@@ -622,11 +625,11 @@ export function getToolsNotInCurrentActivities(toolGroupMessages: ClineMessage[]
  * - at least one low-stakes tool exists
  * - no high-stakes tool/command exists
  *
- * Note: this operates on a flat `ClineMessage[]` (e.g. `modifiedMessages`) rather than
+ * Note: this operates on a flat `NexusAIMessage[]` (e.g. `modifiedMessages`) rather than
  * grouped messages. It is used at render time to avoid transient UI frames where
  * `api_req_started` briefly appears before grouping absorbs it.
  */
-export function isApiReqAbsorbable(apiReqTs: number, allMessages: ClineMessage[]): boolean {
+export function isApiReqAbsorbable(apiReqTs: number, allMessages: NexusAIMessage[]): boolean {
 	const apiReqIndex = allMessages.findIndex((m) => m.ts === apiReqTs && m.say === "api_req_started")
 	if (apiReqIndex === -1) {
 		return false
@@ -678,7 +681,7 @@ export function isApiReqAbsorbable(apiReqTs: number, allMessages: ClineMessage[]
  * If so, it should be absorbed into the tool group rather than rendered separately.
  * The key is: no HIGH-stakes tools (write, edit, command, etc.) AND no reasoning
  */
-function isApiReqFollowedOnlyByLowStakesTools(index: number, messages: (ClineMessage | ClineMessage[])[]): boolean {
+function isApiReqFollowedOnlyByLowStakesTools(index: number, messages: (NexusAIMessage | NexusAIMessage[])[]): boolean {
 	let hasLowStakesTool = false
 	let hasReasoning = false
 	for (let i = index + 1; i < messages.length; i++) {
@@ -726,13 +729,15 @@ function isApiReqFollowedOnlyByLowStakesTools(index: number, messages: (ClineMes
  * Only creates tool groups when there's at least one actual tool - reasoning-only groups are dropped.
  * Should be called after groupMessages.
  */
-export function groupLowStakesTools(groupedMessages: (ClineMessage | ClineMessage[])[]): (ClineMessage | ClineMessage[])[] {
-	const result: (ClineMessage | ClineMessage[])[] = []
-	let toolGroup: ClineMessage[] = []
-	let pendingReasoning: ClineMessage[] = []
-	let pendingApiReq: ClineMessage[] = []
+export function groupLowStakesTools(
+	groupedMessages: (NexusAIMessage | NexusAIMessage[])[],
+): (NexusAIMessage | NexusAIMessage[])[] {
+	const result: (NexusAIMessage | NexusAIMessage[])[] = []
+	let toolGroup: NexusAIMessage[] = []
+	let pendingReasoning: NexusAIMessage[] = []
+	let pendingApiReq: NexusAIMessage[] = []
 	let hasTools = false
-	const pendingTools: ClineMessage[] = []
+	const pendingTools: NexusAIMessage[] = []
 
 	const flushPending = () => {
 		pendingApiReq.forEach((m) => result.push(m))
@@ -743,7 +748,7 @@ export function groupLowStakesTools(groupedMessages: (ClineMessage | ClineMessag
 
 	const commitToolGroup = () => {
 		if (toolGroup.length > 0 && hasTools) {
-			const group = toolGroup as ClineMessage[] & { _isToolGroup: boolean }
+			const group = toolGroup as NexusAIMessage[] & { _isToolGroup: boolean }
 			group._isToolGroup = true
 			result.push(group)
 			pendingReasoning = []

@@ -8,9 +8,9 @@ import { v7 as uuidv7 } from "uuid"
 import { openAiCodexOAuthManager } from "@/integrations/openai-codex/oauth"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
 import { featureFlagsService } from "@/services/feature-flags"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { fetch } from "@/shared/net"
-import { ApiFormat } from "@/shared/proto/cline/models"
+import { ApiFormat } from "@/shared/proto/nexusai/models"
 import { FeatureFlag } from "@/shared/services/feature-flags/feature-flags"
 import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
@@ -97,7 +97,7 @@ export class OpenAiCodexHandler implements ApiHandler {
 		return out
 	}
 
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
 		const model = this.getModel()
 
 		// Reset state for this request

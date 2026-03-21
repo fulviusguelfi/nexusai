@@ -2,9 +2,9 @@ import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { findLast, parsePartialArrayString } from "@shared/array"
 import { telemetryService } from "@/services/telemetry"
-import { ClinePlanModeResponse } from "@/shared/ExtensionMessage"
+import { NexusAIPlanModeResponse } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { TaskConfig } from "../types/TaskConfig"
@@ -12,7 +12,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { getTaskCompletionTelemetry } from "../utils"
 
 export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = ClineDefaultTool.PLAN_MODE
+	readonly name = NexusAIDefaultTool.PLAN_MODE
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name}]`
@@ -28,7 +28,7 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 		const sharedMessage = {
 			response: uiHelpers.removeClosingTag(block, "response", response),
 			options: parsePartialArrayString(uiHelpers.removeClosingTag(block, "options", optionsRaw)),
-		} satisfies ClinePlanModeResponse
+		} satisfies NexusAIPlanModeResponse
 
 		await uiHelpers.ask(this.name, JSON.stringify(sharedMessage), true).catch(() => {})
 	}
@@ -77,7 +77,7 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 				if (lastPlanMessage) {
 					lastPlanMessage.text = JSON.stringify({
 						...sharedMessage,
-					} satisfies ClinePlanModeResponse)
+					} satisfies NexusAIPlanModeResponse)
 					lastPlanMessage.partial = false
 					await config.messageState.saveClineMessagesAndUpdateHistory()
 				}
@@ -115,7 +115,7 @@ export class PlanModeRespondHandler implements IToolHandler, IPartialBlockHandle
 				lastPlanMessage.text = JSON.stringify({
 					...sharedMessage,
 					selected: text,
-				} satisfies ClinePlanModeResponse)
+				} satisfies NexusAIPlanModeResponse)
 				await config.messageState.saveClineMessagesAndUpdateHistory()
 			}
 		} else {

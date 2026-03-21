@@ -1,10 +1,10 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 
-const id = ClineDefaultTool.ATTEMPT
+const id = NexusAIDefaultTool.ATTEMPT
 
-const generic: ClineToolSpec = {
+const generic: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
 	id,
 	name: "attempt_completion",
@@ -21,7 +21,7 @@ IMPORTANT NOTE: This tool CANNOT be used until you've confirmed from the user th
 			name: "command",
 			required: false,
 			instruction:
-				"A CLI command to execute to show a live demo of the result to the user. For example, use \`open index.html\` to display a created html website, or \`open localhost:3000\` to display a locally running development server. But DO NOT use commands like \`echo\` or \`cat\` that merely print text. This command should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions",
+				"A CLI command to execute to show a live demo of the result to the user. For example, use `open index.html` to display a created html website, or `open localhost:3000` to display a locally running development server. But DO NOT use commands like `echo` or `cat` that merely print text. This command should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions",
 			usage: "Your command here (optional)",
 		},
 		// Different than the vanilla ASK_PROGRESS_PARAMETER
@@ -31,14 +31,14 @@ IMPORTANT NOTE: This tool CANNOT be used until you've confirmed from the user th
 			instruction:
 				"A checklist showing task progress after this tool use is completed. (See 'Updating Task Progress' section for more details)",
 			usage: "Checklist here (required if you used task_progress in previous tool uses)",
-			dependencies: [ClineDefaultTool.TODO],
+			dependencies: [NexusAIDefaultTool.TODO],
 			description:
 				"If you were using task_progress to update the task progress, you must include the completed list in the result as well.",
 		},
 	],
 }
 
-const GPT_5: ClineToolSpec = {
+const GPT_5: NexusAIToolSpec = {
 	variant: ModelFamily.GPT_5,
 	id,
 	name: "attempt_completion",
@@ -55,7 +55,7 @@ IMPORTANT NOTE: This tool CANNOT be used until you've confirmed from the user th
 			name: "command",
 			required: false,
 			instruction:
-				"A CLI command to execute to show a live demo of the result to the user. For example, use \`open index.html\` to display a created html website, or \`open localhost:3000\` to display a locally running development server. But DO NOT use commands like \`echo\` or \`cat\` that merely print text. This command should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions",
+				"A CLI command to execute to show a live demo of the result to the user. For example, use `open index.html` to display a created html website, or `open localhost:3000` to display a locally running development server. But DO NOT use commands like `echo` or `cat` that merely print text. This command should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions",
 			usage: "Your command here (optional)",
 		},
 		// Different than the vanilla ASK_PROGRESS_PARAMETER
@@ -65,14 +65,14 @@ IMPORTANT NOTE: This tool CANNOT be used until you've confirmed from the user th
 			instruction:
 				"A checklist showing task progress after this tool use is completed. (See 'Updating Task Progress' section for more details)",
 			usage: "Checklist here (required if you used task_progress in previous tool uses)",
-			dependencies: [ClineDefaultTool.TODO],
+			dependencies: [NexusAIDefaultTool.TODO],
 			description:
 				"If you were using task_progress to update the task progress, you must include the completed list in the result as well.",
 		},
 	],
 }
 
-const NATIVE_NEXT_GEN: ClineToolSpec = {
+const NATIVE_NEXT_GEN: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_NEXT_GEN,
 	id,
 	name: "attempt_completion",
@@ -88,19 +88,19 @@ const NATIVE_NEXT_GEN: ClineToolSpec = {
 			name: "command",
 			required: false,
 			instruction:
-				"An actionable terminal command that is non-verbose that allows user to review the result of your work. For example, use \`start localhost:3000\` to start a locally running development server. Commands like \`echo\` or \`cat\` that merely print text or open a file are not allowed. Ensure the command is properly formatted for user's OS and does not contain any harmful instructions",
+				"An actionable terminal command that is non-verbose that allows user to review the result of your work. For example, use `start localhost:3000` to start a locally running development server. Commands like `echo` or `cat` that merely print text or open a file are not allowed. Ensure the command is properly formatted for user's OS and does not contain any harmful instructions",
 		},
 		{
 			name: "task_progress",
 			required: false,
-			dependencies: [ClineDefaultTool.TODO],
+			dependencies: [NexusAIDefaultTool.TODO],
 			instruction:
 				"A checklist showing task progress with the latest status of each subtasks included previously, if any. If you are calling attempt completion, and all items in this list have been completed, they must be marked as completed in this response.",
 		},
 	],
 }
 
-const NATIVE_GPT_5: ClineToolSpec = {
+const NATIVE_GPT_5: NexusAIToolSpec = {
 	...NATIVE_NEXT_GEN,
 	variant: ModelFamily.NATIVE_GPT_5,
 }

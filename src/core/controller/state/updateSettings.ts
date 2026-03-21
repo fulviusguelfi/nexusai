@@ -1,10 +1,10 @@
 import { buildApiHandler } from "@core/api"
-import { Empty } from "@shared/proto/cline/common"
-import { PlanActMode, McpDisplayMode as ProtoMcpDisplayMode, UpdateSettingsRequest } from "@shared/proto/cline/state"
+import { Empty } from "@shared/proto/nexusai/common"
+import { PlanActMode, McpDisplayMode as ProtoMcpDisplayMode, UpdateSettingsRequest } from "@shared/proto/nexusai/state"
 import { convertProtoToApiProvider } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { OpenaiReasoningEffort } from "@shared/storage/types"
 import { TelemetrySetting } from "@shared/TelemetrySetting"
-import { ClineEnv } from "@/config"
+import { NexusAIEnv } from "@/config"
 import { fetchRemoteConfig } from "@/core/storage/remote-config/fetch"
 import { clearRemoteConfig } from "@/core/storage/remote-config/utils"
 import { HostProvider } from "@/hosts/host-provider"
@@ -25,7 +25,7 @@ import { accountLogoutClicked } from "../account/accountLogoutClicked"
 export async function updateSettings(controller: Controller, request: UpdateSettingsRequest): Promise<Empty> {
 	try {
 		if (request.clineEnv !== undefined) {
-			ClineEnv.setEnvironment(request.clineEnv)
+			NexusAIEnv.setEnvironment(request.clineEnv)
 			await accountLogoutClicked(controller, Empty.create())
 		}
 

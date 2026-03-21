@@ -13,7 +13,7 @@ export function insertMention(
 	text: string,
 	position: number,
 	value: string,
-	partialQueryLength: number = 0,
+	partialQueryLength = 0,
 ): { newValue: string; mentionIndex: number } {
 	const beforeCursor = text.slice(0, position)
 	const afterCursor = text.slice(position)

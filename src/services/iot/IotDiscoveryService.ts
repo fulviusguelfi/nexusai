@@ -1,4 +1,4 @@
-import * as childProcess from "node:child_process"
+﻿import * as childProcess from "node:child_process"
 import * as dgram from "node:dgram"
 import { DeviceIdentificationService } from "@services/iot/DeviceIdentificationService"
 import { DeviceRegistry } from "@services/iot/DeviceRegistry"
@@ -19,7 +19,7 @@ const SSDP_DISCOVER_MSG = Buffer.from(
  *   1. mDNS/Bonjour
  *   2. SSDP/UPnP (UDP multicast)
  *   3. ARP table (passive, no packets sent)
- * Safe to call fire-and-forget — errors are swallowed internally.
+ * Safe to call fire-and-forget â€” errors are swallowed internally.
  */
 export class IotDiscoveryService {
 	static async scan(timeoutMs = DEFAULT_SCAN_TIMEOUT_MS): Promise<DeviceProfile[]> {
@@ -81,6 +81,8 @@ export class IotDiscoveryService {
 		const found: DeviceProfile[] = []
 
 		// biome-ignore lint/suspicious/noExplicitAny: bonjour dynamic import
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-expect-error
 		const bonjourMod: any = await import("bonjour-service")
 		const Bonjour = bonjourMod.default ?? bonjourMod.Bonjour ?? bonjourMod
 		const bonjour = new Bonjour()

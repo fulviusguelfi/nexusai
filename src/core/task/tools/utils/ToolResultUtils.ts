@@ -2,7 +2,7 @@ import { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { ToolResponse } from "@core/task"
 import { processFilesIntoText } from "@/integrations/misc/extract-text"
-import { ClineAsk } from "@/shared/ExtensionMessage"
+import { NexusAIAsk } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import type { ToolExecutorCoordinator } from "../ToolExecutorCoordinator"
 import { TaskConfig } from "../types/TaskConfig"
@@ -122,7 +122,7 @@ export class ToolResultUtils {
 	/**
 	 * Handles tool approval flow and processes any user feedback
 	 */
-	static async askApprovalAndPushFeedback(type: ClineAsk, completeMessage: string, config: TaskConfig) {
+	static async askApprovalAndPushFeedback(type: NexusAIAsk, completeMessage: string, config: TaskConfig) {
 		if (config.isSubagentExecution) {
 			return true
 		}

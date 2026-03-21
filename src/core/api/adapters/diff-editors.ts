@@ -1,11 +1,11 @@
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 
 const APPLY_PATCH_PATCH_REGEX = /\*\*\* Begin Patch\s+([\s\S]*?)\s+\*\*\* End Patch/m
 
 /**
  * Convert apply_patch tool calls to write_to_file and replace_in_file format
  */
-export function convertApplyPatchToolCalls(messages: Array<ClineStorageMessage>): Array<ClineStorageMessage> {
+export function convertApplyPatchToolCalls(messages: Array<NexusAIStorageMessage>): Array<NexusAIStorageMessage> {
 	// Map to track tool_use_id to converted tool info and original input
 	const toolUseIdMap = new Map<string, { name: string; input: any; originalInput: any }>()
 
@@ -298,7 +298,7 @@ function reconstructApplyPatchResult(
 /**
  * Convert write_to_file and replace_in_file tool calls to apply_patch format
  */
-export function convertWriteToFileToolCalls(messages: Array<ClineStorageMessage>): Array<ClineStorageMessage> {
+export function convertWriteToFileToolCalls(messages: Array<NexusAIStorageMessage>): Array<NexusAIStorageMessage> {
 	// Map to track tool_use_id to converted tool info and original input
 	const toolUseIdMap = new Map<string, { originalName: string; originalInput: any; patchInput?: string }>()
 
@@ -585,9 +585,8 @@ function reconstructWriteToFileResult(block: any, originalToolName: string, orig
 		// If no final_file_content found, create a simple success message
 		if (originalToolName === "write_to_file") {
 			return `[apply_patch for '${filePath}'] Result:\nThe content was successfully saved to ${filePath}.\n\nThe file has been created/updated with the new content.`
-		} else {
-			return `[apply_patch for '${filePath}'] Result:\nThe content was successfully updated in ${filePath}.\n\nThe file has been modified.`
 		}
+		return `[apply_patch for '${filePath}'] Result:\nThe content was successfully updated in ${filePath}.\n\nThe file has been modified.`
 	}
 
 	const finalContent = finalContentMatch[2]

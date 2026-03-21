@@ -1,4 +1,4 @@
-import { StringArray, StringRequest } from "@shared/proto/cline/common"
+import { StringArray, StringRequest } from "@shared/proto/nexusai/common"
 import axios from "axios"
 import { getAxiosSettings } from "@/shared/net"
 import { Controller } from ".."

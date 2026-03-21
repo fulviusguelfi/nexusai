@@ -1,4 +1,4 @@
-import { RefreshedSkills, SkillInfo } from "@shared/proto/cline/file"
+import { RefreshedSkills, SkillInfo } from "@shared/proto/nexusai/file"
 import fs from "fs/promises"
 import path from "path"
 import { getSkillsDirectoriesForScan } from "@/core/storage/disk"

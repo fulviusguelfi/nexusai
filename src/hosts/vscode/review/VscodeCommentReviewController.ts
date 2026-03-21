@@ -105,7 +105,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			body: new vscode.MarkdownString(comment.comment),
 			mode: vscode.CommentMode.Preview,
 			author: {
-				name: "Cline",
+				name: "NexusAI",
 				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
@@ -152,7 +152,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			body: new vscode.MarkdownString("_Thinking..._"),
 			mode: vscode.CommentMode.Preview,
 			author: {
-				name: "Cline",
+				name: "NexusAI",
 				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
@@ -218,7 +218,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			body: new vscode.MarkdownString(this.streamingContent || "_Thinking..._"),
 			mode: vscode.CommentMode.Preview,
 			author: {
-				name: "Cline",
+				name: "NexusAI",
 				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
@@ -240,7 +240,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 			body: new vscode.MarkdownString(finalContent),
 			mode: vscode.CommentMode.Preview,
 			author: {
-				name: "Cline",
+				name: "NexusAI",
 				iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 			},
 		}
@@ -331,7 +331,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 					body: new vscode.MarkdownString(content || "_Thinking..._"),
 					mode: vscode.CommentMode.Preview,
 					author: {
-						name: "Cline",
+						name: "NexusAI",
 						iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 					},
 				}
@@ -343,7 +343,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 				body: new vscode.MarkdownString("_Thinking..._"),
 				mode: vscode.CommentMode.Preview,
 				author: {
-					name: "Cline",
+					name: "NexusAI",
 					iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 				},
 			}
@@ -369,7 +369,7 @@ export class VscodeCommentReviewController extends CommentReviewController imple
 						),
 						mode: vscode.CommentMode.Preview,
 						author: {
-							name: "Cline",
+							name: "NexusAI",
 							iconPath: vscode.Uri.parse(NEXUSAI_AVATAR_URL),
 						},
 					}

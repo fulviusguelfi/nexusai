@@ -1,6 +1,6 @@
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
-import { ResetStateRequest } from "@shared/proto/cline/state"
-import { UserOrganization } from "@shared/proto/index.cline"
+import { UserOrganization } from "@shared/proto/index.nexusai"
+import { ResetStateRequest } from "@shared/proto/nexusai/state"
 import {
 	CheckCheck,
 	FlaskConical,
@@ -15,8 +15,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useEvent } from "react-use"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { useClineAuth } from "@/context/NexusAIAuthContext"
 import { cn } from "@/lib/utils"
 import { StateServiceClient } from "@/services/grpc-client"
 import { isAdminOrOwner } from "../account/helpers"

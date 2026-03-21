@@ -1,7 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { VoiceSessionManager } from "@services/voice/VoiceSessionManager"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -11,7 +11,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 const LISTEN_TIMEOUT_MS = 30_000
 
 export class ListenForSpeechToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.LISTEN_FOR_SPEECH
+	readonly name = NexusAIDefaultTool.LISTEN_FOR_SPEECH
 
 	constructor(_validator: ToolValidator) {}
 

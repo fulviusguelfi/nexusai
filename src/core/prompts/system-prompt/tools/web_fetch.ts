@@ -1,11 +1,11 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
-const GENERIC: ClineToolSpec = {
+const GENERIC: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
-	id: ClineDefaultTool.WEB_FETCH,
+	id: NexusAIDefaultTool.WEB_FETCH,
 	name: "web_fetch",
 	description: `Fetches content from a specified URL and analyzes it using your prompt
 - Takes a URL and analysis prompt as input
@@ -34,9 +34,9 @@ const GENERIC: ClineToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: ClineToolSpec = {
+const NATIVE_NEXT_GEN: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_NEXT_GEN,
-	id: ClineDefaultTool.WEB_FETCH,
+	id: NexusAIDefaultTool.WEB_FETCH,
 	name: "web_fetch",
 	description:
 		"Fetches and analyzes content from a specified URL. IMPORTANT: If an MCP-provided web fetch tool is available, prefer using that tool instead of this one, as it may have fewer restrictions.",
@@ -56,7 +56,7 @@ const NATIVE_NEXT_GEN: ClineToolSpec = {
 	],
 }
 
-const NATIVE_GPT_5: ClineToolSpec = {
+const NATIVE_GPT_5: NexusAIToolSpec = {
 	...NATIVE_NEXT_GEN,
 	variant: ModelFamily.NATIVE_GPT_5,
 }

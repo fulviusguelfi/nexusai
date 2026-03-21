@@ -9,7 +9,7 @@ import { telemetryService } from "@services/telemetry"
 import { findLastIndex } from "@shared/array"
 import { COMPLETION_RESULT_CHANGES_FLAG } from "@shared/ExtensionMessage"
 import { Logger } from "@shared/services/Logger"
-import { ClineDefaultTool } from "@shared/tools"
+import { NexusAIDefaultTool } from "@shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import { buildUserFeedbackContent } from "../../utils/buildUserFeedbackContent"
@@ -36,7 +36,7 @@ function getInitialTaskPreview(config: TaskConfig): string | undefined {
 }
 
 export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = ClineDefaultTool.ATTEMPT
+	readonly name = NexusAIDefaultTool.ATTEMPT
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name}]`
@@ -167,7 +167,7 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 
 			// Check if command should be auto-approved
 			// attempt_completion commands don't have requires_approval param, so we treat them as safe commands
-			const autoApproveResult = config.autoApprover?.shouldAutoApproveTool(ClineDefaultTool.BASH)
+			const autoApproveResult = config.autoApprover?.shouldAutoApproveTool(NexusAIDefaultTool.BASH)
 			const autoApproveSafe = Array.isArray(autoApproveResult) ? autoApproveResult[0] : autoApproveResult
 
 			if (autoApproveSafe) {

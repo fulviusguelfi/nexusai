@@ -2,7 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import * as diff from "diff"
 import * as path from "path"
 import { Mode } from "@/shared/storage/types"
-import { ClineIgnoreController, LOCK_TEXT_SYMBOL } from "../ignore/ClineIgnoreController"
+import { LOCK_TEXT_SYMBOL, NexusAIIgnoreController } from "../ignore/NexusAIIgnoreController"
 
 const CONTEXT_WINDOW_WARNING_THRESHOLD_PERCENT = 50
 
@@ -28,7 +28,7 @@ export const formatResponse = {
 		`Access to ${path} is blocked by the .clineignore file settings. You must try to continue in the task without using this file, or ask the user to update the .clineignore file.`,
 
 	permissionDeniedError: (reason: string) =>
-		`Command execution blocked by CLINE_COMMAND_PERMISSIONS: ${reason}. You must try a different approach or ask the user to update the permission settings.`,
+		`Command execution blocked by NEXUSAI_COMMAND_PERMISSIONS: ${reason}. You must try a different approach or ask the user to update the permission settings.`,
 
 	noToolsUsed: (usingNativeToolCalls: boolean) =>
 		`[ERROR] You did not use a tool in your previous response! Please retry with a tool use.
@@ -134,7 +134,7 @@ Otherwise, if you have not completed the task and do not need additional informa
 		absolutePath: string,
 		files: string[],
 		didHitLimit: boolean,
-		clineIgnoreController?: ClineIgnoreController,
+		clineIgnoreController?: NexusAIIgnoreController,
 	): string => {
 		const sorted = files
 			.map((file) => {

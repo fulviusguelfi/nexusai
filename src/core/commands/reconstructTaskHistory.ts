@@ -1,6 +1,6 @@
 import { getSavedClineMessages, getTaskMetadata, readTaskHistoryFromState, writeTaskHistoryToState } from "@core/storage/disk"
 import { HostProvider } from "@hosts/host-provider"
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import { ShowMessageType } from "@shared/proto/host/window"
 import { fileExistsAtPath } from "@utils/fs"
@@ -212,7 +212,7 @@ interface TaskInfo {
 	conversationHistoryDeletedRange?: [number, number]
 }
 
-function extractTaskInformation(clineMessages: ClineMessage[], metadata: any): TaskInfo {
+function extractTaskInformation(clineMessages: NexusAIMessage[], metadata: any): TaskInfo {
 	// Find the first user message (task description)
 	const firstUserMessage = clineMessages.find((msg) => msg.type === "say" && msg.say === "text" && msg.text)
 

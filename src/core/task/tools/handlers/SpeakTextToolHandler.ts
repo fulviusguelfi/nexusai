@@ -1,7 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { VoiceSessionManager } from "@services/voice/VoiceSessionManager"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -9,7 +9,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class SpeakTextToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.SPEAK_TEXT
+	readonly name = NexusAIDefaultTool.SPEAK_TEXT
 
 	constructor(_validator: ToolValidator) {}
 

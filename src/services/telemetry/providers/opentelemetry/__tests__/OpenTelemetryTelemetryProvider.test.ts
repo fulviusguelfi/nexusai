@@ -1,13 +1,13 @@
 import { InMemoryLogRecordExporter, LoggerProvider, SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs"
 import { expect } from "chai"
 import * as sinon from "sinon"
-import type { ClineAccountUserInfo } from "@/services/auth/AuthService"
+import type { NexusAIAccountUserInfo } from "@/services/auth/AuthService"
 import * as distinctIdModule from "@/services/logging/distinctId"
 import { OpenTelemetryTelemetryProvider } from "../OpenTelemetryTelemetryProvider"
 
 function makeUserInfo(
-	overrides: Partial<ClineAccountUserInfo> & { orgOverrides?: Record<string, unknown> } = {},
-): ClineAccountUserInfo {
+	overrides: Partial<NexusAIAccountUserInfo> & { orgOverrides?: Record<string, unknown> } = {},
+): NexusAIAccountUserInfo {
 	const { orgOverrides, ...rest } = overrides
 	return {
 		id: "user-1",
@@ -150,7 +150,7 @@ describe("OpenTelemetryTelemetryProvider.identifyUser", () => {
 	it("should handle user with no active organization", () => {
 		getDistinctIdStub.returns("user-1")
 
-		const userInfo: ClineAccountUserInfo = {
+		const userInfo: NexusAIAccountUserInfo = {
 			id: "user-1",
 			displayName: "Solo User",
 			email: "solo@example.com",
@@ -184,7 +184,7 @@ describe("OpenTelemetryTelemetryProvider.identifyUser", () => {
 		logExporter.reset()
 
 		// Second: identify same user but no active org
-		const userNoOrg: ClineAccountUserInfo = {
+		const userNoOrg: NexusAIAccountUserInfo = {
 			id: "user-1",
 			displayName: "Test User",
 			email: "test@example.com",

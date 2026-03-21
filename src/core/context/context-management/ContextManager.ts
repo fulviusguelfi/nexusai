@@ -2,7 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { ApiHandler } from "@core/api"
 import { formatResponse } from "@core/prompts/responses"
 import { GlobalFileNames } from "@core/storage/disk"
-import { ClineApiReqInfo, ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIApiReqInfo, NexusAIMessage } from "@shared/ExtensionMessage"
 import { fileExistsAtPath } from "@utils/fs"
 import cloneDeep from "clone-deep"
 import fs from "fs/promises"
@@ -148,7 +148,7 @@ export class ContextManager {
 	 * Determine whether we should compact context window, based on token counts
 	 */
 	shouldCompactContextWindow(
-		clineMessages: ClineMessage[],
+		clineMessages: NexusAIMessage[],
 		api: ApiHandler,
 		previousApiReqIndex: number,
 		thresholdPercentage?: number,
@@ -157,7 +157,7 @@ export class ContextManager {
 			const previousRequestText = clineMessages[previousApiReqIndex]?.text
 			if (previousRequestText) {
 				try {
-					const { tokensIn, tokensOut, cacheWrites, cacheReads }: ClineApiReqInfo = JSON.parse(previousRequestText)
+					const { tokensIn, tokensOut, cacheWrites, cacheReads }: NexusAIApiReqInfo = JSON.parse(previousRequestText)
 					const totalTokens = (tokensIn || 0) + (tokensOut || 0) + (cacheWrites || 0) + (cacheReads || 0)
 
 					const { contextWindow, maxAllowedSize } = getContextWindowInfo(api)
@@ -179,7 +179,7 @@ export class ContextManager {
 	 * Returns the token counts and context window info that drove summarization
 	 */
 	getContextTelemetryData(
-		clineMessages: ClineMessage[],
+		clineMessages: NexusAIMessage[],
 		api: ApiHandler,
 		triggerIndex?: number,
 	): {
@@ -204,7 +204,7 @@ export class ContextManager {
 			const targetRequestText = clineMessages[targetIndex]?.text
 			if (targetRequestText) {
 				try {
-					const { tokensIn, tokensOut, cacheWrites, cacheReads }: ClineApiReqInfo = JSON.parse(targetRequestText)
+					const { tokensIn, tokensOut, cacheWrites, cacheReads }: NexusAIApiReqInfo = JSON.parse(targetRequestText)
 					const tokensUsed = (tokensIn || 0) + (tokensOut || 0) + (cacheWrites || 0) + (cacheReads || 0)
 
 					const { contextWindow } = getContextWindowInfo(api)
@@ -226,7 +226,7 @@ export class ContextManager {
 	 */
 	async getNewContextMessagesAndMetadata(
 		apiConversationHistory: Anthropic.Messages.MessageParam[],
-		clineMessages: ClineMessage[],
+		clineMessages: NexusAIMessage[],
 		api: ApiHandler,
 		conversationHistoryDeletedRange: [number, number] | undefined,
 		previousApiReqIndex: number,
@@ -241,7 +241,7 @@ export class ContextManager {
 				const previousRequestText = clineMessages[previousApiReqIndex]?.text
 				if (previousRequestText) {
 					const timestamp = clineMessages[previousApiReqIndex].ts
-					const { tokensIn, tokensOut, cacheWrites, cacheReads }: ClineApiReqInfo = JSON.parse(previousRequestText)
+					const { tokensIn, tokensOut, cacheWrites, cacheReads }: NexusAIApiReqInfo = JSON.parse(previousRequestText)
 					const totalTokens = (tokensIn || 0) + (tokensOut || 0) + (cacheWrites || 0) + (cacheReads || 0)
 					const { maxAllowedSize } = getContextWindowInfo(api)
 
@@ -661,7 +661,7 @@ export class ContextManager {
 	async attemptFileReadOptimization(
 		apiConversationHistory: Anthropic.Messages.MessageParam[],
 		conversationHistoryDeletedRange: [number, number] | undefined,
-		clineMessages: ClineMessage[],
+		clineMessages: NexusAIMessage[],
 		previousApiReqIndex: number,
 		taskDirectory: string,
 	): Promise<boolean> {

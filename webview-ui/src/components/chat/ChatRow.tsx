@@ -1,15 +1,15 @@
 import { COMMAND_OUTPUT_STRING } from "@shared/combineCommandSequences"
 import {
-	ClineApiReqInfo,
-	ClineAskQuestion,
-	ClineAskUseMcpServer,
-	ClineMessage,
-	ClinePlanModeResponse,
-	ClineSayGenerateExplanation,
-	ClineSayTool,
 	COMPLETION_RESULT_CHANGES_FLAG,
+	NexusAIApiReqInfo,
+	NexusAIAskQuestion,
+	NexusAIAskUseMcpServer,
+	NexusAIMessage,
+	NexusAIPlanModeResponse,
+	NexusAISayGenerateExplanation,
+	NexusAISayTool,
 } from "@shared/ExtensionMessage"
-import { BooleanRequest, StringRequest } from "@shared/proto/cline/common"
+import { BooleanRequest, StringRequest } from "@shared/proto/nexusai/common"
 import { Mode } from "@shared/storage/types"
 import deepEqual from "fast-deep-equal"
 import {
@@ -68,10 +68,10 @@ import UserMessage from "./UserMessage"
 const HEADER_CLASSNAMES = "flex items-center gap-2.5 mb-3"
 
 interface ChatRowProps {
-	message: ClineMessage
+	message: NexusAIMessage
 	isExpanded: boolean
 	onToggleExpand: (ts: number) => void
-	lastModifiedMessage?: ClineMessage
+	lastModifiedMessage?: NexusAIMessage
 	isLast: boolean
 	onHeightChange: (isTaller: boolean) => void
 	inputValue?: string
@@ -200,7 +200,7 @@ export const ChatRowContent = memo(
 
 		const [cost, apiReqCancelReason, apiReqStreamingFailedMessage] = useMemo(() => {
 			if (message.text != null && message.say === "api_req_started") {
-				const info: ClineApiReqInfo = JSON.parse(message.text)
+				const info: NexusAIApiReqInfo = JSON.parse(message.text)
 				return [info.cost, info.cancelReason, info.streamingFailedMessage, info.retryStatus]
 			}
 			return [undefined, undefined, undefined, undefined, undefined]
@@ -326,7 +326,7 @@ export const ChatRowContent = memo(
 						<span className="font-bold text-foreground">Nexus AI wants to execute this command:</span>,
 					]
 				case "use_mcp_server":
-					const mcpServerUse = JSON.parse(message.text || "{}") as ClineAskUseMcpServer
+					const mcpServerUse = JSON.parse(message.text || "{}") as NexusAIAskUseMcpServer
 					return [
 						isMcpServerResponding ? (
 							<ProgressIndicator />
@@ -372,7 +372,7 @@ export const ChatRowContent = memo(
 		const tool = useMemo(() => {
 			if (message.ask === "tool" || message.say === "tool") {
 				try {
-					return JSON.parse(message.text || "{}") as ClineSayTool
+					return JSON.parse(message.text || "{}") as NexusAISayTool
 				} catch {
 					return null
 				}
@@ -874,7 +874,7 @@ export const ChatRowContent = memo(
 		}
 
 		if (message.ask === "use_mcp_server" || message.say === "use_mcp_server") {
-			const useMcpServer = JSON.parse(message.text || "{}") as ClineAskUseMcpServer
+			const useMcpServer = JSON.parse(message.text || "{}") as NexusAIAskUseMcpServer
 			const server = mcpServers.find((server) => server.name === useMcpServer.serverName)
 			return (
 				<div>
@@ -1016,7 +1016,7 @@ export const ChatRowContent = memo(
 							/>
 						)
 					case "user_feedback_diff":
-						const tool = JSON.parse(message.text || "{}") as ClineSayTool
+						const tool = JSON.parse(message.text || "{}") as NexusAISayTool
 						return (
 							<div className="w-full -mt-2.5">
 								<CodeAccordian
@@ -1043,7 +1043,7 @@ export const ChatRowContent = memo(
 							</div>
 						)
 					case "generate_explanation": {
-						let explanationInfo: ClineSayGenerateExplanation = {
+						let explanationInfo: NexusAISayGenerateExplanation = {
 							title: "code changes",
 							fromRef: "",
 							toRef: "",
@@ -1314,7 +1314,7 @@ export const ChatRowContent = memo(
 						let options: string[] | undefined
 						let selected: string | undefined
 						try {
-							const parsedMessage = JSON.parse(message.text || "{}") as ClineAskQuestion
+							const parsedMessage = JSON.parse(message.text || "{}") as NexusAIAskQuestion
 							question = parsedMessage.question
 							options = parsedMessage.options
 							selected = parsedMessage.selected
@@ -1398,7 +1398,7 @@ export const ChatRowContent = memo(
 						let options: string[] | undefined
 						let selected: string | undefined
 						try {
-							const parsedMessage = JSON.parse(message.text || "{}") as ClinePlanModeResponse
+							const parsedMessage = JSON.parse(message.text || "{}") as NexusAIPlanModeResponse
 							response = parsedMessage.response
 							options = parsedMessage.options
 							selected = parsedMessage.selected

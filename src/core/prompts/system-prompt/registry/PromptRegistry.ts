@@ -1,7 +1,7 @@
 import { ModelFamily } from "@/shared/prompts"
 import { Logger } from "@/shared/services/Logger"
-import type { ClineTool } from "@/shared/tools"
-import { ClineToolSet } from ".."
+import type { NexusAITool } from "@/shared/tools"
+import { NexusAIToolSet } from ".."
 import { getSystemPromptComponents } from "../components"
 import { registerClineToolSets } from "../tools"
 import type { ComponentFunction, ComponentRegistry, PromptVariant, SystemPromptContext } from "../types"
@@ -13,7 +13,7 @@ export class PromptRegistry {
 	private static instance: PromptRegistry
 	private variants: Map<string, PromptVariant> = new Map()
 	private components: ComponentRegistry = {}
-	public nativeTools: ClineTool[] | undefined = undefined
+	public nativeTools: NexusAITool[] | undefined = undefined
 
 	private constructor() {
 		registerClineToolSets()
@@ -87,7 +87,7 @@ export class PromptRegistry {
 		const variant = this.getVariant(context)
 
 		// Hacky way to get native tools for the current variant - it's bad and ugly
-		this.nativeTools = ClineToolSet.getNativeTools(variant, context)
+		this.nativeTools = NexusAIToolSet.getNativeTools(variant, context)
 
 		const builder = new PromptBuilder(variant, context, this.components)
 		return await builder.build()

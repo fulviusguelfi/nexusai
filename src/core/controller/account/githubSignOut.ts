@@ -1,4 +1,4 @@
-import { Empty, EmptyRequest } from "@shared/proto/cline/common"
+import { Empty, EmptyRequest } from "@shared/proto/nexusai/common"
 import { GitHubAuthService } from "@/services/auth/GitHubAuthService"
 import { Controller } from ".."
 

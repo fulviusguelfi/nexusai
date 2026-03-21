@@ -1,7 +1,7 @@
 import { ApiHandler } from "@core/api"
 import { execSync } from "child_process"
 import { showSystemNotification } from "@/integrations/notifications"
-import { ClineApiReqCancelReason, ClineApiReqInfo } from "@/shared/ExtensionMessage"
+import { NexusAIApiReqCancelReason, NexusAIApiReqInfo } from "@/shared/ExtensionMessage"
 import { calculateApiCostAnthropic } from "@/utils/cost"
 import { MessageStateHandler } from "./message-state"
 
@@ -23,7 +23,7 @@ type UpdateApiReqMsgParams = {
 	cacheReadTokens: number
 	totalCost?: number
 	api: ApiHandler
-	cancelReason?: ClineApiReqCancelReason
+	cancelReason?: NexusAIApiReqCancelReason
 	streamingFailedMessage?: string
 }
 
@@ -32,7 +32,7 @@ type UpdateApiReqMsgParams = {
 // (it's worth removing a few months from now)
 export const updateApiReqMsg = async (params: UpdateApiReqMsgParams) => {
 	const clineMessages = params.messageStateHandler.getClineMessages()
-	const currentApiReqInfo: ClineApiReqInfo = JSON.parse(clineMessages[params.lastApiReqIndex].text || "{}")
+	const currentApiReqInfo: NexusAIApiReqInfo = JSON.parse(clineMessages[params.lastApiReqIndex].text || "{}")
 	delete currentApiReqInfo.retryStatus // Clear retry status when request is finalized
 
 	await params.messageStateHandler.updateClineMessage(params.lastApiReqIndex, {
@@ -53,7 +53,7 @@ export const updateApiReqMsg = async (params: UpdateApiReqMsgParams) => {
 				),
 			cancelReason: params.cancelReason,
 			streamingFailedMessage: params.streamingFailedMessage,
-		} satisfies ClineApiReqInfo),
+		} satisfies NexusAIApiReqInfo),
 	})
 }
 

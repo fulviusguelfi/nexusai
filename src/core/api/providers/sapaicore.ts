@@ -11,7 +11,7 @@ import axios from "axios"
 import JSON5 from "json5"
 import OpenAI from "openai"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
@@ -120,7 +120,7 @@ namespace Bedrock {
 	 * Formats messages for models using the Converse API specification
 	 * Used by both Anthropic and Nova models to avoid code duplication
 	 */
-	export function formatMessagesForConverseAPI(messages: ClineStorageMessage[]): BedrockMessage[] {
+	export function formatMessagesForConverseAPI(messages: NexusAIStorageMessage[]): BedrockMessage[] {
 		return messages.map((message) => {
 			// Determine role (user or assistant)
 			const role = message.role === "user" ? BedrockConversationRole.USER : BedrockConversationRole.ASSISTANT
@@ -320,7 +320,7 @@ namespace Gemini {
 	 */
 	export function prepareRequestPayload(
 		systemPrompt: string,
-		messages: ClineStorageMessage[],
+		messages: NexusAIStorageMessage[],
 		model: { id: SapAiCoreModelId; info: ModelInfo },
 	): any {
 		const contents = messages.map(convertAnthropicMessageToGemini)
@@ -507,7 +507,7 @@ export class SapAiCoreHandler implements ApiHandler {
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[]): ApiStream {
 		if (this.options.sapAiCoreUseOrchestrationMode) {
 			yield* this.createMessageWithOrchestration(systemPrompt, messages)
 		} else {
@@ -530,7 +530,7 @@ export class SapAiCoreHandler implements ApiHandler {
 		}
 	}
 
-	private async *createMessageWithOrchestration(systemPrompt: string, messages: ClineStorageMessage[]): ApiStream {
+	private async *createMessageWithOrchestration(systemPrompt: string, messages: NexusAIStorageMessage[]): ApiStream {
 		try {
 			await this.ensureAiCoreEnvSetup()
 			const model = this.getModel()
@@ -587,7 +587,7 @@ export class SapAiCoreHandler implements ApiHandler {
 		}
 	}
 
-	private async *createMessageWithDeployments(systemPrompt: string, messages: ClineStorageMessage[]): ApiStream {
+	private async *createMessageWithDeployments(systemPrompt: string, messages: NexusAIStorageMessage[]): ApiStream {
 		const token = await this.getToken()
 		const externalHeaders = buildExternalBasicHeaders()
 		const headers = {
@@ -1154,7 +1154,7 @@ export class SapAiCoreHandler implements ApiHandler {
 		}
 		return { id: sapAiCoreDefaultModelId, info: sapAiCoreModels[sapAiCoreDefaultModelId] }
 	}
-	private convertMessageParamToSAPMessages(messages: ClineStorageMessage[]): ChatMessage[] {
+	private convertMessageParamToSAPMessages(messages: NexusAIStorageMessage[]): ChatMessage[] {
 		// Use the existing OpenAI converter since the logic is identical
 		return convertToOpenAiMessages(messages) as ChatMessage[]
 	}

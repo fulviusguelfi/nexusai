@@ -1,13 +1,13 @@
-import { ClineAsk, ClineSayTool } from "@shared/ExtensionMessage"
-import { ClineDefaultTool } from "@shared/tools"
+import { NexusAIAsk, NexusAISayTool } from "@shared/ExtensionMessage"
+import { NexusAIDefaultTool } from "@shared/tools"
 import axios from "axios"
-import { ClineEnv } from "@/config"
+import { NexusAIEnv } from "@/config"
 import { AuthService } from "@/services/auth/AuthService"
 import { buildClineExtraHeaders } from "@/services/EnvUtils"
 import { featureFlagsService } from "@/services/feature-flags"
 import { telemetryService } from "@/services/telemetry"
 import { parsePartialArrayString } from "@/shared/array"
-import { CLINE_ACCOUNT_AUTH_ERROR_MESSAGE } from "@/shared/ClineAccount"
+import { NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE } from "@/shared/NexusAIAccount"
 import { getAxiosSettings } from "@/shared/net"
 import { ToolUse } from "../../../assistant-message"
 import { formatResponse } from "../../../prompts/responses"
@@ -19,7 +19,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class WebSearchToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.WEB_SEARCH
+	readonly name = NexusAIDefaultTool.WEB_SEARCH
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name} for '${block.params.query}']`
@@ -27,19 +27,19 @@ export class WebSearchToolHandler implements IFullyManagedTool {
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {
 		const query = block.params.query || ""
-		const sharedMessageProps: ClineSayTool = {
+		const sharedMessageProps: NexusAISayTool = {
 			tool: "webSearch",
 			path: uiHelpers.removeClosingTag(block, "query", query),
 			content: `Searching for: ${uiHelpers.removeClosingTag(block, "query", query)}`,
 			operationIsLocatedInWorkspace: false, // web_search is always external
-		} satisfies ClineSayTool
+		} satisfies NexusAISayTool
 
 		const partialMessage = JSON.stringify(sharedMessageProps)
 
 		// For partial blocks, we'll let the ToolExecutor handle auto-approval logic
 		// Just stream the UI update for now
 		await uiHelpers.removeLastPartialMessageIfExistsWithType("say", "tool")
-		await uiHelpers.ask("tool" as ClineAsk, partialMessage, block.partial).catch(() => {})
+		await uiHelpers.ask("tool" as NexusAIAsk, partialMessage, block.partial).catch(() => {})
 	}
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
@@ -78,7 +78,7 @@ export class WebSearchToolHandler implements IFullyManagedTool {
 			}
 
 			// Create message for approval
-			const sharedMessageProps: ClineSayTool = {
+			const sharedMessageProps: NexusAISayTool = {
 				tool: "webSearch",
 				path: query,
 				content: `Searching for: ${query}`,
@@ -121,18 +121,17 @@ export class WebSearchToolHandler implements IFullyManagedTool {
 						block.isNativeToolCall,
 					)
 					return formatResponse.toolDenied()
-				} else {
-					telemetryService.captureToolUsage(
-						config.ulid,
-						block.name,
-						config.api.getModel().id,
-						provider,
-						false,
-						true,
-						undefined,
-						block.isNativeToolCall,
-					)
 				}
+				telemetryService.captureToolUsage(
+					config.ulid,
+					block.name,
+					config.api.getModel().id,
+					provider,
+					false,
+					true,
+					undefined,
+					block.isNativeToolCall,
+				)
 			}
 
 			// Run PreToolUse hook after approval but before execution
@@ -148,11 +147,11 @@ export class WebSearchToolHandler implements IFullyManagedTool {
 			}
 
 			// Execute the actual search
-			const baseUrl = ClineEnv.config().apiBaseUrl
+			const baseUrl = NexusAIEnv.config().apiBaseUrl
 			const authToken = await AuthService.getInstance().getAuthToken()
 
 			if (!authToken) {
-				throw new Error(CLINE_ACCOUNT_AUTH_ERROR_MESSAGE)
+				throw new Error(NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE)
 			}
 
 			const requestBody: {

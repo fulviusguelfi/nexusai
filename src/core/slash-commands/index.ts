@@ -1,6 +1,6 @@
 import type { ApiProviderInfo } from "@core/api"
-import { ClineRulesToggles } from "@shared/cline-rules"
 import { McpPromptResponse } from "@shared/mcp"
+import { NexusAIRulesToggles } from "@shared/nexusai-rules"
 import fs from "fs/promises"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
@@ -41,8 +41,8 @@ type Workflow = FileBasedWorkflow | RemoteWorkflow
  */
 export async function parseSlashCommands(
 	text: string,
-	localWorkflowToggles: ClineRulesToggles,
-	globalWorkflowToggles: ClineRulesToggles,
+	localWorkflowToggles: NexusAIRulesToggles,
+	globalWorkflowToggles: NexusAIRulesToggles,
 	ulid: string,
 	focusChainSettings?: { enabled: boolean },
 	enableNativeToolCalls?: boolean,

@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { AccountServiceClient } from "@/services/grpc-client"

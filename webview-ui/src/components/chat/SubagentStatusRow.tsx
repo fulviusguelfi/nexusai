@@ -1,7 +1,7 @@
 import {
-	ClineAskUseSubagents,
-	ClineMessage,
-	ClineSaySubagentStatus,
+	NexusAIAskUseSubagents,
+	NexusAIMessage,
+	NexusAISaySubagentStatus,
 	SubagentExecutionStatus,
 	SubagentStatusItem,
 } from "@shared/ExtensionMessage"
@@ -19,9 +19,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import MarkdownBlock from "../common/MarkdownBlock"
 
 interface SubagentStatusRowProps {
-	message: ClineMessage
+	message: NexusAIMessage
 	isLast: boolean
-	lastModifiedMessage?: ClineMessage
+	lastModifiedMessage?: NexusAIMessage
 }
 
 type DisplayStatus = SubagentExecutionStatus | "cancelled"
@@ -72,14 +72,14 @@ const formatCost = (value: number | undefined): string => {
 	}).format(normalized)
 }
 
-function parseSubagentRowData(message: ClineMessage): SubagentRowData | null {
+function parseSubagentRowData(message: NexusAIMessage): SubagentRowData | null {
 	if (!message.text) {
 		return null
 	}
 
 	try {
 		if (message.ask === "use_subagents" || message.say === "use_subagents") {
-			const parsed = JSON.parse(message.text) as ClineAskUseSubagents
+			const parsed = JSON.parse(message.text) as NexusAIAskUseSubagents
 			if (!Array.isArray(parsed.prompts)) {
 				return null
 			}
@@ -105,7 +105,7 @@ function parseSubagentRowData(message: ClineMessage): SubagentRowData | null {
 			}
 		}
 
-		const parsed = JSON.parse(message.text) as ClineSaySubagentStatus
+		const parsed = JSON.parse(message.text) as NexusAISaySubagentStatus
 		if (!Array.isArray(parsed.items)) {
 			return null
 		}

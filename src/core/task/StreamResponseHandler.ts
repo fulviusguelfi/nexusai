@@ -2,15 +2,15 @@ import type { ToolUse } from "@core/assistant-message"
 import { JSONParser } from "@streamparser/json"
 import { nanoid } from "nanoid"
 import { McpHub } from "@/services/mcp/McpHub"
-import { CLINE_MCP_TOOL_IDENTIFIER } from "@/shared/mcp"
+import { NEXUSAI_MCP_TOOL_IDENTIFIER } from "@/shared/mcp"
 import {
-	ClineAssistantRedactedThinkingBlock,
-	ClineAssistantThinkingBlock,
-	ClineAssistantToolUseBlock,
-	ClineReasoningDetailParam,
+	NexusAIAssistantRedactedThinkingBlock,
+	NexusAIAssistantThinkingBlock,
+	NexusAIAssistantToolUseBlock,
+	NexusAIReasoningDetailParam,
 } from "@/shared/messages/content"
 import { Session } from "@/shared/services/Session"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 
 export interface PendingToolUse {
 	id: string
@@ -42,8 +42,8 @@ export interface PendingReasoning {
 	id?: string
 	content: string
 	signature: string
-	redactedThinking: ClineAssistantRedactedThinkingBlock[]
-	summary: unknown[] | ClineReasoningDetailParam[]
+	redactedThinking: NexusAIAssistantRedactedThinkingBlock[]
+	summary: unknown[] | NexusAIReasoningDetailParam[]
 }
 
 const ESCAPE_MAP: Record<string, string> = {
@@ -87,7 +87,7 @@ export class StreamResponseHandler {
 }
 
 /**
- * Handles streaming native tool use blocks and converts them to ClineAssistantToolUseBlock format
+ * Handles streaming native tool use blocks and converts them to NexusAIAssistantToolUseBlock format
  */
 class ToolUseHandler {
 	private pendingToolUses = new Map<string, PendingToolUse>()
@@ -120,7 +120,7 @@ class ToolUseHandler {
 		}
 	}
 
-	getFinalizedToolUse(id: string): ClineAssistantToolUseBlock | undefined {
+	getFinalizedToolUse(id: string): NexusAIAssistantToolUseBlock | undefined {
 		const pending = this.pendingToolUses.get(id)
 		if (!pending?.name) {
 			return undefined
@@ -147,8 +147,8 @@ class ToolUseHandler {
 		}
 	}
 
-	getAllFinalizedToolUses(summary?: ClineAssistantToolUseBlock["reasoning_details"]): ClineAssistantToolUseBlock[] {
-		const results: ClineAssistantToolUseBlock[] = []
+	getAllFinalizedToolUses(summary?: NexusAIAssistantToolUseBlock["reasoning_details"]): NexusAIAssistantToolUseBlock[] {
+		const results: NexusAIAssistantToolUseBlock[] = []
 		for (const id of this.pendingToolUses.keys()) {
 			const toolUse = this.getFinalizedToolUse(id)
 			if (toolUse) {
@@ -186,11 +186,11 @@ class ToolUseHandler {
 				}
 			}
 
-			if (pending.name.includes(CLINE_MCP_TOOL_IDENTIFIER)) {
-				const [key, toolName] = pending.name.split(CLINE_MCP_TOOL_IDENTIFIER)
+			if (pending.name.includes(NEXUSAI_MCP_TOOL_IDENTIFIER)) {
+				const [key, toolName] = pending.name.split(NEXUSAI_MCP_TOOL_IDENTIFIER)
 				results.push({
 					type: "tool_use",
-					name: ClineDefaultTool.MCP_USE,
+					name: NexusAIDefaultTool.MCP_USE,
 					params: {
 						server_name: McpHub.getMcpServerByKey(key),
 						tool_name: toolName,
@@ -210,7 +210,7 @@ class ToolUseHandler {
 				}
 				results.push({
 					type: "tool_use",
-					name: pending.name as ClineDefaultTool,
+					name: pending.name as NexusAIDefaultTool,
 					params: params as any,
 					partial: true,
 					signature: pending.signature,
@@ -312,7 +312,7 @@ class ReasoningHandler {
 		}
 	}
 
-	getCurrentReasoning(): ClineAssistantThinkingBlock | null {
+	getCurrentReasoning(): NexusAIAssistantThinkingBlock | null {
 		if (!this.pendingReasoning) {
 			return null
 		}
@@ -341,7 +341,7 @@ class ReasoningHandler {
 		}
 	}
 
-	getRedactedThinking(): ClineAssistantRedactedThinkingBlock[] {
+	getRedactedThinking(): NexusAIAssistantRedactedThinkingBlock[] {
 		return this.pendingReasoning?.redactedThinking || []
 	}
 

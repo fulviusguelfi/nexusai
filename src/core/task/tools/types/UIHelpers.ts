@@ -1,6 +1,6 @@
-import type { ClineAsk, ClineSay } from "@shared/ExtensionMessage"
-import type { ClineDefaultTool } from "@shared/tools"
-import type { ClineAskResponse } from "@shared/WebviewMessage"
+import type { NexusAIAsk, NexusAISay } from "@shared/ExtensionMessage"
+import type { NexusAIDefaultTool } from "@shared/tools"
+import type { NexusAIAskResponse } from "@shared/WebviewMessage"
 import { telemetryService } from "@/services/telemetry"
 import type { ToolParamName, ToolUse } from "../../../assistant-message"
 import { showNotificationForApproval } from "../../utils"
@@ -12,14 +12,14 @@ import type { TaskConfig } from "./TaskConfig"
  */
 export interface StronglyTypedUIHelpers {
 	// Core UI methods
-	say: (type: ClineSay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
+	say: (type: NexusAISay, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
 
 	ask: (
-		type: ClineAsk,
+		type: NexusAIAsk,
 		text?: string,
 		partial?: boolean,
 	) => Promise<{
-		response: ClineAskResponse
+		response: NexusAIAskResponse
 		text?: string
 		images?: string[]
 		files?: string[]
@@ -27,15 +27,15 @@ export interface StronglyTypedUIHelpers {
 
 	// Utility methods
 	removeClosingTag: (block: ToolUse, tag: ToolParamName, text?: string) => string
-	removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: ClineAsk | ClineSay) => Promise<void>
+	removeLastPartialMessageIfExistsWithType: (type: "ask" | "say", askOrSay: NexusAIAsk | NexusAISay) => Promise<void>
 
 	// Approval methods
-	shouldAutoApproveTool: (toolName: ClineDefaultTool) => boolean | [boolean, boolean]
-	shouldAutoApproveToolWithPath: (toolName: ClineDefaultTool, path?: string) => Promise<boolean>
-	askApproval: (messageType: ClineAsk, message: string) => Promise<boolean>
+	shouldAutoApproveTool: (toolName: NexusAIDefaultTool) => boolean | [boolean, boolean]
+	shouldAutoApproveToolWithPath: (toolName: NexusAIDefaultTool, path?: string) => Promise<boolean>
+	askApproval: (messageType: NexusAIAsk, message: string) => Promise<boolean>
 
 	// Telemetry and notifications
-	captureTelemetry: (toolName: ClineDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => void
+	captureTelemetry: (toolName: NexusAIDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => void
 	showNotificationIfEnabled: (message: string) => void
 
 	// Config access - returns the proper typed config
@@ -51,13 +51,18 @@ export function createUIHelpers(config: TaskConfig): StronglyTypedUIHelpers {
 		ask: config.callbacks.ask,
 		removeClosingTag: (block: ToolUse, tag: ToolParamName, text?: string) => removeClosingTag(block, tag, text),
 		removeLastPartialMessageIfExistsWithType: config.callbacks.removeLastPartialMessageIfExistsWithType,
-		shouldAutoApproveTool: (toolName: ClineDefaultTool) => config.autoApprover.shouldAutoApproveTool(toolName),
+		shouldAutoApproveTool: (toolName: NexusAIDefaultTool) => config.autoApprover.shouldAutoApproveTool(toolName),
 		shouldAutoApproveToolWithPath: config.callbacks.shouldAutoApproveToolWithPath,
-		askApproval: async (messageType: ClineAsk, message: string): Promise<boolean> => {
+		askApproval: async (messageType: NexusAIAsk, message: string): Promise<boolean> => {
 			const { response } = await config.callbacks.ask(messageType, message, false)
 			return response === "yesButtonClicked"
 		},
-		captureTelemetry: (toolName: ClineDefaultTool, autoApproved: boolean, approved: boolean, isNativeToolCall?: boolean) => {
+		captureTelemetry: (
+			toolName: NexusAIDefaultTool,
+			autoApproved: boolean,
+			approved: boolean,
+			isNativeToolCall?: boolean,
+		) => {
 			// Extract provider information for telemetry
 			const apiConfig = config.services.stateManager.getApiConfiguration()
 			const currentMode = config.services.stateManager.getGlobalSettingsKey("mode")

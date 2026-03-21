@@ -1,14 +1,14 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { ClineMessage } from "@shared/proto/cline/ui"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { NexusAIMessage } from "@shared/proto/nexusai/ui"
 import { Logger } from "@/shared/services/Logger"
 import { getRequestRegistry, StreamingResponseHandler } from "../grpc-handler"
 import { Controller } from "../index"
 
 // Keep track of active partial message subscriptions (gRPC streams)
-const activePartialMessageSubscriptions = new Set<StreamingResponseHandler<ClineMessage>>()
+const activePartialMessageSubscriptions = new Set<StreamingResponseHandler<NexusAIMessage>>()
 
 // Keep track of callback-based subscriptions (for CLI and other non-gRPC consumers)
-export type PartialMessageCallback = (message: ClineMessage) => void
+export type PartialMessageCallback = (message: NexusAIMessage) => void
 const callbackSubscriptions = new Set<PartialMessageCallback>()
 
 /**
@@ -21,7 +21,7 @@ const callbackSubscriptions = new Set<PartialMessageCallback>()
 export async function subscribeToPartialMessage(
 	_controller: Controller,
 	_request: EmptyRequest,
-	responseStream: StreamingResponseHandler<ClineMessage>,
+	responseStream: StreamingResponseHandler<NexusAIMessage>,
 	requestId?: string,
 ): Promise<void> {
 	// Add this subscription to the active subscriptions
@@ -52,9 +52,9 @@ export function registerPartialMessageCallback(callback: PartialMessageCallback)
 
 /**
  * Send a partial message event to all active subscribers
- * @param partialMessage The ClineMessage to send
+ * @param partialMessage The NexusAIMessage to send
  */
-export async function sendPartialMessageEvent(partialMessage: ClineMessage): Promise<void> {
+export async function sendPartialMessageEvent(partialMessage: NexusAIMessage): Promise<void> {
 	// Send to gRPC stream subscribers
 	const streamPromises = Array.from(activePartialMessageSubscriptions).map(async (responseStream) => {
 		try {

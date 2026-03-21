@@ -3,7 +3,7 @@ import * as https from "node:https"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { DeviceRegistry } from "@services/iot/DeviceRegistry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -19,7 +19,7 @@ function isPrivateIp(host: string): boolean {
 }
 
 export class HttpRequestToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.HTTP_REQUEST
+	readonly name = NexusAIDefaultTool.HTTP_REQUEST
 
 	constructor(_validator: ToolValidator) {}
 

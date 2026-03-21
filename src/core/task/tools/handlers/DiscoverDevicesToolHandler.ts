@@ -1,7 +1,7 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
 import { IotDiscoveryService } from "@services/iot/IotDiscoveryService"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -11,7 +11,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 const SCAN_TIMEOUT_MS = 8_000
 
 export class DiscoverDevicesToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.DISCOVER_DEVICES
+	readonly name = NexusAIDefaultTool.DISCOVER_DEVICES
 
 	constructor(_validator: ToolValidator) {}
 

@@ -1,5 +1,5 @@
-import type { UsageTransaction as ClineAccountUsageTransaction } from "@shared/ClineAccount"
-import type { UsageTransaction as ProtoUsageTransaction, UserOrganization } from "@shared/proto/cline/account"
+import type { UsageTransaction as NexusAIAccountUsageTransaction } from "@shared/NexusAIAccount"
+import type { UsageTransaction as ProtoUsageTransaction, UserOrganization } from "@shared/proto/nexusai/account"
 
 export const getMainRole = (roles?: string[]) => {
 	if (!roles) {
@@ -30,10 +30,10 @@ export const getClineUris = (base: string, type: "dashboard" | "credits", route?
 }
 
 /**
- * Converts a protobuf UsageTransaction to a ClineAccount UsageTransaction
+ * Converts a protobuf UsageTransaction to a NexusAIAccount UsageTransaction
  * by adding the missing id and metadata fields
  */
-export function convertProtoUsageTransaction(protoTransaction: ProtoUsageTransaction): ClineAccountUsageTransaction {
+export function convertProtoUsageTransaction(protoTransaction: ProtoUsageTransaction): NexusAIAccountUsageTransaction {
 	return {
 		...protoTransaction,
 		id: protoTransaction.generationId, // Use generationId as the id
@@ -46,9 +46,9 @@ export function convertProtoUsageTransaction(protoTransaction: ProtoUsageTransac
 }
 
 /**
- * Converts an array of protobuf UsageTransactions to ClineAccount UsageTransactions
+ * Converts an array of protobuf UsageTransactions to NexusAIAccount UsageTransactions
  */
-export function convertProtoUsageTransactions(protoTransactions: ProtoUsageTransaction[]): ClineAccountUsageTransaction[] {
+export function convertProtoUsageTransactions(protoTransactions: ProtoUsageTransaction[]): NexusAIAccountUsageTransaction[] {
 	return protoTransactions.map(convertProtoUsageTransaction)
 }
 

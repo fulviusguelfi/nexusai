@@ -2,14 +2,14 @@ import { readFile } from "node:fs/promises"
 import type { ToolUse } from "@core/assistant-message"
 import { resolveWorkspacePath } from "@core/workspace"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
-import type { ClineSayTool } from "@shared/ExtensionMessage"
+import type { NexusAISayTool } from "@shared/ExtensionMessage"
 import { fileExistsAtPath } from "@utils/fs"
 import { getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { applyPatch } from "diff"
 import { telemetryService } from "@/services/telemetry"
 import { BASH_WRAPPERS, DiffError, PATCH_MARKERS, type Patch, PatchActionType, type PatchChunk } from "@/shared/Patch"
 import { preserveEscaping } from "@/shared/string"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -42,7 +42,7 @@ export const PatchClineSayMap = {
 }
 
 export class ApplyPatchHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.APPLY_PATCH
+	readonly name = NexusAIDefaultTool.APPLY_PATCH
 	private config?: TaskConfig
 	private pathResolver?: PathResolver
 	private providerOps?: FileProviderOperations
@@ -672,7 +672,7 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 		}
 	}
 
-	private async generateChangeSummary(changes: Record<string, FileChange>): Promise<ClineSayTool[]> {
+	private async generateChangeSummary(changes: Record<string, FileChange>): Promise<NexusAISayTool[]> {
 		const summaries = await Promise.all(
 			Object.entries(changes).map(async ([file, change]) => {
 				const operationIsLocatedInWorkspace = await isLocatedInWorkspace(file)
@@ -683,7 +683,7 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 							path: file,
 							content: change.newContent,
 							operationIsLocatedInWorkspace,
-						} as ClineSayTool
+						} as NexusAISayTool
 					case PatchActionType.UPDATE:
 						return {
 							tool: change.movePath ? "newFileCreated" : "editedExistingFile",
@@ -691,14 +691,14 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 							content: change.movePath ? change.oldContent : change.newContent,
 							operationIsLocatedInWorkspace,
 							startLineNumbers: change.startLineNumbers,
-						} as ClineSayTool
+						} as NexusAISayTool
 					case PatchActionType.DELETE:
 						return {
 							tool: "fileDeleted",
 							path: file,
 							content: change.newContent,
 							operationIsLocatedInWorkspace,
-						} as ClineSayTool
+						} as NexusAISayTool
 				}
 			}),
 		)
@@ -709,7 +709,7 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 	private async handleApproval(
 		config: TaskConfig,
 		block: ToolUse,
-		message: ClineSayTool,
+		message: NexusAISayTool,
 		rawInput: string,
 		change?: FileChange,
 	): Promise<boolean> {

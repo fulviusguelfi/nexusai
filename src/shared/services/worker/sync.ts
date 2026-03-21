@@ -12,7 +12,7 @@
 import * as path from "node:path"
 import { HostProvider } from "@/hosts/host-provider"
 import { Logger } from "@/shared/services/Logger"
-import { blobStorage } from "../../storage/ClineBlobStorage"
+import { blobStorage } from "../../storage/NexusAIBlobStorage"
 import { backfillTasks } from "./backfill"
 import { SyncQueue } from "./queue"
 import type { SyncWorkerOptions } from "./worker"

@@ -1,4 +1,4 @@
-import { UpdateTerminalConnectionTimeoutResponse } from "@shared/proto/index.cline"
+import { UpdateTerminalConnectionTimeoutResponse } from "@shared/proto/index.nexusai"
 import { VSCodeCheckbox, VSCodeDropdown, VSCodeOption, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import React, { useState } from "react"
 import { PlatformType } from "@/config/platform.config"
@@ -33,7 +33,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 
 		setInputValue(value)
 
-		const seconds = parseFloat(value)
+		const seconds = Number.parseFloat(value)
 		if (Number.isNaN(seconds) || seconds <= 0) {
 			setInputError("Please enter a positive number")
 			return

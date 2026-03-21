@@ -21,7 +21,7 @@
  * prevents GitHub Copilot from loading.  This fixture omits that flag and points
  * VS Code at your real user-data directory so that Copilot auth is preserved.
  *
- * Only the NexusAI extension state (CLINE_DIR) is isolated to a temp directory,
+ * Only the NexusAI extension state (NEXUSAI_DIR) is isolated to a temp directory,
  * so the test never mutates your personal NexusAI configuration.
  */
 
@@ -78,8 +78,8 @@ const e2eCopilot = test.extend<{
 			env: {
 				...process.env,
 				E2E_TEST: "true",
-				CLINE_ENVIRONMENT: "local",
-				CLINE_DIR: nexusaiTestDir,
+				NEXUSAI_ENVIRONMENT: "local",
+				NEXUSAI_DIR: nexusaiTestDir,
 			},
 			recordVideo: {
 				dir: E2ETestHelper.getResultsDir(testInfo.title, "recordings"),

@@ -1,14 +1,14 @@
-import type { UsageTransaction as ClineAccountUsageTransaction, PaymentTransaction } from "@shared/ClineAccount"
 import { isClineInternalTester } from "@shared/internal/account"
-import type { UserOrganization } from "@shared/proto/cline/account"
-import { EmptyRequest } from "@shared/proto/cline/common"
+import type { UsageTransaction as NexusAIAccountUsageTransaction, PaymentTransaction } from "@shared/NexusAIAccount"
+import type { UserOrganization } from "@shared/proto/nexusai/account"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTag } from "@vscode/webview-ui-toolkit/react"
 import deepEqual from "fast-deep-equal"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useInterval } from "react-use"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { type ClineUser, handleSignOut } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { handleSignOut, type NexusAIUser } from "@/context/NexusAIAuthContext"
 import { AccountServiceClient } from "@/services/grpc-client"
 import ViewHeader from "../common/ViewHeader"
 import VSCodeButtonLink from "../common/VSCodeButtonLink"
@@ -20,14 +20,14 @@ import { convertProtoUsageTransactions, getClineUris, getMainRole } from "./help
 import { RemoteConfigToggle } from "./RemoteConfigToggle"
 
 type AccountViewProps = {
-	clineUser: ClineUser | null
+	clineUser: NexusAIUser | null
 	organizations: UserOrganization[] | null
 	activeOrganization: UserOrganization | null
 	onDone: () => void
 }
 
-type ClineAccountViewProps = {
-	clineUser: ClineUser
+type NexusAIAccountViewProps = {
+	clineUser: NexusAIUser
 	userOrganizations: UserOrganization[] | null
 	activeOrganization: UserOrganization | null
 	clineEnv: "Production" | "Staging" | "Local"
@@ -35,12 +35,12 @@ type ClineAccountViewProps = {
 
 type CachedData = {
 	balance: number | null
-	usageData: ClineAccountUsageTransaction[]
+	usageData: NexusAIAccountUsageTransaction[]
 	paymentsData: PaymentTransaction[]
 	lastFetchTime: number
 }
 
-const ClineEnvOptions = ["Production", "Staging", "Local"] as const
+const NexusAIEnvOptions = ["Production", "Staging", "Local"] as const
 
 const AccountView = ({ onDone, clineUser, organizations, activeOrganization }: AccountViewProps) => {
 	const { environment } = useExtensionState()
@@ -50,7 +50,7 @@ const AccountView = ({ onDone, clineUser, organizations, activeOrganization }: A
 			<ViewHeader environment={environment} onDone={onDone} showEnvironmentSuffix title="Account" />
 			<div className="grow flex flex-col px-5 overflow-y-auto">
 				{clineUser?.uid ? (
-					<ClineAccountView
+					<NexusAIAccountView
 						activeOrganization={activeOrganization}
 						clineEnv={environment === "local" ? "Local" : environment === "staging" ? "Staging" : "Production"}
 						clineUser={clineUser}
@@ -65,7 +65,7 @@ const AccountView = ({ onDone, clineUser, organizations, activeOrganization }: A
 	)
 }
 
-export const ClineAccountView = ({ clineUser, userOrganizations, activeOrganization, clineEnv }: ClineAccountViewProps) => {
+export const NexusAIAccountView = ({ clineUser, userOrganizations, activeOrganization, clineEnv }: NexusAIAccountViewProps) => {
 	const { email, displayName, appBaseUrl, uid } = clineUser
 	const { remoteConfigSettings, environment } = useExtensionState()
 
@@ -82,7 +82,7 @@ export const ClineAccountView = ({ clineUser, userOrganizations, activeOrganizat
 
 	// Current displayed data
 	const [balance, setBalance] = useState<number | null>(null)
-	const [usageData, setUsageData] = useState<ClineAccountUsageTransaction[]>([])
+	const [usageData, setUsageData] = useState<NexusAIAccountUsageTransaction[]>([])
 	const [paymentsData, setPaymentsData] = useState<PaymentTransaction[]>([])
 	const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now())
 
@@ -401,7 +401,7 @@ export const ClineAccountView = ({ clineUser, userOrganizations, activeOrganizat
 									updateSetting("clineEnv", value.toLowerCase())
 								}
 							}}>
-							{ClineEnvOptions.map((env) => (
+							{NexusAIEnvOptions.map((env) => (
 								<VSCodeOption key={env} value={env}>
 									{env}
 								</VSCodeOption>

@@ -1,5 +1,5 @@
 import type { ToolParamName, ToolUse } from "@core/assistant-message"
-import type { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
+import type { NexusAIIgnoreController } from "@core/ignore/NexusAIIgnoreController"
 
 export type ValidationResult = { ok: true } | { ok: false; error: string }
 
@@ -8,7 +8,7 @@ export type ValidationResult = { ok: true } | { ok: false; error: string }
  * The legacy ToolExecutor switch remains unchanged and does not depend on this.
  */
 export class ToolValidator {
-	constructor(private readonly clineIgnoreController: ClineIgnoreController) {}
+	constructor(private readonly clineIgnoreController: NexusAIIgnoreController) {}
 
 	/**
 	 * Verifies required parameters exist on the tool block.

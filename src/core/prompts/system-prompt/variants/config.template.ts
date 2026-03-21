@@ -13,7 +13,7 @@
 
 import { ModelFamily } from "@/shared/prompts"
 import { Logger } from "@/shared/services/Logger"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import { PromptVariant } from ".."
 import { SystemPromptSection } from "../templates/placeholders"
 import { baseTemplate } from "./generic/template"
@@ -47,22 +47,22 @@ export const config: Omit<PromptVariant, "id"> = createVariant(ModelFamily.GENER
 	.tools(
 		// Define tool order - this is type-safe and will show available options.
 		// If a tool is listed here but no variant was registered, it will fall back to the generic variant.
-		ClineDefaultTool.BASH,
-		ClineDefaultTool.FILE_READ,
-		ClineDefaultTool.FILE_NEW,
-		ClineDefaultTool.FILE_EDIT,
-		ClineDefaultTool.SEARCH,
-		ClineDefaultTool.LIST_FILES,
-		ClineDefaultTool.LIST_CODE_DEF,
-		ClineDefaultTool.BROWSER,
-		ClineDefaultTool.MCP_USE,
-		ClineDefaultTool.MCP_ACCESS,
-		ClineDefaultTool.ASK,
-		ClineDefaultTool.ATTEMPT,
-		ClineDefaultTool.NEW_TASK,
-		ClineDefaultTool.PLAN_MODE,
-		ClineDefaultTool.MCP_DOCS,
-		ClineDefaultTool.TODO,
+		NexusAIDefaultTool.BASH,
+		NexusAIDefaultTool.FILE_READ,
+		NexusAIDefaultTool.FILE_NEW,
+		NexusAIDefaultTool.FILE_EDIT,
+		NexusAIDefaultTool.SEARCH,
+		NexusAIDefaultTool.LIST_FILES,
+		NexusAIDefaultTool.LIST_CODE_DEF,
+		NexusAIDefaultTool.BROWSER,
+		NexusAIDefaultTool.MCP_USE,
+		NexusAIDefaultTool.MCP_ACCESS,
+		NexusAIDefaultTool.ASK,
+		NexusAIDefaultTool.ATTEMPT,
+		NexusAIDefaultTool.NEW_TASK,
+		NexusAIDefaultTool.PLAN_MODE,
+		NexusAIDefaultTool.MCP_DOCS,
+		NexusAIDefaultTool.TODO,
 	)
 	.placeholders({
 		MODEL_FAMILY: "your-model-family", // Replace with appropriate model family
@@ -78,7 +78,7 @@ export const config: Omit<PromptVariant, "id"> = createVariant(ModelFamily.GENER
 	//     template: customRulesTemplate,
 	// })
 	// Optional: Override specific tools
-	// .overrideTool(ClineDefaultTool.BASH, {
+	// .overrideTool(NexusAIDefaultTool.BASH, {
 	//     enabled: false,
 	// })
 	.build()
@@ -111,7 +111,7 @@ export const createMinimalVariant = (family: ModelFamily) =>
 			SystemPromptSection.RULES,
 			SystemPromptSection.SYSTEM_INFO,
 		)
-		.tools(ClineDefaultTool.FILE_READ, ClineDefaultTool.FILE_NEW, ClineDefaultTool.ATTEMPT)
+		.tools(NexusAIDefaultTool.FILE_READ, NexusAIDefaultTool.FILE_NEW, NexusAIDefaultTool.ATTEMPT)
 
 // Full-featured variant for advanced models
 export const createAdvancedVariant = (family: ModelFamily) =>
@@ -132,22 +132,22 @@ export const createAdvancedVariant = (family: ModelFamily) =>
 			SystemPromptSection.USER_INSTRUCTIONS,
 		)
 		.tools(
-			ClineDefaultTool.BASH,
-			ClineDefaultTool.FILE_READ,
-			ClineDefaultTool.FILE_NEW,
-			ClineDefaultTool.FILE_EDIT,
-			ClineDefaultTool.SEARCH,
-			ClineDefaultTool.LIST_FILES,
-			ClineDefaultTool.LIST_CODE_DEF,
-			ClineDefaultTool.BROWSER,
-			ClineDefaultTool.WEB_FETCH,
-			ClineDefaultTool.MCP_USE,
-			ClineDefaultTool.MCP_ACCESS,
-			ClineDefaultTool.ASK,
-			ClineDefaultTool.ATTEMPT,
-			ClineDefaultTool.NEW_TASK,
-			ClineDefaultTool.PLAN_MODE,
-			ClineDefaultTool.MCP_DOCS,
-			ClineDefaultTool.TODO,
-			ClineDefaultTool.USE_SUBAGENTS,
+			NexusAIDefaultTool.BASH,
+			NexusAIDefaultTool.FILE_READ,
+			NexusAIDefaultTool.FILE_NEW,
+			NexusAIDefaultTool.FILE_EDIT,
+			NexusAIDefaultTool.SEARCH,
+			NexusAIDefaultTool.LIST_FILES,
+			NexusAIDefaultTool.LIST_CODE_DEF,
+			NexusAIDefaultTool.BROWSER,
+			NexusAIDefaultTool.WEB_FETCH,
+			NexusAIDefaultTool.MCP_USE,
+			NexusAIDefaultTool.MCP_ACCESS,
+			NexusAIDefaultTool.ASK,
+			NexusAIDefaultTool.ATTEMPT,
+			NexusAIDefaultTool.NEW_TASK,
+			NexusAIDefaultTool.PLAN_MODE,
+			NexusAIDefaultTool.MCP_DOCS,
+			NexusAIDefaultTool.TODO,
+			NexusAIDefaultTool.USE_SUBAGENTS,
 		)

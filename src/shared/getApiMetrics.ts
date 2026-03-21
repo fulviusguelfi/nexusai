@@ -1,4 +1,4 @@
-import { ClineMessage } from "./ExtensionMessage"
+import { NexusAIMessage } from "./ExtensionMessage"
 
 interface ApiMetrics {
 	totalTokensIn: number
@@ -9,7 +9,7 @@ interface ApiMetrics {
 }
 
 /**
- * Calculates API metrics from an array of ClineMessages.
+ * Calculates API metrics from an array of NexusAIMessages.
  *
  * This function processes usage-carrying say messages.
  * It includes:
@@ -18,7 +18,7 @@ interface ApiMetrics {
  * - 'subagent_usage' messages, which are aggregated usage snapshots emitted by subagent batches
  * It extracts and sums up the tokensIn, tokensOut, cacheWrites, cacheReads, and cost from these messages.
  *
- * @param messages - An array of ClineMessage objects to process.
+ * @param messages - An array of NexusAIMessage objects to process.
  * @returns An ApiMetrics object containing totalTokensIn, totalTokensOut, totalCacheWrites, totalCacheReads, and totalCost.
  *
  * @example
@@ -28,7 +28,7 @@ interface ApiMetrics {
  * const { totalTokensIn, totalTokensOut, totalCost } = getApiMetrics(messages);
  * // Result: { totalTokensIn: 10, totalTokensOut: 20, totalCost: 0.005 }
  */
-export function getApiMetrics(messages: ClineMessage[]): ApiMetrics {
+export function getApiMetrics(messages: NexusAIMessage[]): ApiMetrics {
 	const result: ApiMetrics = {
 		totalTokensIn: 0,
 		totalTokensOut: 0,
@@ -77,10 +77,10 @@ export function getApiMetrics(messages: ClineMessage[]): ApiMetrics {
  * This is used for context window progress display - it shows how much of the
  * context window is used in the current/most recent request, not cumulative totals.
  *
- * @param messages - An array of ClineMessage objects to process.
+ * @param messages - An array of NexusAIMessage objects to process.
  * @returns The total tokens (tokensIn + tokensOut + cacheWrites + cacheReads) from the last api_req_started message, or 0 if none found.
  */
-export function getLastApiReqTotalTokens(messages: ClineMessage[]): number {
+export function getLastApiReqTotalTokens(messages: NexusAIMessage[]): number {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const msg = messages[i]
 		if (msg.type === "say" && msg.say === "api_req_started" && msg.text) {

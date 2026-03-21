@@ -1,11 +1,11 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
-const id = ClineDefaultTool.FILE_READ
+const id = NexusAIDefaultTool.FILE_READ
 
-const generic: ClineToolSpec = {
+const generic: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
 	id,
 	name: "read_file",
@@ -22,7 +22,7 @@ const generic: ClineToolSpec = {
 	],
 }
 
-const NATIVE_GPT_5: ClineToolSpec = {
+const NATIVE_GPT_5: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_GPT_5,
 	id,
 	name: "read_file",
@@ -39,7 +39,7 @@ const NATIVE_GPT_5: ClineToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: ClineToolSpec = {
+const NATIVE_NEXT_GEN: NexusAIToolSpec = {
 	...NATIVE_GPT_5,
 	variant: ModelFamily.NATIVE_NEXT_GEN,
 }

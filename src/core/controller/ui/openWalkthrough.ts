@@ -1,5 +1,5 @@
-import type { EmptyRequest } from "@shared/proto/cline/common"
-import { Empty } from "@shared/proto/cline/common"
+import type { EmptyRequest } from "@shared/proto/nexusai/common"
+import { Empty } from "@shared/proto/nexusai/common"
 import * as vscode from "vscode"
 import { ExtensionRegistryInfo } from "@/registry"
 import { telemetryService } from "@/services/telemetry"
@@ -16,7 +16,7 @@ export async function openWalkthrough(_controller: Controller, _request: EmptyRe
 	try {
 		await vscode.commands.executeCommand(
 			"workbench.action.openWalkthrough",
-			`saoudrizwan.${ExtensionRegistryInfo.name}#ClineWalkthrough`,
+			`saoudrizwan.${ExtensionRegistryInfo.name}#NexusAIWalkthrough`,
 		)
 		telemetryService.captureButtonClick("webview_openWalkthrough")
 		return Empty.create({})

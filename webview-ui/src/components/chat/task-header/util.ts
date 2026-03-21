@@ -1,14 +1,14 @@
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { COLOR_BEIGE, COLOR_BLUE, COLOR_DARK_GRAY, COLOR_GRAY, COLOR_GREEN, COLOR_PURPLE, COLOR_WHITE } from "../colors"
 
 /**
  *
  * Get the color for a block or the indicator based on the message type
  *
- * @param message ClineMessage - The message to determine the color for
+ * @param message NexusAIMessage - The message to determine the color for
  * @returns string - The color code for the block or indicator
  */
-export const getColor = (message: ClineMessage): string => {
+export const getColor = (message: NexusAIMessage): string => {
 	if (message.type === "say") {
 		switch (message.say) {
 			case "task":
@@ -29,13 +29,15 @@ export const getColor = (message: ClineMessage): string => {
 							toolData.tool === "searchFiles"
 						) {
 							return COLOR_BEIGE // Beige for file read operations
-						} else if (
+						}
+						if (
 							toolData.tool === "editedExistingFile" ||
 							toolData.tool === "newFileCreated" ||
 							toolData.tool === "deletedFile"
 						) {
 							return COLOR_BLUE // Blue for file edit/create operations
-						} else if (toolData.tool === "webFetch" || toolData.tool === "webSearch") {
+						}
+						if (toolData.tool === "webFetch" || toolData.tool === "webSearch") {
 							return COLOR_PURPLE // Purple for web fetch/search operations
 						}
 					} catch (_e) {
@@ -54,7 +56,8 @@ export const getColor = (message: ClineMessage): string => {
 			default:
 				return COLOR_DARK_GRAY // Dark gray for unknown
 		}
-	} else if (message.type === "ask") {
+	}
+	if (message.type === "ask") {
 		switch (message.ask) {
 			case "followup":
 				return COLOR_GRAY // Gray for user messages
@@ -73,13 +76,15 @@ export const getColor = (message: ClineMessage): string => {
 							toolData.tool === "searchFiles"
 						) {
 							return COLOR_BEIGE // Beige for file read operations
-						} else if (
+						}
+						if (
 							toolData.tool === "editedExistingFile" ||
 							toolData.tool === "newFileCreated" ||
 							toolData.tool === "deletedFile"
 						) {
 							return COLOR_BLUE // Blue for file edit/create operations
-						} else if (toolData.tool === "webFetch" || toolData.tool === "webSearch") {
+						}
+						if (toolData.tool === "webFetch" || toolData.tool === "webSearch") {
 							return COLOR_PURPLE // Purple for web fetch/search operations
 						}
 					} catch (_e) {

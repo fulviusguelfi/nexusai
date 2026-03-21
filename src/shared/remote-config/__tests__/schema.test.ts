@@ -2,8 +2,8 @@ import { expect } from "chai"
 import { describe, it } from "mocha"
 import {
 	AwsBedrockSettingsSchema,
-	ClineSettingsSchema,
 	EnterpriseTelemetrySchema,
+	NexusAISettingsSchema,
 	OpenAiCompatibleSchema,
 	PromptUploadingSchema,
 	type RemoteConfig,
@@ -311,17 +311,17 @@ describe("Remote Config Schema", () => {
 		})
 	})
 
-	describe("ClineSettingsSchema", () => {
+	describe("NexusAISettingsSchema", () => {
 		it("should accept valid Cline provider settings", () => {
 			const validSettings = {
 				models: [{ id: "claude-3-5-sonnet-20241022" }, { id: "claude-3-5-haiku-20241022" }],
 			}
-			const result = ClineSettingsSchema.parse(validSettings)
+			const result = NexusAISettingsSchema.parse(validSettings)
 			expect(result).to.deep.equal(validSettings)
 		})
 
 		it("should accept empty settings object", () => {
-			const result = ClineSettingsSchema.parse({})
+			const result = NexusAISettingsSchema.parse({})
 			expect(result.models).to.be.undefined
 		})
 
@@ -329,12 +329,12 @@ describe("Remote Config Schema", () => {
 			const settings = {
 				models: [{ id: "claude-3-5-sonnet-20241022" }],
 			}
-			expect(() => ClineSettingsSchema.parse(settings)).to.not.throw()
+			expect(() => NexusAISettingsSchema.parse(settings)).to.not.throw()
 		})
 
 		it("should reject models with missing id field", () => {
 			expect(() =>
-				ClineSettingsSchema.parse({
+				NexusAISettingsSchema.parse({
 					models: [{}],
 				}),
 			).to.throw()

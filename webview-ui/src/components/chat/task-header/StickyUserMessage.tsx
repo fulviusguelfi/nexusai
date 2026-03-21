@@ -1,10 +1,10 @@
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import React, { memo, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { highlightText } from "./Highlights"
 
 interface StickyUserMessageProps {
-	readonly lastUserMessage: ClineMessage | null
+	readonly lastUserMessage: NexusAIMessage | null
 	readonly onScrollToMessage?: () => void
 	readonly isVisible: boolean
 }

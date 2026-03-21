@@ -3,10 +3,10 @@ import { formatResponse } from "@core/prompts/responses"
 import { WorkspacePathAdapter } from "@core/workspace/WorkspacePathAdapter"
 import { showSystemNotification } from "@integrations/notifications"
 import { COMMAND_REQ_APP_STRING } from "@shared/combineCommandSequences"
-import { ClineAsk } from "@shared/ExtensionMessage"
+import { NexusAIAsk } from "@shared/ExtensionMessage"
 import { arePathsEqual } from "@utils/path"
 import { telemetryService } from "@/services/telemetry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -57,7 +57,7 @@ export function resolveCommandTimeoutSeconds(
 }
 
 export class ExecuteCommandToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.BASH
+	readonly name = NexusAIDefaultTool.BASH
 
 	constructor(_validator: ToolValidator) {}
 
@@ -81,7 +81,7 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			return
 		}
 		await uiHelpers
-			.ask("command" as ClineAsk, uiHelpers.removeClosingTag(block, "command", command), block.partial)
+			.ask("command" as NexusAIAsk, uiHelpers.removeClosingTag(block, "command", command), block.partial)
 			.catch(() => {})
 	}
 
@@ -155,20 +155,20 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 			// If no hint, use primary workspace (cwd)
 		}
 
-		// Check command permission validation (CLINE_COMMAND_PERMISSIONS env var)
+		// Check command permission validation (NEXUSAI_COMMAND_PERMISSIONS env var)
 		const permissionResult = config.services.commandPermissionController.validateCommand(actualCommand)
 		if (!permissionResult.allowed) {
 			let errorMessage: string
 			if (permissionResult.failedSegment) {
 				errorMessage =
-					`Command "${actualCommand}" was denied by CLINE_COMMAND_PERMISSIONS. ` +
+					`Command "${actualCommand}" was denied by NEXUSAI_COMMAND_PERMISSIONS. ` +
 					`Segment "${permissionResult.failedSegment}" ${permissionResult.reason}.`
 			} else {
 				const matchedPattern = permissionResult.matchedPattern
 					? ` (matched pattern: ${permissionResult.matchedPattern})`
 					: ""
 				errorMessage =
-					`Command "${actualCommand}" was denied by CLINE_COMMAND_PERMISSIONS. ` +
+					`Command "${actualCommand}" was denied by NEXUSAI_COMMAND_PERMISSIONS. ` +
 					`Reason: ${permissionResult.reason}${matchedPattern}`
 			}
 			if (!config.isSubagentExecution) {

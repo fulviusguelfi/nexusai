@@ -1,5 +1,5 @@
 import { Logger } from "@/shared/services/Logger"
-import { BlobStoreSettings, blobStorage } from "../../storage/ClineBlobStorage"
+import { BlobStoreSettings, blobStorage } from "../../storage/NexusAIBlobStorage"
 
 import { SyncQueue, SyncQueueItem } from "./queue"
 
@@ -20,7 +20,7 @@ function parseIntEnv(value: string | undefined, fallback: number): number {
 	if (!value) {
 		return fallback
 	}
-	const parsed = parseInt(value, 10)
+	const parsed = Number.parseInt(value, 10)
 	return Number.isNaN(parsed) ? fallback : parsed
 }
 
@@ -30,20 +30,20 @@ function parseIntEnv(value: string | undefined, fallback: number): number {
  */
 export function getBlobStoreSettingsFromEnv(): BlobStoreSettings {
 	return {
-		adapterType: process?.env?.CLINE_STORAGE_ADAPTER || "unknown",
-		bucket: process?.env?.CLINE_STORAGE_BUCKET || "cline",
-		accessKeyId: process?.env?.CLINE_STORAGE_ACCESS_KEY_ID || "",
-		secretAccessKey: process?.env?.CLINE_STORAGE_SECRET_ACCESS_KEY || "",
-		region: process?.env?.CLINE_STORAGE_REGION,
-		endpoint: process?.env?.CLINE_STORAGE_ENDPOINT,
-		accountId: process?.env?.CLINE_STORAGE_ACCOUNT_ID,
+		adapterType: process?.env?.NEXUSAI_STORAGE_ADAPTER || "unknown",
+		bucket: process?.env?.NEXUSAI_STORAGE_BUCKET || "cline",
+		accessKeyId: process?.env?.NEXUSAI_STORAGE_ACCESS_KEY_ID || "",
+		secretAccessKey: process?.env?.NEXUSAI_STORAGE_SECRET_ACCESS_KEY || "",
+		region: process?.env?.NEXUSAI_STORAGE_REGION,
+		endpoint: process?.env?.NEXUSAI_STORAGE_ENDPOINT,
+		accountId: process?.env?.NEXUSAI_STORAGE_ACCOUNT_ID,
 
-		intervalMs: parseIntEnv(process.env.CLINE_STORAGE_SYNC_INTERVAL_MS, 30000),
-		maxRetries: parseIntEnv(process.env.CLINE_STORAGE_SYNC_MAX_RETRIES, 5),
-		batchSize: parseIntEnv(process.env.CLINE_STORAGE_SYNC_BATCH_SIZE, 10),
-		maxQueueSize: parseIntEnv(process.env.CLINE_STORAGE_SYNC_MAX_QUEUE_SIZE, 1000),
-		maxFailedAgeMs: parseIntEnv(process.env.CLINE_STORAGE_SYNC_MAX_FAILED_AGE_MS, SEVEN_DAYS_MS),
-		backfillEnabled: process.env.CLINE_STORAGE_SYNC_BACKFILL_ENABLED === "true",
+		intervalMs: parseIntEnv(process.env.NEXUSAI_STORAGE_SYNC_INTERVAL_MS, 30000),
+		maxRetries: parseIntEnv(process.env.NEXUSAI_STORAGE_SYNC_MAX_RETRIES, 5),
+		batchSize: parseIntEnv(process.env.NEXUSAI_STORAGE_SYNC_BATCH_SIZE, 10),
+		maxQueueSize: parseIntEnv(process.env.NEXUSAI_STORAGE_SYNC_MAX_QUEUE_SIZE, 1000),
+		maxFailedAgeMs: parseIntEnv(process.env.NEXUSAI_STORAGE_SYNC_MAX_FAILED_AGE_MS, SEVEN_DAYS_MS),
+		backfillEnabled: process.env.NEXUSAI_STORAGE_SYNC_BACKFILL_ENABLED === "true",
 	}
 }
 
@@ -97,7 +97,7 @@ type ResolvedSyncWorkerOptions = SyncWorkerOptions &
 
 export class SyncWorker {
 	private interval: ReturnType<typeof setInterval> | null = null
-	private isProcessing: boolean = false
+	private isProcessing = false
 	private options: ResolvedSyncWorkerOptions
 	private listeners: SyncWorkerEventListener[] = []
 
@@ -163,7 +163,7 @@ export class SyncWorker {
 	 * Stop the background worker.
 	 * @param waitForCurrent If true, waits for current processing to complete
 	 */
-	public async stop(waitForCurrent: boolean = true): Promise<void> {
+	public async stop(waitForCurrent = true): Promise<void> {
 		if (this.interval) {
 			clearInterval(this.interval)
 			this.interval = null

@@ -1,7 +1,7 @@
 import { ConverseStreamCommand } from "@aws-sdk/client-bedrock-runtime"
 import should from "should"
 import { Readable } from "stream"
-import type { ClineStorageMessage } from "@/shared/messages/content"
+import type { NexusAIStorageMessage } from "@/shared/messages/content"
 import type { AwsBedrockHandlerOptions } from "../bedrock"
 import { AwsBedrockHandler } from "../bedrock"
 
@@ -789,7 +789,7 @@ describe("AwsBedrockHandler", () => {
 	describe("formatMessagesForConverseAPI", () => {
 		it("should format tool_use and tool_result blocks", () => {
 			const handler = new AwsBedrockHandler(mockOptions)
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -825,7 +825,7 @@ describe("AwsBedrockHandler", () => {
 
 		it("should format tool_result with array content", () => {
 			const handler = new AwsBedrockHandler(mockOptions)
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "user",
 					content: [
@@ -851,7 +851,7 @@ describe("AwsBedrockHandler", () => {
 
 		it("should map is_error to error status on tool_result", () => {
 			const handler = new AwsBedrockHandler(mockOptions)
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "user",
 					content: [
@@ -1123,7 +1123,7 @@ describe("AwsBedrockHandler", () => {
 			// Turn 2: user sends tool result
 			// Turn 3: assistant calls another tool (proves multi-turn works)
 			// Turn 4: user sends second tool result
-			const conversation: ClineStorageMessage[] = [
+			const conversation: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [

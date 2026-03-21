@@ -1,9 +1,9 @@
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { memo } from "react"
 import CreditLimitError from "@/components/chat/CreditLimitError"
 import { Button } from "@/components/ui/button"
-import { useClineAuth, useClineSignIn } from "@/context/ClineAuthContext"
-import { ClineError, ClineErrorType } from "../../../../src/services/error/ClineError"
+import { useClineAuth, useClineSignIn } from "@/context/NexusAIAuthContext"
+import { NexusAIError, NexusAIErrorType } from "../../../../src/services/error/NexusAIError"
 
 interface BalanceErrorDetails {
 	buy_credits_url?: string
@@ -16,7 +16,7 @@ interface BalanceErrorDetails {
 const _errorColor = "var(--vscode-errorForeground)"
 
 interface ErrorRowProps {
-	message: ClineMessage
+	message: NexusAIMessage
 	errorType: "error" | "mistake_limit_reached" | "diff_error" | "clineignore_error"
 	apiRequestFailedMessage?: string
 	apiReqStreamingFailedMessage?: string
@@ -34,15 +34,15 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 			case "mistake_limit_reached":
 				// Handle API request errors with special error parsing
 				if (rawApiError) {
-					// FIXME: ClineError parsing should not be applied to non-Cline providers, but it seems we're using clineErrorMessage below in the default error display
-					const clineError = ClineError.parse(rawApiError)
+					// FIXME: NexusAIError parsing should not be applied to non-Cline providers, but it seems we're using clineErrorMessage below in the default error display
+					const clineError = NexusAIError.parse(rawApiError)
 					const errorMessage = clineError?._error?.message || clineError?.message || rawApiError
 					const requestId = clineError?._error?.request_id
 					const providerId = clineError?.providerId || clineError?._error?.providerId
 					const isClineProvider = providerId === "cline"
 					const errorCode = clineError?._error?.code
 
-					if (clineError?.isErrorType(ClineErrorType.Balance)) {
+					if (clineError?.isErrorType(NexusAIErrorType.Balance)) {
 						const errorDetails = clineError._error?.details as BalanceErrorDetails | undefined
 						return (
 							<CreditLimitError
@@ -55,7 +55,7 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 						)
 					}
 
-					if (clineError?.isErrorType(ClineErrorType.RateLimit)) {
+					if (clineError?.isErrorType(NexusAIErrorType.RateLimit)) {
 						return (
 							<p className="m-0 whitespace-pre-wrap text-error wrap-anywhere">
 								{errorMessage}
@@ -66,7 +66,7 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 
 					return (
 						<p className="m-0 whitespace-pre-wrap text-error wrap-anywhere flex flex-col gap-3">
-							{/* Display the well-formatted error extracted from the ClineError instance */}
+							{/* Display the well-formatted error extracted from the NexusAIError instance */}
 
 							<header>
 								{providerId && <span className="uppercase">[{providerId}] </span>}

@@ -6,7 +6,7 @@ import { NotebookDiffView } from "@/hosts/vscode/NotebookDiffView"
 import { Logger } from "@/shared/services/Logger"
 import { arePathsEqual } from "@/utils/path"
 
-export const DIFF_VIEW_URI_SCHEME = "cline-diff"
+export const DIFF_VIEW_URI_SCHEME = "nexusai-diff"
 
 export class VscodeDiffViewProvider extends DiffViewProvider {
 	private activeDiffEditor?: vscode.TextEditor
@@ -72,7 +72,7 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 						query: Buffer.from(this.originalContent ?? "").toString("base64"),
 					}),
 					uri,
-					`${fileName}: ${fileExists ? "Original ↔ Cline's Changes" : "New File"} (Editable)`,
+					`${fileName}: ${fileExists ? "Original ↔ NexusAI's Changes" : "New File"} (Editable)`,
 					{
 						preserveFocus: true,
 					},
@@ -190,7 +190,7 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 		return this.activeDiffEditor.document.getText()
 	}
 
-	protected override async saveDocument(): Promise<Boolean> {
+	protected override async saveDocument(): Promise<boolean> {
 		if (!this.activeDiffEditor) {
 			return false
 		}

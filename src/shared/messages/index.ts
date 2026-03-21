@@ -1,20 +1,20 @@
 // Core content types
 export type {
-	ClineAssistantContent,
-	ClineAssistantRedactedThinkingBlock,
-	ClineAssistantThinkingBlock,
-	ClineAssistantToolUseBlock,
-	ClineContent,
-	ClineDocumentContentBlock,
-	ClineImageContentBlock,
-	ClineMessageRole,
-	ClinePromptInputContent,
-	ClineReasoningDetailParam,
-	ClineStorageMessage,
-	ClineTextContentBlock,
-	ClineToolResponseContent,
-	ClineUserContent,
-	ClineUserToolResultContentBlock,
+	NexusAIAssistantContent,
+	NexusAIAssistantRedactedThinkingBlock,
+	NexusAIAssistantThinkingBlock,
+	NexusAIAssistantToolUseBlock,
+	NexusAIContent,
+	NexusAIDocumentContentBlock,
+	NexusAIImageContentBlock,
+	NexusAIMessageRole,
+	NexusAIPromptInputContent,
+	NexusAIReasoningDetailParam,
+	NexusAIStorageMessage,
+	NexusAITextContentBlock,
+	NexusAIToolResponseContent,
+	NexusAIUserContent,
+	NexusAIUserToolResultContentBlock,
 } from "./content"
 export { cleanContentBlock, convertClineStorageToAnthropicMessage, REASONING_DETAILS_PROVIDERS } from "./content"
-export type { ClineMessageMetricsInfo, ClineMessageModelInfo } from "./metrics"
+export type { NexusAIMessageMetricsInfo, NexusAIMessageModelInfo } from "./metrics"

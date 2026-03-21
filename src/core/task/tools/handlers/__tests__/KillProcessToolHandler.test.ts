@@ -3,7 +3,7 @@ import { afterEach, describe, it } from "mocha"
 import "should"
 import type { ToolUse } from "@core/assistant-message"
 import sinon from "sinon"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
 import type { ToolValidator } from "../../ToolValidator"
 import type { TaskConfig } from "../../types/TaskConfig"
@@ -12,7 +12,7 @@ import { KillProcessToolHandler } from "../KillProcessToolHandler"
 type TextResult = { type: string; text: string }
 
 function makeBlock(params: Record<string, string | undefined> = {}): ToolUse {
-	return { type: "tool_use", name: ClineDefaultTool.KILL_PROCESS, params, partial: false }
+	return { type: "tool_use", name: NexusAIDefaultTool.KILL_PROCESS, params, partial: false }
 }
 
 function makeConfig(options: { askResponse?: "yesButtonClicked" | "noButtonClicked"; taskState?: TaskState } = {}): {
@@ -182,7 +182,7 @@ describe("KillProcessToolHandler", () => {
 	describe("name", () => {
 		it("is kill_process", () => {
 			const handler = makeHandler()
-			handler.name.should.equal(ClineDefaultTool.KILL_PROCESS)
+			handler.name.should.equal(NexusAIDefaultTool.KILL_PROCESS)
 		})
 	})
 

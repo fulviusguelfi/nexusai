@@ -1,11 +1,11 @@
 import { Anthropic } from "@anthropic-ai/sdk"
-import { ClineMessageMetricsInfo, ClineMessageModelInfo } from "./metrics"
+import { NexusAIMessageMetricsInfo, NexusAIMessageModelInfo } from "./metrics"
 
-export type ClinePromptInputContent = string
+export type NexusAIPromptInputContent = string
 
-export type ClineMessageRole = "user" | "assistant"
+export type NexusAIMessageRole = "user" | "assistant"
 
-export interface ClineReasoningDetailParam {
+export interface NexusAIReasoningDetailParam {
 	type: "reasoning.text" | string
 	text: string
 	signature: string
@@ -13,7 +13,7 @@ export interface ClineReasoningDetailParam {
 	index: number
 }
 
-interface ClineSharedMessageParam {
+interface NexusAISharedMessageParam {
 	// The id of the response that the block belongs to
 	call_id?: string
 }
@@ -25,54 +25,54 @@ export const REASONING_DETAILS_PROVIDERS = ["cline", "openrouter"]
  * This ensures backward compatibility where the messages were stored in Anthropic format with additional
  * fields unknown to Anthropic SDK.
  */
-export interface ClineTextContentBlock extends Anthropic.TextBlockParam, ClineSharedMessageParam {
+export interface NexusAITextContentBlock extends Anthropic.TextBlockParam, NexusAISharedMessageParam {
 	// reasoning_details only exists for providers listed in REASONING_DETAILS_PROVIDERS
-	reasoning_details?: ClineReasoningDetailParam[]
+	reasoning_details?: NexusAIReasoningDetailParam[]
 	// Thought Signature associates with Gemini
 	signature?: string
 }
 
-export interface ClineImageContentBlock extends Anthropic.ImageBlockParam, ClineSharedMessageParam {}
+export interface NexusAIImageContentBlock extends Anthropic.ImageBlockParam, NexusAISharedMessageParam {}
 
-export interface ClineDocumentContentBlock extends Anthropic.DocumentBlockParam, ClineSharedMessageParam {}
+export interface NexusAIDocumentContentBlock extends Anthropic.DocumentBlockParam, NexusAISharedMessageParam {}
 
-export interface ClineUserToolResultContentBlock extends Anthropic.ToolResultBlockParam, ClineSharedMessageParam {}
+export interface NexusAIUserToolResultContentBlock extends Anthropic.ToolResultBlockParam, NexusAISharedMessageParam {}
 
 /**
  * Assistant only content types
  */
-export interface ClineAssistantToolUseBlock extends Anthropic.ToolUseBlockParam, ClineSharedMessageParam {
+export interface NexusAIAssistantToolUseBlock extends Anthropic.ToolUseBlockParam, NexusAISharedMessageParam {
 	// reasoning_details only exists for providers listed in REASONING_DETAILS_PROVIDERS
-	reasoning_details?: unknown[] | ClineReasoningDetailParam[]
+	reasoning_details?: unknown[] | NexusAIReasoningDetailParam[]
 	// Thought Signature associates with Gemini
 	signature?: string
 }
 
-export interface ClineAssistantThinkingBlock extends Anthropic.ThinkingBlock, ClineSharedMessageParam {
+export interface NexusAIAssistantThinkingBlock extends Anthropic.ThinkingBlock, NexusAISharedMessageParam {
 	// The summary items returned by OpenAI response API
 	// The reasoning details that will be moved to the text block when finalized
-	summary?: unknown[] | ClineReasoningDetailParam[]
+	summary?: unknown[] | NexusAIReasoningDetailParam[]
 }
 
-export interface ClineAssistantRedactedThinkingBlock extends Anthropic.RedactedThinkingBlockParam, ClineSharedMessageParam {}
+export interface NexusAIAssistantRedactedThinkingBlock extends Anthropic.RedactedThinkingBlockParam, NexusAISharedMessageParam {}
 
-export type ClineToolResponseContent = ClinePromptInputContent | Array<ClineTextContentBlock | ClineImageContentBlock>
+export type NexusAIToolResponseContent = NexusAIPromptInputContent | Array<NexusAITextContentBlock | NexusAIImageContentBlock>
 
-export type ClineUserContent =
-	| ClineTextContentBlock
-	| ClineImageContentBlock
-	| ClineDocumentContentBlock
-	| ClineUserToolResultContentBlock
+export type NexusAIUserContent =
+	| NexusAITextContentBlock
+	| NexusAIImageContentBlock
+	| NexusAIDocumentContentBlock
+	| NexusAIUserToolResultContentBlock
 
-export type ClineAssistantContent =
-	| ClineTextContentBlock
-	| ClineImageContentBlock
-	| ClineDocumentContentBlock
-	| ClineAssistantToolUseBlock
-	| ClineAssistantThinkingBlock
-	| ClineAssistantRedactedThinkingBlock
+export type NexusAIAssistantContent =
+	| NexusAITextContentBlock
+	| NexusAIImageContentBlock
+	| NexusAIDocumentContentBlock
+	| NexusAIAssistantToolUseBlock
+	| NexusAIAssistantThinkingBlock
+	| NexusAIAssistantRedactedThinkingBlock
 
-export type ClineContent = ClineUserContent | ClineAssistantContent
+export type NexusAIContent = NexusAIUserContent | NexusAIAssistantContent
 
 /**
  * An extension of Anthropic.MessageParam that includes Cline-specific fields.
@@ -80,24 +80,24 @@ export type ClineContent = ClineUserContent | ClineAssistantContent
  * while allowing for additional metadata specific to Cline to avoid unknown fields in Anthropic SDK
  * added by ignoring the type checking for those fields.
  */
-export interface ClineStorageMessage extends Anthropic.MessageParam {
+export interface NexusAIStorageMessage extends Anthropic.MessageParam {
 	/**
 	 * Response ID associated with this message
 	 */
 	id?: string
-	role: ClineMessageRole
-	content: ClinePromptInputContent | ClineContent[]
+	role: NexusAIMessageRole
+	content: NexusAIPromptInputContent | NexusAIContent[]
 	/**
 	 * NOTE: model information used when generating this message.
 	 * Internal use for message conversion only.
 	 * MUST be removed before sending message to any LLM provider.
 	 */
-	modelInfo?: ClineMessageModelInfo
+	modelInfo?: NexusAIMessageModelInfo
 	/**
 	 * LLM operational and performance metrics for this message
 	 * Includes token counts, costs.
 	 */
-	metrics?: ClineMessageMetricsInfo
+	metrics?: NexusAIMessageMetricsInfo
 	/**
 	 * Timestamp of when the message was created
 	 */
@@ -105,11 +105,11 @@ export interface ClineStorageMessage extends Anthropic.MessageParam {
 }
 
 /**
- * Converts ClineStorageMessage to Anthropic.MessageParam by removing Cline-specific fields
+ * Converts NexusAIStorageMessage to Anthropic.MessageParam by removing Cline-specific fields
  * Cline-specific fields (like modelInfo, reasoning_details) are properly omitted.
  */
 export function convertClineStorageToAnthropicMessage(
-	clineMessage: ClineStorageMessage,
+	clineMessage: NexusAIStorageMessage,
 	provider = "anthropic",
 ): Anthropic.MessageParam {
 	const { role, content } = clineMessage
@@ -134,7 +134,7 @@ export function convertClineStorageToAnthropicMessage(
 /**
  * Clean a content block by removing Cline-specific fields and returning only Anthropic-compatible fields
  */
-export function cleanContentBlock(block: ClineContent): Anthropic.ContentBlock {
+export function cleanContentBlock(block: NexusAIContent): Anthropic.ContentBlock {
 	// Fast path: if no Cline-specific fields exist, return as-is
 	const hasClineFields =
 		"reasoning_details" in block ||

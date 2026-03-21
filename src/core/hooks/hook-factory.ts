@@ -17,7 +17,7 @@ import {
 	TaskResumeData,
 	TaskStartData,
 	UserPromptSubmitData,
-} from "../../shared/proto/cline/hooks"
+} from "../../shared/proto/nexusai/hooks"
 import { getAllHooksDirs } from "../storage/disk"
 import { StateManager } from "../storage/StateManager"
 import { HookExecutionError } from "./HookError"

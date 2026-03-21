@@ -3,12 +3,12 @@ import { shouldSkipReasoningForModel } from "@utils/model-utils"
 import axios from "axios"
 import OpenAI from "openai"
 import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
-import { ClineEnv } from "@/config"
-import { ClineAccountService } from "@/services/account/ClineAccountService"
+import { NexusAIEnv } from "@/config"
+import { NexusAIAccountService } from "@/services/account/NexusAIAccountService"
 import { AuthService } from "@/services/auth/AuthService"
 import { buildClineExtraHeaders } from "@/services/EnvUtils"
-import { CLINE_ACCOUNT_AUTH_ERROR_MESSAGE } from "@/shared/ClineAccount"
-import type { ClineStorageMessage } from "@/shared/messages/content"
+import type { NexusAIStorageMessage } from "@/shared/messages/content"
+import { NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE } from "@/shared/NexusAIAccount"
 import { fetch, getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import type { ApiHandler, CommonApiHandlerOptions } from "../"
@@ -18,7 +18,7 @@ import type { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { ToolCallProcessor } from "../transform/tool-call-processor"
 import type { OpenRouterErrorResponse } from "./types"
 
-interface ClineHandlerOptions extends CommonApiHandlerOptions {
+interface NexusAIHandlerOptions extends CommonApiHandlerOptions {
 	ulid?: string
 	taskId?: string
 	reasoningEffort?: string
@@ -30,21 +30,21 @@ interface ClineHandlerOptions extends CommonApiHandlerOptions {
 	clineApiKey?: string
 }
 
-const CLINE_FREE_MODELS = ["minimax/minimax-m2.5", "kwaipilot/kat-coder-pro", "z-ai/glm-5"]
+const NEXUSAI_FREE_MODELS = ["minimax/minimax-m2.5", "kwaipilot/kat-coder-pro", "z-ai/glm-5"]
 
-export class ClineHandler implements ApiHandler {
-	private options: ClineHandlerOptions
-	private clineAccountService = ClineAccountService.getInstance()
+export class NexusAIHandler implements ApiHandler {
+	private options: NexusAIHandlerOptions
+	private clineAccountService = NexusAIAccountService.getInstance()
 	private _authService: AuthService
 	private client: OpenAI | undefined
 	lastGenerationId?: string
 	private lastRequestId?: string
 
 	private get _baseUrl(): string {
-		return ClineEnv.config().apiBaseUrl
+		return NexusAIEnv.config().apiBaseUrl
 	}
 
-	constructor(options: ClineHandlerOptions) {
+	constructor(options: NexusAIHandlerOptions) {
 		this.options = options
 		this._authService = AuthService.getInstance()
 	}
@@ -52,7 +52,7 @@ export class ClineHandler implements ApiHandler {
 	private async ensureClient(): Promise<OpenAI> {
 		const clineAccountAuthToken = this.options.clineApiKey || (await this._authService.getAuthToken())
 		if (!clineAccountAuthToken) {
-			throw new Error(CLINE_ACCOUNT_AUTH_ERROR_MESSAGE)
+			throw new Error(NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE)
 		}
 		if (!this.client) {
 			try {
@@ -103,7 +103,7 @@ export class ClineHandler implements ApiHandler {
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: OpenAITool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		try {
 			const client = await this.ensureClient()
 
@@ -126,7 +126,7 @@ export class ClineHandler implements ApiHandler {
 			const toolCallProcessor = new ToolCallProcessor()
 
 			for await (const chunk of stream) {
-				Logger.debug("ClineHandler chunk:" + JSON.stringify(chunk))
+				Logger.debug("NexusAIHandler chunk:" + JSON.stringify(chunk))
 				// openrouter returns an error object instead of the openai sdk throwing an error
 				if ("error" in chunk) {
 					const error = chunk.error as OpenRouterErrorResponse["error"]
@@ -206,7 +206,7 @@ export class ClineHandler implements ApiHandler {
 					// @ts-expect-error-next-line
 					let totalCost = (chunk.usage.cost || 0) + (chunk.usage.cost_details?.upstream_inference_cost || 0)
 					const modelId = this.getModel().id
-					const isFreeModel = CLINE_FREE_MODELS.includes(modelId)
+					const isFreeModel = NEXUSAI_FREE_MODELS.includes(modelId)
 
 					if (isFreeModel) {
 						totalCost = 0
@@ -243,7 +243,7 @@ export class ClineHandler implements ApiHandler {
 			try {
 				const clineAccountAuthToken = await this._authService.getAuthToken()
 				if (!clineAccountAuthToken) {
-					throw new Error(CLINE_ACCOUNT_AUTH_ERROR_MESSAGE)
+					throw new Error(NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE)
 				}
 				const headers: Record<string, string> = {
 					// Align with backend auth expectations
@@ -260,7 +260,7 @@ export class ClineHandler implements ApiHandler {
 				const generation = response.data
 				let totalCost = generation?.total_cost || 0
 				const modelId = this.getModel().id
-				const isFreeModel = CLINE_FREE_MODELS.includes(modelId)
+				const isFreeModel = NEXUSAI_FREE_MODELS.includes(modelId)
 
 				if (isFreeModel) {
 					totalCost = 0

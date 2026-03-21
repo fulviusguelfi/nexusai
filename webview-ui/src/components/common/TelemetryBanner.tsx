@@ -1,4 +1,4 @@
-import { TelemetrySettingEnum, TelemetrySettingRequest } from "@shared/proto/cline/state"
+import { TelemetrySettingEnum, TelemetrySettingRequest } from "@shared/proto/nexusai/state"
 import { useCallback } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { StateServiceClient } from "@/services/grpc-client"

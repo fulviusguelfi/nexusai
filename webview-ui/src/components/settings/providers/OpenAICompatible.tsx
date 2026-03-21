@@ -1,6 +1,6 @@
 import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip"
 import { azureOpenAiDefaultApiVersion, openAiModelInfoSaneDefaults } from "@shared/api"
-import { OpenAiModelsRequest } from "@shared/proto/cline/models"
+import { OpenAiModelsRequest } from "@shared/proto/nexusai/models"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useCallback, useEffect, useRef, useState } from "react"

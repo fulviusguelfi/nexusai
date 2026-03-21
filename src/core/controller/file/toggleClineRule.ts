@@ -1,6 +1,6 @@
 import { getWorkspaceBasename } from "@core/workspace"
-import type { ToggleClineRuleRequest } from "@shared/proto/cline/file"
-import { RuleScope, ToggleClineRules } from "@shared/proto/cline/file"
+import type { ToggleClineRuleRequest } from "@shared/proto/nexusai/file"
+import { RuleScope, ToggleClineRules } from "@shared/proto/nexusai/file"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"

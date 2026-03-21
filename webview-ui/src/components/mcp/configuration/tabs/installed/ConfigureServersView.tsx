@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { McpServiceClient } from "@/services/grpc-client"
@@ -54,7 +54,7 @@ const ConfigureServersView = () => {
 						})
 					}}
 					style={{ width: "100%", marginBottom: "5px" }}>
-					<span className="codicon codicon-server" style={{ marginRight: "6px" }}></span>
+					<span className="codicon codicon-server" style={{ marginRight: "6px" }} />
 					Configure MCP Servers
 				</VSCodeButton>
 

@@ -27,7 +27,7 @@ interface ParsedCommand {
  * Controls command execution permissions based on environment variable configuration.
  * Uses glob pattern matching to allow/deny specific commands.
  *
- * Configuration is read from the CLINE_COMMAND_PERMISSIONS environment variable.
+ * Configuration is read from the NEXUSAI_COMMAND_PERMISSIONS environment variable.
  * Format: {"allow": ["pattern1", "pattern2"], "deny": ["pattern3"], "allowRedirects": true}
  *
  * Rule evaluation for chained commands (e.g., "cd /tmp && npm test"):
@@ -46,7 +46,7 @@ export class CommandPermissionController {
 	}
 
 	/**
-	 * Parse the CLINE_COMMAND_PERMISSIONS environment variable
+	 * Parse the NEXUSAI_COMMAND_PERMISSIONS environment variable
 	 * @returns Parsed configuration or null if not set or invalid
 	 */
 	private parseConfig(): CommandPermissionConfig | null {

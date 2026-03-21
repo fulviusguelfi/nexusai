@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { WorktreeDefaults } from "@shared/proto/cline/worktree"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { WorktreeDefaults } from "@shared/proto/nexusai/worktree"
 import { getWorkspacePath } from "@utils/path"
 import path from "path"
 import { getDocumentsPath } from "@/core/storage/disk"

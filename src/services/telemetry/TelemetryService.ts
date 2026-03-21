@@ -1,10 +1,10 @@
 import { HostProvider } from "@hosts/host-provider"
 import type { BrowserSettings } from "@shared/BrowserSettings"
-import { ApiFormat, apiFormatToJSON } from "@shared/proto/cline/models"
 import { ShowMessageType } from "@shared/proto/host/window"
+import { ApiFormat, apiFormatToJSON } from "@shared/proto/nexusai/models"
 import type { TaskFeedbackType } from "@shared/WebviewMessage"
 import * as os from "os"
-import { ClineAccountUserInfo } from "@/services/auth/AuthService"
+import { NexusAIAccountUserInfo } from "@/services/auth/AuthService"
 import { Setting } from "@/shared/proto/index.host"
 import { Logger } from "@/shared/services/Logger"
 import { Mode } from "@/shared/storage/types"
@@ -289,7 +289,7 @@ export class TelemetryService {
 			// Tracks when yolo mode setting is toggled on/off
 			YOLO_MODE_TOGGLED: "task.yolo_mode_toggled",
 			// Tracks when Cline web tools setting is toggled on/off
-			CLINE_WEB_TOOLS_TOGGLED: "task.cline_web_tools_toggled",
+			NEXUSAI_WEB_TOOLS_TOGGLED: "task.cline_web_tools_toggled",
 			// Tracks task initialization timing
 			INITIALIZATION: "task.initialization",
 			// Terminal execution telemetry events
@@ -634,7 +634,7 @@ export class TelemetryService {
 	 * Identifies the accounts user
 	 * @param userInfo The user's information
 	 */
-	public identifyAccount(userInfo: ClineAccountUserInfo) {
+	public identifyAccount(userInfo: NexusAIAccountUserInfo) {
 		const propertiesWithMetadata: TelemetryProperties = {
 			...this.telemetryMetadata,
 		}
@@ -1609,7 +1609,7 @@ export class TelemetryService {
 	 */
 	public captureClineWebToolsToggle(ulid: string, enabled: boolean) {
 		this.capture({
-			event: TelemetryService.EVENTS.TASK.CLINE_WEB_TOOLS_TOGGLED,
+			event: TelemetryService.EVENTS.TASK.NEXUSAI_WEB_TOOLS_TOGGLED,
 			properties: {
 				ulid,
 				enabled,

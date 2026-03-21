@@ -13,10 +13,10 @@ export async function executeCommandInTerminal(
 	try {
 		// Create terminal with fixed options
 		const terminalOptions: vscode.TerminalOptions = {
-			name: "Cline",
-			iconPath: new vscode.ThemeIcon("cline-icon"),
+			name: "NexusAI",
+			iconPath: new vscode.ThemeIcon("nexusai-icon"),
 			env: {
-				CLINE_ACTIVE: "true",
+				NEXUSAI_ACTIVE: "true",
 			},
 		}
 

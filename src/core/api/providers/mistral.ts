@@ -4,7 +4,7 @@ import { Tool as MistralTool } from "@mistralai/mistralai/models/components/tool
 import { MistralModelId, ModelInfo, mistralDefaultModelId, mistralModels } from "@shared/api"
 import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { fetch } from "@/shared/net"
 import { ApiHandler, CommonApiHandlerOptions } from "../"
 import { withRetry } from "../retry"
@@ -80,7 +80,7 @@ export class MistralHandler implements ApiHandler {
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: OpenAITool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		const client = this.ensureClient()
 		const stream = await client.chat
 			.stream({
@@ -118,7 +118,7 @@ export class MistralHandler implements ApiHandler {
 					}
 				}
 			} else if (delta?.content) {
-				let content: string = ""
+				let content = ""
 				if (typeof delta.content === "string") {
 					content = delta.content
 				} else if (Array.isArray(delta.content)) {

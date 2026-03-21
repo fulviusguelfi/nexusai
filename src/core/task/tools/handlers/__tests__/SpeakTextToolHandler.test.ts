@@ -3,14 +3,14 @@ import "should"
 import type { ToolUse } from "@core/assistant-message"
 import { VoiceSessionManager } from "@services/voice/VoiceSessionManager"
 import sinon from "sinon"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
 import type { ToolValidator } from "../../ToolValidator"
 import type { TaskConfig } from "../../types/TaskConfig"
 import { SpeakTextToolHandler } from "../SpeakTextToolHandler"
 
 function makeBlock(params: Record<string, string | undefined> = {}): ToolUse {
-	return { type: "tool_use", name: ClineDefaultTool.SPEAK_TEXT, params, partial: false }
+	return { type: "tool_use", name: NexusAIDefaultTool.SPEAK_TEXT, params, partial: false }
 }
 
 function makeConfig(voiceTtsEnabled: boolean, taskState = new TaskState()): { config: TaskConfig; say: sinon.SinonStub } {

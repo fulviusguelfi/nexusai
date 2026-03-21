@@ -1,10 +1,10 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 
-const id = ClineDefaultTool.LISTEN_FOR_SPEECH
+const id = NexusAIDefaultTool.LISTEN_FOR_SPEECH
 
-const generic: ClineToolSpec = {
+const generic: NexusAIToolSpec = {
 	variant: ModelFamily.GENERIC,
 	id,
 	name: "listen_for_speech",
@@ -22,7 +22,7 @@ const generic: ClineToolSpec = {
 	],
 }
 
-const NATIVE_GPT_5: ClineToolSpec = { ...generic, variant: ModelFamily.NATIVE_GPT_5 }
-const NATIVE_NEXT_GEN: ClineToolSpec = { ...generic, variant: ModelFamily.NATIVE_NEXT_GEN }
+const NATIVE_GPT_5: NexusAIToolSpec = { ...generic, variant: ModelFamily.NATIVE_GPT_5 }
+const NATIVE_NEXT_GEN: NexusAIToolSpec = { ...generic, variant: ModelFamily.NATIVE_NEXT_GEN }
 
 export const listen_for_speech_variants = [generic, NATIVE_GPT_5, NATIVE_NEXT_GEN]

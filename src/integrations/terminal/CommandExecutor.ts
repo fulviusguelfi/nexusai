@@ -14,7 +14,7 @@
  */
 
 import { findLastIndex } from "@shared/array"
-import { ClineToolResponseContent } from "@shared/messages"
+import { NexusAIToolResponseContent } from "@shared/messages"
 import { Logger } from "@/shared/services/Logger"
 import { orchestrateCommandExecution } from "./CommandOrchestrator"
 import { StandaloneTerminalManager } from "./standalone/StandaloneTerminalManager"
@@ -99,7 +99,7 @@ export class CommandExecutor {
 		command: string,
 		timeoutSeconds: number | undefined,
 		options?: CommandExecutionOptions,
-	): Promise<[boolean, ClineToolResponseContent]> {
+	): Promise<[boolean, NexusAIToolResponseContent]> {
 		// Strip leading `cd` to workspace from command
 		const workspaceCdPrefix = `cd ${this.cwd} && `
 		if (command.startsWith(workspaceCdPrefix)) {

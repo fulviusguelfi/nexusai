@@ -4,7 +4,7 @@ import { extractPathLikeStrings, RuleEvaluationContext, toWorkspaceRelativePosix
 type WorkspaceRoot = { path: string }
 type WorkspaceManagerLike = { getRoots(): WorkspaceRoot[] }
 
-type ClineMessageLike = {
+type NexusAIMessageLike = {
 	type: string
 	ask?: string
 	say?: string
@@ -12,7 +12,7 @@ type ClineMessageLike = {
 }
 
 type MessageStateHandlerLike = {
-	getClineMessages(): ClineMessageLike[]
+	getClineMessages(): NexusAIMessageLike[]
 }
 
 export type RuleContextBuilderDeps = {

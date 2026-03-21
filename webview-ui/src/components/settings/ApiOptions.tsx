@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/cline/common"
+import { StringRequest } from "@shared/proto/nexusai/common"
 import PROVIDERS from "@shared/providers/providers.json"
 import { Mode } from "@shared/storage/types"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
@@ -19,7 +19,6 @@ import { BasetenProvider } from "./providers/BasetenProvider"
 import { BedrockProvider } from "./providers/BedrockProvider"
 import { CerebrasProvider } from "./providers/CerebrasProvider"
 import { ClaudeCodeProvider } from "./providers/ClaudeCodeProvider"
-import { ClineProvider } from "./providers/ClineProvider"
 import { DeepSeekProvider } from "./providers/DeepSeekProvider"
 import { DifyProvider } from "./providers/DifyProvider"
 import { DoubaoProvider } from "./providers/DoubaoProvider"
@@ -35,6 +34,7 @@ import { MinimaxProvider } from "./providers/MiniMaxProvider"
 import { MistralProvider } from "./providers/MistralProvider"
 import { MoonshotProvider } from "./providers/MoonshotProvider"
 import { NebiusProvider } from "./providers/NebiusProvider"
+import { NexusAIProvider } from "./providers/NexusAIProvider"
 import { NousResearchProvider } from "./providers/NousresearchProvider"
 import { OcaProvider } from "./providers/OcaProvider"
 import { OllamaProvider } from "./providers/OllamaProvider"
@@ -359,7 +359,7 @@ const ApiOptions = ({
 			)}
 
 			{apiConfiguration && selectedProvider === "cline" && (
-				<ClineProvider
+				<NexusAIProvider
 					currentMode={currentMode}
 					initialModelTab={initialModelTab}
 					isPopup={isPopup}

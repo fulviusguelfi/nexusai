@@ -1,4 +1,4 @@
-import { Empty, EmptyRequest } from "@shared/proto/cline/common"
+import { Empty, EmptyRequest } from "@shared/proto/nexusai/common"
 import { fetchRemoteConfig } from "@/core/storage/remote-config/fetch"
 import { Controller } from ".."
 

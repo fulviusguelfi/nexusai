@@ -2,13 +2,13 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI from "openai"
 import { ApiProvider } from "@/shared/api"
 import {
-	ClineAssistantRedactedThinkingBlock,
-	ClineAssistantThinkingBlock,
-	ClineAssistantToolUseBlock,
-	ClineImageContentBlock,
-	ClineStorageMessage,
-	ClineTextContentBlock,
-	ClineUserToolResultContentBlock,
+	NexusAIAssistantRedactedThinkingBlock,
+	NexusAIAssistantThinkingBlock,
+	NexusAIAssistantToolUseBlock,
+	NexusAIImageContentBlock,
+	NexusAIStorageMessage,
+	NexusAITextContentBlock,
+	NexusAIUserToolResultContentBlock,
 } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 
@@ -55,17 +55,17 @@ function transformToolCallIdForNativeApi(toolId: string, provider?: ApiProvider)
 }
 
 /**
- * Converts an array of ClineStorageMessage objects to OpenAI's Completions API format.
+ * Converts an array of NexusAIStorageMessage objects to OpenAI's Completions API format.
  *
  * Handles conversion of Cline-specific content types (tool uses, tool results, images, reasoning details)
  * into OpenAI's expected message structure, including tool_calls and tool_call_id fields.
  *
- * @param anthropicMessages - Array of ClineStorageMessage objects to be converted
+ * @param anthropicMessages - Array of NexusAIStorageMessage objects to be converted
  * @param provider - Optional parameter to indicate the API provider, which may affect ID transformation logic
  * @returns Array of OpenAI.Chat.ChatCompletionMessageParam objects
  */
 export function convertToOpenAiMessages(
-	anthropicMessages: Omit<ClineStorageMessage, "modelInfo">[],
+	anthropicMessages: Omit<NexusAIStorageMessage, "modelInfo">[],
 	provider?: ApiProvider,
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
 	const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = []
@@ -87,8 +87,8 @@ export function convertToOpenAiMessages(
          */
 			if (anthropicMessage.role === "user") {
 				const { nonToolMessages, toolMessages } = anthropicMessage.content.reduce<{
-					nonToolMessages: (ClineTextContentBlock | ClineImageContentBlock)[]
-					toolMessages: ClineUserToolResultContentBlock[]
+					nonToolMessages: (NexusAITextContentBlock | NexusAIImageContentBlock)[]
+					toolMessages: NexusAIUserToolResultContentBlock[]
 				}>(
 					(acc, part) => {
 						if (part.type === "tool_result") {
@@ -102,7 +102,7 @@ export function convertToOpenAiMessages(
 				)
 
 				// Process tool result messages FIRST since they must follow the tool use messages
-				const toolResultImages: ClineImageContentBlock[] = []
+				const toolResultImages: NexusAIImageContentBlock[] = []
 				toolMessages.forEach((toolMessage) => {
 					// The Anthropic SDK allows tool results to be a string or an array of text and image blocks, enabling rich and structured content. In contrast, the OpenAI SDK only supports tool results as a single string, so we map the Anthropic tool result parts into one concatenated string to maintain compatibility.
 					let content: string
@@ -169,12 +169,12 @@ export function convertToOpenAiMessages(
 			} else if (anthropicMessage.role === "assistant") {
 				const { nonToolMessages, toolMessages } = anthropicMessage.content.reduce<{
 					nonToolMessages: (
-						| ClineTextContentBlock
-						| ClineImageContentBlock
-						| ClineAssistantThinkingBlock
-						| ClineAssistantRedactedThinkingBlock
+						| NexusAITextContentBlock
+						| NexusAIImageContentBlock
+						| NexusAIAssistantThinkingBlock
+						| NexusAIAssistantRedactedThinkingBlock
 					)[]
-					toolMessages: ClineAssistantToolUseBlock[]
+					toolMessages: NexusAIAssistantToolUseBlock[]
 				}>(
 					(acc, part) => {
 						if (part.type === "tool_use") {

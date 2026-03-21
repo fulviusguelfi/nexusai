@@ -1,5 +1,5 @@
 import { Controller } from "@core/controller"
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -153,7 +153,7 @@ export function registerTaskCommands(controller: Controller): vscode.Disposable[
 /**
  * Creates a realistic sequence of messages that would occur in a typical task
  */
-function createRealisticMessageSequence(baseTimestamp: number, taskPrompt: string, taskIndex: number): ClineMessage[] {
+function createRealisticMessageSequence(baseTimestamp: number, taskPrompt: string, taskIndex: number): NexusAIMessage[] {
 	// Use an incrementing timestamp to ensure messages appear in sequence
 	let timestamp = baseTimestamp
 	const getNextTimestamp = () => {
@@ -166,7 +166,7 @@ function createRealisticMessageSequence(baseTimestamp: number, taskPrompt: strin
 	const commitHash = `commit${taskIndex}${Math.floor(Math.random() * 1000000).toString(16)}`
 
 	// Create a realistic message sequence
-	const messages: ClineMessage[] = [
+	const messages: NexusAIMessage[] = [
 		// Initial task message - uses "say" with "text" which is the format used in Cline.ts
 		{
 			ts: baseTimestamp,

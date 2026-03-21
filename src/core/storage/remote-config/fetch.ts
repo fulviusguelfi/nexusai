@@ -4,9 +4,9 @@ import { buildBasicClineHeaders } from "@/services/EnvUtils"
 import { getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { ConfiguredAPIKeys } from "@/shared/storage/state-keys"
-import { ClineEnv } from "../../../config"
+import { NexusAIEnv } from "../../../config"
 import { AuthService } from "../../../services/auth/AuthService"
-import { CLINE_API_ENDPOINT } from "../../../shared/cline/api"
+import { NEXUSAI_API_ENDPOINT } from "../../../shared/nexusai/api"
 import { APIKeySchema, type APIKeySettings, RemoteConfig, RemoteConfigSchema } from "../../../shared/remote-config/schema"
 import { deleteRemoteConfigFromCache, readRemoteConfigFromCache, writeRemoteConfigToCache } from "../disk"
 import { applyRemoteConfig, clearRemoteConfig, isRemoteConfigEnabled } from "./utils"
@@ -46,7 +46,7 @@ async function makeAuthenticatedRequest<T>(endpoint: string, organizationId: str
 
 	// Construct URL by replacing {id} placeholder with organizationId
 	const apiEndpoint = endpoint.replace("{id}", organizationId)
-	const url = new URL(apiEndpoint, ClineEnv.config().apiBaseUrl).toString()
+	const url = new URL(apiEndpoint, NexusAIEnv.config().apiBaseUrl).toString()
 
 	// Make authenticated request
 	const requestConfig: AxiosRequestConfig = {
@@ -99,7 +99,7 @@ async function fetchRemoteConfigForOrganization(organizationId: string): Promise
 	try {
 		// Fetch config data using helper
 		const configData = await makeAuthenticatedRequest<{ value: string; enabled: boolean }>(
-			CLINE_API_ENDPOINT.REMOTE_CONFIG,
+			NEXUSAI_API_ENDPOINT.REMOTE_CONFIG,
 			organizationId,
 		)
 
@@ -146,7 +146,10 @@ async function fetchRemoteConfigForOrganization(organizationId: string): Promise
 async function fetchApiKeysForOrganization(organizationId: string): Promise<APIKeySettings> {
 	try {
 		// Fetch API keys string using helper
-		const response = await makeAuthenticatedRequest<{ providerApiKeys: string }>(CLINE_API_ENDPOINT.API_KEYS, organizationId)
+		const response = await makeAuthenticatedRequest<{ providerApiKeys: string }>(
+			NEXUSAI_API_ENDPOINT.API_KEYS,
+			organizationId,
+		)
 
 		// Parse and return API keys
 		return parseApiKeys(response?.providerApiKeys)

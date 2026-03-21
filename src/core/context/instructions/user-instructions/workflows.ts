@@ -1,6 +1,6 @@
 import { synchronizeRuleToggles } from "@core/context/instructions/user-instructions/rule-helpers"
 import { ensureWorkflowsDirectoryExists, GlobalFileNames } from "@core/storage/disk"
-import { ClineRulesToggles } from "@shared/cline-rules"
+import { NexusAIRulesToggles } from "@shared/nexusai-rules"
 import path from "path"
 import { Controller } from "@/core/controller"
 
@@ -11,8 +11,8 @@ export async function refreshWorkflowToggles(
 	controller: Controller,
 	workingDirectory: string,
 ): Promise<{
-	globalWorkflowToggles: ClineRulesToggles
-	localWorkflowToggles: ClineRulesToggles
+	globalWorkflowToggles: NexusAIRulesToggles
+	localWorkflowToggles: NexusAIRulesToggles
 }> {
 	// Global workflows
 	const globalWorkflowToggles = controller.stateManager.getGlobalSettingsKey("globalWorkflowToggles")

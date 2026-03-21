@@ -7,9 +7,9 @@ import { parseWorkspaceInlinePath } from "@/core/workspace/utils/parseWorkspaceI
 import { WorkspacePathAdapter } from "@/core/workspace/WorkspacePathAdapter"
 import { resolveWorkspacePath } from "@/core/workspace/WorkspaceResolver"
 import { telemetryService } from "@/services/telemetry"
-import { ClineSayTool } from "@/shared/ExtensionMessage"
+import { NexusAISayTool } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -19,7 +19,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class SearchFilesToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.SEARCH
+	readonly name = NexusAIDefaultTool.SEARCH
 
 	constructor(private validator: ToolValidator) {}
 
@@ -188,7 +188,7 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 			regex: uiHelpers.removeClosingTag(block, "regex", regex),
 			filePattern: uiHelpers.removeClosingTag(block, "file_pattern", filePattern),
 			operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath),
-		} satisfies ClineSayTool
+		} satisfies NexusAISayTool
 
 		const partialMessage = JSON.stringify(sharedMessageProps)
 
@@ -301,7 +301,7 @@ export class SearchFilesToolHandler implements IFullyManagedTool {
 			regex: regex,
 			filePattern: filePattern,
 			operationIsLocatedInWorkspace: await isLocatedInWorkspace(parsedPath),
-		} satisfies ClineSayTool
+		} satisfies NexusAISayTool
 
 		const completeMessage = JSON.stringify(sharedMessageProps)
 

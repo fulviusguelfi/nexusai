@@ -1,4 +1,4 @@
-import { NewTaskRequest } from "@shared/proto/cline/task"
+import { NewTaskRequest } from "@shared/proto/nexusai/task"
 import React from "react"
 import { TaskServiceClient } from "@/services/grpc-client"
 import QuickWinCard from "./QuickWinCard"

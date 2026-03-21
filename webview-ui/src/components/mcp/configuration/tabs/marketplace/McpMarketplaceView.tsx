@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
 import {
 	VSCodeButton,
 	VSCodeDropdown,
@@ -73,7 +73,7 @@ const McpMarketplaceView = () => {
 		}
 	}, [mcpMarketplaceCatalog])
 
-	const fetchMarketplace = (forceRefresh: boolean = false) => {
+	const fetchMarketplace = (forceRefresh = false) => {
 		if (forceRefresh) {
 			setIsRefreshing(true)
 		} else {

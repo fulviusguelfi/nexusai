@@ -1,4 +1,4 @@
-import { AskResponseRequest } from "@shared/proto/cline/task"
+import { AskResponseRequest } from "@shared/proto/nexusai/task"
 import styled from "styled-components"
 import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
 import { TaskServiceClient } from "@/services/grpc-client"

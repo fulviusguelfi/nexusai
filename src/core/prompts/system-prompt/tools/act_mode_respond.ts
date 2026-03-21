@@ -1,6 +1,6 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 
 /**
  * ## act_mode_respond
@@ -20,9 +20,9 @@ Usage:
 </act_mode_respond>
  */
 
-const id = ClineDefaultTool.ACT_MODE
+const id = NexusAIDefaultTool.ACT_MODE
 
-const NATIVE_GPT_5: ClineToolSpec = {
+const NATIVE_GPT_5: NexusAIToolSpec = {
 	variant: ModelFamily.NATIVE_GPT_5,
 	id,
 	name: "act_mode_respond",
@@ -56,12 +56,12 @@ CRITICAL CONSTRAINT: You MUST NOT call this tool more than once in a row. After 
 	],
 }
 
-const NATIVE_NEXT_GEN: ClineToolSpec = {
+const NATIVE_NEXT_GEN: NexusAIToolSpec = {
 	...NATIVE_GPT_5,
 	variant: ModelFamily.NATIVE_NEXT_GEN,
 }
 
-const GEMINI_3: ClineToolSpec = {
+const GEMINI_3: NexusAIToolSpec = {
 	...NATIVE_GPT_5,
 	variant: ModelFamily.GEMINI_3,
 }

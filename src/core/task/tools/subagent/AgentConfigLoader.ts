@@ -1,6 +1,6 @@
 import { parseYamlFrontmatter } from "@core/context/instructions/user-instructions/frontmatter"
 import { Logger } from "@shared/services/Logger"
-import { ClineDefaultTool, setDynamicToolUseNames } from "@shared/tools"
+import { NexusAIDefaultTool, setDynamicToolUseNames } from "@shared/tools"
 import chokidar, { type FSWatcher } from "chokidar"
 import fs from "fs/promises"
 import os from "os"
@@ -15,7 +15,7 @@ const SUBAGENT_DYNAMIC_TOOL_NAMESPACE = "subagent"
 const AgentBaseConfigSchema = z.object({
 	name: z.string().trim().min(1),
 	description: z.string().trim().min(1),
-	tools: z.array(z.nativeEnum(ClineDefaultTool)).default([]),
+	tools: z.array(z.nativeEnum(NexusAIDefaultTool)).default([]),
 	skills: z.array(z.string().trim().min(1)).optional(),
 	modelId: z.string().trim().min(1).optional(),
 	systemPrompt: z.string().trim().min(1),
@@ -31,23 +31,23 @@ const AgentConfigFrontmatterSchema = z.object({
 
 export type AgentBaseConfig = z.infer<typeof AgentBaseConfigSchema>
 
-function normalizeToolName(toolName: string): ClineDefaultTool {
+function normalizeToolName(toolName: string): NexusAIDefaultTool {
 	const trimmed = toolName.trim()
 	if (!trimmed) {
 		throw new Error("Tool name cannot be empty.")
 	}
 
-	const asDefaultTool = trimmed as ClineDefaultTool
-	if (Object.values(ClineDefaultTool).includes(asDefaultTool)) {
+	const asDefaultTool = trimmed as NexusAIDefaultTool
+	if (Object.values(NexusAIDefaultTool).includes(asDefaultTool)) {
 		return asDefaultTool
 	}
 
 	throw new Error(
-		`Unknown tool '${trimmed}'. Expected a ClineDefaultTool value (for example: read_file, list_files, search_files).`,
+		`Unknown tool '${trimmed}'. Expected a NexusAIDefaultTool value (for example: read_file, list_files, search_files).`,
 	)
 }
 
-function parseTools(tools: string | string[] | undefined): ClineDefaultTool[] {
+function parseTools(tools: string | string[] | undefined): NexusAIDefaultTool[] {
 	if (!tools) {
 		return []
 	}

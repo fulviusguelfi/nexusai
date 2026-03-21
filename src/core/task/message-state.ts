@@ -5,35 +5,35 @@ import Mutex from "p-mutex"
 import { findLastIndex } from "@/shared/array"
 import { combineApiRequests } from "@/shared/combineApiRequests"
 import { combineCommandSequences } from "@/shared/combineCommandSequences"
-import { ClineMessage } from "@/shared/ExtensionMessage"
+import { NexusAIMessage } from "@/shared/ExtensionMessage"
 import { getApiMetrics } from "@/shared/getApiMetrics"
 import { HistoryItem } from "@/shared/HistoryItem"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import { getCwd, getDesktopDir } from "@/utils/path"
 import { ensureTaskDirectoryExists, saveApiConversationHistory, saveClineMessages } from "../storage/disk"
 import { TaskState } from "./TaskState"
 
 // Event types for clineMessages changes
-export type ClineMessageChangeType = "add" | "update" | "delete" | "set"
+export type NexusAIMessageChangeType = "add" | "update" | "delete" | "set"
 
-export interface ClineMessageChange {
-	type: ClineMessageChangeType
+export interface NexusAIMessageChange {
+	type: NexusAIMessageChangeType
 	/** The full array after the change */
-	messages: ClineMessage[]
+	messages: NexusAIMessage[]
 	/** The affected index (for add/update/delete) */
 	index?: number
 	/** The new/updated message (for add/update) */
-	message?: ClineMessage
+	message?: NexusAIMessage
 	/** The old message before change (for update/delete) */
-	previousMessage?: ClineMessage
+	previousMessage?: NexusAIMessage
 	/** The entire previous array (for set) */
-	previousMessages?: ClineMessage[]
+	previousMessages?: NexusAIMessage[]
 }
 
 // Strongly-typed event emitter interface
 export interface MessageStateHandlerEvents {
-	clineMessagesChanged: [change: ClineMessageChange]
+	clineMessagesChanged: [change: NexusAIMessageChange]
 }
 
 interface MessageStateHandlerParams {
@@ -46,8 +46,8 @@ interface MessageStateHandlerParams {
 }
 
 export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents> {
-	private apiConversationHistory: ClineStorageMessage[] = []
-	private clineMessages: ClineMessage[] = []
+	private apiConversationHistory: NexusAIStorageMessage[] = []
+	private clineMessages: NexusAIMessage[] = []
 	private taskIsFavorited: boolean
 	private checkpointTracker: CheckpointTracker | undefined
 	private updateTaskHistory: (historyItem: HistoryItem) => Promise<HistoryItem[]>
@@ -73,7 +73,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	/**
 	 * Emit a clineMessagesChanged event with the change details
 	 */
-	private emitClineMessagesChanged(change: ClineMessageChange): void {
+	private emitClineMessagesChanged(change: NexusAIMessageChange): void {
 		this.emit("clineMessagesChanged", change)
 	}
 
@@ -90,19 +90,19 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 		return await this.stateMutex.withLock(fn)
 	}
 
-	getApiConversationHistory(): ClineStorageMessage[] {
+	getApiConversationHistory(): NexusAIStorageMessage[] {
 		return this.apiConversationHistory
 	}
 
-	setApiConversationHistory(newHistory: ClineStorageMessage[]): void {
+	setApiConversationHistory(newHistory: NexusAIStorageMessage[]): void {
 		this.apiConversationHistory = newHistory
 	}
 
-	getClineMessages(): ClineMessage[] {
+	getClineMessages(): NexusAIMessage[] {
 		return this.clineMessages
 	}
 
-	setClineMessages(newMessages: ClineMessage[]) {
+	setClineMessages(newMessages: NexusAIMessage[]) {
 		const previousMessages = this.clineMessages
 		this.clineMessages = newMessages
 		this.emitClineMessagesChanged({
@@ -175,7 +175,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 		})
 	}
 
-	async addToApiConversationHistory(message: ClineStorageMessage) {
+	async addToApiConversationHistory(message: NexusAIStorageMessage) {
 		// Protect with mutex to prevent concurrent modifications from corrupting data (RC-4)
 		return await this.withStateLock(async () => {
 			this.apiConversationHistory.push(message)
@@ -183,7 +183,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 		})
 	}
 
-	async overwriteApiConversationHistory(newHistory: ClineStorageMessage[]): Promise<void> {
+	async overwriteApiConversationHistory(newHistory: NexusAIStorageMessage[]): Promise<void> {
 		// Protect with mutex to prevent concurrent modifications from corrupting data (RC-4)
 		return await this.withStateLock(async () => {
 			this.apiConversationHistory = newHistory
@@ -197,7 +197,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * The conversationHistoryIndex must be set correctly based on the current state,
 	 * and the message must be added and saved without any interleaving operations
 	 */
-	async addToClineMessages(message: ClineMessage) {
+	async addToClineMessages(message: NexusAIMessage) {
 		return await this.withStateLock(async () => {
 			// these values allow us to reconstruct the conversation history at the time this cline message was created
 			// it's important that apiConversationHistory is initialized before we add cline messages
@@ -219,7 +219,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * Replace the entire clineMessages array with new messages
 	 * Protected by mutex to prevent concurrent modifications (RC-4)
 	 */
-	async overwriteClineMessages(newMessages: ClineMessage[]) {
+	async overwriteClineMessages(newMessages: NexusAIMessage[]) {
 		return await this.withStateLock(async () => {
 			const previousMessages = this.clineMessages
 			this.clineMessages = newMessages
@@ -236,7 +236,7 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 	 * Update a specific message in the clineMessages array
 	 * The entire operation (validate, update, save) is atomic to prevent races (RC-4)
 	 */
-	async updateClineMessage(index: number, updates: Partial<ClineMessage>): Promise<void> {
+	async updateClineMessage(index: number, updates: Partial<NexusAIMessage>): Promise<void> {
 		return await this.withStateLock(async () => {
 			if (index < 0 || index >= this.clineMessages.length) {
 				throw new Error(`Invalid message index: ${index}`)

@@ -3,9 +3,9 @@ import "should"
 import sinon from "sinon"
 import type { Controller } from "@/core/controller"
 import { Logger } from "@/shared/services/Logger"
-import { AuthService, type ClineAuthInfo } from "../AuthService"
+import { AuthService, type NexusAIAuthInfo } from "../AuthService"
 
-function makeAuthInfo(): ClineAuthInfo {
+function makeAuthInfo(): NexusAIAuthInfo {
 	return {
 		idToken: "id-token",
 		refreshToken: "refresh-token",
@@ -49,17 +49,17 @@ describe("AuthService.restoreRefreshTokenAndRetrieveAuthInfo", () => {
 	it("captures error_recovery logout and clears local auth when restore returns null", async () => {
 		const warnStub = sandbox.stub(Logger, "warn")
 		sandbox
-			.stub(service as unknown as { retrieveAuthInfo: () => Promise<ClineAuthInfo | null> }, "retrieveAuthInfo")
+			.stub(service as unknown as { retrieveAuthInfo: () => Promise<NexusAIAuthInfo | null> }, "retrieveAuthInfo")
 			.resolves(null)
 
 		;(service as unknown as { _authenticated: boolean })._authenticated = true
-		;(service as unknown as { _clineAuthInfo: ClineAuthInfo | null })._clineAuthInfo = makeAuthInfo()
+		;(service as unknown as { _clineAuthInfo: NexusAIAuthInfo | null })._clineAuthInfo = makeAuthInfo()
 
 		await service.restoreRefreshTokenAndRetrieveAuthInfo()
 		await Promise.resolve()
 
 		;(service as unknown as { _authenticated: boolean })._authenticated.should.be.false()
-		;((service as unknown as { _clineAuthInfo: ClineAuthInfo | null })._clineAuthInfo === null).should.be.true()
+		;((service as unknown as { _clineAuthInfo: NexusAIAuthInfo | null })._clineAuthInfo === null).should.be.true()
 		warnStub.calledWithMatch("No user found after restoring auth token").should.be.true()
 	})
 
@@ -67,16 +67,16 @@ describe("AuthService.restoreRefreshTokenAndRetrieveAuthInfo", () => {
 		const restoreError = new Error("network down")
 		const errorStub = sandbox.stub(Logger, "error")
 		sandbox
-			.stub(service as unknown as { retrieveAuthInfo: () => Promise<ClineAuthInfo | null> }, "retrieveAuthInfo")
+			.stub(service as unknown as { retrieveAuthInfo: () => Promise<NexusAIAuthInfo | null> }, "retrieveAuthInfo")
 			.rejects(restoreError)
 
 		;(service as unknown as { _authenticated: boolean })._authenticated = true
-		;(service as unknown as { _clineAuthInfo: ClineAuthInfo | null })._clineAuthInfo = makeAuthInfo()
+		;(service as unknown as { _clineAuthInfo: NexusAIAuthInfo | null })._clineAuthInfo = makeAuthInfo()
 
 		await service.restoreRefreshTokenAndRetrieveAuthInfo()
 
 		;(service as unknown as { _authenticated: boolean })._authenticated.should.be.false()
-		;((service as unknown as { _clineAuthInfo: ClineAuthInfo | null })._clineAuthInfo === null).should.be.true()
+		;((service as unknown as { _clineAuthInfo: NexusAIAuthInfo | null })._clineAuthInfo === null).should.be.true()
 		errorStub.calledWithMatch("Error restoring auth token:", restoreError).should.be.true()
 	})
 })

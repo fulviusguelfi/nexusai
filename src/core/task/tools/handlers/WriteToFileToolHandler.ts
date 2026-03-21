@@ -5,13 +5,13 @@ import { constructNewFileContent, getLineNumberFromCharIndex } from "@core/assis
 import { formatResponse } from "@core/prompts/responses"
 import { getWorkspaceBasename, resolveWorkspacePath } from "@core/workspace"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
-import { ClineSayTool } from "@shared/ExtensionMessage"
+import { NexusAISayTool } from "@shared/ExtensionMessage"
 import { getLastApiReqTotalTokens } from "@shared/getApiMetrics"
 import { fileExistsAtPath } from "@utils/fs"
 import { arePathsEqual, getReadablePath, isLocatedInWorkspace } from "@utils/path"
 import { applyPatch } from "diff"
 import { telemetryService } from "@/services/telemetry"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -24,7 +24,7 @@ import { ToolDisplayUtils } from "../utils/ToolDisplayUtils"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class WriteToFileToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.FILE_NEW // This handler supports write_to_file, replace_in_file, and new_rule
+	readonly name = NexusAIDefaultTool.FILE_NEW // This handler supports write_to_file, replace_in_file, and new_rule
 
 	constructor(private validator: ToolValidator) {}
 
@@ -55,7 +55,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			const { relPath, absolutePath, fileExists, diff, content, newContent, matchIndices } = result
 
 			// Create and show partial UI message
-			const sharedMessageProps: ClineSayTool = {
+			const sharedMessageProps: NexusAISayTool = {
 				tool: fileExists ? "editedExistingFile" : "newFileCreated",
 				path: getReadablePath(
 					config.cwd,
@@ -161,7 +161,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			const { relPath, absolutePath, fileExists, diff, content, newContent, workspaceContext, matchIndices } = result
 
 			// Handle approval flow
-			const sharedMessageProps: ClineSayTool = {
+			const sharedMessageProps: NexusAISayTool = {
 				tool: fileExists ? "editedExistingFile" : "newFileCreated",
 				path: getReadablePath(config.cwd, relPath),
 				content: diff || content,
@@ -194,7 +194,7 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				// 		newContent,
 				// 	)
 				// : undefined,
-			} satisfies ClineSayTool)
+			} satisfies NexusAISayTool)
 
 			if (await config.callbacks.shouldAutoApproveToolWithPath(block.name, relPath)) {
 				// Auto-approval flow

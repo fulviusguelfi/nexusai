@@ -2,11 +2,11 @@ import { afterEach, describe, it } from "mocha"
 import "should"
 import sinon from "sinon"
 import type { Controller } from "@/core/controller"
-import type { ClineAuthInfo } from "@/services/auth/AuthService"
+import type { NexusAIAuthInfo } from "@/services/auth/AuthService"
 import { AuthNetworkError } from "@/services/error/NexusError"
 import { NexusAuthProvider } from "../NexusAuthProvider"
 
-function makeAuthInfo(tokenExpSeconds: number, expiresAtSeconds: number): ClineAuthInfo {
+function makeAuthInfo(tokenExpSeconds: number, expiresAtSeconds: number): NexusAIAuthInfo {
 	return {
 		idToken: `token-${tokenExpSeconds}`,
 		refreshToken: "refresh-token",
@@ -23,7 +23,7 @@ function makeAuthInfo(tokenExpSeconds: number, expiresAtSeconds: number): ClineA
 	}
 }
 
-function makeControllerWithAuth(authInfo: ClineAuthInfo): Controller {
+function makeControllerWithAuth(authInfo: NexusAIAuthInfo): Controller {
 	return {
 		stateManager: {
 			getSecretKey: sinon.stub().withArgs("cline:clineAccountId").returns(JSON.stringify(authInfo)),

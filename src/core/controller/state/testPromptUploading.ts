@@ -1,7 +1,7 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { TestConnectionResult } from "@shared/proto/cline/state"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { TestConnectionResult } from "@shared/proto/nexusai/state"
 import { Logger } from "@/shared/services/Logger"
-import { blobStorage } from "@/shared/storage/ClineBlobStorage"
+import { blobStorage } from "@/shared/storage/NexusAIBlobStorage"
 import { Controller } from ".."
 
 /**

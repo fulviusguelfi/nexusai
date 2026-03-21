@@ -8,8 +8,8 @@ import type { BrowserSettings } from "@/shared/BrowserSettings"
 import type { FocusChainSettings } from "@/shared/FocusChainSettings"
 import { ModelFamily } from "@/shared/prompts"
 import type { SkillMetadata } from "@/shared/skills"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "./spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "./spec"
 import { SystemPromptSection } from "./templates/placeholders"
 
 /**
@@ -41,8 +41,8 @@ export interface PromptVariant {
 	readonly placeholders: Readonly<Record<string, string>> // Default placeholder values
 
 	// Tool configuration
-	readonly tools?: readonly ClineDefaultTool[] // Ordered list of tools to include
-	readonly toolOverrides?: Readonly<Partial<Record<ClineDefaultTool, ConfigOverride>>> // Tool customizations
+	readonly tools?: readonly NexusAIDefaultTool[] // Ordered list of tools to include
+	readonly toolOverrides?: Readonly<Partial<Record<NexusAIDefaultTool, ConfigOverride>>> // Tool customizations
 }
 
 /**
@@ -61,8 +61,8 @@ export interface MutablePromptVariant {
 	componentOrder: SystemPromptSection[]
 	componentOverrides: Partial<Record<SystemPromptSection, ConfigOverride>>
 	placeholders: Record<string, string>
-	tools?: ClineDefaultTool[]
-	toolOverrides?: Partial<Record<ClineDefaultTool, ConfigOverride>>
+	tools?: NexusAIDefaultTool[]
+	toolOverrides?: Partial<Record<NexusAIDefaultTool, ConfigOverride>>
 }
 
 /**
@@ -72,7 +72,7 @@ export interface PromptConfig {
 	readonly modelName?: string
 	readonly temperature?: number
 	readonly maxTokens?: number
-	readonly tools?: readonly ClineToolSpec[]
+	readonly tools?: readonly NexusAIToolSpec[]
 	readonly [key: string]: unknown // Additional arbitrary config
 }
 
@@ -154,8 +154,8 @@ export type ComponentKey = keyof typeof SystemPromptSection
 export type ComponentValue = (typeof SystemPromptSection)[ComponentKey]
 
 // Extract tool keys as literal types
-export type ToolKey = keyof typeof ClineDefaultTool
-export type ToolValue = (typeof ClineDefaultTool)[ToolKey]
+export type ToolKey = keyof typeof NexusAIDefaultTool
+export type ToolValue = (typeof NexusAIDefaultTool)[ToolKey]
 
 // Type for variant builder methods
 export type VariantBuilderMethod<T> = (this: T, ...args: any[]) => T
@@ -169,8 +169,8 @@ export function isValidSystemPromptSection(section: string): section is SystemPr
 	return Object.values(SystemPromptSection).includes(section as SystemPromptSection)
 }
 
-export function isValidClineDefaultTool(tool: string): tool is ClineDefaultTool {
-	return Object.values(ClineDefaultTool).includes(tool as ClineDefaultTool)
+export function isValidClineDefaultTool(tool: string): tool is NexusAIDefaultTool {
+	return Object.values(NexusAIDefaultTool).includes(tool as NexusAIDefaultTool)
 }
 
 /**
@@ -202,8 +202,8 @@ export interface VariantBuilder {
 	template(baseTemplate: string): this
 	components(...sections: SystemPromptSection[]): this
 	overrideComponent(section: SystemPromptSection, override: ConfigOverride): this
-	tools(...tools: ClineDefaultTool[]): this
-	overrideTool(tool: ClineDefaultTool, override: ConfigOverride): this
+	tools(...tools: NexusAIDefaultTool[]): this
+	overrideTool(tool: NexusAIDefaultTool, override: ConfigOverride): this
 	placeholders(placeholders: Record<string, string>): this
 	config(config: Record<string, any>): this
 	build(): VariantConfig
@@ -271,5 +271,5 @@ export const TASK_PROGRESS_PARAMETER = {
 	required: false,
 	instruction: `A checklist showing task progress after this tool use is completed. The task_progress parameter must be included as a separate parameter inside of the parent tool call, it must be separate from other parameters such as content, arguments, etc. (See 'UPDATING TASK PROGRESS' section for more details)`,
 	usage: "Checklist here (optional)",
-	dependencies: [ClineDefaultTool.TODO],
+	dependencies: [NexusAIDefaultTool.TODO],
 }

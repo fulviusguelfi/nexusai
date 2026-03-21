@@ -7,7 +7,7 @@ import {
 import { formatResponse } from "@core/prompts/responses"
 import { GlobalFileNames } from "@core/storage/disk"
 import { listFiles } from "@services/glob/list-files"
-import { ClineRulesToggles } from "@shared/cline-rules"
+import { NexusAIRulesToggles } from "@shared/nexusai-rules"
 import { fileExistsAtPath, isDirectory } from "@utils/fs"
 import fs from "fs/promises"
 import path from "path"
@@ -21,9 +21,9 @@ export async function refreshExternalRulesToggles(
 	controller: Controller,
 	workingDirectory: string,
 ): Promise<{
-	windsurfLocalToggles: ClineRulesToggles
-	cursorLocalToggles: ClineRulesToggles
-	agentsLocalToggles: ClineRulesToggles
+	windsurfLocalToggles: NexusAIRulesToggles
+	cursorLocalToggles: NexusAIRulesToggles
+	agentsLocalToggles: NexusAIRulesToggles
 }> {
 	// local windsurf toggles
 	const localWindsurfRulesToggles = controller.stateManager.getWorkspaceStateKey("localWindsurfRulesToggles")
@@ -61,7 +61,7 @@ export async function refreshExternalRulesToggles(
 /**
  * Gather formatted windsurf rules
  */
-export const getLocalWindsurfRules = async (cwd: string, toggles: ClineRulesToggles) => {
+export const getLocalWindsurfRules = async (cwd: string, toggles: NexusAIRulesToggles) => {
 	const windsurfRulesFilePath = path.resolve(cwd, GlobalFileNames.windsurfRules)
 
 	let windsurfRulesFileInstructions: string | undefined
@@ -87,7 +87,7 @@ export const getLocalWindsurfRules = async (cwd: string, toggles: ClineRulesTogg
 /**
  * Gather formatted cursor rules, which can come from two sources
  */
-export const getLocalCursorRules = async (cwd: string, toggles: ClineRulesToggles) => {
+export const getLocalCursorRules = async (cwd: string, toggles: NexusAIRulesToggles) => {
 	// we first check for the .cursorrules file
 	const cursorRulesFilePath = path.resolve(cwd, GlobalFileNames.cursorRulesFile)
 	let cursorRulesFileInstructions: string | undefined
@@ -158,7 +158,7 @@ async function findAgentsMdFiles(cwd: string): Promise<string[]> {
 /**
  * Gather formatted agents rules - searches recursively and combines all agents.md files
  */
-export const getLocalAgentsRules = async (cwd: string, toggles: ClineRulesToggles) => {
+export const getLocalAgentsRules = async (cwd: string, toggles: NexusAIRulesToggles) => {
 	const agentsRulesFilePath = path.resolve(cwd, GlobalFileNames.agentsRulesFile)
 
 	// Check if the top-level agents.md file is enabled

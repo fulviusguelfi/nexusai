@@ -1,4 +1,4 @@
-import { ApiFormat } from "@shared/proto/cline/models"
+import { ApiFormat } from "@shared/proto/nexusai/models"
 import * as assert from "assert"
 import type { ITelemetryProvider, TelemetryProperties, TelemetrySettings } from "../providers/ITelemetryProvider"
 import { TelemetryMetadata, TelemetryService } from "../TelemetryService"

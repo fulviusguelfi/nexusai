@@ -1,5 +1,5 @@
 import type { Controller } from "@core/controller"
-import { VoiceSettings } from "@shared/proto/cline/voice"
+import { VoiceSettings } from "@shared/proto/nexusai/voice"
 
 /**
  * Persists voice settings (piper voice, speed) to global state

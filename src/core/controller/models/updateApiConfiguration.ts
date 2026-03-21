@@ -1,8 +1,8 @@
-import { Empty } from "@shared/proto/cline/common"
+import { Empty } from "@shared/proto/nexusai/common"
 import { convertProtoToApiProvider } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { buildApiHandler } from "@/core/api"
 import { ApiHandlerOptions, ApiProvider } from "@/shared/api"
-import { UpdateApiConfigurationRequestNew } from "@/shared/proto/index.cline"
+import { UpdateApiConfigurationRequestNew } from "@/shared/proto/index.nexusai"
 import { Logger } from "@/shared/services/Logger"
 import { Secrets } from "@/shared/storage/state-keys"
 import type { Controller } from "../index"
@@ -41,7 +41,8 @@ function parseFieldMask(updateMask: string[]): {
 function getAlternateModeField(fieldName: string): string | null {
 	if (fieldName.startsWith("planMode")) {
 		return fieldName.replace("planMode", "actMode")
-	} else if (fieldName.startsWith("actMode")) {
+	}
+	if (fieldName.startsWith("actMode")) {
 		return fieldName.replace("actMode", "planMode")
 	}
 	return null

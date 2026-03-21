@@ -1,4 +1,4 @@
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
+import { EmptyRequest, StringRequest } from "@shared/proto/nexusai/common"
 import { VSCodeButton, VSCodeCheckbox, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
 import React, { useCallback, useEffect, useState } from "react"
 import styled from "styled-components"
@@ -312,7 +312,8 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({ 
 											fontSize: "12px",
 											color: "var(--vscode-descriptionForeground)",
 											margin: 0,
-										}}></p>
+										}}
+									/>
 								</div>
 							)}
 							{/* Chrome Executable Path section now follows remote-specific settings */}

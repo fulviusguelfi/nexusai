@@ -1,9 +1,9 @@
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { ClineAsk, ClineAskUseMcpServer } from "@shared/ExtensionMessage"
+import { NexusAIAsk, NexusAIAskUseMcpServer } from "@shared/ExtensionMessage"
 import { telemetryService } from "@/services/telemetry"
 import { truncateContent } from "@/shared/content-limits"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import { showNotificationForApproval } from "../../utils"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -12,7 +12,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 import { ToolResultUtils } from "../utils/ToolResultUtils"
 
 export class UseMcpToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.MCP_USE
+	readonly name = NexusAIDefaultTool.MCP_USE
 
 	getDescription(block: ToolUse): string {
 		return `[${block.name} for '${block.params.server_name}']`
@@ -28,7 +28,7 @@ export class UseMcpToolHandler implements IFullyManagedTool {
 			serverName: uiHelpers.removeClosingTag(block, "server_name", server_name),
 			toolName: uiHelpers.removeClosingTag(block, "tool_name", tool_name),
 			arguments: uiHelpers.removeClosingTag(block, "arguments", mcp_arguments),
-		} satisfies ClineAskUseMcpServer)
+		} satisfies NexusAIAskUseMcpServer)
 
 		// Check if tool should be auto-approved using MCP-specific logic
 		const config = uiHelpers.getConfig()
@@ -39,7 +39,7 @@ export class UseMcpToolHandler implements IFullyManagedTool {
 			await uiHelpers.say("use_mcp_server" as any, partialMessage, undefined, undefined, block.partial)
 		} else {
 			await uiHelpers.removeLastPartialMessageIfExistsWithType("say", "use_mcp_server")
-			await uiHelpers.ask("use_mcp_server" as ClineAsk, partialMessage, block.partial).catch(() => {})
+			await uiHelpers.ask("use_mcp_server" as NexusAIAsk, partialMessage, block.partial).catch(() => {})
 		}
 	}
 
@@ -84,7 +84,7 @@ export class UseMcpToolHandler implements IFullyManagedTool {
 			serverName: server_name,
 			toolName: tool_name,
 			arguments: mcp_arguments,
-		} satisfies ClineAskUseMcpServer)
+		} satisfies NexusAIAskUseMcpServer)
 
 		const isToolAutoApproved = config.services.mcpHub.connections
 			?.find((conn: any) => conn.server.name === server_name)
@@ -128,18 +128,17 @@ export class UseMcpToolHandler implements IFullyManagedTool {
 					block.isNativeToolCall,
 				)
 				return formatResponse.toolDenied()
-			} else {
-				telemetryService.captureToolUsage(
-					config.ulid,
-					block.name,
-					config.api.getModel().id,
-					provider,
-					false,
-					true,
-					undefined,
-					block.isNativeToolCall,
-				)
 			}
+			telemetryService.captureToolUsage(
+				config.ulid,
+				block.name,
+				config.api.getModel().id,
+				provider,
+				false,
+				true,
+				undefined,
+				block.isNativeToolCall,
+			)
 		}
 
 		// Run PreToolUse hook after approval but before execution

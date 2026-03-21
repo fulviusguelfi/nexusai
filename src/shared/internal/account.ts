@@ -1,7 +1,7 @@
 /**
  * List of email domains that are considered trusted testers for Cline.
  */
-const CLINE_TRUSTED_TESTER_DOMAINS = ["fibilabs.tech"]
+const NEXUSAI_TRUSTED_TESTER_DOMAINS = ["fibilabs.tech"]
 
 /**
  * Checks if the given email belongs to a Cline bot user.
@@ -12,5 +12,5 @@ export function isClineBotUser(email: string): boolean {
 }
 
 export function isClineInternalTester(email: string): boolean {
-	return isClineBotUser(email) || CLINE_TRUSTED_TESTER_DOMAINS.some((d) => email.endsWith(`@${d}`))
+	return isClineBotUser(email) || NEXUSAI_TRUSTED_TESTER_DOMAINS.some((d) => email.endsWith(`@${d}`))
 }

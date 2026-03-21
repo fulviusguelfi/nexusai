@@ -3,7 +3,7 @@ import { Controller } from "@core/controller/index"
 import axios from "axios"
 import { readFile } from "fs/promises"
 import { HostProvider } from "@/hosts/host-provider"
-import { ClineExtensionContext } from "@/shared/cline"
+import { NexusAIExtensionContext } from "@/shared/nexusai"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { Logger } from "@/shared/services/Logger"
 import { getNonce } from "./getNonce"
@@ -12,7 +12,7 @@ export abstract class WebviewProvider {
 	private static instance: WebviewProvider | null = null
 	controller: Controller
 
-	constructor(readonly context: ClineExtensionContext) {
+	constructor(readonly context: NexusAIExtensionContext) {
 		WebviewProvider.instance = this
 
 		// Create controller with cache service

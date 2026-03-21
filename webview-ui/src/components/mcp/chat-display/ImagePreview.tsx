@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/cline/common"
+import { StringRequest } from "@shared/proto/nexusai/common"
 import DOMPurify from "dompurify"
 import React from "react"
 import ChatErrorBoundary from "@/components/chat/ChatErrorBoundary"
@@ -32,7 +32,7 @@ class ImagePreview extends React.Component<
 	}
 
 	// Track aspect ratio for proper display
-	private aspectRatio: number = 1
+	private aspectRatio = 1
 
 	componentDidMount() {
 		// Set up a timeout to handle cases where the image never loads or errors

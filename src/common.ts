@@ -15,7 +15,7 @@ import { ErrorService } from "./services/error"
 import { featureFlagsService } from "./services/feature-flags"
 import { getDistinctId } from "./services/logging/distinctId"
 import { telemetryService } from "./services/telemetry"
-import { ClineTempManager } from "./services/temp"
+import { NexusAITempManager } from "./services/temp"
 import { cleanupTestMode } from "./services/test/TestMode"
 import { ShowMessageType } from "./shared/proto/host/window"
 import { syncWorker } from "./shared/services/worker/sync"
@@ -28,18 +28,18 @@ import { arePathsEqual } from "./utils/path"
  *
  * @param context
  * @returns The webview provider
- * @throws ClineConfigurationError if endpoints.json exists but is invalid
+ * @throws NexusAIConfigurationError if endpoints.json exists but is invalid
  */
 export async function initialize(storageContext: StorageContext): Promise<WebviewProvider> {
 	// Configure the shared Logging class to use HostProvider's output channels and debug logger
 	Logger.subscribe((msg: string) => HostProvider.get().logToChannel(msg)) // File system logging
 	Logger.subscribe((msg: string) => HostProvider.env.debugLog({ value: msg })) // Host debug logging
 
-	// Initialize ClineEndpoint configuration (reads bundled and ~/.cline/endpoints.json if present)
-	// This must be done before any other code that calls ClineEnv.config()
-	// Throws ClineConfigurationError if config file exists but is invalid
-	const { ClineEndpoint } = await import("./config")
-	await ClineEndpoint.initialize(HostProvider.get().extensionFsPath)
+	// Initialize NexusAIEndpoint configuration (reads bundled and ~/.cline/endpoints.json if present)
+	// This must be done before any other code that calls NexusAIEnv.config()
+	// Throws NexusAIConfigurationError if config file exists but is invalid
+	const { NexusAIEndpoint } = await import("./config")
+	await NexusAIEndpoint.initialize(HostProvider.get().extensionFsPath)
 
 	try {
 		await StateManager.initialize(storageContext)
@@ -68,7 +68,7 @@ export async function initialize(storageContext: StorageContext): Promise<Webvie
 	const blobStoreSettings = stateManager.getRemoteConfigSettings()?.blobStoreConfig ?? getBlobStoreSettingsFromEnv()
 	syncWorker().init({ ...blobStoreSettings, userDistinctId: getDistinctId() })
 	// Clean up old temp files in background (non-blocking) and start periodic cleanup every 24 hours
-	ClineTempManager.startPeriodicCleanup()
+	NexusAITempManager.startPeriodicCleanup()
 	// Clean up orphaned file context warnings (startup cleanup)
 	FileContextTracker.cleanupOrphanedWarnings(stateManager)
 
@@ -135,7 +135,7 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
 			// Clear the state first to prevent re-triggering
 			stateManager.setGlobalState("worktreeAutoOpenPath", undefined)
 			// Open the Cline sidebar
-			await HostProvider.workspace.openClineSidebarPanel({})
+			await HostProvider.workspace.openNexusAISidebarPanel({})
 		}
 	} catch (error) {
 		Logger.error("Error checking worktree auto-open", error)
@@ -160,7 +160,7 @@ export async function tearDown(): Promise<void> {
 	// Clean up hook discovery cache
 	HookDiscoveryCache.getInstance().dispose()
 	// Stop periodic temp file cleanup
-	ClineTempManager.stopPeriodicCleanup()
+	NexusAITempManager.stopPeriodicCleanup()
 
 	// Clean up test mode
 	cleanupTestMode()

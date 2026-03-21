@@ -1,9 +1,9 @@
-﻿import { execSync } from "node:child_process"
+import { execSync } from "node:child_process"
 import { afterEach, describe, it } from "mocha"
 import "should"
 import type { ToolUse } from "@core/assistant-message"
 import sinon from "sinon"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import { TaskState } from "../../../TaskState"
 import type { ToolValidator } from "../../ToolValidator"
 import type { TaskConfig } from "../../types/TaskConfig"
@@ -12,7 +12,7 @@ import { ListProcessesToolHandler } from "../ListProcessesToolHandler"
 type TextResult = { type: string; text: string }
 
 function makeBlock(params: Record<string, string | undefined> = {}): ToolUse {
-	return { type: "tool_use", name: ClineDefaultTool.LIST_PROCESSES, params, partial: false }
+	return { type: "tool_use", name: NexusAIDefaultTool.LIST_PROCESSES, params, partial: false }
 }
 
 function makeConfig(taskState = new TaskState()): { config: TaskConfig; say: sinon.SinonStub } {
@@ -128,7 +128,7 @@ describe("ListProcessesToolHandler", () => {
 	describe("name", () => {
 		it("is list_processes", () => {
 			const handler = makeHandler("")
-			handler.name.should.equal(ClineDefaultTool.LIST_PROCESSES)
+			handler.name.should.equal(NexusAIDefaultTool.LIST_PROCESSES)
 		})
 	})
 })

@@ -436,7 +436,7 @@ describe("State Keys Type Safety", () => {
 			expect(combined.preferredLanguage).to.equal("English")
 		})
 
-		it("should have LocalState keys map to ClineRulesToggles", () => {
+		it("should have LocalState keys map to NexusAIRulesToggles", () => {
 			const localState: Partial<LocalState> = {
 				localClineRulesToggles: {},
 				localCursorRulesToggles: { "some-rule": true },

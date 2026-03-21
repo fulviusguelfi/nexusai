@@ -12,8 +12,9 @@
 | 1 | Fundação | 1.0.0-alpha | ✅ Concluída |
 | 2 | Controle Local | 1.0.0-beta | ✅ Concluída |
 | 3 | Conexão SSH | 1.0.0-beta | ✅ Concluída |
-| 4 | IoT — MQTT, mDNS, HTTP | 1.0.0-rc | ⏳ Planejada |
-| 5 | Voz (TTS/STT) | 1.0.0-rc | ⏳ Planejada |
+| 4 | IoT — MQTT, mDNS, HTTP | 1.0.0-rc | ✅ Concluída |
+| 5 | Voz (TTS/STT) | 1.0.0-rc | ✅ Concluída |
+| 6 | Agentes Autônomos | 1.0.0 | ⏳ Planejada |
 | — | Stable | 1.0.0 | ⏳ Planejada |
 
 ---
@@ -112,58 +113,59 @@ message SshExecuteResponse {
 
 ---
 
-## Fase 4 — IoT 📡
+## Fase 4 — IoT 📡 ✅ Concluída (`2026-03-14`)
 
-> **Objetivo**: O agente entra no mundo físico — descobre e controla dispositivos na rede local via MQTT, mDNS e HTTP.
+> **Status**: Concluída · Veja [Fase-4-IoT.md](Fase-4-IoT.md) para detalhes completos.
 
-### Casos de Uso
+### Entregues
 
-- **"Liga o ar-condicionado"** → descobre o dispositivo Shelly/Sonoff → envia comando MQTT/HTTP
-- **"Me diz a temperatura do servidor"** → lê sensor via MQTT
-- **"Quais dispositivos tenho na rede?"** → mDNS scan, retorna inventário
-
-### Tarefas
-
-| # | Tarefa | Descrição |
-| - | ------ | --------- |
-| 4.1 | `mdns_discover` | Descoberta de dispositivos via mDNS/Bonjour — [#24](https://github.com/fulviusguelfi/nexusai/issues/24) |
-| 4.2 | `mqtt_publish` + `mqtt_subscribe` | Cliente MQTT, pub/sub — [#25](https://github.com/fulviusguelfi/nexusai/issues/25) |
-| 4.3 | `http_request` | REST para dispositivos HTTP (Shelly, Tasmota…) — [#26](https://github.com/fulviusguelfi/nexusai/issues/26) |
-| 4.5 | Interface webview | Painel de dispositivos IoT descobertos |
-| 4.6 | E2E coverage | Mock MQTT broker + testes dos handlers |
-
-### Dependências
-
-- `mqtt` — cliente MQTT para Node.js
-- `mdns-js` ou `bonjour-service` — descoberta mDNS local
-- Avaliar bundling (mesma estratégia do `ssh2` — incluir no bundle, não external)
+| # | Entrega | Descrição |
+| - | ------- | --------- |
+| 4.1 | `discover_devices` | mDNS/Bonjour + SSDP + ARP scan — #24 |
+| 4.2 | `register_device` / `get_device_info` / `operate_device` | DeviceRegistry + DeviceCommandAdapter |
+| 4.3 | `mqtt_connect` / `mqtt_publish` / `mqtt_subscribe` / `mqtt_disconnect` | MqttConnectionRegistry + MockMqttBroker — #25 |
+| 4.4 | `http_request` | SSRF guard (IPs privados bloqueados, `trusted_local`) — #26 |
+| 4.5 | `IotDevicesPanelProvider` | Painel webview de dispositivos |
+| 4.6 | E2E coverage | 13 cenários IoT passando |
 
 ---
 
-## Fase 5 — Voz (TTS/STT) 🎙️
+## Fase 5 — Voz (TTS/STT) 🎙️ ✅ Concluída (`2026-03-15`)
 
-> **Objetivo**: Interagir com o agente por voz — dar comandos falados, ouvir respostas, ter um avatar com personalidade.
+> **Status**: Concluída · Veja [Fase-5-Voice.md](Fase-5-Voice.md) para detalhes completos.
 
-### Por que Voz Local?
+### Entregues
 
-Soluções em nuvem têm latência perceptível, custo por uso e enviam áudio para servidores externos. O NexusAI usa modelos rodando 100% localmente:
+| # | Entrega | Descrição |
+| - | ------- | --------- |
+| 5.1 | `speak_text` | PiperService (TTS offline) + SpeakTextToolHandler |
+| 5.2 | `listen_for_speech` | WhisperService + whisper.worker.ts (STT offline) + ListenForSpeechToolHandler |
+| 5.3 | VoiceSessionManager | Singleton para estado de voz, push-to-talk |
+| 5.4 | Voice UI | Componentes em webview-ui/src/components/voice/, botão push-to-talk |
+| 5.5 | Voice proto | voice.proto + VoiceService gRPC |
+| 5.6 | E2E coverage | voice.test.ts + voice-settings.test.ts |
 
-- **[Piper](https://github.com/rhasspy/piper)** para TTS — voz sintética de qualidade, modelos de ~50-70MB
-- **[Whisper](https://github.com/openai/whisper)** para STT — reconhecimento de fala via `whisper.cpp`
+### Pendências (adiadas para v2.0 ou sprint dedicada)
 
-### Desafio: Auto-Escuta
+- Avatar interativo (visualização animada no webview)
+- Speaker diarization / detecção de locutor
+- Personalidade configurável (nome, tom, modo)
 
-⚠️ Quando o NexusAI fala, o microfone pode captar a própria voz e ativar o STT em loop. Solução: gate de áudio (desativa captura durante TTS) + speaker diarization.
+---
+
+## Fase 6 — Agentes Autônomos 🤖 ⏳ Planejada
+
+> **Objetivo**: IA auto-gerenciável que usa outras IAs como ferramentas.
 
 ### Tarefas
 
 | # | Tarefa | Descrição |
 | - | ------ | --------- |
-| 5.1 | Integrar Piper (TTS) | Síntese de voz local, seleção de voz/idioma |
-| 5.2 | Integrar Whisper (STT) | Captura de microfone, transcrição em tempo real |
-| 5.3 | Speaker gate | Desativa captura durante playback TTS |
-| 5.4 | Avatar interativo | Visualização animada no webview |
-| 5.5 | Personalidade configurável | Nome, tom, idioma, modo de resposta |
+| 6.1 | Multi-IA | Usar outras IAs como ferramentas |
+| 6.2 | Agent loop autônomo | Goal decomposition, planning |
+| 6.3 | Memory persistente | Across sessions |
+
+`SubagentToolHandler` já existe como fundação.
 
 ---
 

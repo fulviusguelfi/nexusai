@@ -1,5 +1,5 @@
 import { Logger } from "@/shared/services/Logger"
-import { ClineError } from "./ClineError"
+import { NexusAIError } from "./NexusAIError"
 import { IErrorProvider } from "./providers/IErrorProvider"
 
 /**
@@ -43,11 +43,11 @@ export class ErrorProviderFactory {
  * or for testing purposes
  */
 class NoOpErrorProvider implements IErrorProvider {
-	async captureException(error: Error | ClineError, properties?: Record<string, unknown>): Promise<void> {
+	async captureException(error: Error | NexusAIError, properties?: Record<string, unknown>): Promise<void> {
 		Logger.error("[NoOpErrorProvider] captureException called", { error: error.message || String(error), properties })
 	}
 
-	public logException(error: Error | ClineError, _properties?: Record<string, unknown>): void {
+	public logException(error: Error | NexusAIError, _properties?: Record<string, unknown>): void {
 		// Use Logger.error directly to avoid potential infinite recursion through Logger
 		Logger.error("[NoOpErrorProvider]", error.message || String(error))
 	}

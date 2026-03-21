@@ -1,18 +1,18 @@
 import axios from "axios"
 import { type JwtPayload } from "jwt-decode"
-import { ClineEnv, Environment, EnvironmentConfig } from "@/config"
+import { Environment, EnvironmentConfig, NexusAIEnv } from "@/config"
 import { Controller } from "@/core/controller"
 import { HostProvider } from "@/hosts/host-provider"
 import { buildBasicClineHeaders } from "@/services/EnvUtils"
 import { AuthInvalidTokenError, AuthNetworkError } from "@/services/error/NexusError"
 import { telemetryService } from "@/services/telemetry"
-import { CLINE_API_ENDPOINT } from "@/shared/cline/api"
 import { fetch, getAxiosSettings } from "@/shared/net"
+import { NEXUSAI_API_ENDPOINT } from "@/shared/nexusai/api"
 import { Logger } from "@/shared/services/Logger"
-import { type ClineAccountUserInfo, type ClineAuthInfo } from "../AuthService"
+import { type NexusAIAccountUserInfo, type NexusAIAuthInfo } from "../AuthService"
 import { parseJwtPayload } from "../oca/utils/utils"
 
-interface ClineAuthApiUser {
+interface NexusAIAuthApiUser {
 	subject: string | null
 	email: string
 	name: string
@@ -21,7 +21,7 @@ interface ClineAuthApiUser {
 }
 
 // Unified API response data shape for token exchange/refresh
-interface ClineAuthResponseData {
+interface NexusAIAuthResponseData {
 	/**
 	 * Auth token to be used for authenticated requests
 	 */
@@ -43,7 +43,7 @@ interface ClineAuthResponseData {
 	/**
 	 * User information associated with the token
 	 */
-	userInfo: ClineAuthApiUser
+	userInfo: NexusAIAuthApiUser
 }
 
 type TokenData = JwtPayload & {
@@ -51,21 +51,21 @@ type TokenData = JwtPayload & {
 	external_id?: string
 }
 
-export interface ClineAuthApiTokenExchangeResponse {
+export interface NexusAIAuthApiTokenExchangeResponse {
 	success: boolean
-	data: ClineAuthResponseData
+	data: NexusAIAuthResponseData
 }
 
-export interface ClineAuthApiTokenRefreshResponse {
+export interface NexusAIAuthApiTokenRefreshResponse {
 	success: boolean
-	data: ClineAuthResponseData
+	data: NexusAIAuthResponseData
 }
 
 // Backward compat aliases
-export type NexusAuthApiTokenExchangeResponse = ClineAuthApiTokenExchangeResponse
-export type NexusAuthApiTokenRefreshResponse = ClineAuthApiTokenRefreshResponse
+export type NexusAuthApiTokenExchangeResponse = NexusAIAuthApiTokenExchangeResponse
+export type NexusAuthApiTokenRefreshResponse = NexusAIAuthApiTokenRefreshResponse
 
-export class ClineAuthProvider {
+export class NexusAIAuthProvider {
 	readonly name = "cline"
 	private refreshRetryCount = 0
 	private lastRefreshAttempt = 0
@@ -73,16 +73,16 @@ export class ClineAuthProvider {
 	private readonly RETRY_DELAY_MS = 30000 // 30 seconds
 
 	get config(): EnvironmentConfig {
-		return ClineEnv.config()
+		return NexusAIEnv.config()
 	}
 
 	/**
 	 * In local extension profile we still want Cline cloud auth by default.
-	 * Set CLINE_USE_LOCAL_AUTH=true only when intentionally testing a local auth backend.
+	 * Set NEXUSAI_USE_LOCAL_AUTH=true only when intentionally testing a local auth backend.
 	 */
 	private getAuthApiBaseUrl(): string {
 		const apiBaseUrl = this.config.apiBaseUrl
-		const useLocalAuth = process.env.CLINE_USE_LOCAL_AUTH === "true"
+		const useLocalAuth = process.env.NEXUSAI_USE_LOCAL_AUTH === "true"
 		const isLocalEnv = this.config.environment === Environment.local
 		const looksLocalHost = /(^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?)/i.test(apiBaseUrl)
 
@@ -129,7 +129,7 @@ export class ClineAuthProvider {
 		return expirationTime - currentTime
 	}
 
-	private clearSession(controller: Controller, reason: string, storedAuthData?: ClineAuthInfo) {
+	private clearSession(controller: Controller, reason: string, storedAuthData?: NexusAIAuthInfo) {
 		Logger.error(reason)
 
 		const startedAt = storedAuthData?.startedAt
@@ -152,7 +152,7 @@ export class ClineAuthProvider {
 		return null
 	}
 
-	private logFailedRefreshAttempt(response: Response, storedAuthData?: ClineAuthInfo) {
+	private logFailedRefreshAttempt(response: Response, storedAuthData?: NexusAIAuthInfo) {
 		const startedAt = storedAuthData?.startedAt
 		const timeSinceStarted = Date.now() - (startedAt || 0)
 
@@ -180,9 +180,9 @@ export class ClineAuthProvider {
 	/**
 	 * Retrieves Cline auth info using the stored access token.
 	 * @param controller - The controller instance to access stored secrets.
-	 * @returns {Promise<ClineAuthInfo | null>} A promise that resolves with the auth info or null.
+	 * @returns {Promise<NexusAIAuthInfo | null>} A promise that resolves with the auth info or null.
 	 */
-	async retrieveClineAuthInfo(controller: Controller): Promise<ClineAuthInfo | null> {
+	async retrieveClineAuthInfo(controller: Controller): Promise<NexusAIAuthInfo | null> {
 		try {
 			// Get the stored auth data from secure storage
 			const storedAuthDataString = controller.stateManager.getSecretKey("cline:clineAccountId")
@@ -196,7 +196,7 @@ export class ClineAuthProvider {
 			}
 
 			// Parse the stored auth data
-			let storedAuthData: ClineAuthInfo
+			let storedAuthData: NexusAIAuthInfo
 			try {
 				storedAuthData = JSON.parse(storedAuthDataString)
 			} catch (e) {
@@ -315,11 +315,11 @@ export class ClineAuthProvider {
 	/**
 	 * Refreshes an access token using a refresh token.
 	 * @param refreshToken - The refresh token.
-	 * @returns {Promise<ClineAuthInfo>} The new access token and user info.
+	 * @returns {Promise<NexusAIAuthInfo>} The new access token and user info.
 	 */
-	async refreshToken(refreshToken: string, storedData: ClineAuthInfo): Promise<ClineAuthInfo> {
+	async refreshToken(refreshToken: string, storedData: NexusAIAuthInfo): Promise<NexusAIAuthInfo> {
 		try {
-			const endpoint = new URL(CLINE_API_ENDPOINT.REFRESH_TOKEN, this.getAuthApiBaseUrl())
+			const endpoint = new URL(NEXUSAI_API_ENDPOINT.REFRESH_TOKEN, this.getAuthApiBaseUrl())
 			const response = await fetch(endpoint.toString(), {
 				method: "POST",
 				headers: await this.headers(),
@@ -371,7 +371,7 @@ export class ClineAuthProvider {
 	}
 
 	async getAuthRequest(callbackUrl: string): Promise<string> {
-		const authUrl = new URL(CLINE_API_ENDPOINT.AUTH, this.getAuthApiBaseUrl())
+		const authUrl = new URL(NEXUSAI_API_ENDPOINT.AUTH, this.getAuthApiBaseUrl())
 		authUrl.searchParams.set("client_type", "extension")
 		authUrl.searchParams.set("callback_url", callbackUrl)
 		// Ensure the redirect_uri is properly encoded and included
@@ -384,13 +384,13 @@ export class ClineAuthProvider {
 		return authUrl.toString()
 	}
 
-	async signIn(controller: Controller, authorizationCode: string, provider: string): Promise<ClineAuthInfo | null> {
+	async signIn(controller: Controller, authorizationCode: string, provider: string): Promise<NexusAIAuthInfo | null> {
 		try {
 			// Get the callback URL that was used during the initial auth request
 			const callbackUrl = await HostProvider.get().getCallbackUrl("/auth")
 
 			// Exchange the authorization code for tokens
-			const tokenUrl = new URL(CLINE_API_ENDPOINT.TOKEN_EXCHANGE, this.getAuthApiBaseUrl())
+			const tokenUrl = new URL(NEXUSAI_API_ENDPOINT.TOKEN_EXCHANGE, this.getAuthApiBaseUrl())
 
 			const response = await fetch(tokenUrl.toString(), {
 				method: "POST",
@@ -438,7 +438,7 @@ export class ClineAuthProvider {
 		}
 	}
 
-	private async fetchRemoteUserInfo(tokenData: NexusAuthApiTokenExchangeResponse["data"]): Promise<ClineAccountUserInfo> {
+	private async fetchRemoteUserInfo(tokenData: NexusAuthApiTokenExchangeResponse["data"]): Promise<NexusAIAccountUserInfo> {
 		try {
 			const userResponse = await axios.get(`${this.getAuthApiBaseUrl()}/api/v1/users/me`, {
 				headers: {
@@ -473,4 +473,4 @@ export class ClineAuthProvider {
 }
 
 // Backward compatibility aliases for code still importing NexusAuthProvider symbols.
-export { ClineAuthProvider as NexusAuthProvider }
+export { NexusAIAuthProvider as NexusAuthProvider }

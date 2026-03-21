@@ -13,7 +13,7 @@ import { testHooks } from "@/core/controller/grpc-recorder/test-hooks"
  */
 export class GrpcRecorderBuilder {
 	private fileHandler: LogFileHandler | null = null
-	private enabled: boolean = true
+	private enabled = true
 	private filters: GrpcRequestFilter[] = []
 	private hooks: GrpcPostRecordHook[] = []
 
@@ -46,7 +46,7 @@ export class GrpcRecorderBuilder {
 	static getRecorder(controller: Controller): IRecorder {
 		if (!GrpcRecorderBuilder.recorder) {
 			GrpcRecorderBuilder.recorder = GrpcRecorder.builder()
-				.enableIf(process.env.GRPC_RECORDER_ENABLED === "true" && process.env.CLINE_ENVIRONMENT === "local")
+				.enableIf(process.env.GRPC_RECORDER_ENABLED === "true" && process.env.NEXUSAI_ENVIRONMENT === "local")
 				.withLogFileHandler(new LogFileHandler())
 				.build(controller)
 		}

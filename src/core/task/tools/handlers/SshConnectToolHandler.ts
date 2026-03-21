@@ -4,7 +4,7 @@ import { formatResponse } from "@core/prompts/responses"
 import { SshServerProfileRegistry } from "@services/ssh/SshServerProfileRegistry"
 import { SshSessionRegistry } from "@services/ssh/SshSessionRegistry"
 import type { SshAuthType } from "@shared/ssh/SshServerProfile"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -12,7 +12,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class SshConnectToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.SSH_CONNECT
+	readonly name = NexusAIDefaultTool.SSH_CONNECT
 
 	constructor(_validator: ToolValidator) {}
 
@@ -85,6 +85,7 @@ export class SshConnectToolHandler implements IFullyManagedTool {
 
 		try {
 			// biome-ignore lint/suspicious/noExplicitAny: ssh2 dynamic import
+			// @ts-expect-error -- ssh2 is an optional runtime dependency
 			const ssh2Module: any = await import("ssh2")
 			const ssh2: any = ssh2Module.default ?? ssh2Module
 			// biome-ignore lint/suspicious/noExplicitAny: ssh2 Client

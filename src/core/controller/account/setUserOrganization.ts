@@ -1,5 +1,5 @@
-import { UserOrganizationUpdateRequest } from "@shared/proto/cline/account"
-import { Empty } from "@shared/proto/cline/common"
+import { UserOrganizationUpdateRequest } from "@shared/proto/nexusai/account"
+import { Empty } from "@shared/proto/nexusai/common"
 import { fetchRemoteConfig } from "@/core/storage/remote-config/fetch"
 import type { Controller } from "../index"
 

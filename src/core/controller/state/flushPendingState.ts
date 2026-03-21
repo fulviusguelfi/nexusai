@@ -1,5 +1,5 @@
-import type { EmptyRequest } from "@shared/proto/cline/common"
-import { Empty } from "@shared/proto/cline/common"
+import type { EmptyRequest } from "@shared/proto/nexusai/common"
+import { Empty } from "@shared/proto/nexusai/common"
 import { Logger } from "@/shared/services/Logger"
 import type { Controller } from "../index"
 

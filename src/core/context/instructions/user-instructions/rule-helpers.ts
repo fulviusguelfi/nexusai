@@ -1,5 +1,5 @@
 import { ensureRulesDirectoryExists, ensureWorkflowsDirectoryExists, GlobalFileNames } from "@core/storage/disk"
-import { ClineRulesToggles } from "@shared/cline-rules"
+import { NexusAIRulesToggles } from "@shared/nexusai-rules"
 import { GlobalInstructionsFile } from "@shared/remote-config/schema"
 import { fileExistsAtPath, isDirectory, readDirectory } from "@utils/fs"
 import fs from "fs/promises"
@@ -41,10 +41,10 @@ export async function readDirectoryRecursive(
  */
 export async function synchronizeRuleToggles(
 	rulesDirectoryPath: string,
-	currentToggles: ClineRulesToggles,
-	allowedFileExtension: string = "",
+	currentToggles: NexusAIRulesToggles,
+	allowedFileExtension = "",
 	excludedPaths: string[][] = [],
-): Promise<ClineRulesToggles> {
+): Promise<NexusAIRulesToggles> {
 	// Create a copy of toggles to modify
 	const updatedToggles = { ...currentToggles }
 
@@ -111,9 +111,9 @@ export async function synchronizeRuleToggles(
  */
 export function synchronizeRemoteRuleToggles(
 	remoteRules: GlobalInstructionsFile[],
-	currentToggles: ClineRulesToggles,
-): ClineRulesToggles {
-	const updatedToggles: ClineRulesToggles = {}
+	currentToggles: NexusAIRulesToggles,
+): NexusAIRulesToggles {
+	const updatedToggles: NexusAIRulesToggles = {}
 
 	// Create set of current remote rule names
 	const existingRuleNames = new Set(remoteRules.map((rule) => rule.name))
@@ -138,14 +138,14 @@ export function synchronizeRemoteRuleToggles(
 /**
  * Certain project rules have more than a single location where rules are allowed to be stored
  */
-export function combineRuleToggles(toggles1: ClineRulesToggles, toggles2: ClineRulesToggles): ClineRulesToggles {
+export function combineRuleToggles(toggles1: NexusAIRulesToggles, toggles2: NexusAIRulesToggles): NexusAIRulesToggles {
 	return { ...toggles1, ...toggles2 }
 }
 
 /**
  * Read the content of rules files
  */
-export const getRuleFilesTotalContent = async (rulesFilePaths: string[], basePath: string, toggles: ClineRulesToggles) => {
+export const getRuleFilesTotalContent = async (rulesFilePaths: string[], basePath: string, toggles: NexusAIRulesToggles) => {
 	return (await getRuleFilesTotalContentWithMetadata(rulesFilePaths, basePath, toggles)).content
 }
 
@@ -179,7 +179,7 @@ export type RuleLoadResultWithInstructions = {
 export const getRuleFilesTotalContentWithMetadata = async (
 	rulesFilePaths: string[],
 	basePath: string,
-	toggles: ClineRulesToggles,
+	toggles: NexusAIRulesToggles,
 	opts?: { evaluationContext?: RuleEvaluationContext; ruleNamePrefix?: keyof typeof RULE_SOURCE_PREFIX },
 ): Promise<RuleLoadResult> => {
 	const evaluationContext = opts?.evaluationContext ?? {}
@@ -238,7 +238,7 @@ export const getRuleFilesTotalContentWithMetadata = async (
 
 export function getRemoteRulesTotalContentWithMetadata(
 	remoteRules: GlobalInstructionsFile[],
-	remoteToggles: ClineRulesToggles,
+	remoteToggles: NexusAIRulesToggles,
 	opts?: { evaluationContext?: RuleEvaluationContext },
 ): RuleLoadResult {
 	const activatedConditionalRules: ActivatedConditionalRule[] = []

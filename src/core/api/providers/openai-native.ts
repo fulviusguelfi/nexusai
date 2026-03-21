@@ -16,9 +16,9 @@ import type {
 import { MessageEvent as UndiciMessageEvent, WebSocket as UndiciWebSocket } from "undici"
 import { buildExternalBasicHeaders } from "@/services/EnvUtils"
 import { featureFlagsService } from "@/services/feature-flags"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { createOpenAIClient } from "@/shared/net"
-import { ApiFormat } from "@/shared/proto/cline/models"
+import { ApiFormat } from "@/shared/proto/nexusai/models"
 import { FeatureFlag } from "@/shared/services/feature-flags/feature-flags"
 import { Logger } from "@/shared/services/Logger"
 import { isGPT5ModelFamily } from "@/utils/model-utils"
@@ -83,7 +83,7 @@ export class OpenAiNativeHandler implements ApiHandler {
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
+	async *createMessage(systemPrompt: string, messages: NexusAIStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
 		// Responses API requires tool format to be set to OPENAI_RESPONSES with native tools calling enabled
 		const apiFormat = this.getModel()?.info?.apiFormat
 		if (apiFormat === ApiFormat.OPENAI_RESPONSES || apiFormat === ApiFormat.OPENAI_RESPONSES_WEBSOCKET_MODE) {
@@ -98,7 +98,7 @@ export class OpenAiNativeHandler implements ApiHandler {
 
 	private async *createCompletionStream(
 		systemPrompt: string,
-		messages: ClineStorageMessage[],
+		messages: NexusAIStorageMessage[],
 		tools?: ChatCompletionTool[],
 	): ApiStream {
 		const client = this.ensureClient()
@@ -166,7 +166,7 @@ export class OpenAiNativeHandler implements ApiHandler {
 
 	private async *createResponseStream(
 		systemPrompt: string,
-		messages: ClineStorageMessage[],
+		messages: NexusAIStorageMessage[],
 		tools: ChatCompletionTool[],
 	): ApiStream {
 		const model = this.getModel()

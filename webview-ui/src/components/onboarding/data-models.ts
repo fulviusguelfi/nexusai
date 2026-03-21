@@ -1,5 +1,5 @@
-import type { OpenRouterModelInfo } from "@shared/proto/cline/models"
-import type { OnboardingModel, OnboardingModelGroup } from "@shared/proto/cline/state"
+import type { OpenRouterModelInfo } from "@shared/proto/nexusai/models"
+import type { OnboardingModel, OnboardingModelGroup } from "@shared/proto/nexusai/state"
 
 export interface OnboardingModelsByGroup {
 	free: ModelGroup[]

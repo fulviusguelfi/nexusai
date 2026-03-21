@@ -1,6 +1,6 @@
 import type { OcaModelInfo } from "@shared/api"
-import type { OcaAuthState, OcaUserInfo } from "@shared/proto/index.cline"
-import { EmptyRequest, StringRequest } from "@shared/proto/index.cline"
+import type { OcaAuthState, OcaUserInfo } from "@shared/proto/index.nexusai"
+import { EmptyRequest, StringRequest } from "@shared/proto/index.nexusai"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton, VSCodeCheckbox, VSCodeLink, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react"
 import React, { useCallback, useEffect, useRef, useState } from "react"
@@ -202,9 +202,8 @@ function useOcaModels({
 				if (!retry) {
 					await login() // prompt login
 					return tryRefresh(true) // retry once
-				} else {
-					setHasError(true)
 				}
+				setHasError(true)
 				return false
 			} finally {
 				setLoading(false)

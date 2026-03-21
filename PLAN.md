@@ -185,11 +185,11 @@ O NexusAI terá uma personalidade configurável:
 
 ## 9. Requisitos de Licença
 
-O projeto é baseado no Cline (MIT License). Ao usar o código do Cline:
+O projeto é baseado no Cline (Apache-2.0 License). Ao usar o código do Cline:
 
-- Manter atribuições necessárias
+- Manter atribuições necessárias (arquivo NOTICE)
 - Adicionar créditos dos autores (Fulvius Titanero Guelfi + IA)
-- Manter licença MIT para código derivado
+- Manter licença Apache-2.0 para código derivado
 
 ---
 
@@ -233,21 +233,39 @@ pull requests
 
 ## 13. Status de Implementação das Fases
 
+> Última atualização: 2026-03-21. Para roadmap completo com issues, veja [ROADMAP.md](ROADMAP.md).
+
 ### Fase 1 — Fundação ✅
 - Renomeação Cline → NexusAI
 - Configuração de build, CI, protobuf
 - Estrutura de pastas, licença, documentação inicial
+- Integração GitHub Copilot como auth primária
 
-### Fase 2 — Ferramentas de Terminal e Processos ✅
+### Fase 2 — Ferramentas de Terminal e Processos ✅ (`2026-03-11`)
 - `list_processes`, `kill_process` handlers implementados
 - Testes unitários com DI para mocks de `execSync`
-- Pattern DI-for-testability documentado em `.clinerules/general.md`
+- Suite E2E Playwright completa
 
-### Fase 3 — SSH e Rede ✅ _(concluído em 2026-03-13)_
-- **Handlers implementados**: `ssh_connect`, `ssh_execute`, `ssh_disconnect`, `ssh_upload`, `ssh_download`, `discover_network_hosts`
-- **Sessões SSH**: `SshSessionRegistry` com gerenciamento por `taskId`
-- **Say format**: JSON `say("tool", JSON.stringify({tool, content}))` para integração com ChatRow
-- **Tipos**: `ClineSayTool.tool` atualizado com 6 SSH tool names; `private_key_content` em `toolParamNames`
+### Fase 3 — SSH e Rede ✅ (`2026-03-13`)
+- 6 ferramentas: `ssh_connect`, `ssh_execute`, `ssh_disconnect`, `ssh_upload`, `ssh_download`, `discover_network_hosts`
+- `SshSessionRegistry` com gerenciamento por `taskId`
+- E2E: 7 cenários, 26 testes
+
+### Fase 4 — IoT ✅ (`2026-03-14`)
+- 9 ferramentas: `discover_devices`, `register_device`, `get_device_info`, `operate_device`, `mqtt_connect`, `mqtt_publish`, `mqtt_subscribe`, `mqtt_disconnect`, `http_request`
+- `IotDiscoveryService` (mDNS + SSDP + ARP), `DeviceRegistry`, `MqttConnectionRegistry`
+- SSRF guard no `http_request`
+- E2E: 13 cenários IoT
+
+### Fase 5 — Voz ✅ (`2026-03-15`)
+- 2 ferramentas: `speak_text`, `listen_for_speech`
+- `PiperService` (TTS offline), `WhisperService` + `whisper.worker.ts` (STT offline)
+- `VoiceSessionManager`, UI push-to-talk, voz proto
+- E2E: `voice.test.ts`, `voice-settings.test.ts`
+
+### Fase 6 — Agentes Autônomos ⏳
+- `SubagentToolHandler` existe mas coordenação complexa é v2.0
+- Goal decomposition e memory persistente ainda não implementados
 - **ChatRow**: 6 novos casos de renderização
 - **E2E Mock Server**: respostas LLM e roteamento para todos os cenários SSH
 - **MockSshServer**: correção ESM/CJS interop (`ssh2Module.default ?? ssh2Module`), formato de chave `pkcs1`, `stop()` com force-close de conexões
@@ -281,6 +299,17 @@ pull requests
 - **Testes unitários**: `DeviceRegistry`, `MqttConnectionRegistry`, `DeviceIdentificationService`
 - **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) — todos fechados
 - **Wiki**: `docs/wiki/Fase-4-IoT.md`
+
+### Rebranding Completo (Phases 1–4) ✅ _(2026-03-21)_
+
+Remoção de todas as referências visíveis a "Cline" no código-fonte, preservando chaves de auth imutáveis (`clineApiKey`, `clineAccountId`) e URLs de backend.
+
+- **Phase 1** — `package.json`, labels da UI, system prompts, locale READMEs (8 arquivos)
+- **Phase 2** — Proto namespace `cline.` → `nexusai.`; 291 arquivos de import atualizados; `buf.yaml` e scripts
+- **Phase 3** — 28 arquivos TypeScript renomeados (`ClineXxx` → `NexusAIXxx`); `src/shared/cline/` → `src/shared/nexusai/`; mensagens/enums proto renomeados (3 arquivos); protos regenerados; `@ts-expect-error` → `@ts-ignore` para deps opcionais
+- **Phase 4** — Migração de storage: `~/.cline` → `~/.nexusai` (cópia automática na primeira execução); `StorageContextOptions.nexusaiDir`; `disk.ts` paths e nomes de arquivo; `state-migrations.ts` lê `"nexusai"` primeiro, `"cline"` como fallback
+
+**Suite completa**: 1319 testes passando.
 
 ### Próximas Fases
 

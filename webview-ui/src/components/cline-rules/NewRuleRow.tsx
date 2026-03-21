@@ -1,4 +1,4 @@
-import { CreateHookRequest, CreateSkillRequest, RuleFileRequest } from "@shared/proto/index.cline"
+import { CreateHookRequest, CreateSkillRequest, RuleFileRequest } from "@shared/proto/index.nexusai"
 import { PlusIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useClickAway } from "react-use"

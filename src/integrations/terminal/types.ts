@@ -4,7 +4,7 @@
  * the StandaloneTerminalManager used in CLI/JetBrains environments.
  */
 
-import type { ClineToolResponseContent } from "@shared/messages"
+import type { NexusAIToolResponseContent } from "@shared/messages"
 import type { EventEmitter } from "events"
 
 // =============================================================================
@@ -418,7 +418,7 @@ export interface OrchestrationResult {
 	/** Whether the user rejected/cancelled the command */
 	userRejected: boolean
 	/** The result content to return */
-	result: ClineToolResponseContent
+	result: NexusAIToolResponseContent
 	/** Whether the command completed */
 	completed: boolean
 	/** All output lines captured */

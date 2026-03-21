@@ -11,14 +11,14 @@
 
 import { describe, it } from "mocha"
 import "should"
-import { ClineAssistantThinkingBlock, ClineStorageMessage, ClineTextContentBlock } from "@/shared/messages/content"
+import { NexusAIAssistantThinkingBlock, NexusAIStorageMessage, NexusAITextContentBlock } from "@/shared/messages/content"
 import { sanitizeAnthropicMessages } from "../anthropic-format"
 import { convertToOpenAiMessages, sanitizeGeminiMessages } from "../openai-format"
 
 describe("Thinking Trace Preservation", () => {
 	describe("convertToOpenAiMessages", () => {
 		it("should preserve reasoning_details on text blocks", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -34,7 +34,7 @@ describe("Thinking Trace Preservation", () => {
 									index: 0,
 								},
 							],
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 					],
 				},
 			]
@@ -50,7 +50,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should preserve thinking blocks with signatures", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -58,11 +58,11 @@ describe("Thinking Trace Preservation", () => {
 							type: "thinking",
 							thinking: "Let me analyze this problem...",
 							signature: "valid-signature",
-						} as ClineAssistantThinkingBlock,
+						} as NexusAIAssistantThinkingBlock,
 						{
 							type: "text",
 							text: "Here's my answer.",
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 					],
 				},
 			]
@@ -77,7 +77,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should consolidate multiple reasoning_details entries", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -100,7 +100,7 @@ describe("Thinking Trace Preservation", () => {
 									index: 0,
 								},
 							],
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 					],
 				},
 			]
@@ -115,7 +115,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should filter out corrupted encrypted reasoning blocks", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -138,7 +138,7 @@ describe("Thinking Trace Preservation", () => {
 									index: 1,
 								},
 							],
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 					],
 				},
 			]
@@ -225,7 +225,7 @@ describe("Thinking Trace Preservation", () => {
 
 	describe("sanitizeAnthropicMessages", () => {
 		it("should preserve thinking blocks", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "assistant",
 					content: [
@@ -233,11 +233,11 @@ describe("Thinking Trace Preservation", () => {
 							type: "thinking",
 							thinking: "Let me think about this...",
 							signature: "valid-sig",
-						} as ClineAssistantThinkingBlock,
+						} as NexusAIAssistantThinkingBlock,
 						{
 							type: "text",
 							text: "Here's my answer",
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 					],
 				},
 			]
@@ -253,7 +253,7 @@ describe("Thinking Trace Preservation", () => {
 		})
 
 		it("should not add cache_control to thinking blocks", () => {
-			const messages: ClineStorageMessage[] = [
+			const messages: NexusAIStorageMessage[] = [
 				{
 					role: "user",
 					content: [
@@ -265,7 +265,7 @@ describe("Thinking Trace Preservation", () => {
 						{
 							type: "text",
 							text: "Question",
-						} as ClineTextContentBlock,
+						} as NexusAITextContentBlock,
 					],
 				},
 			]

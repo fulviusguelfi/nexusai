@@ -53,7 +53,7 @@ function saveMcpOAuthSecrets(secrets: McpOAuthSecrets): void {
  * Implementation of OAuthClientProvider for Cline
  * Manages OAuth state and token storage for a single MCP server
  */
-class ClineOAuthClientProvider implements OAuthClientProvider {
+class NexusAIOAuthClientProvider implements OAuthClientProvider {
 	private serverName: string
 	private serverUrl: string
 	private _redirectUrl: string
@@ -313,7 +313,7 @@ export class McpOAuthManager {
 		}
 
 		// Create provider
-		const provider = new ClineOAuthClientProvider(serverName, serverUrl)
+		const provider = new NexusAIOAuthClientProvider(serverName, serverUrl)
 		await provider.initialize() // Sets the redirect URL
 		this.providers.set(key, provider)
 		return provider

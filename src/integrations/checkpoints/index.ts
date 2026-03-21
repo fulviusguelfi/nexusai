@@ -8,10 +8,10 @@ import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import { findLast, findLastIndex } from "@shared/array"
 import { combineApiRequests } from "@shared/combineApiRequests"
 import { combineCommandSequences } from "@shared/combineCommandSequences"
-import { ClineApiReqInfo, ClineMessage, ClineSay } from "@shared/ExtensionMessage"
+import { NexusAIApiReqInfo, NexusAIMessage, NexusAISay } from "@shared/ExtensionMessage"
 import { getApiMetrics } from "@shared/getApiMetrics"
 import { HistoryItem } from "@shared/HistoryItem"
-import { ClineCheckpointRestore } from "@shared/WebviewMessage"
+import { NexusAICheckpointRestore } from "@shared/WebviewMessage"
 import pTimeout from "p-timeout"
 import { HostProvider } from "@/hosts/host-provider"
 import { ShowMessageType } from "@/shared/proto/host/window"
@@ -22,7 +22,7 @@ import { ICheckpointManager } from "./types"
 
 // Type definitions for better code organization
 type SayFunction = (
-	type: ClineSay,
+	type: NexusAISay,
 	text?: string,
 	images?: string[],
 	files?: string[],
@@ -237,7 +237,7 @@ export class TaskCheckpointManager implements ICheckpointManager {
 	 */
 	async restoreCheckpoint(
 		messageTs: number,
-		restoreType: ClineCheckpointRestore,
+		restoreType: NexusAICheckpointRestore,
 		offset?: number,
 	): Promise<CheckpointRestoreStateUpdate> {
 		try {
@@ -650,8 +650,8 @@ export class TaskCheckpointManager implements ICheckpointManager {
 	 */
 	// Largely unchanged from original Task class implementation
 	private async handleSuccessfulRestore(
-		restoreType: ClineCheckpointRestore,
-		message: ClineMessage,
+		restoreType: NexusAICheckpointRestore,
+		message: NexusAIMessage,
 		messageIndex: number,
 		messageTs: number,
 	): Promise<void> {
@@ -698,7 +698,7 @@ export class TaskCheckpointManager implements ICheckpointManager {
 						cacheWrites: deletedApiReqsMetrics.totalCacheWrites,
 						cacheReads: deletedApiReqsMetrics.totalCacheReads,
 						cost: deletedApiReqsMetrics.totalCost,
-					} satisfies ClineApiReqInfo),
+					} satisfies NexusAIApiReqInfo),
 				)
 				break
 			case "workspace":

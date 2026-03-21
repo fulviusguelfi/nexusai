@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -11,7 +11,7 @@ import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 const MAX_HOST_LINES = 200
 
 export class DiscoverNetworkHostsToolHandler implements IFullyManagedTool {
-	readonly name = ClineDefaultTool.DISCOVER_NETWORK_HOSTS
+	readonly name = NexusAIDefaultTool.DISCOVER_NETWORK_HOSTS
 
 	constructor(
 		_validator: ToolValidator,

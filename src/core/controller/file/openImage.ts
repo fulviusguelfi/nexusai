@@ -1,5 +1,5 @@
 import { openImage as openImageIntegration } from "@integrations/misc/open-file"
-import { Empty, StringRequest } from "@shared/proto/cline/common"
+import { Empty, StringRequest } from "@shared/proto/nexusai/common"
 import { Controller } from ".."
 
 /**

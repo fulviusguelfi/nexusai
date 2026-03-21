@@ -1,5 +1,5 @@
 import { serializeError } from "serialize-error"
-import { CLINE_ACCOUNT_AUTH_ERROR_MESSAGE } from "../../shared/ClineAccount"
+import { NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE } from "../../shared/NexusAIAccount"
 
 export enum NexusErrorType {
 	Auth = "auth",
@@ -183,7 +183,7 @@ export class NexusError extends Error {
 		if (message) {
 			// Check for specific error codes/messages if applicable
 			const authErrorRegex = [/(?:in)?valid[-_ ]?(?:api )?(?:token|key)/i, /authentication[-_ ]?failed/i, /unauthorized/i]
-			if (message?.includes(CLINE_ACCOUNT_AUTH_ERROR_MESSAGE) || authErrorRegex.some((regex) => regex.test(message))) {
+			if (message?.includes(NEXUSAI_ACCOUNT_AUTH_ERROR_MESSAGE) || authErrorRegex.some((regex) => regex.test(message))) {
 				return NexusErrorType.Auth
 			}
 
@@ -216,4 +216,4 @@ export class AuthInvalidTokenError extends Error {
 }
 
 // Backward-compatibility aliases
-export { NexusError as ClineError, NexusErrorType as ClineErrorType }
+export { NexusError as NexusAIError, NexusErrorType as NexusAIErrorType }

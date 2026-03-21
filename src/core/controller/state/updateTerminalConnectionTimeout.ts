@@ -1,4 +1,4 @@
-import { UpdateTerminalConnectionTimeoutRequest, UpdateTerminalConnectionTimeoutResponse } from "@shared/proto/cline/state"
+import { UpdateTerminalConnectionTimeoutRequest, UpdateTerminalConnectionTimeoutResponse } from "@shared/proto/nexusai/state"
 import { Controller } from "../index"
 
 export async function updateTerminalConnectionTimeout(

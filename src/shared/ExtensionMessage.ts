@@ -15,13 +15,13 @@ import type { Environment } from "../config"
 import { AutoApprovalSettings } from "./AutoApprovalSettings"
 import { ApiConfiguration } from "./api"
 import { BrowserSettings } from "./BrowserSettings"
-import { ClineFeatureSetting } from "./ClineFeatureSetting"
-import { ClineRulesToggles } from "./cline-rules"
 import { FocusChainSettings } from "./FocusChainSettings"
 import { HistoryItem } from "./HistoryItem"
 import { McpDisplayMode } from "./McpDisplayMode"
-import { ClineMessageModelInfo } from "./messages"
-import { OnboardingModelGroup } from "./proto/cline/state"
+import { NexusAIMessageModelInfo } from "./messages"
+import { NexusAIFeatureSetting } from "./NexusAIFeatureSetting"
+import { NexusAIRulesToggles } from "./nexusai-rules"
+import { OnboardingModelGroup } from "./proto/nexusai/state"
 import { Mode } from "./storage/types"
 import { TelemetrySetting } from "./TelemetrySetting"
 import { UserInfo } from "./UserInfo"
@@ -57,7 +57,7 @@ export interface ExtensionState {
 	preferredLanguage?: string
 	mode: Mode
 	checkpointManagerErrorMessage?: string
-	clineMessages: ClineMessage[]
+	clineMessages: NexusAIMessage[]
 	currentTaskItem?: HistoryItem
 	currentFocusChainChecklist?: string | null
 	mcpMarketplaceEnabled?: boolean
@@ -81,22 +81,22 @@ export interface ExtensionState {
 	userInfo?: UserInfo
 	version: string
 	distinctId: string
-	globalClineRulesToggles: ClineRulesToggles
-	localClineRulesToggles: ClineRulesToggles
-	localWorkflowToggles: ClineRulesToggles
-	globalWorkflowToggles: ClineRulesToggles
-	localCursorRulesToggles: ClineRulesToggles
-	localWindsurfRulesToggles: ClineRulesToggles
-	remoteRulesToggles?: ClineRulesToggles
-	remoteWorkflowToggles?: ClineRulesToggles
-	localAgentsRulesToggles: ClineRulesToggles
+	globalClineRulesToggles: NexusAIRulesToggles
+	localClineRulesToggles: NexusAIRulesToggles
+	localWorkflowToggles: NexusAIRulesToggles
+	globalWorkflowToggles: NexusAIRulesToggles
+	localCursorRulesToggles: NexusAIRulesToggles
+	localWindsurfRulesToggles: NexusAIRulesToggles
+	remoteRulesToggles?: NexusAIRulesToggles
+	remoteWorkflowToggles?: NexusAIRulesToggles
+	localAgentsRulesToggles: NexusAIRulesToggles
 	mcpResponsesCollapsed?: boolean
 	strictPlanModeEnabled?: boolean
 	yoloModeToggled?: boolean
 	useAutoCondense?: boolean
 	subagentsEnabled?: boolean
-	clineWebToolsEnabled?: ClineFeatureSetting
-	worktreesEnabled?: ClineFeatureSetting
+	clineWebToolsEnabled?: NexusAIFeatureSetting
+	worktreesEnabled?: NexusAIFeatureSetting
 	focusChainSettings: FocusChainSettings
 	customPrompt?: string
 	favoritedModelIds: string[]
@@ -104,7 +104,7 @@ export interface ExtensionState {
 	workspaceRoots: WorkspaceRoot[]
 	primaryRootIndex: number
 	isMultiRootWorkspace: boolean
-	multiRootSetting: ClineFeatureSetting
+	multiRootSetting: NexusAIFeatureSetting
 	hooksEnabled?: boolean
 	remoteConfigSettings?: Partial<RemoteConfigFields>
 	globalSkillsToggles?: Record<string, boolean>
@@ -124,11 +124,11 @@ export interface ExtensionState {
 	voicePiperVoice: string
 }
 
-export interface ClineMessage {
+export interface NexusAIMessage {
 	ts: number
 	type: "ask" | "say"
-	ask?: ClineAsk
-	say?: ClineSay
+	ask?: NexusAIAsk
+	say?: NexusAISay
 	text?: string
 	reasoning?: string
 	images?: string[]
@@ -140,10 +140,10 @@ export interface ClineMessage {
 	isOperationOutsideWorkspace?: boolean
 	conversationHistoryIndex?: number
 	conversationHistoryDeletedRange?: [number, number] // for when conversation history is truncated for API requests
-	modelInfo?: ClineMessageModelInfo
+	modelInfo?: NexusAIMessageModelInfo
 }
 
-export type ClineAsk =
+export type NexusAIAsk =
 	| "followup"
 	| "plan_mode_respond"
 	| "act_mode_respond"
@@ -163,7 +163,7 @@ export type ClineAsk =
 	| "report_bug"
 	| "use_subagents"
 
-export type ClineSay =
+export type NexusAISay =
 	| "task"
 	| "error"
 	| "error_retry"
@@ -205,7 +205,7 @@ export type ClineSay =
 	| "voice_speak"
 	| "voice_listen"
 
-export interface ClineSayTool {
+export interface NexusAISayTool {
 	tool:
 		| "editedExistingFile"
 		| "newFileCreated"
@@ -236,7 +236,7 @@ export interface ClineSayTool {
 	startLineNumbers?: number[]
 }
 
-export interface ClineSayHook {
+export interface NexusAISayHook {
 	hookName: string // Name of the hook (e.g., "PreToolUse", "PostToolUse")
 	toolName?: string // Tool name if applicable (for PreToolUse/PostToolUse)
 	status: "running" | "completed" | "failed" | "cancelled" // Execution status
@@ -275,13 +275,13 @@ export type HookOutputStreamMeta = {
 export const browserActions = ["launch", "click", "type", "scroll_down", "scroll_up", "close"] as const
 export type BrowserAction = (typeof browserActions)[number]
 
-export interface ClineSayBrowserAction {
+export interface NexusAISayBrowserAction {
 	action: BrowserAction
 	coordinate?: string
 	text?: string
 }
 
-export interface ClineSayGenerateExplanation {
+export interface NexusAISayGenerateExplanation {
 	title: string
 	fromRef: string
 	toRef: string
@@ -307,7 +307,7 @@ export interface SubagentStatusItem {
 	error?: string
 }
 
-export interface ClineSaySubagentStatus {
+export interface NexusAISaySubagentStatus {
 	status: "running" | "completed" | "failed"
 	total: number
 	completed: number
@@ -329,7 +329,7 @@ export type BrowserActionResult = {
 	currentMousePosition?: string
 }
 
-export interface ClineAskUseMcpServer {
+export interface NexusAIAskUseMcpServer {
 	serverName: string
 	type: "use_mcp_tool" | "access_mcp_resource"
 	toolName?: string
@@ -337,34 +337,34 @@ export interface ClineAskUseMcpServer {
 	uri?: string
 }
 
-export interface ClineAskUseSubagents {
+export interface NexusAIAskUseSubagents {
 	prompts: string[]
 }
 
-export interface ClinePlanModeResponse {
+export interface NexusAIPlanModeResponse {
 	response: string
 	options?: string[]
 	selected?: string
 }
 
-export interface ClineAskQuestion {
+export interface NexusAIAskQuestion {
 	question: string
 	options?: string[]
 	selected?: string
 }
 
-export interface ClineAskNewTask {
+export interface NexusAIAskNewTask {
 	context: string
 }
 
-export interface ClineApiReqInfo {
+export interface NexusAIApiReqInfo {
 	request?: string
 	tokensIn?: number
 	tokensOut?: number
 	cacheWrites?: number
 	cacheReads?: number
 	cost?: number
-	cancelReason?: ClineApiReqCancelReason
+	cancelReason?: NexusAIApiReqCancelReason
 	streamingFailedMessage?: string
 	retryStatus?: {
 		attempt: number
@@ -374,7 +374,7 @@ export interface ClineApiReqInfo {
 	}
 }
 
-export interface ClineSubagentUsageInfo {
+export interface NexusAISubagentUsageInfo {
 	source: "subagents"
 	tokensIn: number
 	tokensOut: number
@@ -383,6 +383,6 @@ export interface ClineSubagentUsageInfo {
 	cost: number
 }
 
-export type ClineApiReqCancelReason = "streaming_failed" | "user_cancelled" | "retries_exhausted"
+export type NexusAIApiReqCancelReason = "streaming_failed" | "user_cancelled" | "retries_exhausted"
 
 export const COMPLETION_RESULT_CHANGES_FLAG = "HAS_CHANGES"

@@ -1,4 +1,4 @@
-import { DeleteHookRequest, DeleteHookResponse } from "@shared/proto/cline/file"
+import { DeleteHookRequest, DeleteHookResponse } from "@shared/proto/nexusai/file"
 import fs from "fs/promises"
 import { HookDiscoveryCache } from "../../hooks/HookDiscoveryCache"
 import { resolveExistingHookPath, resolveHooksDirectory } from "../../hooks/utils"

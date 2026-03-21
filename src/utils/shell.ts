@@ -100,7 +100,8 @@ function getWindowsShellFromVSCode(): string | null {
 		if (profile?.path) {
 			// If there's an explicit PowerShell path, return that
 			return profile.path
-		} else if (profile?.source === "PowerShell") {
+		}
+		if (profile?.source === "PowerShell") {
 			// If the profile is sourced from PowerShell, assume the newest
 			return SHELL_PATHS.POWERSHELL_7
 		}
@@ -186,7 +187,7 @@ function getShellFromEnv(): string | null {
 // 4) Terminal Profile Interface and Utilities
 // -----------------------------------------------------
 
-import { TerminalProfile } from "@shared/proto/cline/state"
+import { TerminalProfile } from "@shared/proto/nexusai/state"
 
 /** Gets available terminal profiles for the current platform */
 export function getAvailableTerminalProfiles(): TerminalProfile[] {

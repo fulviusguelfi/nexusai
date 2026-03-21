@@ -1,8 +1,8 @@
 import { ApiConfiguration, ModelInfo, QwenApiRegions } from "@shared/api"
 import { Mode } from "@shared/storage/types"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
-import { ClineTool } from "@/shared/tools"
+import { NexusAITool } from "@/shared/tools"
 import { AIhubmixHandler } from "./providers/aihubmix"
 import { AnthropicHandler } from "./providers/anthropic"
 import { AskSageHandler } from "./providers/asksage"
@@ -10,7 +10,7 @@ import { BasetenHandler } from "./providers/baseten"
 import { AwsBedrockHandler } from "./providers/bedrock"
 import { CerebrasHandler } from "./providers/cerebras"
 import { ClaudeCodeHandler } from "./providers/claude-code"
-import { ClineHandler } from "./providers/cline"
+import { NexusAIHandler } from "./providers/cline"
 import { DeepSeekHandler } from "./providers/deepseek"
 import { DifyHandler } from "./providers/dify"
 import { DoubaoHandler } from "./providers/doubao"
@@ -50,7 +50,12 @@ export type CommonApiHandlerOptions = {
 	onRetryAttempt?: ApiConfiguration["onRetryAttempt"]
 }
 export interface ApiHandler {
-	createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: ClineTool[], useResponseApi?: boolean): ApiStream
+	createMessage(
+		systemPrompt: string,
+		messages: NexusAIStorageMessage[],
+		tools?: NexusAITool[],
+		useResponseApi?: boolean,
+	): ApiStream
 	getModel(): ApiHandlerModel
 	getApiStreamUsage?(): Promise<ApiStreamUsageChunk | undefined>
 	abort?(): void
@@ -260,7 +265,7 @@ function createHandlerForProvider(
 			const clineModelInfo =
 				(mode === "plan" ? options.planModeClineModelInfo : options.actModeClineModelInfo) ||
 				(mode === "plan" ? options.planModeOpenRouterModelInfo : options.actModeOpenRouterModelInfo)
-			return new ClineHandler({
+			return new NexusAIHandler({
 				onRetryAttempt: options.onRetryAttempt,
 				clineAccountId: options.clineAccountId,
 				clineApiKey: options.clineApiKey,

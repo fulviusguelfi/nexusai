@@ -1,4 +1,4 @@
-import { ClineDefaultTool, getToolUseNames } from "@shared/tools"
+import { getToolUseNames, NexusAIDefaultTool } from "@shared/tools"
 import { nanoid } from "nanoid"
 import { AssistantMessageContent, TextStreamContent, ToolParamName, ToolUse, toolParamNames } from "." // Assuming types are defined in index.ts or a similar file
 
@@ -173,7 +173,7 @@ export function parseAssistantMessageV2(assistantMessage: string): AssistantMess
 					// Start the new tool use
 					currentToolUse = {
 						type: "tool_use",
-						name: toolName as ClineDefaultTool,
+						name: toolName as NexusAIDefaultTool,
 						params: {},
 						partial: true, // Assume partial until closing tag is found
 						call_id: nanoid(8),

@@ -1,6 +1,6 @@
 import { ModelFamily } from "@/shared/prompts"
-import { ClineDefaultTool } from "@/shared/tools"
-import type { ClineToolSpec } from "../spec"
+import { NexusAIDefaultTool } from "@/shared/tools"
+import type { NexusAIToolSpec } from "../spec"
 
 /**
  * ## load_mcp_documentation
@@ -11,9 +11,9 @@ Usage:
 </load_mcp_documentation>
  */
 
-const id = ClineDefaultTool.MCP_DOCS
+const id = NexusAIDefaultTool.MCP_DOCS
 
-const generic: ClineToolSpec = {
+const generic: NexusAIToolSpec = {
 	id,
 	variant: ModelFamily.GENERIC,
 	name: "load_mcp_documentation",

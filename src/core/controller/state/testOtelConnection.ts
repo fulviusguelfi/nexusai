@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { TestConnectionResult } from "@shared/proto/cline/state"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
+import { TestConnectionResult } from "@shared/proto/nexusai/state"
 import { REMOTE_CONFIG_OTEL_PROVIDER_ID } from "@/core/storage/remote-config/utils"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"

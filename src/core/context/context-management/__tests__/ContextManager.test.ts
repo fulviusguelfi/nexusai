@@ -1,5 +1,5 @@
 import { Anthropic } from "@anthropic-ai/sdk"
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { expect } from "chai"
 import { ContextManager } from "../ContextManager"
 
@@ -15,7 +15,7 @@ function createApiReqMessage(tokens: {
 	tokensOut?: number
 	cacheWrites?: number
 	cacheReads?: number
-}): ClineMessage {
+}): NexusAIMessage {
 	return {
 		ts: Date.now(),
 		type: "say",
@@ -413,7 +413,7 @@ describe("ContextManager", () => {
 
 		it("does not compact at 33K tokens with default 0.75 threshold on 200K context", () => {
 			const api = createMockApi(200_000)
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn: 30_000, tokensOut: 3_000 })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn: 30_000, tokensOut: 3_000 })]
 
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, 0, 0.75)
 			expect(result).to.equal(false)
@@ -421,7 +421,7 @@ describe("ContextManager", () => {
 
 		it("compacts when tokens exceed 0.75 threshold on 200K context", () => {
 			const api = createMockApi(200_000)
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn: 140_000, tokensOut: 15_000 })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn: 140_000, tokensOut: 15_000 })]
 
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, 0, 0.75)
 			expect(result).to.equal(true)
@@ -439,7 +439,7 @@ describe("ContextManager", () => {
 			const api = createMockApi(contextWindow)
 			const tokensIn = totalTokens - 1_500
 			const tokensOut = 1_500
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn, tokensOut })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn, tokensOut })]
 
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, 0, accidentalThreshold)
 			expect(result).to.equal(true)
@@ -448,7 +448,7 @@ describe("ContextManager", () => {
 		it("falls back to maxAllowedSize when threshold is undefined", () => {
 			const api = createMockApi(200_000)
 			// 155K tokens — above 0.75 threshold (150K) but below maxAllowedSize (160K)
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn: 150_000, tokensOut: 5_000 })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn: 150_000, tokensOut: 5_000 })]
 
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, 0, undefined)
 			// undefined → uses maxAllowedSize (160K), so 155K < 160K → false
@@ -457,7 +457,7 @@ describe("ContextManager", () => {
 
 		it("falls back to maxAllowedSize when threshold is 0", () => {
 			const api = createMockApi(200_000)
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn: 150_000, tokensOut: 5_000 })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn: 150_000, tokensOut: 5_000 })]
 
 			// 0 is falsy, so ternary falls back to maxAllowedSize (160K)
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, 0, 0)
@@ -467,7 +467,7 @@ describe("ContextManager", () => {
 		it("includes cacheWrites and cacheReads in total token count", () => {
 			const api = createMockApi(200_000)
 			// Low direct tokens but high cache reads push total over threshold
-			const clineMessages: ClineMessage[] = [
+			const clineMessages: NexusAIMessage[] = [
 				createApiReqMessage({ tokensIn: 5_000, tokensOut: 500, cacheWrites: 0, cacheReads: 150_000 }),
 			]
 
@@ -477,7 +477,7 @@ describe("ContextManager", () => {
 
 		it("returns false when previousApiReqIndex is negative", () => {
 			const api = createMockApi(200_000)
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn: 200_000 })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn: 200_000 })]
 
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, -1, 0.75)
 			expect(result).to.equal(false)
@@ -486,7 +486,7 @@ describe("ContextManager", () => {
 		it("threshold is capped at maxAllowedSize even when percentage is very high", () => {
 			const api = createMockApi(200_000)
 			// threshold of 1.0 → floor(200000 * 1.0) = 200000, but min(200000, 160000) = 160000
-			const clineMessages: ClineMessage[] = [createApiReqMessage({ tokensIn: 165_000 })]
+			const clineMessages: NexusAIMessage[] = [createApiReqMessage({ tokensIn: 165_000 })]
 
 			const result = contextManager.shouldCompactContextWindow(clineMessages, api, 0, 1.0)
 			expect(result).to.equal(true)

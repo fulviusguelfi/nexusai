@@ -1,4 +1,4 @@
-import { ClineMessage } from "@shared/ExtensionMessage"
+import { NexusAIMessage } from "@shared/ExtensionMessage"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ChatState } from "../types/chatTypes"
 
@@ -6,7 +6,7 @@ import { ChatState } from "../types/chatTypes"
  * Custom hook for managing chat state
  * Handles input values, selection states, and UI state
  */
-export function useChatState(messages: ClineMessage[]): ChatState {
+export function useChatState(messages: NexusAIMessage[]): ChatState {
 	// Input and selection state
 	const [inputValue, setInputValue] = useState("")
 	const [activeQuote, setActiveQuote] = useState<string | null>(null)

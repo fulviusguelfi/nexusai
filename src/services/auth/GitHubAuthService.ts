@@ -1,5 +1,5 @@
-import { GitHubAuthState } from "@shared/proto/cline/account"
-import { EmptyRequest } from "@shared/proto/cline/common"
+import { GitHubAuthState } from "@shared/proto/nexusai/account"
+import { EmptyRequest } from "@shared/proto/nexusai/common"
 import * as vscode from "vscode"
 import { Controller } from "@/core/controller"
 import { getRequestRegistry, StreamingResponseHandler } from "@/core/controller/grpc-handler"

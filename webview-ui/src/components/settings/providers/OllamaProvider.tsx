@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/cline/common"
+import { StringRequest } from "@shared/proto/nexusai/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useCallback, useEffect, useState } from "react"
@@ -110,7 +110,7 @@ export const OllamaProvider = ({ showModelOptions, isPopup, currentMode }: Ollam
 						initialValue={apiConfiguration?.requestTimeoutMs ? apiConfiguration.requestTimeoutMs.toString() : "30000"}
 						onChange={(value) => {
 							// Convert to number, with validation
-							const numValue = parseInt(value, 10)
+							const numValue = Number.parseInt(value, 10)
 							if (!Number.isNaN(numValue) && numValue > 0) {
 								handleFieldChange("requestTimeoutMs", numValue)
 							}

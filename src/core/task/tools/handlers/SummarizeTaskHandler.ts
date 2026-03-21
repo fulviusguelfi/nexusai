@@ -8,10 +8,10 @@ import { ensureTaskDirectoryExists } from "@core/storage/disk"
 import { StateManager } from "@core/storage/StateManager"
 import { resolveWorkspacePath } from "@core/workspace"
 import { extractFileContent } from "@integrations/misc/extract-file-content"
-import { ClineSayTool } from "@shared/ExtensionMessage"
+import { NexusAISayTool } from "@shared/ExtensionMessage"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
-import { ClineDefaultTool } from "@/shared/tools"
+import { NexusAIDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
 import type { ToolValidator } from "../ToolValidator"
@@ -19,7 +19,7 @@ import type { TaskConfig } from "../types/TaskConfig"
 import type { StronglyTypedUIHelpers } from "../types/UIHelpers"
 
 export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler {
-	readonly name = ClineDefaultTool.SUMMARIZE_TASK
+	readonly name = NexusAIDefaultTool.SUMMARIZE_TASK
 
 	constructor(private validator: ToolValidator) {}
 
@@ -106,7 +106,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 			const completeMessage = JSON.stringify({
 				tool: "summarizeTask",
 				content: context,
-			} satisfies ClineSayTool)
+			} satisfies NexusAISayTool)
 
 			await config.callbacks.say("tool", completeMessage, undefined, undefined, false)
 
@@ -163,7 +163,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 					}
 
 					// Only process if auto-approved (respects workspace/outside-workspace settings)
-					if (await config.callbacks.shouldAutoApproveToolWithPath(ClineDefaultTool.FILE_READ, relPath)) {
+					if (await config.callbacks.shouldAutoApproveToolWithPath(NexusAIDefaultTool.FILE_READ, relPath)) {
 						try {
 							// Resolve path (handles multi-root workspaces)
 							const pathResult = resolveWorkspacePath(config, relPath, "SummarizeTaskHandler")
@@ -275,7 +275,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 		const partialMessage = JSON.stringify({
 			tool: "summarizeTask",
 			content: uiHelpers.removeClosingTag(block, "context", context),
-		} satisfies ClineSayTool)
+		} satisfies NexusAISayTool)
 
 		await uiHelpers.say("tool", partialMessage, undefined, undefined, block.partial)
 	}

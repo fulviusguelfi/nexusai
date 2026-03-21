@@ -3,7 +3,7 @@ import { isBinaryFile } from "isbinaryfile"
 import { HostProvider } from "@/hosts/host-provider"
 import { formatContentBlockToMarkdown } from "@/integrations/misc/export-markdown"
 import { ApiConfiguration } from "@/shared/api"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { NexusAIStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 
 export interface ChangedFile {
@@ -220,7 +220,7 @@ Output your explanation comments now using the @@@ format:`
 					// Check for LINE header (single line number)
 					if (trimmedLine.startsWith("@@@ LINE:")) {
 						const lineStr = trimmedLine.substring("@@@ LINE:".length).trim()
-						const lineNum = parseInt(lineStr, 10)
+						const lineNum = Number.parseInt(lineStr, 10)
 						if (!Number.isNaN(lineNum) && currentFile) {
 							currentStartLine = lineNum
 							currentEndLine = lineNum
@@ -361,7 +361,7 @@ Please respond to the user's question about this code.`
 /**
  * Stringify conversation history into a readable summary for context
  */
-export function stringifyConversationHistory(apiConversationHistory: ClineStorageMessage[]): string {
+export function stringifyConversationHistory(apiConversationHistory: NexusAIStorageMessage[]): string {
 	if (!apiConversationHistory || apiConversationHistory.length === 0) {
 		return "No prior conversation context available."
 	}

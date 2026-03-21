@@ -1,5 +1,5 @@
 import { HostProvider } from "@/hosts/host-provider"
-import { EmptyRequest } from "@/shared/proto/cline/common"
+import { EmptyRequest } from "@/shared/proto/nexusai/common"
 import { Logger } from "@/shared/services/Logger"
 
 /**
