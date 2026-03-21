@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Smoke Test Runner for Cline
+ * Smoke Test Runner for NexusAI
  *
  * Runs curated smoke tests against configured providers to verify:
  * - Basic tool execution works
@@ -41,9 +41,9 @@ function checkClineCli(): boolean {
 	}
 }
 
-// Use user's existing Cline config (already has auth configured)
+// Use user's existing NexusAI config (already has auth configured)
 // For CI, this would be set up by the auth step before tests run
-const CLINE_CONFIG_DIR = path.join(process.env.HOME || "", ".cline")
+const NEXUSAI_CONFIG_DIR = path.join(process.env.HOME || "", ".nexusai")
 const configuredAuthCache = new Set<string>()
 
 function configureAuth(options: { provider: string; apiKey: string; modelId: string; baseUrl?: string }): {
@@ -51,11 +51,12 @@ function configureAuth(options: { provider: string; apiKey: string; modelId: str
 	error?: string
 } {
 	// Ensure config directory exists
-	fs.mkdirSync(CLINE_CONFIG_DIR, { recursive: true })
+	fs.mkdirSync(NEXUSAI_CONFIG_DIR, { recursive: true })
 
 	try {
 		// Run quick auth setup (non-interactive when all flags provided)
-		const args = [`cline auth --config "${CLINE_CONFIG_DIR}"`, `-p "${options.provider}"`, `-k "${options.apiKey}"`, `-m "${options.modelId}"`]
+		const args = [`cline auth --config "${NEXUSAI_CONFIG_DIR}"`,
+ `-p "${options.provider}"`, `-k "${options.apiKey}"`, `-m "${options.modelId}"`]
 		if (options.baseUrl) {
 			args.push(`-b "${options.baseUrl}"`)
 		}
@@ -98,7 +99,7 @@ interface SmokeScenario {
 	prompt: string
 	workdir: string // Relative to scenario directory
 	expectedFiles?: string[] // Files that should exist after
-	expectedContent?: { file: string; contains: string }[] // Content checks
+	expectedContent?: { file: string; contains?: string; matchesRegex?: string }[] // Content checks
 	timeout: number // Seconds
 	models?: string[] // Optional: override default models for this scenario
 	provider?: string // Provider override (defaults to DEFAULT_PROVIDER)
@@ -141,7 +142,7 @@ function getScenarioProvider(scenario: SmokeScenario): string {
 function ensureScenarioAuth(scenario: SmokeScenario, modelId: string): { ok: boolean; error?: string } {
 	const provider = getScenarioProvider(scenario)
 	const authModelId = scenario.auth?.modelId || modelId
-	const apiKeyEnv = scenario.auth?.apiKeyEnv || (provider === DEFAULT_PROVIDER ? "CLINE_API_KEY" : undefined)
+	const apiKeyEnv = scenario.auth?.apiKeyEnv || (provider === DEFAULT_PROVIDER ? "NEXUSAI_API_KEY" : undefined)
 	const apiKey = apiKeyEnv ? process.env[apiKeyEnv] : undefined
 	const baseUrl = scenario.auth?.baseUrlEnv ? process.env[scenario.auth.baseUrlEnv] : undefined
 	const authCacheKey = `${provider}|${authModelId}|${baseUrl || ""}|${apiKeyEnv || ""}`
@@ -157,7 +158,7 @@ function ensureScenarioAuth(scenario: SmokeScenario, modelId: string): { ok: boo
 		return result
 	}
 
-	// For default provider, local developers can rely on existing ~/.cline auth.
+	// For default provider, local developers can rely on existing ~/.nexusai auth.
 	if (provider === DEFAULT_PROVIDER) {
 		return { ok: true }
 	}
@@ -203,7 +204,7 @@ async function runTrial(scenario: SmokeScenario, modelId: string, trialWorkdir: 
 	// Provider is configured via `cline auth` before running tests
 	const args = [
 		"--config",
-		CLINE_CONFIG_DIR, // Use shared config directory for auth
+		NEXUSAI_CONFIG_DIR, // Use shared config directory for auth
 		"-y", // YOLO mode - auto-approve all actions, exits after completion
 		"-t",
 		String(scenario.timeout), // CLI timeout (matches our timeout)
@@ -214,7 +215,7 @@ async function runTrial(scenario: SmokeScenario, modelId: string, trialWorkdir: 
 
 	try {
 		// Run cline CLI
-		const result = await runClineWithTimeout(args, trialWorkdir, scenario.timeout * 1000)
+		const result = await runNexusAIWithTimeout(args, trialWorkdir, scenario.timeout * 1000)
 
 		if (!result.success) {
 			return {
@@ -256,10 +257,19 @@ async function runTrial(scenario: SmokeScenario, modelId: string, trialWorkdir: 
 					}
 				}
 				const content = fs.readFileSync(filePath, "utf-8")
-				if (!content.includes(check.contains)) {
+				if (check.contains !== undefined && !content.includes(check.contains)) {
 					return {
 						passed: false,
 						error: `Expected content not found in ${check.file}: "${check.contains}"`,
+						durationMs: Date.now() - startTime,
+						stdout: result.stdout,
+						stderr: result.stderr,
+					}
+				}
+				if (check.matchesRegex !== undefined && !new RegExp(check.matchesRegex).test(content)) {
+					return {
+						passed: false,
+						error: `Content in ${check.file} does not match regex: "${check.matchesRegex}"`,
 						durationMs: Date.now() - startTime,
 						stdout: result.stdout,
 						stderr: result.stderr,
@@ -286,14 +296,14 @@ async function runTrial(scenario: SmokeScenario, modelId: string, trialWorkdir: 
 }
 
 // Run cline CLI with timeout
-interface ClineResult {
+interface NexusAIResult {
 	success: boolean
 	error?: string
 	stdout: string
 	stderr: string
 }
 
-function runClineWithTimeout(args: string[], cwd: string, timeoutMs: number): Promise<ClineResult> {
+function runNexusAIWithTimeout(args: string[], cwd: string, timeoutMs: number): Promise<NexusAIResult> {
 	return new Promise((resolve) => {
 		let stdout = ""
 		let stderr = ""
