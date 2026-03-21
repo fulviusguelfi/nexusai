@@ -82,6 +82,7 @@ export class IotDiscoveryService {
 
 		// biome-ignore lint/suspicious/noExplicitAny: bonjour dynamic import
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-expect-error bonjour-service types unavailable in some module resolution modes
 		const bonjourMod: any = await import("bonjour-service")
 		const Bonjour = bonjourMod.default ?? bonjourMod.Bonjour ?? bonjourMod
 		const bonjour = new Bonjour()

@@ -38,9 +38,6 @@ import {
 import { releaseTaskLock } from "@core/task/TaskLockUtils"
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils"
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
-import { buildCheckpointManager, shouldUseMultiRoot } from "@integrations/checkpoints/factory"
-import { ensureCheckpointInitialized } from "@integrations/checkpoints/initializer"
-import { ICheckpointManager } from "@integrations/checkpoints/types"
 import { DiffViewProvider } from "@integrations/editor/DiffViewProvider"
 import { formatContentBlockToMarkdown } from "@integrations/misc/export-markdown"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
@@ -60,7 +57,7 @@ import { HistoryItem } from "@shared/HistoryItem"
 import { DEFAULT_LANGUAGE_SETTINGS, getLanguageKey, LanguageDisplay } from "@shared/Languages"
 import { USER_CONTENT_TAGS } from "@shared/messages/constants"
 import { convertClineMessageToProto } from "@shared/proto-conversions/nexusai-message"
-import { NexusAIDefaultTool, READ_ONLY_TOOLS } from "@shared/tools"
+import { NexusAIDefaultTool } from "@shared/tools"
 import { NexusAIAskResponse } from "@shared/WebviewMessage"
 import {
 	isClaude4PlusModelFamily,
@@ -101,7 +98,6 @@ import {
 	NexusAIUserContent,
 } from "@/shared/messages"
 import { NexusAIClient } from "@/shared/nexusai"
-import { ShowMessageType } from "@/shared/proto/index.host"
 import { ApiFormat } from "@/shared/proto/nexusai/models"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
@@ -116,6 +112,7 @@ import { FocusChainManager } from "./focus-chain"
 import { MessageStateHandler } from "./message-state"
 import { StreamChunkCoordinator } from "./StreamChunkCoordinator"
 import { StreamResponseHandler } from "./StreamResponseHandler"
+import { CheckpointOrchestrator } from "./services/CheckpointOrchestrator"
 import { ContextCompactor } from "./services/ContextCompactor"
 import { NativeToolCallProcessor } from "./services/NativeToolCallProcessor"
 import { TaskState } from "./TaskState"
@@ -213,8 +210,10 @@ export class Task {
 	browserSession: BrowserSession
 	contextManager: ContextManager
 	private diffViewProvider: DiffViewProvider
-	public checkpointManager?: ICheckpointManager
-	private initialCheckpointCommitPromise?: Promise<string | undefined>
+	private checkpointOrchestrator!: CheckpointOrchestrator
+	public get checkpointManager() {
+		return this.checkpointOrchestrator?.checkpointManager
+	}
 	private clineIgnoreController: NexusAIIgnoreController
 	private commandPermissionController: CommandPermissionController
 	private toolExecutor: ToolExecutor
@@ -378,59 +377,22 @@ export class Task {
 			})
 		}
 
-		// Check for multiroot workspace and warn about checkpoints
-		const isMultiRootWorkspace = this.workspaceManager && this.workspaceManager.getRoots().length > 1
-		const checkpointsEnabled = this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting")
-
-		if (isMultiRootWorkspace && checkpointsEnabled) {
-			// Set checkpoint manager error message to display warning in TaskHeader
-			this.taskState.checkpointManagerErrorMessage = "Checkpoints are not currently supported in multi-root workspaces."
-		}
-
-		// Initialize checkpoint manager based on workspace configuration
-		if (!isMultiRootWorkspace) {
-			try {
-				this.checkpointManager = buildCheckpointManager({
-					taskId: this.taskId,
-					messageStateHandler: this.messageStateHandler,
-					fileContextTracker: this.fileContextTracker,
-					diffViewProvider: this.diffViewProvider,
-					taskState: this.taskState,
-					workspaceManager: this.workspaceManager,
-					updateTaskHistory: this.updateTaskHistory,
-					say: this.say.bind(this),
-					cancelTask: this.cancelTask,
-					postStateToWebview: this.postStateToWebview,
-					initialConversationHistoryDeletedRange: this.taskState.conversationHistoryDeletedRange,
-					initialCheckpointManagerErrorMessage: this.taskState.checkpointManagerErrorMessage,
-					stateManager: this.stateManager,
-				})
-
-				// If multi-root, kick off non-blocking initialization
-				// Unreachable for now, leaving in for future multi-root checkpoint support
-				if (
-					shouldUseMultiRoot({
-						workspaceManager: this.workspaceManager,
-						enableCheckpoints: this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting"),
-						stateManager: this.stateManager,
-					})
-				) {
-					this.checkpointManager.initialize?.().catch((error: Error) => {
-						Logger.error("Failed to initialize multi-root checkpoint manager:", error)
-						this.taskState.checkpointManagerErrorMessage = error?.message || String(error)
-					})
-				}
-			} catch (error) {
-				Logger.error("Failed to initialize checkpoint manager:", error)
-				if (this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting")) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error"
-					HostProvider.window.showMessage({
-						type: ShowMessageType.ERROR,
-						message: `Failed to initialize checkpoint manager: ${errorMessage}`,
-					})
-				}
-			}
-		}
+		// Initialize checkpoint orchestrator (handles multi-root warning + manager build)
+		this.checkpointOrchestrator = new CheckpointOrchestrator({
+			taskId: this.taskId,
+			taskState: this.taskState,
+			messageStateHandler: this.messageStateHandler,
+			fileContextTracker: this.fileContextTracker,
+			diffViewProvider: this.diffViewProvider,
+			workspaceManager: this.workspaceManager,
+			stateManager: this.stateManager,
+			updateTaskHistory: this.updateTaskHistory,
+			say: this.say.bind(this),
+			cancelTask: this.cancelTask,
+			postStateToWebview: this.postStateToWebview,
+			initialConversationHistoryDeletedRange: this.taskState.conversationHistoryDeletedRange,
+			initialCheckpointManagerErrorMessage: this.taskState.checkpointManagerErrorMessage,
+		})
 
 		// Prepare effective API configuration
 		const apiConfiguration = this.stateManager.getApiConfiguration()
@@ -576,12 +538,13 @@ export class Task {
 			isMultiRootEnabled(this.stateManager),
 			this.say.bind(this),
 			this.ask.bind(this),
-			this.saveCheckpointCallback.bind(this),
+			this.checkpointOrchestrator.saveCheckpoint.bind(this.checkpointOrchestrator),
 			this.sayAndCreateMissingParamError.bind(this),
 			this.removeLastPartialMessageIfExistsWithType.bind(this),
 			this.executeCommandTool.bind(this),
 			this.cancelBackgroundCommand.bind(this),
-			() => this.checkpointManager?.doesLatestTaskCompletionHaveNewChanges() ?? Promise.resolve(false),
+			() =>
+				this.checkpointOrchestrator.checkpointManager?.doesLatestTaskCompletionHaveNewChanges() ?? Promise.resolve(false),
 			this.FocusChainManager?.updateFCListFromToolResponse.bind(this.FocusChainManager) || (async () => {}),
 			this.switchToActModeCallback.bind(this),
 			this.cancelTask,
@@ -890,10 +853,6 @@ export class Task {
 			this.messageStateHandler.setClineMessages(clineMessages.slice(0, -1))
 			await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
 		}
-	}
-
-	private async saveCheckpointCallback(isAttemptCompletionMessage?: boolean, completionMessageTs?: number): Promise<void> {
-		return this.checkpointManager?.saveCheckpoint(isAttemptCompletionMessage, completionMessageTs) ?? Promise.resolve()
 	}
 
 	/**
@@ -1233,7 +1192,7 @@ export class Task {
 		let responseFiles: string[] | undefined
 		if (response === "messageResponse" || text || (images && images.length > 0) || (files && files.length > 0)) {
 			await this.say("user_feedback", text, images, files)
-			await this.checkpointManager?.saveCheckpoint()
+			await this.checkpointOrchestrator.saveCheckpoint()
 			responseText = text
 			responseImages = images
 			responseFiles = files
@@ -2157,12 +2116,7 @@ export class Task {
 			case "tool_use":
 				// If we have a pending initial commit, we must block unsafe tools until it finishes.
 				// Safe tools (read-only) can run in parallel.
-				if (this.initialCheckpointCommitPromise) {
-					if (!READ_ONLY_TOOLS.includes(block.name as any)) {
-						await this.initialCheckpointCommitPromise
-						this.initialCheckpointCommitPromise = undefined
-					}
-				}
+				await this.checkpointOrchestrator.waitForInitialCommitIfNeeded(block.name)
 				await this.toolExecutor.executeTool(block)
 				if (block.call_id) {
 					Session.get().updateToolCall(block.call_id, block.name)
@@ -2290,54 +2244,8 @@ export class Task {
 		// Save checkpoint if this is the first API request
 		const isFirstRequest = this.messageStateHandler.getClineMessages().filter((m) => m.say === "api_req_started").length === 0
 
-		// Initialize checkpointManager in the background (non-blocking) if enabled and it's the first request.
-		// This allows the API request to proceed while checkpoints initialize, avoiding a 15s hang.
-		if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			this.checkpointManager &&
-			!this.taskState.checkpointManagerErrorMessage
-		) {
-			const checkpointInitPromise = ensureCheckpointInitialized({ checkpointManager: this.checkpointManager })
-				.then(async () => {
-					// Checkpoint initialized successfully — create initial checkpoint
-					await this.say("checkpoint_created")
-					const lastCheckpointMessageIndex = findLastIndex(
-						this.messageStateHandler.getClineMessages(),
-						(m) => m.say === "checkpoint_created",
-					)
-					if (lastCheckpointMessageIndex !== -1) {
-						const commitPromise = this.checkpointManager?.commit()
-						this.initialCheckpointCommitPromise = commitPromise
-						commitPromise
-							?.then(async (commitHash) => {
-								if (commitHash) {
-									await this.messageStateHandler.updateClineMessage(lastCheckpointMessageIndex, {
-										lastCheckpointHash: commitHash,
-									})
-								}
-							})
-							.catch((error) => {
-								Logger.error(
-									`[TaskCheckpointManager] Failed to create checkpoint commit for task ${this.taskId}:`,
-									error,
-								)
-							})
-					}
-				})
-				.catch((error) => {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error"
-					Logger.error("Failed to initialize checkpoint manager:", errorMessage)
-					this.taskState.checkpointManagerErrorMessage = errorMessage
-					HostProvider.window.showMessage({
-						type: ShowMessageType.WARNING,
-						message: `Checkpoint initialization timed out: ${errorMessage}`,
-					})
-				})
-
-			// Store for later await if needed (e.g. saveCheckpoint)
-			this.initialCheckpointCommitPromise = checkpointInitPromise.then(() => undefined)
-		}
+		// Initialize checkpoint in the background on first request (non-blocking, avoids 15s hang)
+		this.checkpointOrchestrator.maybeRunFirstRequestInit(isFirstRequest)
 
 		// Determine if we should compact context window
 		// Note: We delay context loading until we know if we're compacting (performance optimization)
@@ -3019,7 +2927,7 @@ export class Task {
 				await pWaitFor(() => this.taskState.userMessageContentReady)
 
 				// Save checkpoint after all tools in this response have finished executing
-				await this.checkpointManager?.saveCheckpoint()
+				await this.checkpointOrchestrator.saveCheckpoint()
 
 				// if the model did not tool use, then we need to tell it to either use a tool or attempt_completion
 				const didToolUse = this.taskState.assistantMessageContent.some((block) => block.type === "tool_use")
