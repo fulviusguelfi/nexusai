@@ -290,6 +290,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		voiceInputDeviceId: undefined,
 		voiceOutputDeviceId: undefined,
 		voicePiperVoice: "en_US-lessac-medium",
+		voiceSilenceThresholdMs: 700,
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)

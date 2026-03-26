@@ -64,6 +64,14 @@ export abstract class WebviewProvider {
 	abstract isVisible(): boolean
 
 	/**
+	 * Sends a message from the extension to the webview.
+	 *
+	 * @param message - The extension message to send
+	 * @returns A thenable or promise that resolves to boolean|undefined
+	 */
+	abstract postExtensionMessage(message: any): Promise<boolean | undefined>
+
+	/**
 	 * Defines and returns the HTML that should be rendered within the webview panel.
 	 *
 	 * @remarks This is also the place where references to the React webview build files
@@ -116,14 +124,13 @@ export abstract class WebviewProvider {
 					style-src ${this.getCspSource()} 'unsafe-inline'; 
 					img-src ${this.getCspSource()} https: data:; 
 					media-src 'self' blob:;
-					script-src 'nonce-${nonce}' 'unsafe-eval';">
+					script-src 'nonce-${nonce}';">
 				<title>NexusAI</title>
 			</head>
 			<body>
 				<noscript>You need to enable JavaScript to run this app.</noscript>
 				<div id="root"></div>
 				<script type="module" nonce="${nonce}" src="${scriptUrl}"></script>
-				<script src="http://localhost:8097"></script> 
 			</body>
 		</html>
 		`

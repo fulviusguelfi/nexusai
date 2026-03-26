@@ -55,7 +55,20 @@ export class PiperService {
 		const platform = this._getPlatformKey()
 		const asset = PLATFORM_ASSETS[platform]
 		if (!asset) throw new Error(`Unsupported platform: ${platform}`)
-		return path.join(this._binDir, asset.binary)
+		const expectedPath = path.join(this._binDir, asset.binary)
+
+		// Check if the binary is in the expected location or in a subdirectory
+		// (handles both extraction formats: piper.exe and piper/piper.exe)
+		if (fs.existsSync(expectedPath)) {
+			return expectedPath
+		}
+
+		const altPath = path.join(this._binDir, "piper", asset.binary)
+		if (fs.existsSync(altPath)) {
+			return altPath
+		}
+
+		return expectedPath // Return expected path even if not found (error will happen at spawn)
 	}
 
 	isBinaryInstalled(): boolean {

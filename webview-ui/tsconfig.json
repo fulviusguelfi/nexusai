@@ -12,6 +12,9 @@
 		"paths": {
 			"@/*": [
 				"./src/*"
+			],
+			"@services/*": [
+				"./src/services/*"
 			]
 		}
 	}

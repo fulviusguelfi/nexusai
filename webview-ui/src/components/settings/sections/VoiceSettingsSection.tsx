@@ -1,10 +1,9 @@
-import { StringRequest } from "@shared/proto/cline/common"
+import { VoiceServiceClient } from "@services/grpc-client"
 import React, { useCallback, useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { WebServiceClient } from "@/services/grpc-client"
 import Section from "../Section"
 import { updateSetting } from "../utils/settingsHandlers"
 
@@ -25,140 +24,79 @@ const VOICE_OPTIONS = [
 ] as const
 
 const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
-	const { voiceTtsEnabled, voiceSttEnabled, voiceInputDeviceId, voiceOutputDeviceId, voicePiperVoice } = useExtensionState()
-	const mediaDevices = typeof navigator !== "undefined" ? navigator.mediaDevices : undefined
+	const { voiceTtsEnabled, voiceSttEnabled, voiceInputDeviceId, voicePiperVoice, voiceSilenceThresholdMs } = useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
-	const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
-	const [permissionState, setPermissionState] = useState<"idle" | "requesting" | "granted" | "denied">("idle")
-	const [permissionError, setPermissionError] = useState<string>("")
-	const [probeStatus, setProbeStatus] = useState<string>("")
+	const [isDetectingDevices, setIsDetectingDevices] = useState(false)
+	const [error, setError] = useState<string | null>(null)
 
-	// Populate device lists without proactively requesting mic permission.
-	// Some environments/webviews flicker or lose focus when getUserMedia is called on mount.
-	const mapDevices = (devices: MediaDeviceInfo[]) => {
-		const realInputs: AudioDevice[] = []
-		const realOutputs: AudioDevice[] = []
-		const virtualInputs: AudioDevice[] = []
-		const virtualOutputs: AudioDevice[] = []
+	// Enumerate devices via backend RPC
+	const detectRealDevices = useCallback(async () => {
+		setIsDetectingDevices(true)
+		setError(null)
 
-		devices.forEach((d) => {
-			if (!d.deviceId) return
-			const label = d.label || d.deviceId
-			const isVirtual = d.deviceId === "default" || d.deviceId === "communications"
-			if (d.kind === "audioinput") {
-				if (isVirtual) virtualInputs.push({ deviceId: d.deviceId, label })
-				else realInputs.push({ deviceId: d.deviceId, label })
-			} else if (d.kind === "audiooutput") {
-				if (isVirtual) virtualOutputs.push({ deviceId: d.deviceId, label })
-				else realOutputs.push({ deviceId: d.deviceId, label })
+		try {
+			console.log("[Voice] Calling backend enumerateAudioDevices RPC...")
+			const resp = await VoiceServiceClient.enumerateAudioDevices({})
+			console.log("[Voice] Backend response:", resp)
+
+			if (resp.error) {
+				setError(resp.error)
+				console.error("[Voice] Backend error:", resp.error)
+				return
 			}
-		})
 
-		// Some Windows environments expose only virtual entries. In that case,
-		// show them instead of an empty list.
-		const inputs = realInputs.length > 0 ? realInputs : virtualInputs
-		const outputs = realOutputs.length > 0 ? realOutputs : virtualOutputs
+			const devices: AudioDevice[] = (resp.inputDevices || []).map((d: any) => ({
+				deviceId: d.deviceId || "",
+				label: d.label || d.deviceId || "(unknown)",
+			}))
 
-		return { inputs, outputs }
-	}
+			console.log("[Voice] Mapped devices:", devices)
+			setInputDevices(devices)
+			setError(null)
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			console.error("[Voice] Detection error:", msg)
+			setError(msg)
+		} finally {
+			setIsDetectingDevices(false)
+		}
+	}, [])
 
-	const loadDevices = useCallback(async () => {
+	// Load devices on mount (browser-based enumeration as fallback)
+	const loadDevicesFallback = useCallback(async () => {
+		const mediaDevices = typeof navigator !== "undefined" ? navigator.mediaDevices : undefined
 		if (!mediaDevices?.enumerateDevices) {
-			setInputDevices([])
-			setOutputDevices([])
-			setPermissionState("denied")
-			setPermissionError("navigator.mediaDevices.enumerateDevices is unavailable in this webview context")
+			console.warn("[Voice] browser enumerateDevices not available")
 			return
 		}
 
 		try {
 			const devices = await mediaDevices.enumerateDevices()
-			const { inputs, outputs } = mapDevices(devices)
-
-			if (inputs.length > 0 || outputs.length > 0) {
-				setPermissionState("granted")
-				setPermissionError("")
-			}
-
-			setInputDevices(inputs)
-			setOutputDevices(outputs)
-		} catch (err) {
-			setPermissionState("denied")
-			setPermissionError(err instanceof Error ? err.message : "Failed to enumerate audio devices")
-			setInputDevices([])
-			setOutputDevices([])
-		}
-	}, [mediaDevices])
-
-	/** Explicitly request microphone permission (called by the "Grant Access" button). */
-	const requestPermission = useCallback(async () => {
-		if (!mediaDevices?.getUserMedia) return
-		setPermissionState("requesting")
-		setPermissionError("")
-		setProbeStatus("")
-		try {
-			const stream = await mediaDevices.getUserMedia({ audio: true })
-			stream.getTracks().forEach((t) => t.stop())
-			setPermissionState("granted")
-			await loadDevices()
-		} catch (err) {
-			setPermissionState("denied")
-			if (err instanceof DOMException) {
-				setPermissionError(`${err.name}: ${err.message}`)
-			} else if (err instanceof Error) {
-				setPermissionError(err.message)
+			const inputs: AudioDevice[] = []
+			devices.forEach((d) => {
+				if (d.kind === "audioinput" && d.deviceId) {
+					inputs.push({
+						deviceId: d.deviceId,
+						label: d.label || d.deviceId,
+					})
+				}
+			})
+			console.log("[Voice] Browser enumeration found:", inputs)
+			if (inputs.length === 0) {
+				// No real devices yet - show detect button
+				setInputDevices([])
 			} else {
-				setPermissionError("Unknown microphone permission error")
+				setInputDevices(inputs)
 			}
-		}
-	}, [mediaDevices, loadDevices])
-
-	const runMicProbe = useCallback(async () => {
-		if (!mediaDevices?.getUserMedia) {
-			setProbeStatus("MIC_ERR: getUserMedia is unavailable in this webview context")
-			setPermissionState("denied")
-			return
-		}
-
-		setPermissionState("requesting")
-		setPermissionError("")
-		setProbeStatus("")
-
-		try {
-			const stream = await mediaDevices.getUserMedia({ audio: true })
-			stream.getTracks().forEach((t) => t.stop())
-
-			const devices = mediaDevices.enumerateDevices ? await mediaDevices.enumerateDevices() : []
-			const { inputs, outputs } = mapDevices(devices)
-			setInputDevices(inputs)
-			setOutputDevices(outputs)
-			setPermissionState("granted")
-			setProbeStatus(`MIC_OK: ${inputs.length} input device(s), ${outputs.length} output device(s)`)
 		} catch (err) {
-			setPermissionState("denied")
-			if (err instanceof DOMException) {
-				setPermissionError(`${err.name}: ${err.message}`)
-				setProbeStatus(`MIC_ERR: ${err.name} - ${err.message}`)
-			} else if (err instanceof Error) {
-				setPermissionError(err.message)
-				setProbeStatus(`MIC_ERR: ${err.message}`)
-			} else {
-				setPermissionError("Unknown microphone permission error")
-				setProbeStatus("MIC_ERR: Unknown microphone permission error")
-			}
+			console.error("[Voice] browser enumeration failed:", err)
 		}
-	}, [mediaDevices])
+	}, [])
 
 	useEffect(() => {
-		loadDevices()
-		if (!mediaDevices?.addEventListener || !mediaDevices?.removeEventListener) {
-			return
-		}
-
-		mediaDevices.addEventListener("devicechange", loadDevices)
-		return () => mediaDevices.removeEventListener("devicechange", loadDevices)
-	}, [loadDevices, mediaDevices])
+		loadDevicesFallback()
+	}, [])
 
 	useEffect(() => {
 		if (!voiceInputDeviceId) return
@@ -167,14 +105,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 			updateSetting("voiceInputDeviceId", "")
 		}
 	}, [voiceInputDeviceId, inputDevices])
-
-	useEffect(() => {
-		if (!voiceOutputDeviceId) return
-		const exists = outputDevices.some((d) => d.deviceId === voiceOutputDeviceId)
-		if (!exists) {
-			updateSetting("voiceOutputDeviceId", "")
-		}
-	}, [voiceOutputDeviceId, outputDevices])
 
 	useEffect(() => {
 		if (!voicePiperVoice) return
@@ -206,6 +136,20 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{voiceSttEnabled && (
 						<div className="pl-2 flex flex-col gap-2">
 							<Label className="text-xs text-vscode-descriptionForeground">Microphone Input Device</Label>
+
+							{/* Show detect button if list is empty or only has default */}
+							{inputDevices.length === 0 && (
+								<button
+									className="text-xs px-2 py-1 rounded border border-vscode-focusBorder hover:bg-vscode-button-hoverBackground disabled:opacity-50"
+									disabled={isDetectingDevices}
+									onClick={detectRealDevices}>
+									{isDetectingDevices ? "Detecting..." : "Detect microphones"}
+								</button>
+							)}
+
+							{/* Show error if detection failed */}
+							{error && <p className="text-xs text-red-400">Detection failed: {error}</p>}
+
 							<Select
 								onValueChange={(v) => updateSetting("voiceInputDeviceId", v === "default" ? "" : v)}
 								value={
@@ -226,106 +170,30 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 								</SelectContent>
 							</Select>
 
-							{/* Permission status */}
-							{permissionState === "denied" &&
-								(() => {
-									const ua = navigator.userAgent
-									const isWindows = ua.includes("Windows")
-									const isMac = ua.includes("Macintosh") || ua.includes("Mac OS")
-
-									if (isWindows) {
-										return (
-											<div className="flex items-start gap-2">
-												<span className="codicon codicon-warning text-error text-xs mt-0.5 shrink-0" />
-												<p className="text-xs text-error leading-snug">
-													Microphone access denied. In Windows Settings:{" "}
-													<strong>Privacy &amp; Security → Microphone</strong> — first enable{" "}
-													<strong>"Microphone access"</strong>, then enable{" "}
-													<strong>"Let desktop apps access your microphone"</strong>. After changing
-													this, fully close and reopen <strong>Visual Studio Code</strong>, then run the
-													mic diagnostic again.{" "}
-													<button
-														className="underline font-medium"
-														onClick={() =>
-															WebServiceClient.openInBrowser(
-																StringRequest.create({ value: "ms-settings:privacy-microphone" }),
-															)
-														}
-														type="button">
-														Open microphone settings ↗
-													</button>
-												</p>
-											</div>
-										)
+							{/* Silence threshold slider */}
+							<div className="flex flex-col gap-2 mt-3">
+								<div className="flex items-center justify-between">
+									<Label className="text-xs text-vscode-descriptionForeground">Silence Threshold</Label>
+									<span className="text-xs font-mono bg-vscode-editor-background px-2 py-1 rounded">
+										{((voiceSilenceThresholdMs || 700) / 1000).toFixed(3)}s
+									</span>
+								</div>
+								<input
+									className="w-full cursor-pointer"
+									max="2000"
+									min="0"
+									onChange={(e) =>
+										updateSetting("voiceSilenceThresholdMs", Number.parseInt(e.target.value, 10))
 									}
-
-									if (isMac) {
-										return (
-											<div className="flex items-start gap-2">
-												<span className="codicon codicon-warning text-error text-xs mt-0.5 shrink-0" />
-												<p className="text-xs text-error leading-snug">
-													Microphone access denied. Open{" "}
-													<strong>System Settings → Privacy &amp; Security → Microphone</strong> and
-													allow <strong>Visual Studio Code</strong>.{" "}
-													<button
-														className="underline font-medium"
-														onClick={() =>
-															WebServiceClient.openInBrowser(
-																StringRequest.create({
-																	value: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
-																}),
-															)
-														}
-														type="button">
-														Open microphone settings ↗
-													</button>
-												</p>
-											</div>
-										)
-									}
-
-									// Linux and others
-									return (
-										<div className="flex items-start gap-2">
-											<span className="codicon codicon-warning text-error text-xs mt-0.5 shrink-0" />
-											<p className="text-xs text-error leading-snug">
-												Microphone access denied. Make sure PulseAudio or PipeWire is running and that VS
-												Code has permission to use audio devices. You can check with{" "}
-												<strong>pavucontrol</strong> or your system's sound settings.
-											</p>
-										</div>
-									)
-								})()}
-							{permissionError && (
-								<p className="text-xs text-vscode-descriptionForeground leading-snug break-all">
-									Mic diagnostic: {permissionError}
+									step="1"
+									title="Time to wait for silence before stopping recording (0-2000ms)"
+									type="range"
+									value={voiceSilenceThresholdMs || 700}
+								/>
+								<p className="text-xs text-vscode-descriptionForeground mt-1">
+									Wait {((voiceSilenceThresholdMs || 700) / 1000).toFixed(3)}s of silence to auto-stop recording
 								</p>
-							)}
-							{permissionError.includes("NotAllowedError") && (
-								<p className="text-xs text-vscode-descriptionForeground leading-snug">
-									If Windows settings are already enabled, reload VS Code window and retry to force a fresh
-									permission check.
-								</p>
-							)}
-							{probeStatus && (
-								<p className="text-xs text-vscode-descriptionForeground leading-snug break-all">{probeStatus}</p>
-							)}
-							{inputDevices.length === 0 && permissionState !== "granted" && (
-								<button
-									className="text-xs text-vscode-textLink-foreground hover:underline text-left w-fit"
-									disabled={permissionState === "requesting"}
-									onClick={requestPermission}
-									type="button">
-									{permissionState === "requesting" ? "Requesting…" : "Grant microphone access to see devices"}
-								</button>
-							)}
-							<button
-								className="text-xs text-vscode-textLink-foreground hover:underline text-left w-fit"
-								disabled={permissionState === "requesting"}
-								onClick={runMicProbe}
-								type="button">
-								{permissionState === "requesting" ? "Probing…" : "Run microphone diagnostic"}
-							</button>
+							</div>
 						</div>
 					)}
 
@@ -346,29 +214,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 
 					{voiceTtsEnabled && (
 						<>
-							<div className="pl-2">
-								<Label className="text-xs text-vscode-descriptionForeground">Output Device</Label>
-								<Select
-									onValueChange={(v) => updateSetting("voiceOutputDeviceId", v === "default" ? "" : v)}
-									value={
-										voiceOutputDeviceId && outputDevices.some((d) => d.deviceId === voiceOutputDeviceId)
-											? voiceOutputDeviceId
-											: "default"
-									}>
-									<SelectTrigger className="mt-1 w-full">
-										<SelectValue placeholder="Default speaker" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="default">Default speaker</SelectItem>
-										{outputDevices.map((d) => (
-											<SelectItem key={d.deviceId} value={d.deviceId}>
-												{d.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-
 							<div className="pl-2">
 								<Label className="text-xs text-vscode-descriptionForeground">Voice</Label>
 								<Select

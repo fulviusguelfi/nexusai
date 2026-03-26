@@ -27,10 +27,45 @@ import { TelemetrySetting } from "./TelemetrySetting"
 import { UserInfo } from "./UserInfo"
 // webview will hold state
 export interface ExtensionMessage {
-	type: "grpc_response" | "voice_audio_play" | "voice_transcription"
+	type:
+		| "grpc_response"
+		| "voice_audio_play"
+		| "voice_transcription"
+		| "voice_result"
+		| "voice_agent_state_changed"
+		| "voice_audio_level"
+		| "voice_error"
+		| "voice_language_detected"
 	grpc_response?: GrpcResponse
 	voice_audio_play?: { wavBase64: string }
 	voice_transcription?: { text: string }
+	voice_result?: {
+		transcriptionText: string
+		llmResponseText: string
+		audioWavBase64: string
+		totalDurationMs: number
+		success: boolean
+		errorMessage?: string
+		detectedLanguage?: string
+	}
+	voice_language_detected?: {
+		languageCode: string
+		languageName: string
+	}
+	voice_agent_state_changed?: {
+		state: "IDLE" | "INITIALIZING" | "RECORDING" | "PROCESSING" | "PLAYING" | "ERROR"
+		context: string
+	}
+	voice_audio_level?: {
+		rms_level: number
+		db_level: number
+		quality: "excellent" | "good" | "poor" | "silent"
+		clipping: boolean
+	}
+	voice_error?: {
+		code: string
+		message: string
+	}
 }
 
 export type GrpcResponse = {
@@ -122,6 +157,7 @@ export interface ExtensionState {
 	voiceInputDeviceId?: string
 	voiceOutputDeviceId?: string
 	voicePiperVoice: string
+	voiceSilenceThresholdMs: number
 }
 
 export interface ClineMessage {

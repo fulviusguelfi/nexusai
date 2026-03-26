@@ -1,0 +1,262 @@
+/* Speech Input Component Styles */
+
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	background: var(--vscode-editor-background);
+	border-radius: 4px;
+	border: 1px solid var(--vscode-editorGroup-border);
+}
+
+/* Permission Prompt */
+.permissionPrompt {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	padding: 16px;
+	background: var(--vscode-notebookStatusErrorItemBackground);
+	border-radius: 4px;
+	text-align: center;
+}
+
+.micIcon {
+	font-size: 24px;
+	display: block;
+}
+
+.permissionPrompt p {
+	margin: 0;
+	color: var(--vscode-foreground);
+	font-size: 13px;
+}
+
+.permissionButton {
+	padding: 6px 12px;
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	transition: background 0.2s;
+}
+
+.permissionButton:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+.permissionButton:active {
+	background: var(--vscode-button-hoverBackground);
+	opacity: 0.8;
+}
+
+/* Recording Interface */
+.recordingInterface {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	background: var(--vscode-editor-background);
+}
+
+.recordButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 10px 16px;
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: 2px solid transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 600;
+	transition: all 0.2s;
+	min-height: 36px;
+	position: relative;
+}
+
+.recordButton:hover:not(:disabled) {
+	background: var(--vscode-button-hoverBackground);
+	transform: scale(1.02);
+}
+
+.recordButton:active:not(:disabled) {
+	transform: scale(0.98);
+}
+
+.recordButton:disabled {
+	background: var(--vscode-button-secondaryBackground);
+	color: var(--vscode-button-secondaryForeground);
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.recordButton.recording {
+	background: var(--vscode-statusBar-debuggingBackground);
+	border-color: var(--vscode-statusBar-debuggingForeground);
+}
+
+.buttonText {
+	display: inline-block;
+}
+
+.pulse {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	background: currentColor;
+	border-radius: 50%;
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.3;
+	}
+}
+
+/* Recording Status */
+.recordingStatus {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px;
+	background: var(--vscode-notebookStatusRunningBackground);
+	border-radius: 3px;
+}
+
+.timer {
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--vscode-notebookStatusRunningBackground);
+	text-align: center;
+	font-family: monospace;
+}
+
+.progressBar {
+	width: 100%;
+	height: 4px;
+	background: var(--vscode-editor-background);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.progressFill {
+	height: 100%;
+	background: var(--vscode-notebookStatusRunningBackground);
+	border-radius: 2px;
+	transition: width 0.1s linear;
+}
+
+/* Transcription Display */
+.transcription {
+	padding: 10px;
+	background: var(--vscode-editor-background);
+	border: 1px solid var(--vscode-editorGroup-border);
+	border-radius: 3px;
+	max-height: 150px;
+	overflow-y: auto;
+}
+
+.transcriptionText {
+	margin: 0;
+	color: var(--vscode-foreground);
+	font-size: 12px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* Device Info */
+.deviceInfo {
+	padding: 6px 8px;
+	background: var(--vscode-editor-background);
+	border-radius: 2px;
+	border-left: 2px solid var(--vscode-editorInfo-border);
+}
+
+.deviceInfo small {
+	color: var(--vscode-editorInfo-foreground);
+	font-size: 11px;
+}
+
+/* Permission Denied */
+.permissionDenied {
+	padding: 12px;
+	background: var(--vscode-notebookStatusErrorItemBackground);
+	border-radius: 3px;
+	text-align: center;
+}
+
+.permissionDenied p {
+	margin: 0 0 4px 0;
+	color: var(--vscode-foreground);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.permissionDenied small {
+	color: var(--vscode-descriptionForeground);
+	font-size: 11px;
+}
+
+/* Error Message */
+.errorMessage {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 10px;
+	background: var(--vscode-editorError-background);
+	border: 1px solid var(--vscode-editorError-border);
+	border-radius: 3px;
+}
+
+.errorMessage p {
+	margin: 0;
+	color: var(--vscode-editorError-foreground);
+	font-size: 12px;
+	flex: 1;
+}
+
+.closeError {
+	background: transparent;
+	border: none;
+	color: var(--vscode-editorError-foreground);
+	cursor: pointer;
+	font-size: 16px;
+	padding: 0;
+	min-width: auto;
+	line-height: 1;
+}
+
+.closeError:hover {
+	opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+	.container {
+		padding: 8px;
+		gap: 8px;
+	}
+
+	.recordButton {
+		min-height: 44px;
+		font-size: 14px;
+	}
+
+	.timer {
+		font-size: 16px;
+	}
+}

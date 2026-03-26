@@ -11,8 +11,10 @@ option java_package = "bot.cline.proto";
 service VoiceService {
   rpc transcribeAudio(AudioChunk) returns (TranscriptionResult);
   rpc synthesizeSpeech(SynthesizeRequest) returns (SpeechResult);
+  rpc recordAndRespond(RecordAndRespondRequest) returns (RecordAndRespondResponse);
   rpc getVoiceStatus(EmptyRequest) returns (VoiceStatus);
   rpc setVoiceSettings(VoiceSettings) returns (VoiceSettings);
+  rpc enumerateAudioDevices(EmptyRequest) returns (AudioDevicesResponse);
 }
 
 message AudioChunk {
@@ -47,4 +49,36 @@ message VoiceSettings {
   string whisper_model = 1;
   string piper_voice = 2;
   float speed = 3;
+}
+
+message AudioDevice {
+  string device_id = 1;
+  string label = 2;
+  string kind = 3; // "audioinput" or "audiooutput"
+}
+
+message AudioDevicesResponse {
+  repeated AudioDevice input_devices = 1;
+  repeated AudioDevice output_devices = 2;
+  string error = 3; // Error message if enumeration failed
+}
+
+message RecordAndRespondRequest {
+  optional int32 max_duration_ms = 1; // 30000 default
+  optional float silence_threshold = 2; // 0.02 default (RMS threshold)
+  optional int32 silence_duration_ms = 7; // 700 default (time in silence before stopping)
+  optional string stt_model = 3; // "whisper-tiny" default
+  optional string llm_model = 4; // "claude-3-haiku" default
+  optional string tts_voice = 5; // "en-US-male" default
+  optional string input_device_id = 6; // Device to record from (empty = use default/first)
+}
+
+message RecordAndRespondResponse {
+  string transcription_text = 1;
+  string llm_response_text = 2;
+  string audio_wav_base64 = 3; // WAV audio response
+  int32 total_duration_ms = 4;
+  optional string error_message = 5;
+  bool success = 6;
+  optional string detected_language = 7; // IETF language tag (e.g., "pt-BR", "en-US")
 }

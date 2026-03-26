@@ -1,5 +1,11 @@
 export interface WebviewMessage {
-	type: "grpc_request" | "grpc_request_cancel" | "voice_float32_audio" | "debug_voice_error"
+	type:
+		| "grpc_request"
+		| "grpc_request_cancel"
+		| "voice_float32_audio"
+		| "debug_voice_error"
+		| "start_voice_recording"
+		| "stop_voice_recording"
 	grpc_request?: GrpcRequest
 	grpc_request_cancel?: GrpcCancel
 	voice_float32_audio?: { buffer: ArrayBuffer; sampleRate: number }
@@ -11,6 +17,13 @@ export interface WebviewMessage {
 		deviceId: string // selected deviceId or "default"
 		userAgent: string // navigator.userAgent
 		timestamp: string // ISO 8601
+	}
+	start_voice_recording?: {
+		timestamp: number // Unix milliseconds for request tracking
+		silenceThresholdMs?: number // Optional silence threshold in milliseconds
+	}
+	stop_voice_recording?: {
+		timestamp: number // Unix milliseconds for request tracking
 	}
 }
 

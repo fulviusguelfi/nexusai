@@ -506,6 +506,7 @@
 		"ts-node": "^10.9.2",
 		"ts-proto": "^2.6.1",
 		"tsconfig-paths": "^4.2.0",
+		"tsx": "^4.21.0",
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
@@ -516,6 +517,7 @@
 		"@azure/identity": "^4.13.0",
 		"@bufbuild/protobuf": "^2.2.5",
 		"@cerebras/cerebras_cloud_sdk": "^1.35.0",
+		"@ffmpeg-installer/ffmpeg": "^1.1.0",
 		"@google-cloud/vertexai": "^1.9.3",
 		"@google/genai": "^1.30.0",
 		"@grpc/grpc-js": "^1.9.15",

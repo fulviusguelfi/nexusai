@@ -8,10 +8,16 @@ import type { ExtensionMessage } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import { WebviewMessage } from "@/shared/WebviewMessage"
 
-/*
-https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
-https://github.com/KumarVariable/vscode-extension-sidebar-html/blob/master/src/customSidebarViewProvider.ts
-*/
+// Global messenger instance for voice state updates
+let globalVoiceMessenger: ((message: ExtensionMessage) => Promise<boolean | undefined>) | null = null
+
+export function setGlobalVoiceMessenger(messenger: ((message: ExtensionMessage) => Promise<boolean | undefined>) | null): void {
+	globalVoiceMessenger = messenger
+}
+
+export function getGlobalVoiceMessenger(): ((message: ExtensionMessage) => Promise<boolean | undefined>) | null {
+	return globalVoiceMessenger
+}
 
 export class VscodeWebviewProvider extends WebviewProvider implements vscode.WebviewViewProvider {
 	// Used in package.json as the view's id. This value cannot be changed due to how vscode caches
@@ -182,6 +188,9 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 	async handleWebviewMessage(message: WebviewMessage) {
 		const postMessageToWebview = (response: ExtensionMessage) => this.postMessageToWebview(response)
 
+		// Register global voice messenger for use in recordAndRespond
+		setGlobalVoiceMessenger(postMessageToWebview)
+
 		switch (message.type) {
 			case "grpc_request": {
 				if (message.grpc_request) {
@@ -262,6 +271,73 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				}
 				break
 			}
+			case "start_voice_recording": {
+				if (message.start_voice_recording) {
+					try {
+						const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
+						const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
+						const response = await recordAndRespond(this.controller, {
+							silenceDurationMs: silenceThresholdMs,
+						})
+
+						// Send detected language as separate event for UI badge display
+						if (response.detectedLanguage && response.detectedLanguage !== "en") {
+							postMessageToWebview({
+								type: "voice_language_detected",
+								voice_language_detected: {
+									languageCode: response.detectedLanguage,
+									languageName: this.getLanguageName(response.detectedLanguage),
+								},
+							})
+						}
+
+						postMessageToWebview({
+							type: "voice_result",
+							voice_result: {
+								transcriptionText: response.transcriptionText,
+								llmResponseText: response.llmResponseText,
+								audioWavBase64: response.audioWavBase64,
+								totalDurationMs: response.totalDurationMs,
+								success: response.success,
+								errorMessage: response.errorMessage,
+								detectedLanguage: response.detectedLanguage,
+							},
+						})
+					} catch (err) {
+						Logger.error("[VscodeWebviewProvider] Voice record and respond failed:", err)
+						postMessageToWebview({
+							type: "voice_result",
+							voice_result: {
+								transcriptionText: "",
+								llmResponseText: "",
+								audioWavBase64: "",
+								totalDurationMs: 0,
+								success: false,
+								errorMessage: err instanceof Error ? err.message : "Unknown error",
+							},
+						})
+					}
+				}
+				break
+			}
+			case "stop_voice_recording": {
+				// Stop active recording (push-to-talk release)
+				if (message.stop_voice_recording) {
+					try {
+						const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
+						const agent = getActiveVoiceAgent()
+						if (agent) {
+							Logger.log("[VscodeWebviewProvider] Stopping voice recording...")
+							agent.stop()
+						} else {
+							Logger.warn("[VscodeWebviewProvider] No active voice agent to stop")
+						}
+					} catch (err) {
+						Logger.error("[VscodeWebviewProvider] Failed to stop voice recording:", err)
+					}
+				}
+				break
+			}
 			default: {
 				Logger.error("Received unhandled WebviewMessage type:", JSON.stringify(message))
 			}
@@ -274,8 +350,56 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 	 * @param message - The message to send to the webview
 	 * @returns A thenable that resolves to a boolean indicating success, or undefined if the webview is not available
 	 */
-	private async postMessageToWebview(message: ExtensionMessage): Promise<boolean | undefined> {
-		return this.webview?.webview.postMessage(message)
+	public async postMessageToWebview(message: ExtensionMessage): Promise<boolean | undefined> {
+		if (!this.webview) {
+			Logger.warn("[VscodeWebviewProvider] postMessageToWebview: webview not available")
+			return undefined
+		}
+		const result = this.webview.webview.postMessage(message)
+		if (message.type === "voice_agent_state_changed") {
+			Logger.log(
+				`[VscodeWebviewProvider] Sent voice_agent_state_changed to webview: ${message.voice_agent_state_changed?.state}`,
+			)
+		}
+		return result
+	}
+
+	/**
+	 * Implementation of abstract method - sends extension message to webview
+	 */
+	async postExtensionMessage(message: any): Promise<boolean | undefined> {
+		return this.postMessageToWebview(message)
+	}
+
+	/**
+	 * Convert ISO 639-1 language code to human-readable name
+	 * Used for displaying language badge in UI (e.g., "pt" → "Português")
+	 */
+	private getLanguageName(languageCode: string): string {
+		const languageMap: Record<string, string> = {
+			en: "English",
+			pt: "Português",
+			"pt-BR": "Português (Brasil)",
+			"pt-PT": "Português (Portugal)",
+			es: "Español",
+			"es-ES": "Español (España)",
+			"es-MX": "Español (México)",
+			fr: "Français",
+			de: "Deutsch",
+			it: "Italiano",
+			ja: "日本語",
+			zh: "中文",
+			"zh-CN": "中文 (简体)",
+			"zh-TW": "中文 (繁體)",
+			ko: "한국어",
+			ru: "Русский",
+			nl: "Nederlands",
+			pl: "Polski",
+			tr: "Türkçe",
+			ar: "العربية",
+			hi: "हिन्दी",
+		}
+		return languageMap[languageCode] || languageCode
 	}
 
 	override async dispose() {

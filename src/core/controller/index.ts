@@ -992,6 +992,7 @@ export class Controller {
 			voiceInputDeviceId: this.stateManager.getGlobalStateKey("voiceInputDeviceId"),
 			voiceOutputDeviceId: this.stateManager.getGlobalStateKey("voiceOutputDeviceId"),
 			voicePiperVoice: this.stateManager.getGlobalStateKey("voicePiperVoice"),
+			voiceSilenceThresholdMs: this.stateManager.getGlobalStateKey("voiceSilenceThresholdMs"),
 		}
 	}
 
