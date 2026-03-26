@@ -282,11 +282,45 @@ pull requests
 - **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) — todos fechados
 - **Wiki**: `docs/wiki/Fase-4-IoT.md`
 
+### Fase 5 — Voz Local (Piper TTS, Whisper STT) 🔄 _(em desenvolvimento — 70% completa - 2026-03-26)_
+
+ **Status**: 🔄 Em Desenvolvimento (70% completo)
+- **Backend**: ✅ 100% Completo
+  - WhisperService (STT) + language detection (português fixo em 2026-03-26)
+  - PiperService (TTS synthesis)
+  - VoiceResponseHandler (pipeline separation: processSpeechToText vs processTextToSpeech)
+  - VoiceSessionManager (state & events)
+  - speak_text & listen_for_speech tools (handlers complete)
+  - recordAndRespond controller (STT-only phase with Portuguese language hint)
+  
+- **Webview**: ⏳ 50% Completo
+  - VoiceRecorder component (recording UI) ✅
+  - VoiceSettingsSection component (settings panel) ✅
+  - Chat integration (connect recorder to send) ⏳ TODO (#51)
+  - Audio playback for LLM response ⏳ TODO (#52)
+  - Device selection UI ⏳ TODO (#50)
+  - Settings panel linking ⏳ TODO (#56)
+  
+- **Testing**: ⏳ 75% Completo
+  - E2E tests (voice.test.ts, voice-settings.test.ts) ✅
+  - Unit tests (VoiceSessionManager, handlers) ✅
+  - Service unit tests (WhisperService, PiperService, VoiceResponseHandler) ⏳ TODO (Phase 1)
+  - Language detection tests + Portuguese regression test ⏳ TODO (Phase 1)
+
+**Recentes Fixes (2026-03-26)**:
+- ✅ Portuguese language detection (Whisper returning [unknown] → now uses heuristic detection)
+- ✅ Pipeline timing (TTS was immediate on transcription → now waits for LLM response)
+- ✅ VoiceResponseHandler file structure (57 TypeScript errors → corrected)
+- ✅ Language hint parameter (added "pt" hint to Whisper)
+
+**Issues Relacionados**: [#50](https://github.com/cline-ai/cline/issues/50) (Device UI), [#51](https://github.com/cline-ai/cline/issues/51) (Chat integration), [#52](https://github.com/cline-ai/cline/issues/52) (Audio playback), [#53-56]
+
+**Wiki**: `docs/wiki/Fase-5-Voice.md`, `docs/wiki/Fase-5-Voice-Integration-Status.md` (TBD)
+
 ### Próximas Fases
 
 | # | Descrição | Issues Relacionados |
 |---|---|---|
-| Fase 5 | Voz — Piper TTS, Whisper STT | — |
 | Fase 6 | Agentes Autônomos e multi-IA | — |
 
 ### Backlog — Tech Debt e Bugs Pendentes

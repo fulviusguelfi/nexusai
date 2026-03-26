@@ -13,7 +13,7 @@
 | 2 | Controle Local | 1.0.0-beta | ✅ Concluída |
 | 3 | Conexão SSH | 1.0.0-beta | ✅ Concluída |
 | 4 | IoT — MQTT, mDNS, HTTP | 1.0.0-rc | ⏳ Planejada |
-| 5 | Voz (TTS/STT) | 1.0.0-rc | ⏳ Planejada |
+| 5 | Voz (TTS/STT) | 1.0.0-rc | 🔄 Em Desenvolvimento (70%) |
 | — | Stable | 1.0.0 | ⏳ Planejada |
 
 ---
