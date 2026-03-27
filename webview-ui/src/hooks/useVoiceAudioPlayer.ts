@@ -30,6 +30,11 @@ export function useVoiceAudioPlayer() {
 					}
 				}
 
+				// Resume context — VSCode webview starts AudioContext suspended (autoplay policy)
+				if (audioCtx.state === "suspended") {
+					await audioCtx.resume()
+				}
+
 				const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer)
 				const source = audioCtx.createBufferSource()
 				source.buffer = audioBuffer

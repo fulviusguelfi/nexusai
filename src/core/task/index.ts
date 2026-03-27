@@ -838,6 +838,11 @@ export class Task {
 				// await this.postStateToWebview()
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
+				if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+					void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+						VoiceSessionManager.getInstance().requestSpeak(text)
+					})
+				}
 				return undefined
 			}
 			// this is a new partial=false message, so add it like normal
@@ -853,6 +858,11 @@ export class Task {
 				modelInfo,
 			})
 			await this.postStateToWebview()
+			if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+				void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+					VoiceSessionManager.getInstance().requestSpeak(text)
+				})
+			}
 			return sayTs
 		}
 		// this is a new non-partial message, so add it like normal
@@ -868,6 +878,11 @@ export class Task {
 			modelInfo,
 		})
 		await this.postStateToWebview()
+		if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+			void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+				VoiceSessionManager.getInstance().requestSpeak(text)
+			})
+		}
 		return sayTs
 	}
 

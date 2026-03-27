@@ -24,6 +24,7 @@ export interface VoiceAgentOptions {
 	maxDuration?: number // Max recording time in milliseconds (default: 30000)
 	silenceThreshold?: number // RMS threshold for silence (default: 0.01)
 	silenceDurationMs?: number // Duration of silence to detect (milliseconds, default: 700)
+	deviceId?: string // Explicit device to use e.g. "audio=Device Name" (default: auto-detect)
 	stateCallback?: (state: VoiceAgentState, context?: string) => void
 	errorCallback?: (error: VoiceError) => void
 }
@@ -41,13 +42,15 @@ export class VoiceAgent {
 	private audioCapture: WindowsAudioCapture | null = null
 	private abortController: AbortController | null = null
 	private activeDevice: { name: string; id: string } | null = null
-	private options: Required<VoiceAgentOptions>
+	private options: Required<Omit<VoiceAgentOptions, "deviceId">>
+	private readonly deviceId: string | undefined
 
 	// State callbacks
 	private stateCallback: (state: VoiceAgentState, context?: string) => void
 	private errorCallback: (error: VoiceError) => void
 
 	constructor(options: VoiceAgentOptions = {}) {
+		this.deviceId = options.deviceId || undefined
 		this.options = {
 			maxDuration: options.maxDuration || 30000,
 			silenceThreshold: options.silenceThreshold || 0.01,
@@ -114,17 +117,22 @@ export class VoiceAgent {
 		this.setState(VoiceAgentState.INITIALIZING, "Checking audio system...")
 
 		try {
-			// Check if device is available and store it
-			const device = await VoiceDeviceManager.getActiveDevice()
-			Logger.log(`[VoiceAgent] Using device: ${device.name}`)
-
-			// Store the full device string (e.g., "audio=Microphone")
-			this.activeDevice = device
+			if (this.deviceId) {
+				// Explicit device requested via settings — strip "audio=" prefix to get plain name
+				const deviceName = this.deviceId.replace(/^audio=/, "")
+				this.activeDevice = { id: "explicit", name: deviceName }
+				Logger.log(`[VoiceAgent] Using device from settings: ${deviceName}`)
+			} else {
+				// Auto-select: first available device from VoiceDeviceManager
+				const device = await VoiceDeviceManager.getActiveDevice()
+				this.activeDevice = device
+				Logger.log(`[VoiceAgent] Using default device: ${device.name}`)
+			}
 
 			this.audioCapture = new WindowsAudioCapture()
 			this.abortController = new AbortController()
 
-			this.setState(VoiceAgentState.INITIALIZING, `Ready on: ${device.name}`)
+			this.setState(VoiceAgentState.INITIALIZING, `Ready on: ${this.activeDevice!.name}`)
 		} catch (error) {
 			if (error instanceof Error && error.message === "NO_DEVICES") {
 				throw new Error("NO_DEVICES")

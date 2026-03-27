@@ -27,22 +27,17 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 	const { voiceTtsEnabled, voiceSttEnabled, voiceInputDeviceId, voicePiperVoice, voiceSilenceThresholdMs } = useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
-	const [isDetectingDevices, setIsDetectingDevices] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
-	// Enumerate devices via backend RPC
+	// Enumerate devices via backend RPC (uses FFmpeg dshow — returns real device names)
 	const detectRealDevices = useCallback(async () => {
-		setIsDetectingDevices(true)
 		setError(null)
 
 		try {
-			console.log("[Voice] Calling backend enumerateAudioDevices RPC...")
 			const resp = await VoiceServiceClient.enumerateAudioDevices({})
-			console.log("[Voice] Backend response:", resp)
 
 			if (resp.error) {
 				setError(resp.error)
-				console.error("[Voice] Backend error:", resp.error)
 				return
 			}
 
@@ -51,52 +46,24 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 				label: d.label || d.deviceId || "(unknown)",
 			}))
 
-			console.log("[Voice] Mapped devices:", devices)
 			setInputDevices(devices)
-			setError(null)
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
-			console.error("[Voice] Detection error:", msg)
 			setError(msg)
-		} finally {
-			setIsDetectingDevices(false)
 		}
 	}, [])
 
-	// Load devices on mount (browser-based enumeration as fallback)
-	const loadDevicesFallback = useCallback(async () => {
-		const mediaDevices = typeof navigator !== "undefined" ? navigator.mediaDevices : undefined
-		if (!mediaDevices?.enumerateDevices) {
-			console.warn("[Voice] browser enumerateDevices not available")
-			return
-		}
-
-		try {
-			const devices = await mediaDevices.enumerateDevices()
-			const inputs: AudioDevice[] = []
-			devices.forEach((d) => {
-				if (d.kind === "audioinput" && d.deviceId) {
-					inputs.push({
-						deviceId: d.deviceId,
-						label: d.label || d.deviceId,
-					})
-				}
-			})
-			console.log("[Voice] Browser enumeration found:", inputs)
-			if (inputs.length === 0) {
-				// No real devices yet - show detect button
-				setInputDevices([])
-			} else {
-				setInputDevices(inputs)
-			}
-		} catch (err) {
-			console.error("[Voice] browser enumeration failed:", err)
-		}
-	}, [])
-
+	// Auto-detect on mount
 	useEffect(() => {
-		loadDevicesFallback()
-	}, [])
+		detectRealDevices()
+	}, [detectRealDevices])
+
+	// Re-detect when system audio devices change (e.g., headset plugged/unplugged)
+	useEffect(() => {
+		if (!navigator.mediaDevices) return
+		navigator.mediaDevices.addEventListener("devicechange", detectRealDevices)
+		return () => navigator.mediaDevices.removeEventListener("devicechange", detectRealDevices)
+	}, [detectRealDevices])
 
 	useEffect(() => {
 		if (!voiceInputDeviceId) return
@@ -124,7 +91,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 						<div>
 							<Label className="text-sm font-medium">Speech-to-Text (Whisper)</Label>
 							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
-								Capture your voice and transcribe it locally with Whisper-tiny (~75 MB, downloaded on first use).
+								Capture your voice and transcribe it locally with Whisper Small (~244 MB, downloaded on first
+								use). Falls back to Whisper-tiny on Linux/macOS.
 							</p>
 						</div>
 						<Switch
@@ -136,16 +104,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{voiceSttEnabled && (
 						<div className="pl-2 flex flex-col gap-2">
 							<Label className="text-xs text-vscode-descriptionForeground">Microphone Input Device</Label>
-
-							{/* Show detect button if list is empty or only has default */}
-							{inputDevices.length === 0 && (
-								<button
-									className="text-xs px-2 py-1 rounded border border-vscode-focusBorder hover:bg-vscode-button-hoverBackground disabled:opacity-50"
-									disabled={isDetectingDevices}
-									onClick={detectRealDevices}>
-									{isDetectingDevices ? "Detecting..." : "Detect microphones"}
-								</button>
-							)}
 
 							{/* Show error if detection failed */}
 							{error && <p className="text-xs text-red-400">Detection failed: {error}</p>}

@@ -107,6 +107,7 @@ export async function recordAndRespond(
 			maxDuration: request.maxDurationMs || 30000,
 			silenceThreshold: request.silenceThreshold || 0.01,
 			silenceDurationMs: request.silenceDurationMs || 700,
+			deviceId: request.inputDeviceId || undefined,
 			stateCallback: (state: VoiceAgentState, context?: string) => {
 				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
 				// Send state updates to webview (async, non-blocking)
@@ -172,7 +173,7 @@ export async function recordAndRespond(
 
 		const sttResult = await VoiceResponseHandler.processSpeechToText(recordResult.audioData, {
 			globalStoragePath: _controller.context.globalStoragePath,
-			sttModel: request.sttModel || "whisper-tiny",
+			sttModel: request.sttModel || "small",
 			userLanguage: "pt", // Hint to Whisper that user likely speaks Portuguese (Brasil)
 			maxDuration: request.maxDurationMs,
 			onProgress: (progress: number) => {

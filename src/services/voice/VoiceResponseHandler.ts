@@ -28,6 +28,7 @@
  */
 
 import { Logger } from "@/shared/services/Logger"
+import { WhisperCliService } from "./WhisperCliService"
 import { WhisperService } from "./WhisperService"
 
 export interface VoiceTranscription {
@@ -236,15 +237,24 @@ export class VoiceResponseHandler {
 		// Convert PCM Buffer (16-bit LE) to Float32Array for Whisper
 		const float32Audio = VoiceResponseHandler.bufferToFloat32(audioBuffer)
 
-		// Initialize Whisper service and transcribe with auto language detection
-		const whisper = WhisperService.getInstance(globalStoragePath)
-
 		Logger.log(`🎙️ Transcribing ${audioBuffer.length} bytes with ${model}... (detecting language)`)
 		if (languageHint) {
 			Logger.log(`🎯 Language hint provided: ${languageHint}`)
 		}
 
-		const { text, language } = await whisper.transcribeWithLanguageDetection(float32Audio, 16000, languageHint)
+		// Use whisper-cli binary on win32-x64 (faster, better PT quality).
+		// Fall back to Xenova/ONNX on other platforms (no pre-built binary available).
+		const { text, language } = WhisperCliService.isPlatformSupported()
+			? await WhisperCliService.getInstance(globalStoragePath).transcribeWithLanguageDetection(
+					float32Audio,
+					16000,
+					languageHint,
+				)
+			: await WhisperService.getInstance(globalStoragePath).transcribeWithLanguageDetection(
+					float32Audio,
+					16000,
+					languageHint,
+				)
 
 		const duration = Date.now() - startTime
 		Logger.log(`✅ Transcribed: "${text}" [${language}] (${duration}ms)`)

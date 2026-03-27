@@ -11,7 +11,24 @@
 			"Bash(npx tsc:*)",
 			"Bash(find . -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -not -path ./node_modules/* -not -path ./webview-ui/node_modules/*)",
 			"Bash(git add:*)",
-			"Bash(git commit:*)"
+			"Bash(git commit:*)",
+			"Bash(git checkout:*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline -type f \\\\\\(-name *Voice* -o -name *Audio* -o -name *Device* \\\\\\) -path */src/*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline/src -type f -name *Voice* -o -name *voice*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline/src/services -type f -name *Voice* -o -name *voice* -o -name *Audio*)",
+			"Bash(grep -i \"\\\\.ts$\")",
+			"Bash(python3 -c \":*)",
+			"Read(//c/Users/Usuario/.claude/plans/**)",
+			"Bash(find . -name *.proto -type f)",
+			"Bash(for f:*)",
+			"Bash(do head:*)",
+			"Bash(done)",
+			"WebFetch(domain:github.com)",
+			"Bash(gh api:*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline -name *WindowsAudioCapture* -o -name *AudioCapture*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline -name *.go)",
+			"Bash(go version:*)",
+			"Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''\\\\n''''.join\\(f''''{k}: {v}'''' for k,v in d.get\\(''''scripts'''',{}\\).items\\(\\)\\)\\)\")"
 		]
 	},
 	"hooks": {

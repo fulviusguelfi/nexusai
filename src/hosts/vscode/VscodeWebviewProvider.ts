@@ -276,8 +276,12 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					try {
 						const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 						const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
+						const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
+							| string
+							| undefined
 						const response = await recordAndRespond(this.controller, {
 							silenceDurationMs: silenceThresholdMs,
+							inputDeviceId: voiceInputDeviceId || undefined,
 						})
 
 						// Send detected language as separate event for UI badge display

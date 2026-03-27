@@ -43,8 +43,9 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	const { voiceSttEnabled } = useExtensionState()
 
 	const handleTranscription = useCallback(
-		(text: string) => {
-			setInputValue((prev) => (prev ? prev + " " + text : text))
+		(text: string, language?: string) => {
+			const tagged = language ? `[lang:${language}] ${text}` : text
+			setInputValue((prev) => (prev ? `${prev} ${tagged}` : tagged))
 		},
 		[setInputValue],
 	)
