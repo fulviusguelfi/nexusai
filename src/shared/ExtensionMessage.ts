@@ -53,7 +53,7 @@ export interface ExtensionMessage {
 		languageName: string
 	}
 	voice_agent_state_changed?: {
-		state: "IDLE" | "INITIALIZING" | "RECORDING" | "PROCESSING" | "PLAYING" | "ERROR"
+		state: "IDLE" | "INITIALIZING" | "READY_TO_LISTEN" | "RECORDING" | "PROCESSING" | "PLAYING" | "ERROR"
 		context: string
 	}
 	voice_audio_level?: {

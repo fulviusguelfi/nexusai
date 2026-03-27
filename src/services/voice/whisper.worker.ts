@@ -187,21 +187,26 @@ parentPort.on("message", async (msg: any) => {
 				// Fallback: Detect language from transcribed text using heuristics
 				// Since Whisper-tiny doesn't return language metadata, we analyze the text
 				const analyzedLanguage = detectLanguageFromText(text)
-				detectedLanguage = analyzedLanguage
 				parentPort.postMessage({
 					type: "debug",
 					message: `Language detected from text heuristics: "${analyzedLanguage}"`,
 				})
+
+				if (analyzedLanguage === "unknown" && languageHint) {
+					// Text too short or ambiguous for heuristics — trust the hint language
+					detectedLanguage = expandLanguageCode(languageHint)
+					parentPort.postMessage({
+						type: "debug",
+						message: `Heuristics inconclusive — falling back to hint language: "${detectedLanguage}"`,
+					})
+				} else {
+					detectedLanguage = analyzedLanguage
+				}
 			}
 
-			// Map generic "pt" to "pt-BR" if we detect Portuguese (Brazil is most common)
-			// TODO: Can be improved with audio fingerprinting to distinguish pt-BR vs pt-PT
-			if (detectedLanguage === "pt") {
-				detectedLanguage = "pt-BR" // Assume Brazil by default for Portuguese
-				parentPort.postMessage({
-					type: "debug",
-					message: `Detected Portuguese - mapping 'pt' to 'pt-BR'`,
-				})
+			// Expand short language codes to regional BCP-47 (e.g., "pt" → "pt-BR")
+			if (!detectedLanguage.includes("-") && detectedLanguage !== "unknown") {
+				detectedLanguage = expandLanguageCode(detectedLanguage)
 			}
 
 			parentPort.postMessage({
@@ -215,6 +220,26 @@ parentPort.on("message", async (msg: any) => {
 		return
 	}
 })
+
+/**
+ * Expand a short language code to its regional BCP-47 form
+ * E.g., "pt" → "pt-BR", "en" → "en-US", "es" → "es-ES"
+ */
+function expandLanguageCode(code: string): string {
+	const defaults: Record<string, string> = {
+		pt: "pt-BR",
+		en: "en-US",
+		es: "es-ES",
+		fr: "fr-FR",
+		de: "de-DE",
+		it: "it-IT",
+		ja: "ja-JP",
+		zh: "zh-CN",
+		ko: "ko-KR",
+		ru: "ru-RU",
+	}
+	return defaults[code] ?? code
+}
 
 /**
  * Simple heuristic language detection from transcribed text
@@ -232,55 +257,74 @@ function detectLanguageFromText(text: string): string {
 
 	// Portuguese (Brazil) indicators
 	const ptIndicators = [
+		// Nasal vowels (unique to Portuguese)
 		"ão",
 		"ões",
-		"ão",
-		"ãe", // Portuguese nasal vowels
+		"ãe",
+		// Gerunds ending in -ando / -endo / -indo (very common in spoken PT)
+		"testando",
+		"falando",
+		"gravando",
+		"ouvindo",
+		"trabalhando",
+		"fazendo",
+		"sendo",
+		"indo",
+		"vindo",
+		// Common test/voice words that appear in "som teste 1 2"
+		"som",
+		"teste",
+		"testando",
+		// Pronouns
 		"você",
 		"vosso",
-		"vocês", // Portuguese pronouns
+		"vocês",
+		// "to be" conjugations
 		"está",
 		"estou",
 		"estamos",
-		"estão", // Portuguese "to be" conjugations
+		"estão",
 		"sou",
 		"somos",
-		"são", // "to be" (ser)
+		"são",
+		// Possessives
 		"meu",
 		"minha",
 		"nosso",
-		"nossa", // Portuguese possessives
+		"nossa",
+		// Common phrases
 		"tudo bem",
 		"tá bom",
 		"tá certo",
-		"pois é", // Common Portuguese phrases
+		"pois é",
+		// Conjunctions
 		"porque",
 		"porém",
-		"porquanto", // Portuguese conjunctions
+		// Particles
 		"não",
 		"sim",
-		"talvez", // Portuguese particles
+		"talvez",
+		// Prepositions
 		"para",
 		"pelo",
 		"pela",
 		"pelos",
-		"pelas", // Portuguese prepositions
+		"pelas",
+		// Adverbs
 		"já",
 		"ainda",
 		"também",
-		"nem", // Portuguese adverbs
+		"nem",
+		// Pronouns
 		"nada",
 		"ninguém",
 		"alguém",
-		"algo", // Portuguese pronouns
-		"dias",
-		"noites",
-		"horas",
-		"minutos", // Portuguese time words
+		// Time & location words
 		"aqui",
 		"aí",
 		"ali",
-		"lá", // Portuguese location words
+		"lá",
+		"agora",
 	]
 
 	// English indicators

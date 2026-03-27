@@ -12,6 +12,7 @@ export enum VoiceErrorCode {
 	FFMPEG_NOT_FOUND = "FFMPEG_NOT_FOUND",
 	FFMPEG_SPAWN_ERROR = "FFMPEG_SPAWN_ERROR",
 	CAPTURE_TIMEOUT = "CAPTURE_TIMEOUT",
+	IDLE_TIMEOUT = "IDLE_TIMEOUT",
 	WHISPER_FAILED = "WHISPER_FAILED",
 	LLM_FAILED = "LLM_FAILED",
 	PIPER_FAILED = "PIPER_FAILED",
@@ -81,6 +82,16 @@ export class VoiceErrorMapper {
 				message: originalError.message,
 				userMessage: "⚙️ Audio capture failed",
 				diagnosticAction: "Try restarting VS Code. Check Windows audio drivers are up to date.",
+				originalError,
+			}
+		}
+
+		if (message.includes("idle_timeout")) {
+			return {
+				code: VoiceErrorCode.IDLE_TIMEOUT,
+				message: originalError.message,
+				userMessage: "Nenhuma fala detectada. Clique para tentar novamente.",
+				diagnosticAction: "Clique no microfone e fale após o indicador verde aparecer.",
 				originalError,
 			}
 		}

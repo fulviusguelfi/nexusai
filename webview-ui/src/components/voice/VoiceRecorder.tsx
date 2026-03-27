@@ -14,6 +14,7 @@ interface Props {
 const VOICE_AGENT_STATES = {
 	IDLE: "IDLE",
 	INITIALIZING: "INITIALIZING",
+	READY_TO_LISTEN: "READY_TO_LISTEN",
 	RECORDING: "RECORDING",
 	PROCESSING: "PROCESSING",
 	PLAYING: "PLAYING",
@@ -71,6 +72,14 @@ function getLanguageName(code: string): string {
 	return languageNames[code] || code
 }
 
+const WAVEFORM_BARS = [
+	{ id: "bar-l2", scale: 0.4 },
+	{ id: "bar-l1", scale: 0.7 },
+	{ id: "bar-c", scale: 1.0 },
+	{ id: "bar-r1", scale: 0.7 },
+	{ id: "bar-r2", scale: 0.4 },
+]
+
 const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	const { voiceSttEnabled, voiceSilenceThresholdMs } = useExtensionState()
 
@@ -101,6 +110,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				return { icon: "🎤", label: "Voice", isActive: false }
 			case VOICE_AGENT_STATES.INITIALIZING:
 				return { icon: "⏳", label: "Starting...", isActive: true }
+			case VOICE_AGENT_STATES.READY_TO_LISTEN:
+				return { icon: "🎙️", label: "Pode falar!", isActive: true }
 			case VOICE_AGENT_STATES.RECORDING:
 				return { icon: "🎙️", label: "Listening...", isActive: true }
 			case VOICE_AGENT_STATES.PROCESSING:
@@ -271,10 +282,24 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				onClick={handleToggleRecording}
 				title={isUserRecording ? "Click to stop recording" : "Click to start recording"}
 			/>
+			{agentState === VOICE_AGENT_STATES.READY_TO_LISTEN && (
+				<span className="relative flex h-3 w-3 ml-1">
+					<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+					<span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+				</span>
+			)}
 			{agentState === VOICE_AGENT_STATES.RECORDING && audioLevel && (
-				<div className="flex items-center gap-1 text-xs">
-					<span className="font-mono min-w-[40px]">{audioLevel.dbLevel.toFixed(1)}dB</span>
-					<span className="opacity-70">{audioLevel.quality}</span>
+				<div className="flex items-end gap-[2px] h-4 mx-1">
+					{WAVEFORM_BARS.map(({ id, scale }) => (
+						<div
+							className="w-[3px] rounded-full bg-red-400 transition-all duration-75"
+							key={id}
+							style={{
+								height: `${Math.max(15, audioLevel.rmsLevel * 100 * scale)}%`,
+								opacity: audioLevel.quality === "silent" ? 0.25 : 0.9,
+							}}
+						/>
+					))}
 				</div>
 			)}
 			{detectedLanguage && (

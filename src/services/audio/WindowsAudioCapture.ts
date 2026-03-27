@@ -77,6 +77,8 @@ export class WindowsAudioCapture {
 	private ffmpegProcess: ChildProcess | null = null
 	private audioBuffer: Buffer[] = []
 	private isRecording = false
+	private recordingStartChunkIndex = 0 // Chunks before this index are warmup (excluded from output)
+	private preRollData: Buffer[] = [] // Pre-roll chunks prepended when speech is detected
 
 	/**
 	 * Start capturing audio from microphone using FFmpeg
@@ -175,7 +177,10 @@ export class WindowsAudioCapture {
 						resolve()
 					} else if (this.audioBuffer.length > 0) {
 						// If we got audio data, consider it success despite exit code
-						Logger.warn(`[FFmpeg] Exit code ${code}, but captured ${this.audioBuffer.length} bytes`)
+						const totalBytes = this.audioBuffer.reduce((sum, b) => sum + b.length, 0)
+						Logger.warn(
+							`[FFmpeg] Exit code ${code}, but captured ${this.audioBuffer.length} chunks (${totalBytes} bytes total)`,
+						)
 						resolve()
 					} else {
 						reject(new Error(`FFmpeg exited with code ${code}`))
@@ -194,7 +199,27 @@ export class WindowsAudioCapture {
 	}
 
 	/**
-	 * Stop recording and return all captured audio data
+	 * Mark where real recording starts (after warmup chunks are discarded).
+	 * Chunks before this index will be excluded from stopCapture() output.
+	 */
+	markRecordingStart(): void {
+		this.recordingStartChunkIndex = this.audioBuffer.length
+		Logger.log(`[WindowsAudioCapture] Recording start marked at chunk index ${this.recordingStartChunkIndex}`)
+	}
+
+	/**
+	 * Prepend pre-roll audio (captured just before speech detection) to the recording.
+	 * Called when speech is first detected so the leading syllables aren't lost.
+	 */
+	prependToBuffer(data: Buffer): void {
+		this.preRollData.push(data)
+		Logger.log(`[WindowsAudioCapture] Pre-roll stored: ${data.length} bytes`)
+	}
+
+	/**
+	 * Stop recording and return captured audio.
+	 * Output = preRollData + audioBuffer[recordingStartChunkIndex:]
+	 * (warmup chunks before recordingStartChunkIndex are excluded)
 	 */
 	stopCapture(): Buffer {
 		if (this.ffmpegProcess) {
@@ -203,8 +228,13 @@ export class WindowsAudioCapture {
 		}
 		this.isRecording = false
 
-		// Combine all chunks into single buffer
-		return Buffer.concat(this.audioBuffer)
+		const recordingChunks = this.audioBuffer.slice(this.recordingStartChunkIndex)
+		const allChunks = [...this.preRollData, ...recordingChunks]
+		const totalBytes = allChunks.reduce((sum, b) => sum + b.length, 0)
+		Logger.log(
+			`[WindowsAudioCapture] stopCapture: preroll=${this.preRollData.length} chunks, recording=${recordingChunks.length} chunks, total=${totalBytes} bytes`,
+		)
+		return Buffer.concat(allChunks)
 	}
 
 	/**

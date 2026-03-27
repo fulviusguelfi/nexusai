@@ -1,4 +1,19 @@
 {
+	"permissions": {
+		"allow": [
+			"WebSearch",
+			"Bash(npm run:*)",
+			"Bash(ls tsconfig*.json)",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''exports:'''', list\\(d.get\\(''''exports'''',{}\\).keys\\(\\)\\)[:10]\\); print\\(''''types:'''', d.get\\(''''types'''',''''''''\\)\\)\")",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''exports'''',{}\\).get\\(''''./wire'''',{}\\), indent=2\\)\\)\")",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''exports'''',{}\\).get\\(''''./wire'''',{}\\), indent=2\\)\\); print\\(''''version:'''', d.get\\(''''version''''\\)\\)\")",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''version:'''', d.get\\(''''version''''\\)\\); deps=d.get\\(''''peerDependencies'''',{}\\); print\\(''''peerDeps:'''', json.dumps\\(deps, indent=2\\)\\)\")",
+			"Bash(npx tsc:*)",
+			"Bash(find . -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -not -path ./node_modules/* -not -path ./webview-ui/node_modules/*)",
+			"Bash(git add:*)",
+			"Bash(git commit:*)"
+		]
+	},
 	"hooks": {
 		"SessionStart": [
 			{

@@ -1,11 +1,13 @@
 import type { Controller } from "@core/controller"
-import { enumerateWindowsAudioDevices } from "@services/audio/WindowsAudioCapture"
+import { VoiceDeviceManager } from "@services/voice/VoiceDeviceManager"
 import { AudioDevice, AudioDevicesResponse } from "@shared/proto/cline/voice"
 import { Logger } from "@shared/services/Logger"
 
 /**
- * Enumerate audio input and output devices
- * Returns real device names extracted from FFmpeg DirectShow enumeration
+ * Enumerate audio input and output devices.
+ * Routes through VoiceDeviceManager so the result is cached for 5 minutes —
+ * subsequent calls (including the one inside VoiceAgent.initialize) hit the cache
+ * instead of spawning a new FFmpeg process.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function enumerateAudioDevices(
@@ -16,9 +18,10 @@ export async function enumerateAudioDevices(
 	try {
 		Logger.log("[EnumerateAudioDevices] Enumeration requested")
 
-		// Enumerate devices via FFmpeg DirectShow
-		const ffmpegDevices = await enumerateWindowsAudioDevices()
-		Logger.log("[EnumerateAudioDevices] FFmpeg returned:", ffmpegDevices)
+		// Use VoiceDeviceManager so result is shared/cached (avoids double FFmpeg spawn)
+		const availableDevices = await VoiceDeviceManager.getAvailableDevices()
+		const ffmpegDevices = availableDevices.map((d) => `audio=${d.name}`)
+		Logger.log("[EnumerateAudioDevices] Devices (via VoiceDeviceManager cache):", ffmpegDevices)
 
 		// Convert FFmpeg format "audio=Device Name" to proto format
 		const inputDevices: AudioDevice[] = ffmpegDevices.map((deviceStr) => {

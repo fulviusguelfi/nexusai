@@ -74,18 +74,19 @@ export async function recordAndRespond(
 ): Promise<RecordAndRespondResponse> {
 	const startTime = Date.now()
 	const totalDurationMs = (): number => Date.now() - startTime
+	const ts = () => `[T+${totalDurationMs()}ms]`
 
 	try {
-		Logger.log(`🎤 recordAndRespond: Starting voice pipeline...`)
+		Logger.log(`${ts()} 🎤 start_voice_recording recebido`)
 
 		// Step 1: Preflight checks
-		Logger.log(`📋 Step 1: Running preflight checks...`)
+		Logger.log(`${ts()} 📋 Step 1: Running preflight checks...`)
 		const preflightResult = await PreFlightChecks.runAll()
 
 		if (!preflightResult.ok) {
 			const blockerMessages = preflightResult.blockers.map((b) => `${b.type}: ${b.message}`).join(" | ")
 
-			Logger.error(`❌ Preflight check failed: ${blockerMessages}`)
+			Logger.error(`${ts()} ❌ Preflight check failed: ${blockerMessages}`)
 
 			return {
 				success: false,
@@ -97,10 +98,10 @@ export async function recordAndRespond(
 			}
 		}
 
-		Logger.log(`✅ Preflight checks passed`)
+		Logger.log(`${ts()} ✅ Preflight checks passed`)
 
 		// Step 2: Record audio with VoiceAgent
-		Logger.log(`🎙️ Step 2: Recording audio...`)
+		Logger.log(`${ts()} 🎙️ Step 2: Recording audio...`)
 
 		const agent = new VoiceAgent({
 			maxDuration: request.maxDurationMs || 30000,
@@ -163,11 +164,11 @@ export async function recordAndRespond(
 			}
 		}
 
-		Logger.log(`✅ Audio recorded: ${recordResult.duration}ms`)
+		Logger.log(`${ts()} ✅ Audio recorded: ${recordResult.duration}ms`)
 
 		// Step 3: ONLY Speech-to-Text (transcription only, NO TTS)
-		Logger.log(`🔄 Step 3: Processing with STT only (transcribe audio to text)...`)
-		Logger.log(`📝 Do NOT do TTS yet! TTS happens AFTER LLM responds to user message.`)
+		Logger.log(`${ts()} 🔄 Step 3: Processing with STT only...`)
+		Logger.log(`${ts()} ⚡ Whisper iniciado — ${recordResult.audioData?.length ?? 0} bytes`)
 
 		const sttResult = await VoiceResponseHandler.processSpeechToText(recordResult.audioData, {
 			globalStoragePath: _controller.context.globalStoragePath,
@@ -195,12 +196,9 @@ export async function recordAndRespond(
 		}
 
 		// Step 4: Return transcribed text ONLY (without audio)
-		Logger.log(`✅ Transcription complete!`)
-		Logger.log(`  Transcribed: "${sttResult.transcription.text}"`)
-		Logger.log(`  Detected language: ${sttResult.detectedLanguage}`)
-		Logger.log(`  Total time: ${totalDurationMs()}ms`)
-		Logger.log(`  ⏭️ User will now press SEND to send this message to LLM`)
-		Logger.log(`  ⏭️ After LLM responds, TTS will synthesize the response`)
+		Logger.log(`${ts()} ✍️ Transcrição: "${sttResult.transcription.text}" [${sttResult.detectedLanguage}]`)
+		Logger.log(`${ts()} 🏁 Pipeline total: ${totalDurationMs()}ms`)
+		Logger.log(`${ts()} ⏭️ Usuário enviará para o LLM — TTS após resposta`)
 
 		return {
 			success: true,
