@@ -1,12 +1,11 @@
-import { NewTaskRequest } from "@shared/proto/cline/task"
 import React from "react"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import QuickWinCard from "./QuickWinCard"
 import { QuickWinTask, quickWinTasks } from "./quickWinTasks"
 
 export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({ shouldShowQuickWins }) => {
 	const handleExecuteQuickWin = async (prompt: string) => {
-		await TaskServiceClient.newTask(NewTaskRequest.create({ text: prompt, images: [] }))
+		await trpc.task.newTask.mutate({ text: prompt, images: [] })
 	}
 
 	if (shouldShowQuickWins) {

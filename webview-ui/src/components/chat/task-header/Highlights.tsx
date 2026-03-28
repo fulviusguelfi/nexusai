@@ -1,6 +1,5 @@
 import { mentionRegexGlobal } from "@shared/context-mentions"
-import { StringRequest } from "@shared/proto/cline/common"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { validateSlashCommand } from "@/utils/slash-commands"
 
 // Optimized highlighting functions
@@ -42,7 +41,7 @@ export const highlightMentions = (text: string, withShadow = true) => {
 				<span
 					className={`${withShadow ? "mention-context-highlight-with-shadow" : "mention-context-highlight"} cursor-pointer`}
 					key={`mention-${Math.floor(i / 2)}`}
-					onClick={() => FileServiceClient.openMention(StringRequest.create({ value: parts[i] }))}>
+					onClick={() => trpc.file.openMention.mutate({ value: parts[i] })}>
 					@{parts[i]}
 				</span>,
 			)

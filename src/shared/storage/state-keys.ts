@@ -98,6 +98,7 @@ const GLOBAL_STATE_FIELDS = {
 	voiceOutputDeviceId: { default: undefined as string | undefined },
 	voicePiperVoice: { default: "en_US-lessac-medium" as string },
 	voiceSilenceThresholdMs: { default: 700 as number },
+	voiceGracePeriodMs: { default: 2000 as number },
 } satisfies FieldDefinitions
 
 // Fields that map directly to ApiHandlerOptions in @shared/api.ts

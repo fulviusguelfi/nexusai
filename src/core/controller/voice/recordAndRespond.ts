@@ -107,6 +107,7 @@ export async function recordAndRespond(
 			maxDuration: request.maxDurationMs || 30000,
 			silenceThreshold: request.silenceThreshold || 0.01,
 			silenceDurationMs: request.silenceDurationMs || 700,
+			gracePeriodMs: request.gracePeriodMs ?? 2000,
 			deviceId: request.inputDeviceId || undefined,
 			stateCallback: (state: VoiceAgentState, context?: string) => {
 				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)

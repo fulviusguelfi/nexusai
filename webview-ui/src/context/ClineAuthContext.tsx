@@ -4,6 +4,7 @@ import deepEqual from "fast-deep-equal"
 import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 // Define User type (you may need to adjust this based on your actual User type)
 export interface ClineUser {
@@ -28,7 +29,7 @@ export const ClineAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 	const getUserOrganizations = useCallback(async () => {
 		try {
-			const response = await AccountServiceClient.getUserOrganizations(EmptyRequest.create())
+			const response = await trpc.account.getUserOrganizations.query({})
 			setUserOrganizations((old) => {
 				if (!deepEqual(response.organizations, old)) {
 					return response.organizations
@@ -110,7 +111,7 @@ export const useClineSignIn = () => {
 		try {
 			setIsLoading(true)
 
-			AccountServiceClient.accountLoginClicked(EmptyRequest.create())
+			trpc.account.accountLoginClicked.mutate({})
 				.catch((err) => console.error("Failed to get login URL:", err))
 				.finally(() => {
 					setIsLoading(false)
@@ -128,7 +129,7 @@ export const useClineSignIn = () => {
 
 export const handleSignOut = async () => {
 	try {
-		await AccountServiceClient.accountLogoutClicked(EmptyRequest.create()).catch((err) =>
+		await trpc.account.accountLogoutClicked.mutate({}).catch((err) =>
 			console.error("Failed to logout:", err),
 		)
 	} catch (error) {

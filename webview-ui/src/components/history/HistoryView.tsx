@@ -1,5 +1,4 @@
-import { BooleanRequest, EmptyRequest, StringArrayRequest } from "@shared/proto/cline/common"
-import { GetTaskHistoryRequest, TaskFavoriteRequest } from "@shared/proto/cline/task"
+
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse, { FuseResult } from "fuse.js"
 import { FunnelIcon } from "lucide-react"
@@ -8,7 +7,7 @@ import { GroupedVirtuoso } from "react-virtuoso"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { formatSize } from "@/utils/format"
 import ViewHeader from "../common/ViewHeader"
 import HistoryViewItem from "./HistoryViewItem"
@@ -55,14 +54,12 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 	// Load and refresh task history
 	const loadTaskHistory = useCallback(async () => {
 		try {
-			const response = await TaskServiceClient.getTaskHistory(
-				GetTaskHistoryRequest.create({
-					favoritesOnly: showFavoritesOnly,
-					searchQuery: searchQuery || undefined,
-					sortBy: sortOption,
-					currentWorkspaceOnly: showCurrentWorkspaceOnly,
-				}),
-			)
+			const response = await trpc.task.getTaskHistory.query({
+				favoritesOnly: showFavoritesOnly,
+				searchQuery: searchQuery || undefined,
+				sortBy: sortOption,
+				currentWorkspaceOnly: showCurrentWorkspaceOnly,
+			})
 			setTasks(response.tasks || [])
 		} catch (error) {
 			console.error("Error loading task history:", error)
@@ -85,12 +82,10 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 			setPendingFavoriteToggles((prev) => ({ ...prev, [taskId]: !currentValue }))
 
 			try {
-				await TaskServiceClient.toggleTaskFavorite(
-					TaskFavoriteRequest.create({
-						taskId,
-						isFavorited: !currentValue,
-					}),
-				)
+				await trpc.task.toggleTaskFavorite.mutate({
+					taskId,
+					isFavorited: !currentValue,
+				})
 
 				// Refresh if either filter is active to ensure proper combined filtering
 				if (showFavoritesOnly || showCurrentWorkspaceOnly) {
@@ -129,7 +124,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 
 	const fetchTotalTasksSize = useCallback(async () => {
 		try {
-			const response = await TaskServiceClient.getTotalTasksSize(EmptyRequest.create({}))
+			const response = await trpc.task.getTotalTasksSize.query({})
 			if (response && typeof response.value === "number") {
 				setTotalTasksSize?.(response.value || 0)
 			}
@@ -165,7 +160,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 
 	const handleDeleteHistoryItem = useCallback(
 		(id: string) => {
-			TaskServiceClient.deleteTasksWithIds(StringArrayRequest.create({ value: [id] }))
+			trpc.task.deleteTasksWithIds.mutate({ value: [id] })
 				.then(() => fetchTotalTasksSize())
 				.catch((error) => console.error("Error deleting task:", error))
 		},
@@ -175,7 +170,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 	const handleDeleteSelectedHistoryItems = useCallback(
 		(ids: string[]) => {
 			if (ids.length > 0) {
-				TaskServiceClient.deleteTasksWithIds(StringArrayRequest.create({ value: ids }))
+				trpc.task.deleteTasksWithIds.mutate({ value: ids })
 					.then(() => fetchTotalTasksSize())
 					.catch((error) => console.error("Error deleting tasks:", error))
 				setSelectedItems([])
@@ -445,7 +440,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 						disabled={deleteAllDisabled || taskHistory.length === 0}
 						onClick={() => {
 							setDeleteAllDisabled(true)
-							TaskServiceClient.deleteAllTaskHistory(BooleanRequest.create({}))
+							trpc.task.deleteAllTaskHistory.mutate()
 								.then(() => fetchTotalTasksSize())
 								.catch((error) => console.error("Error deleting task history:", error))
 								.finally(() => setDeleteAllDisabled(false))

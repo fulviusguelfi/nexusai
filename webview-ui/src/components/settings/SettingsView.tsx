@@ -1,5 +1,4 @@
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
-import { ResetStateRequest } from "@shared/proto/cline/state"
 import { UserOrganization } from "@shared/proto/index.cline"
 import {
 	CheckCheck,
@@ -18,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { isAdminOrOwner } from "../account/helpers"
 import { Tab, TabContent, TabList, TabTrigger } from "../common/Tab"
 import ViewHeader from "../common/ViewHeader"
@@ -176,7 +175,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 			return
 		}
 
-		const grpcMessage = message.grpc_response?.message
+		const grpcMessage = message.grpc_response?.message as { key?: string; value?: string } | undefined
 		if (grpcMessage?.key !== "scrollToSettings") {
 			return
 		}
@@ -214,7 +213,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 	// Memoized reset state handler
 	const handleResetState = useCallback(async (resetGlobalState?: boolean) => {
 		try {
-			await StateServiceClient.resetState(ResetStateRequest.create({ global: resetGlobalState }))
+			await trpc.state.resetState.mutate({ global: resetGlobalState })
 		} catch (error) {
 			console.error("Failed to reset state:", error)
 		}

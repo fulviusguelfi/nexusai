@@ -29,6 +29,7 @@ import { UserInfo } from "./UserInfo"
 export interface ExtensionMessage {
 	type:
 		| "grpc_response"
+		| "trpc_response"
 		| "voice_audio_play"
 		| "voice_transcription"
 		| "voice_result"
@@ -37,6 +38,7 @@ export interface ExtensionMessage {
 		| "voice_error"
 		| "voice_language_detected"
 	grpc_response?: GrpcResponse
+	trpc_response?: TrpcResponse
 	voice_audio_play?: { wavBase64: string }
 	voice_transcription?: { text: string }
 	voice_result?: {
@@ -69,11 +71,17 @@ export interface ExtensionMessage {
 }
 
 export type GrpcResponse = {
-	message?: any // JSON serialized protobuf message
+	message?: unknown // JSON serialized protobuf message
 	request_id: string // Same ID as the request
 	error?: string // Optional error message
 	is_streaming?: boolean // Whether this is part of a streaming response
 	sequence_number?: number // For ordering chunks in streaming responses
+}
+
+export type TrpcResponse = {
+	id: string
+	result?: unknown
+	error?: string
 }
 
 export type Platform = "aix" | "darwin" | "freebsd" | "linux" | "openbsd" | "sunos" | "win32" | "unknown"
@@ -158,6 +166,7 @@ export interface ExtensionState {
 	voiceOutputDeviceId?: string
 	voicePiperVoice: string
 	voiceSilenceThresholdMs: number
+	voiceGracePeriodMs: number
 }
 
 export interface ClineMessage {

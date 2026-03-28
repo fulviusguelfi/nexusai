@@ -1,10 +1,9 @@
 import { COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/combineCommandSequences"
 import { ClineMessage } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/cline/common"
 import { memo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import CodeBlock from "../common/CodeBlock"
 import ExpandHandle from "./ExpandHandle"
 
@@ -70,7 +69,7 @@ export const CommandOutputContent = memo(
 					<div
 						className="flex flex-wrap items-center gap-1.5 px-3 py-2 mx-2 my-1.5 rounded-sm bg-banner-background cursor-pointer hover:brightness-110 transition-colors"
 						onClick={() => {
-							FileServiceClient.openFile(StringRequest.create({ value: logFilePath })).catch((err) =>
+							trpc.file.openFile.mutate({ value: logFilePath }).catch((err) =>
 								console.error("Failed to open log file:", err),
 							)
 						}}

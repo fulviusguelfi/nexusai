@@ -1,8 +1,7 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import ClineLogoSanta from "@/assets/ClineLogoSanta"
 import ClineLogoVariable from "@/assets/ClineLogoVariable"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { UiServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface HomeHeaderProps {
 	shouldShowQuickWins?: boolean
@@ -13,7 +12,7 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 
 	const handleTakeATour = async () => {
 		try {
-			await UiServiceClient.openWalkthrough(EmptyRequest.create())
+			await trpc.ui.openWalkthrough.mutate({})
 		} catch (error) {
 			console.error("Error opening walkthrough:", error)
 		}

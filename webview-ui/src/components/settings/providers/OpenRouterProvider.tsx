@@ -1,8 +1,7 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { useOpenRouterKeyInfo } from "../../ui/hooks/useOpenRouterKeyInfo"
 import { DebouncedTextField } from "../common/DebouncedTextField"
 import OpenRouterModelPicker from "../OpenRouterModelPicker"
@@ -82,7 +81,7 @@ export const OpenRouterProvider = ({ showModelOptions, isPopup, currentMode }: O
 						appearance="secondary"
 						onClick={async () => {
 							try {
-								await AccountServiceClient.openrouterAuthClicked(EmptyRequest.create())
+								await trpc.account.openrouterAuthClicked.mutate({})
 							} catch (error) {
 								console.error("Failed to open OpenRouter auth:", error)
 							}

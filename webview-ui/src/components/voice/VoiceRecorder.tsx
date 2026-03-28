@@ -81,7 +81,7 @@ const WAVEFORM_BARS = [
 ]
 
 const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
-	const { voiceSttEnabled, voiceSilenceThresholdMs } = useExtensionState()
+	const { voiceSttEnabled, voiceSilenceThresholdMs, voiceGracePeriodMs } = useExtensionState()
 
 	// UI State
 	const [agentState, setAgentState] = useState<VoiceAgentState>(VOICE_AGENT_STATES.IDLE)
@@ -150,10 +150,11 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				start_voice_recording: {
 					timestamp: Date.now(),
 					silenceThresholdMs: voiceSilenceThresholdMs || 700,
+					gracePeriodMs: voiceGracePeriodMs ?? 2000,
 				},
 			})
 		}
-	}, [isUserRecording, voiceSilenceThresholdMs])
+	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs])
 
 	// Listen for state changes from extension host
 	useEffect(() => {
@@ -210,19 +211,22 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 
 					// Play audio response if available
 					if (audioWavBase64) {
-						try {
-							console.log("[VoiceRecorder] Playing audio response...")
-							const binaryString = atob(audioWavBase64)
-							const bytes = new Uint8Array(binaryString.length)
-							for (let i = 0; i < binaryString.length; i++) {
-								bytes[i] = binaryString.charCodeAt(i)
+						void (async () => {
+							try {
+								console.log("[VoiceRecorder] Playing audio response...")
+								const binaryString = atob(audioWavBase64)
+								const bytes = new Uint8Array(binaryString.length)
+								for (let i = 0; i < binaryString.length; i++) {
+									bytes[i] = binaryString.charCodeAt(i)
+								}
+								const blob = new Blob([bytes], { type: "audio/wav" })
+								const url = URL.createObjectURL(blob)
+								const audio = new Audio(url)
+								await audio.play()
+							} catch (err) {
+								console.error("[VoiceRecorder] Failed to play audio:", err)
 							}
-							const blob = new Blob([bytes], { type: "audio/wav" })
-							const url = URL.createObjectURL(blob)
-							new Audio(url).play()
-						} catch (err) {
-							console.error("[VoiceRecorder] Failed to play audio:", err)
-						}
+						})()
 					}
 
 					// Return to idle after brief delay

@@ -426,6 +426,7 @@ message UpdateSettingsRequest {
   optional string voice_output_device_id = 45;
   optional string voice_piper_voice = 46;
   optional int32 voice_silence_threshold_ms = 47;
+  optional int32 voice_grace_period_ms = 48;
 }
 
 message UpdateTerminalConnectionTimeoutRequest {

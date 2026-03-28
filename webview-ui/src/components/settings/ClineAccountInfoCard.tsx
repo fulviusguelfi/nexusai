@@ -1,8 +1,7 @@
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"
 import { useClineAuth } from "@/context/ClineAuthContext"
-import { AccountServiceClient, WebServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 export const ClineAccountInfoCard = () => {
 	const { clineUser } = useClineAuth()
@@ -12,7 +11,7 @@ export const ClineAccountInfoCard = () => {
 
 	const handleLogin = () => {
 		setIsLoading(true)
-		AccountServiceClient.accountLoginClicked(EmptyRequest.create())
+		trpc.account.accountLoginClicked.mutate({})
 			.catch((err) => console.error("Failed to get login URL:", err))
 			.finally(() => {
 				setIsLoading(false)
@@ -26,7 +25,7 @@ export const ClineAccountInfoCard = () => {
 		}
 
 		const billingUrl = "https://app.cline.bot/dashboard"
-		WebServiceClient.openInBrowser(StringRequest.create({ value: billingUrl })).catch((err) =>
+		trpc.web.openInBrowser.mutate({ value: billingUrl }).catch((err) =>
 			console.error("Failed to open Cline billing dashboard:", err),
 		)
 	}

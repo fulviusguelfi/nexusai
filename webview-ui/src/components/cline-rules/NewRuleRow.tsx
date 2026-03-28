@@ -1,10 +1,9 @@
-import { CreateHookRequest, CreateSkillRequest, RuleFileRequest } from "@shared/proto/index.cline"
 import { PlusIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useClickAway } from "react-use"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface NewRuleRowProps {
 	isGlobal: boolean
@@ -66,13 +65,11 @@ const NewRuleRow: React.FC<NewRuleRowProps> = ({ isGlobal, ruleType, existingHoo
 		if (!hookName) return
 
 		try {
-			await FileServiceClient.createHook(
-				CreateHookRequest.create({
-					hookName,
-					isGlobal,
-					workspaceName,
-				}),
-			)
+			await trpc.file.createHook.mutate({
+				hookName,
+				isGlobal,
+				workspaceName,
+			})
 		} catch (err) {
 			console.error("Error creating hook:", err)
 		}
@@ -93,12 +90,10 @@ const NewRuleRow: React.FC<NewRuleRowProps> = ({ isGlobal, ruleType, existingHoo
 				}
 
 				try {
-					await FileServiceClient.createSkillFile(
-						CreateSkillRequest.create({
-							skillName: trimmedFilename,
-							isGlobal,
-						}),
-					)
+					await trpc.file.createSkillFile.mutate({
+						skillName: trimmedFilename,
+						isGlobal,
+					})
 					setFilename("")
 					setError(null)
 					setIsExpanded(false)
@@ -121,13 +116,11 @@ const NewRuleRow: React.FC<NewRuleRowProps> = ({ isGlobal, ruleType, existingHoo
 			}
 
 			try {
-				await FileServiceClient.createRuleFile(
-					RuleFileRequest.create({
-						isGlobal,
-						filename: finalFilename,
-						type: ruleType || "cline",
-					}),
-				)
+				await trpc.file.createRuleFile.mutate({
+					isGlobal,
+					filename: finalFilename,
+					type: ruleType || "cline",
+				})
 			} catch (err) {
 				console.error("Error creating rule file:", err)
 			}

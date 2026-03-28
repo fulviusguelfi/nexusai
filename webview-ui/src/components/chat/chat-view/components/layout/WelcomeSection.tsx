@@ -1,6 +1,4 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import type { Worktree } from "@shared/proto/cline/worktree"
-import { TrackWorktreeViewOpenedRequest } from "@shared/proto/cline/worktree"
 import { GitBranch } from "lucide-react"
 import React, { useCallback, useEffect, useState } from "react"
 import WhatsNewModal from "@/components/common/WhatsNewModal"
@@ -10,7 +8,7 @@ import HomeHeader from "@/components/welcome/HomeHeader"
 import { SuggestedTasks } from "@/components/welcome/SuggestedTasks"
 import CreateWorktreeModal from "@/components/worktrees/CreateWorktreeModal"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { WorktreeServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { WelcomeSectionProps } from "../../types/chatTypes"
 
 /**
@@ -36,7 +34,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 
 	// Check if we're in a git repo and get current worktree info on mount
 	useEffect(() => {
-		WorktreeServiceClient.listWorktrees(EmptyRequest.create({}))
+		trpc.worktree.listWorktrees.query({})
 			.then((result) => {
 				const canUseWorktrees = result.isGitRepo && !result.isMultiRoot && !result.isSubfolder
 				setIsGitRepo(canUseWorktrees)
@@ -65,7 +63,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 
 	// Handle click on home page worktree element with telemetry
 	const handleWorktreeClick = useCallback(() => {
-		WorktreeServiceClient.trackWorktreeViewOpened(TrackWorktreeViewOpenedRequest.create({ source: "home_page" })).catch(
+		trpc.worktree.trackWorktreeViewOpened.mutate({ source: "home_page" }).catch(
 			console.error,
 		)
 		navigateToWorktrees()

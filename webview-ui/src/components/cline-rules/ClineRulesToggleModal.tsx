@@ -1,16 +1,4 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import {
-	ClineRulesToggles,
-	RefreshedRules,
-	RuleScope,
-	SkillInfo,
-	ToggleAgentsRuleRequest,
-	ToggleClineRuleRequest,
-	ToggleCursorRuleRequest,
-	ToggleSkillRequest,
-	ToggleWindsurfRuleRequest,
-	ToggleWorkflowRequest,
-} from "@shared/proto/cline/file"
+import { RuleScope, SkillInfo } from "@shared/proto/cline/file"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useRef, useState } from "react"
 import { useClickAway, useWindowSize } from "react-use"
@@ -18,7 +6,7 @@ import styled from "styled-components"
 import PopupModalContainer from "@/components/common/PopupModalContainer"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { isMacOSOrLinux } from "@/utils/platformUtils"
 import HookRow from "./HookRow"
 import NewRuleRow from "./NewRuleRow"
@@ -77,8 +65,8 @@ const ClineRulesToggleModal: React.FC = () => {
 
 	useEffect(() => {
 		if (isVisible) {
-			FileServiceClient.refreshRules({} as EmptyRequest)
-				.then((response: RefreshedRules) => {
+			trpc.file.refreshRules.mutate({})
+				.then((response) => {
 					// Update state with the response data using all available setters
 					if (response.globalClineRulesToggles?.toggles) {
 						setGlobalClineRulesToggles(response.globalClineRulesToggles.toggles)
@@ -128,7 +116,7 @@ const ClineRulesToggleModal: React.FC = () => {
 		const refreshHooks = () => {
 			if (abortController.signal.aborted) return
 
-			FileServiceClient.refreshHooks({} as EmptyRequest)
+			trpc.file.refreshHooks.mutate({})
 				.then((response) => {
 					if (!abortController.signal.aborted) {
 						setGlobalHooks(response.globalHooks || [])
@@ -165,7 +153,7 @@ const ClineRulesToggleModal: React.FC = () => {
 		const refreshSkills = () => {
 			if (isCancelled) return
 
-			FileServiceClient.refreshSkills({} as EmptyRequest)
+			trpc.file.refreshSkills.mutate()
 				.then((response) => {
 					if (!isCancelled) {
 						setGlobalSkills(response.globalSkills || [])
@@ -231,13 +219,11 @@ const ClineRulesToggleModal: React.FC = () => {
 
 	// Handle toggle rule using gRPC
 	const toggleRule = (isGlobal: boolean, rulePath: string, enabled: boolean) => {
-		FileServiceClient.toggleClineRule(
-			ToggleClineRuleRequest.create({
-				scope: isGlobal ? RuleScope.GLOBAL : RuleScope.LOCAL,
-				rulePath,
-				enabled,
-			}),
-		)
+		trpc.file.toggleClineRule.mutate({
+			scope: isGlobal ? RuleScope.GLOBAL : RuleScope.LOCAL,
+			rulePath,
+			enabled,
+		})
 			.then((response) => {
 				// Update the local state with the response
 				if (response.globalClineRulesToggles?.toggles) {
@@ -256,12 +242,10 @@ const ClineRulesToggleModal: React.FC = () => {
 	}
 
 	const toggleCursorRule = (rulePath: string, enabled: boolean) => {
-		FileServiceClient.toggleCursorRule(
-			ToggleCursorRuleRequest.create({
-				rulePath,
-				enabled,
-			}),
-		)
+		trpc.file.toggleCursorRule.mutate({
+			rulePath,
+			enabled,
+		})
 			.then((response) => {
 				// Update the local state with the response
 				if (response.toggles) {
@@ -274,13 +258,11 @@ const ClineRulesToggleModal: React.FC = () => {
 	}
 
 	const toggleWindsurfRule = (rulePath: string, enabled: boolean) => {
-		FileServiceClient.toggleWindsurfRule(
-			ToggleWindsurfRuleRequest.create({
-				rulePath,
-				enabled,
-			} as ToggleWindsurfRuleRequest),
-		)
-			.then((response: ClineRulesToggles) => {
+		trpc.file.toggleWindsurfRule.mutate({
+			rulePath,
+			enabled,
+		})
+			.then((response) => {
 				if (response.toggles) {
 					setLocalWindsurfRulesToggles(response.toggles)
 				}
@@ -291,13 +273,11 @@ const ClineRulesToggleModal: React.FC = () => {
 	}
 
 	const toggleAgentsRule = (rulePath: string, enabled: boolean) => {
-		FileServiceClient.toggleAgentsRule(
-			ToggleAgentsRuleRequest.create({
-				rulePath,
-				enabled,
-			} as ToggleAgentsRuleRequest),
-		)
-			.then((response: ClineRulesToggles) => {
+		trpc.file.toggleAgentsRule.mutate({
+			rulePath,
+			enabled,
+		})
+			.then((response) => {
 				if (response.toggles) {
 					setLocalAgentsRulesToggles(response.toggles)
 				}
@@ -309,8 +289,7 @@ const ClineRulesToggleModal: React.FC = () => {
 
 	// Toggle hook handler
 	const toggleHook = (isGlobal: boolean, hookName: string, enabled: boolean, workspaceName?: string) => {
-		FileServiceClient.toggleHook({
-			metadata: {} as any,
+		trpc.file.toggleHook.mutate({
 			hookName,
 			isGlobal,
 			enabled,
@@ -326,13 +305,11 @@ const ClineRulesToggleModal: React.FC = () => {
 	}
 
 	const toggleWorkflow = (isGlobal: boolean, workflowPath: string, enabled: boolean) => {
-		FileServiceClient.toggleWorkflow(
-			ToggleWorkflowRequest.create({
-				workflowPath,
-				enabled,
-				scope: isGlobal ? RuleScope.GLOBAL : RuleScope.LOCAL,
-			}),
-		)
+		trpc.file.toggleWorkflow.mutate({
+			workflowPath,
+			enabled,
+			scope: isGlobal ? RuleScope.GLOBAL : RuleScope.LOCAL,
+		})
 			.then((response) => {
 				if (response.toggles) {
 					if (isGlobal) {
@@ -349,13 +326,11 @@ const ClineRulesToggleModal: React.FC = () => {
 
 	// Handle toggle for remote rules
 	const toggleRemoteRule = (ruleName: string, enabled: boolean) => {
-		FileServiceClient.toggleClineRule(
-			ToggleClineRuleRequest.create({
-				scope: RuleScope.REMOTE,
-				rulePath: ruleName,
-				enabled,
-			}),
-		)
+		trpc.file.toggleClineRule.mutate({
+			scope: RuleScope.REMOTE,
+			rulePath: ruleName,
+			enabled,
+		})
 			.then((response) => {
 				// Update the local state with the response
 				if (response.remoteRulesToggles?.toggles) {
@@ -369,13 +344,11 @@ const ClineRulesToggleModal: React.FC = () => {
 
 	// Handle toggle for remote workflows
 	const toggleRemoteWorkflow = (workflowName: string, enabled: boolean) => {
-		FileServiceClient.toggleWorkflow(
-			ToggleWorkflowRequest.create({
-				workflowPath: workflowName,
-				enabled,
-				scope: RuleScope.REMOTE,
-			}),
-		)
+		trpc.file.toggleWorkflow.mutate({
+			workflowPath: workflowName,
+			enabled,
+			scope: RuleScope.REMOTE,
+		})
 			.then((response) => {
 				if (response.toggles) {
 					setRemoteWorkflowToggles(response.toggles)
@@ -388,13 +361,11 @@ const ClineRulesToggleModal: React.FC = () => {
 
 	// Handle toggle for skills
 	const toggleSkill = (isGlobal: boolean, skillPath: string, enabled: boolean) => {
-		FileServiceClient.toggleSkill(
-			ToggleSkillRequest.create({
-				skillPath,
-				isGlobal,
-				enabled,
-			}),
-		)
+		trpc.file.toggleSkill.mutate({
+			skillPath,
+			isGlobal,
+			enabled,
+		})
 			.then((response) => {
 				if (response.globalSkillsToggles) {
 					setGlobalSkillsToggles(response.globalSkillsToggles)

@@ -204,6 +204,13 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				}
 				break
 			}
+			case "trpc_request": {
+				if (message.trpc_request) {
+					const { handleTrpcRequest } = await import("@core/trpc/handler")
+					await handleTrpcRequest(this.controller, postMessageToWebview, message.trpc_request)
+				}
+				break
+			}
 			case "voice_float32_audio": {
 				if (message.voice_float32_audio) {
 					const { buffer, sampleRate } = message.voice_float32_audio
@@ -276,11 +283,13 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					try {
 						const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 						const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
+						const gracePeriodMs = message.start_voice_recording.gracePeriodMs ?? 2000
 						const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
 							| string
 							| undefined
 						const response = await recordAndRespond(this.controller, {
 							silenceDurationMs: silenceThresholdMs,
+							gracePeriodMs,
 							inputDeviceId: voiceInputDeviceId || undefined,
 						})
 

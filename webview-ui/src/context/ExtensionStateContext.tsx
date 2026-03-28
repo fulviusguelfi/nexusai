@@ -27,6 +27,7 @@ import {
 import { Environment } from "../../../src/shared/config-types"
 import type { McpMarketplaceCatalog, McpServer, McpViewTab } from "../../../src/shared/mcp"
 import { McpServiceClient, ModelsServiceClient, StateServiceClient, UiServiceClient } from "../services/grpc-client"
+import { trpc } from "../services/trpc-client"
 
 export interface ExtensionStateContextType extends ExtensionState {
 	didHydrateState: boolean
@@ -291,6 +292,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		voiceOutputDeviceId: undefined,
 		voicePiperVoice: "en_US-lessac-medium",
 		voiceSilenceThresholdMs: 700,
+		voiceGracePeriodMs: 2000,
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)
@@ -583,7 +585,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		})
 
 		// Initialize webview using gRPC
-		UiServiceClient.initializeWebview(EmptyRequest.create({}))
+		trpc.ui.initializeWebview.mutate({})
 			.then(() => {
 				console.log("[DEBUG] Webview initialization completed via gRPC")
 			})
@@ -607,7 +609,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		})
 
 		// Fetch available terminal profiles on launch
-		StateServiceClient.getAvailableTerminalProfiles(EmptyRequest.create({}))
+		trpc.state.getAvailableTerminalProfiles.query({})
 			.then((response) => {
 				setAvailableTerminalProfiles(response.profiles)
 			})
@@ -691,7 +693,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshOpenRouterModels = useCallback(() => {
-		ModelsServiceClient.refreshOpenRouterModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshOpenRouterModelsRpc.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setOpenRouterModels({
@@ -703,7 +705,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshHicapModels = useCallback(() => {
-		ModelsServiceClient.refreshHicapModels(EmptyRequest.create({}))
+		trpc.models.refreshHicapModels.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = response.models
 				setHicapModels({
@@ -714,7 +716,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshLiteLlmModels = useCallback(() => {
-		return ModelsServiceClient.refreshLiteLlmModelsRpc(EmptyRequest.create({}))
+		return trpc.models.refreshLiteLlmModelsRpc.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setLiteLlmModels(models)
@@ -723,7 +725,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshBasetenModels = useCallback(() => {
-		ModelsServiceClient.refreshBasetenModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshBasetenModelsRpc.mutate({})
 			.then((response) => {
 				setBasetenModels({
 					[basetenDefaultModelId]: basetenModels[basetenDefaultModelId],
@@ -734,7 +736,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshVercelAiGatewayModels = useCallback(() => {
-		ModelsServiceClient.refreshVercelAiGatewayModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshVercelAiGatewayModelsRpc.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setVercelAiGatewayModels(models)
@@ -767,7 +769,7 @@ export const ExtensionStateContextProvider: React.FC<{
 
 	// Refresh Cline models function
 	const refreshClineModels = useCallback(() => {
-		ModelsServiceClient.refreshClineModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshClineModelsRpc.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setClineModels((prev) => (Object.keys(models).length > 0 ? models : (prev ?? null)))

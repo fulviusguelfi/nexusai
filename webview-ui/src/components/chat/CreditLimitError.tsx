@@ -1,9 +1,8 @@
-import { AskResponseRequest } from "@shared/proto/cline/task"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useMemo, useState } from "react"
 import VSCodeButtonLink from "@/components/common/VSCodeButtonLink"
 import { useClineAuth } from "@/context/ClineAuthContext"
-import { AccountServiceClient, TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface CreditLimitErrorProps {
 	currentBalance: number
@@ -35,7 +34,7 @@ const CreditLimitError: React.FC<CreditLimitErrorProps> = ({
 	useEffect(() => {
 		const fetchCallbackUrl = async () => {
 			try {
-				const callbackUrl = (await AccountServiceClient.getRedirectUrl({})).value
+				const callbackUrl = (await trpc.account.getRedirectUrl.query({})).value
 				const url = new URL(dashboardUrl)
 				url.searchParams.set("callback_url", callbackUrl)
 				setFullBuyCreditsUrl(url.toString())
@@ -76,11 +75,9 @@ const CreditLimitError: React.FC<CreditLimitErrorProps> = ({
 				className="w-full"
 				onClick={async () => {
 					try {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
-								responseType: "yesButtonClicked",
-							}),
-						)
+						await trpc.task.askResponse.mutate({
+							responseType: "yesButtonClicked",
+						})
 					} catch (error) {
 						console.error("Error invoking action:", error)
 					}

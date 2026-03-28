@@ -1,9 +1,8 @@
 import { McpMarketplaceItem, McpServer } from "@shared/mcp"
-import { StringRequest } from "@shared/proto/cline/common"
 import { useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface McpMarketplaceCardProps {
 	item: McpMarketplaceItem
@@ -108,9 +107,7 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 									if (!isInstalled && !isDownloading) {
 										setIsDownloading(true)
 										try {
-											const response = await McpServiceClient.downloadMcp(
-												StringRequest.create({ value: item.mcpId }),
-											)
+											const response = await trpc.mcp.downloadMcp.mutate({ value: item.mcpId })
 											if (response.error) {
 												console.error("MCP download failed:", response.error)
 												setError(response.error)

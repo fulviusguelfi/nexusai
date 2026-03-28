@@ -5,7 +5,7 @@ import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { RefreshCwIcon } from "lucide-react"
 import { useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { DebouncedTextField } from "../common/DebouncedTextField"
 import { ModelAutocomplete } from "../common/ModelAutocomplete"
 import { ModelInfoView } from "../common/ModelInfoView"
@@ -62,7 +62,7 @@ export const LiteLlmProvider = ({ showModelOptions, isPopup, currentMode }: Lite
 					disabled={remoteConfigSettings?.liteLlmBaseUrl !== undefined}
 					initialValue={apiConfiguration?.liteLlmBaseUrl || ""}
 					onChange={async (value) => {
-						await ModelsServiceClient.updateApiConfiguration(
+						await trpc.models.updateApiConfiguration.mutate(
 							UpdateApiConfigurationRequestNew.create({
 								updates: {
 									options: {
@@ -87,7 +87,7 @@ export const LiteLlmProvider = ({ showModelOptions, isPopup, currentMode }: Lite
 					disabled={remoteConfigSettings?.configuredApiKeys?.litellm}
 					initialValue={apiConfiguration?.liteLlmApiKey || ""}
 					onChange={async (value) => {
-						await ModelsServiceClient.updateApiConfiguration(
+						await trpc.models.updateApiConfiguration.mutate(
 							UpdateApiConfigurationRequestNew.create({
 								updates: {
 									secrets: {

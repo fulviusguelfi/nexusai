@@ -1,10 +1,9 @@
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeCheckbox, VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
 import React, { useCallback, useEffect, useState } from "react"
 import styled from "styled-components"
 import { BROWSER_VIEWPORT_PRESETS } from "../../../../../src/shared/BrowserSettings"
 import { useExtensionState } from "../../../context/ExtensionStateContext"
-import { BrowserServiceClient } from "../../../services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import CollapsibleContent from "../CollapsibleContent"
 import { DebouncedTextField } from "../common/DebouncedTextField"
 import Section from "../Section"
@@ -67,7 +66,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({ 
 
 	// Request detected Chrome path on mount
 	useEffect(() => {
-		BrowserServiceClient.getDetectedChromePath(EmptyRequest.create({}))
+		trpc.browser.getDetectedChromePath.query({})
 			.then((result) => {
 				setDetectedChromePath(result.path)
 				setIsBundled(result.isBundled)
@@ -80,7 +79,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({ 
 	// Function to check connection once without changing UI state immediately
 	const checkConnectionOnce = useCallback(() => {
 		if (browserSettings.remoteBrowserHost) {
-			BrowserServiceClient.testBrowserConnection(StringRequest.create({ value: browserSettings.remoteBrowserHost }))
+			trpc.browser.testBrowserConnection.mutate({ value: browserSettings.remoteBrowserHost })
 				.then((result) => {
 					setConnectionStatus(result.success)
 				})
@@ -89,7 +88,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({ 
 					setConnectionStatus(false)
 				})
 		} else {
-			BrowserServiceClient.discoverBrowser(EmptyRequest.create({}))
+			trpc.browser.discoverBrowser.mutate({})
 				.then((result) => {
 					setConnectionStatus(result.success)
 				})
@@ -132,7 +131,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({ 
 		setDebugMode(true)
 		setRelaunchResult(null)
 
-		BrowserServiceClient.relaunchChromeDebugMode(EmptyRequest.create({}))
+		trpc.browser.relaunchChromeDebugMode.mutate({})
 			.then((result) => {
 				setRelaunchResult({
 					success: true,

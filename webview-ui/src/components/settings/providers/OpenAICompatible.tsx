@@ -6,7 +6,7 @@ import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Tooltip } from "@/components/ui/tooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { getAsVar, VSC_DESCRIPTION_FOREGROUND } from "@/utils/vscStyles"
 import { ApiKeyField } from "../common/ApiKeyField"
 import { BaseUrlField } from "../common/BaseUrlField"
@@ -60,7 +60,7 @@ export const OpenAICompatibleProvider = ({ showModelOptions, isPopup, currentMod
 
 		if (baseUrl && apiKey) {
 			debounceTimerRef.current = setTimeout(() => {
-				ModelsServiceClient.refreshOpenAiModels(
+				trpc.models.refreshOpenAiModels.mutate(
 					OpenAiModelsRequest.create({
 						baseUrl,
 						apiKey,

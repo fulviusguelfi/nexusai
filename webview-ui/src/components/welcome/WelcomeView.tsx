@@ -1,4 +1,3 @@
-import { BooleanRequest, EmptyRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeDivider, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 import ClineLogoWhite from "@/assets/ClineLogoWhite"
@@ -6,7 +5,7 @@ import ApiOptions from "@/components/settings/ApiOptions"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useGitHubAuth } from "@/context/GitHubAuthContext"
-import { AccountServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { validateApiConfiguration } from "@/utils/validate"
 
 const WelcomeView = memo(() => {
@@ -33,7 +32,7 @@ const WelcomeView = memo(() => {
 				planModeApiProvider: "vscode-lm",
 				actModeApiProvider: "vscode-lm",
 			})
-			await StateServiceClient.setWelcomeViewCompleted(BooleanRequest.create({ value: true }))
+			await trpc.state.setWelcomeViewCompleted.mutate({ value: true })
 		} catch (error) {
 			console.error("Failed to configure GitHub Copilot provider:", error)
 		}
@@ -48,14 +47,14 @@ const WelcomeView = memo(() => {
 
 	const handleClineLogin = () => {
 		setIsClineLoading(true)
-		AccountServiceClient.accountLoginClicked(EmptyRequest.create())
+		trpc.account.accountLoginClicked.mutate({})
 			.catch((err) => console.error("Failed to get login URL:", err))
 			.finally(() => setIsClineLoading(false))
 	}
 
 	const handleSubmit = async () => {
 		try {
-			await StateServiceClient.setWelcomeViewCompleted(BooleanRequest.create({ value: true }))
+			await trpc.state.setWelcomeViewCompleted.mutate({ value: true })
 		} catch (error) {
 			console.error("Failed to update API configuration or complete welcome view:", error)
 		}

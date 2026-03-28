@@ -1,7 +1,6 @@
 import { CLAUDE_SONNET_1M_SUFFIX, openRouterDefaultModelId } from "@shared/api"
 import { CLINE_RECOMMENDED_MODELS_FALLBACK } from "@shared/cline/recommended-models"
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
-import { type ClineRecommendedModel, ClineRecommendedModelsResponse } from "@shared/proto/cline/models"
+import { type ClineRecommendedModel } from "@shared/proto/cline/models"
 import type { Mode } from "@shared/storage/types"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
@@ -10,7 +9,7 @@ import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState }
 import { useMount } from "react-use"
 import styled from "styled-components"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { highlight } from "../history/HistoryView"
 import { ContextWindowSwitcher } from "./common/ContextWindowSwitcher"
 import { ModelInfoView } from "./common/ModelInfoView"
@@ -121,12 +120,7 @@ const ClineModelPicker: React.FC<ClineModelPickerProps> = ({ isPopup, currentMod
 
 	const refreshClineRecommendedModels = useCallback(async (): Promise<boolean> => {
 		try {
-			const response = await ModelsServiceClient.makeUnaryRequest(
-				"refreshClineRecommendedModelsRpc",
-				EmptyRequest.create({}),
-				EmptyRequest.toJSON,
-				ClineRecommendedModelsResponse.fromJSON,
-			)
+			const response = await trpc.models.refreshClineRecommendedModelsRpc.mutate({})
 			const recommended = (response.recommended ?? [])
 				.map((model) => toFeaturedModelCardEntry(model, "RECOMMENDED"))
 				.filter((model): model is FeaturedModelCardEntry => model !== null)
@@ -492,9 +486,7 @@ const ClineModelPicker: React.FC<ClineModelPickerProps> = ({ isPopup, currentMod
 												isFavorite={isFavorite}
 												onClick={(e) => {
 													e.stopPropagation()
-													StateServiceClient.toggleFavoriteModel(
-														StringRequest.create({ value: item.id }),
-													).catch((error) => console.error("Failed to toggle favorite model:", error))
+													trpc.state.toggleFavoriteModel.mutate({ value: item.id }).catch((error) => console.error("Failed to toggle favorite model:", error))
 												}}
 											/>
 										</div>

@@ -1,9 +1,8 @@
-import { UpdateSettingsRequest } from "@shared/proto/cline/state"
 import { Mode } from "@shared/storage/types"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { TabButton } from "../../mcp/configuration/McpConfigurationView"
 import ApiOptions from "../ApiOptions"
 import Section from "../Section"
@@ -69,11 +68,9 @@ const ApiConfigurationSection = ({ renderSectionHeader, initialModelTab }: ApiCo
 								if (!checked) {
 									await syncModeConfigurations(apiConfiguration, currentTab, handleFieldsChange)
 								}
-								await StateServiceClient.updateSettings(
-									UpdateSettingsRequest.create({
-										planActSeparateModelsSetting: checked,
-									}),
-								)
+								await trpc.state.updateSettings.mutate({
+									planActSeparateModelsSetting: checked,
+								})
 							} catch (error) {
 								console.error("Failed to update separate models setting:", error)
 							}

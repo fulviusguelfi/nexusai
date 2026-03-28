@@ -1,4 +1,4 @@
-import { VoiceServiceClient } from "@services/grpc-client"
+import { trpc } from "@services/trpc-client"
 import React, { useCallback, useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,34 +24,53 @@ const VOICE_OPTIONS = [
 ] as const
 
 const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
-	const { voiceTtsEnabled, voiceSttEnabled, voiceInputDeviceId, voicePiperVoice, voiceSilenceThresholdMs } = useExtensionState()
+	const { voiceTtsEnabled, voiceSttEnabled, voiceInputDeviceId, voiceOutputDeviceId, voicePiperVoice, voiceSilenceThresholdMs, voiceGracePeriodMs } = useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
+	const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
 	const [error, setError] = useState<string | null>(null)
+	const [refreshing, setRefreshing] = useState(false)
 
-	// Enumerate devices via backend RPC (uses FFmpeg dshow — returns real device names)
+	// Enumerate devices:
+	// - Input: backend RPC (FFmpeg dshow — returns real device names for recording)
+	// - Output: browser mediaDevices API (needed for Audio.setSinkId() in webview)
 	const detectRealDevices = useCallback(async () => {
 		setError(null)
 
 		try {
-			const resp = await VoiceServiceClient.enumerateAudioDevices({})
+			const resp = await trpc.voice.enumerateAudioDevices.query()
 
 			if (resp.error) {
 				setError(resp.error)
 				return
 			}
 
-			const devices: AudioDevice[] = (resp.inputDevices || []).map((d: any) => ({
-				deviceId: d.deviceId || "",
-				label: d.label || d.deviceId || "(unknown)",
-			}))
+			setInputDevices(
+				(resp.inputDevices || []).map((d) => ({
+					deviceId: d.deviceId || "",
+					label: d.label || d.deviceId || "(unknown)",
+				})),
+			)
 
-			setInputDevices(devices)
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
 			setError(msg)
 		}
+
+		// Output devices come from the backend (WASAPI via FFmpeg) — already in resp.outputDevices
+		setOutputDevices(
+			(resp.outputDevices || []).map((d) => ({
+				deviceId: d.deviceId || "",
+				label: d.label || d.deviceId || "(unknown)",
+			})),
+		)
 	}, [])
+
+	const handleRefresh = useCallback(async () => {
+		setRefreshing(true)
+		await detectRealDevices()
+		setRefreshing(false)
+	}, [detectRealDevices])
 
 	// Auto-detect on mount
 	useEffect(() => {
@@ -103,7 +122,17 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 
 					{voiceSttEnabled && (
 						<div className="pl-2 flex flex-col gap-2">
-							<Label className="text-xs text-vscode-descriptionForeground">Microphone Input Device</Label>
+							<div className="flex items-center justify-between">
+								<Label className="text-xs text-vscode-descriptionForeground">Microphone Input Device</Label>
+								<button
+									className="text-xs text-vscode-descriptionForeground hover:text-vscode-foreground disabled:opacity-50"
+									disabled={refreshing}
+									onClick={handleRefresh}
+									title="Refresh device list"
+									type="button">
+									{refreshing ? "↻ Refreshing…" : "↻ Refresh"}
+								</button>
+							</div>
 
 							{/* Show error if detection failed */}
 							{error && <p className="text-xs text-red-400">Detection failed: {error}</p>}
@@ -152,6 +181,31 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									Wait {((voiceSilenceThresholdMs || 700) / 1000).toFixed(3)}s of silence to auto-stop recording
 								</p>
 							</div>
+
+							{/* Grace period slider */}
+							<div className="flex flex-col gap-2">
+								<div className="flex items-center justify-between">
+									<Label className="text-xs text-vscode-descriptionForeground">Grace Period</Label>
+									<span className="text-xs font-mono bg-vscode-editor-background px-2 py-1 rounded">
+										{((voiceGracePeriodMs ?? 2000) / 1000).toFixed(1)}s
+									</span>
+								</div>
+								<input
+									className="w-full cursor-pointer"
+									max="4000"
+									min="0"
+									onChange={(e) =>
+										updateSetting("voiceGracePeriodMs", Number.parseInt(e.target.value, 10))
+									}
+									step="400"
+									title="Time after mic is ready before silence detection activates (0-4s)"
+									type="range"
+									value={voiceGracePeriodMs ?? 2000}
+								/>
+								<p className="text-xs text-vscode-descriptionForeground mt-1">
+									Wait {((voiceGracePeriodMs ?? 2000) / 1000).toFixed(1)}s after mic is ready before silence can stop recording
+								</p>
+							</div>
 						</div>
 					)}
 
@@ -171,8 +225,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					</div>
 
 					{voiceTtsEnabled && (
-						<>
-							<div className="pl-2">
+						<div className="pl-2 flex flex-col gap-2">
+							<div>
 								<Label className="text-xs text-vscode-descriptionForeground">Voice</Label>
 								<Select
 									onValueChange={(v) => updateSetting("voicePiperVoice", v)}
@@ -193,7 +247,32 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									</SelectContent>
 								</Select>
 							</div>
-						</>
+
+							{outputDevices.length > 0 && (
+								<div>
+									<Label className="text-xs text-vscode-descriptionForeground">Audio Output Device</Label>
+									<Select
+										onValueChange={(v) => updateSetting("voiceOutputDeviceId", v === "default" ? "" : v)}
+										value={
+											voiceOutputDeviceId && outputDevices.some((d) => d.deviceId === voiceOutputDeviceId)
+												? voiceOutputDeviceId
+												: "default"
+										}>
+										<SelectTrigger className="mt-1 w-full">
+											<SelectValue placeholder="Default output" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="default">Default output</SelectItem>
+											{outputDevices.map((d) => (
+												<SelectItem key={d.deviceId} value={d.deviceId}>
+													{d.label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							)}
+						</div>
 					)}
 				</div>
 			</Section>

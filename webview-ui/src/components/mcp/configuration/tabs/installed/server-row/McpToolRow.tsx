@@ -1,9 +1,8 @@
 import { McpTool } from "@shared/mcp"
-import { ToggleToolAutoApproveRequest } from "@shared/proto/cline/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 type McpToolRowProps = {
 	tool: McpTool
@@ -21,13 +20,11 @@ const McpToolRow = ({ tool, serverName }: McpToolRowProps) => {
 			return
 		}
 
-		McpServiceClient.toggleToolAutoApprove(
-			ToggleToolAutoApproveRequest.create({
-				serverName,
-				toolNames: [tool.name],
-				autoApprove: !tool.autoApprove,
-			}),
-		)
+		trpc.mcp.toggleToolAutoApprove.mutate({
+			serverName,
+			toolNames: [tool.name],
+			autoApprove: !tool.autoApprove,
+		})
 			.then((response) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)

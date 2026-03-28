@@ -1,8 +1,7 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import { FilePlus, FileText, FileX, SquareArrowOutUpRightIcon } from "lucide-react"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface Patch {
 	action: string
@@ -99,7 +98,7 @@ const FileBlock = memo<{ file: Patch; isStreaming: boolean; startLineNumber?: nu
 			event.stopPropagation()
 
 			if (file.path) {
-				FileServiceClient.openFileRelativePath(StringRequest.create({ value: file.path })).catch((err) =>
+				trpc.file.openFileRelativePath.mutate({ value: file.path }).catch((err) =>
 					console.error("Failed to open file:", err),
 				)
 			}

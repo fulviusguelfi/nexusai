@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import Section from "../Section"
 
 interface DebugSectionProps {
@@ -27,7 +27,7 @@ const DebugSection = ({ onResetState, renderSectionHeader }: DebugSectionProps) 
 			<Section>
 				<Button
 					onClick={async () =>
-						await StateServiceClient.setWelcomeViewCompleted({ value: false })
+						await trpc.state.setWelcomeViewCompleted.mutate({ value: false })
 							.catch(() => {})
 							.finally(() => setShowWelcome(true))
 					}

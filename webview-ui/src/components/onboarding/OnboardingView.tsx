@@ -10,7 +10,7 @@ import { Item, ItemContent, ItemDescription, ItemHeader, ItemMedia, ItemTitle } 
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useGitHubAuth } from "@/context/GitHubAuthContext"
 import { cn } from "@/lib/utils"
-import { AccountServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import ApiConfigurationSection from "../settings/sections/ApiConfigurationSection"
 import { useApiConfigurationHandlers } from "../settings/utils/useApiConfigurationHandlers"
 import {
@@ -343,13 +343,13 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 					? "free_user_selected"
 					: "byok_user_selected"
 		// User selection is available in step 0 only
-		StateServiceClient.captureOnboardingProgress({ step: 0, action })
+		trpc.state.captureOnboardingProgress.mutate({ step: 0, action })
 	}, [])
 
 	const onModelClick = useCallback((modelSelected: string) => {
 		setSelectedModelId(modelSelected)
 		// User selection is available in step 1 only
-		StateServiceClient.captureOnboardingProgress({ step: 1, modelSelected, action: "model_selected" })
+		trpc.state.captureOnboardingProgress.mutate({ step: 1, modelSelected, action: "model_selected" })
 	}, [])
 
 	const finishOnboarding = useCallback(
@@ -368,7 +368,7 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 			hideAccount()
 			hideSettings()
 			const action = "onboarding_completed"
-			StateServiceClient.captureOnboardingProgress({ step, modelSelected, action, completed: true })
+			trpc.state.captureOnboardingProgress.mutate({ step, modelSelected, action, completed: true })
 		},
 		[hideAccount, hideSettings, handleFieldsChange, selectedModelId, openRouterModels],
 	)
@@ -387,12 +387,12 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 							})
 							hideAccount()
 							hideSettings()
-							StateServiceClient.captureOnboardingProgress({
+							trpc.state.captureOnboardingProgress.mutate({
 								step: stepNumber,
 								action: "onboarding_completed",
 								completed: true,
 							})
-							await StateServiceClient.setWelcomeViewCompleted({ value: true }).catch(() => {})
+							await trpc.state.setWelcomeViewCompleted.mutate({ value: true }).catch(() => {})
 							setShowWelcome(false)
 						}
 					} catch {
@@ -404,14 +404,14 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 				case "signup":
 					setStepNumber(stepNumber + 1)
 					setIsActionLoading(true)
-					await AccountServiceClient.accountLoginClicked({})
+					await trpc.account.accountLoginClicked.mutate({})
 						.catch(() => {})
 						.finally(() => setIsActionLoading(false))
 					await finishOnboarding(true, stepNumber + 1)
 					break
 				case "signin":
 					setIsActionLoading(true)
-					await AccountServiceClient.accountLoginClicked({})
+					await trpc.account.accountLoginClicked.mutate({})
 						.catch(() => {})
 						.finally(() => setIsActionLoading(false))
 					// Ensure provider is set to "cline" for the signin flow even if no model was selected
@@ -421,20 +421,20 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 					})
 					// Explicitly close the welcome view after sign-in attempt,
 					// consistent with the "done" and "github" flows.
-					await StateServiceClient.setWelcomeViewCompleted({ value: true }).catch(() => {})
+					await trpc.state.setWelcomeViewCompleted.mutate({ value: true }).catch(() => {})
 					setShowWelcome(false)
 					await finishOnboarding(true, stepNumber + 1)
 					break
 				case "next":
-					StateServiceClient.captureOnboardingProgress({ step: stepNumber + 1 })
+					trpc.state.captureOnboardingProgress.mutate({ step: stepNumber + 1 })
 					setStepNumber(stepNumber + 1)
 					break
 				case "back":
-					StateServiceClient.captureOnboardingProgress({ step: stepNumber - 1 })
+					trpc.state.captureOnboardingProgress.mutate({ step: stepNumber - 1 })
 					setStepNumber(stepNumber - 1)
 					break
 				case "done":
-					await StateServiceClient.setWelcomeViewCompleted({ value: true }).catch(() => {})
+					await trpc.state.setWelcomeViewCompleted.mutate({ value: true }).catch(() => {})
 					setShowWelcome(false)
 					await finishOnboarding(false, stepNumber)
 					break

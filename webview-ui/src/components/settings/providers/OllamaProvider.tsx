@@ -1,11 +1,10 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useCallback, useEffect, useState } from "react"
 import { useInterval } from "react-use"
 import UseCustomPromptCheckbox from "@/components/settings/UseCustomPromptCheckbox"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { ApiKeyField } from "../common/ApiKeyField"
 import { BaseUrlField } from "../common/BaseUrlField"
 import { DebouncedTextField } from "../common/DebouncedTextField"
@@ -36,11 +35,9 @@ export const OllamaProvider = ({ showModelOptions, isPopup, currentMode }: Ollam
 	// Poll ollama models
 	const requestOllamaModels = useCallback(async () => {
 		try {
-			const response = await ModelsServiceClient.getOllamaModels(
-				StringRequest.create({
-					value: apiConfiguration?.ollamaBaseUrl || "",
-				}),
-			)
+			const response = await trpc.models.getOllamaModels.query({
+				value: apiConfiguration?.ollamaBaseUrl || "",
+			})
 			if (response && response.values) {
 				setOllamaModels(response.values)
 			}

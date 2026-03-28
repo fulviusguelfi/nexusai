@@ -1,4 +1,3 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { McpServers } from "@shared/proto/cline/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
@@ -8,7 +7,7 @@ import PopupModalContainer from "@/components/common/PopupModalContainer"
 import ServersToggleList from "@/components/mcp/configuration/tabs/installed/ServersToggleList"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 const ServersToggleModal: React.FC = () => {
 	const { mcpServers, navigateToMcp, setMcpServers } = useExtensionState()
@@ -21,7 +20,7 @@ const ServersToggleModal: React.FC = () => {
 
 	useEffect(() => {
 		if (isVisible) {
-			McpServiceClient.getLatestMcpServers(EmptyRequest.create({}))
+			trpc.mcp.getLatestMcpServers.query({})
 				.then((response: McpServers) => {
 					if (response.mcpServers) {
 						const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)

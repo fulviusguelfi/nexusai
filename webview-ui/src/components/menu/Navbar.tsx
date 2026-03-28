@@ -2,7 +2,7 @@ import { HistoryIcon, PlusIcon, SettingsIcon } from "lucide-react"
 import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { useExtensionState } from "../../context/ExtensionStateContext"
 
 // Custom MCP Server Icon component using VSCode codicon
@@ -25,7 +25,7 @@ export const Navbar = () => {
 				icon: PlusIcon,
 				navigate: () => {
 					// Close the current task, then navigate to the chat view
-					TaskServiceClient.clearTask({})
+					trpc.task.clearTask.mutate({})
 						.catch((error) => {
 							console.error("Failed to clear task:", error)
 						})

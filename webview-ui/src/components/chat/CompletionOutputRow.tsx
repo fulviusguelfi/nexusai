@@ -1,10 +1,9 @@
 import { memo } from "react"
 import { cn } from "@/lib/utils"
 import { MarkdownRow } from "./MarkdownRow"
-import { Int64Request } from "@shared/proto/cline/common"
 import { CheckIcon } from "lucide-react"
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { CopyButton } from "../common/CopyButton"
 import SuccessButton from "../common/SuccessButton"
 import { QuoteButtonState } from "./ChatRow"
@@ -94,11 +93,9 @@ const CompletionOutputActionRow = memo(
 					disabled={seeNewChangesDisabled}
 					onClick={() => {
 						setSeeNewChangesDisabled(true)
-						TaskServiceClient.taskCompletionViewChanges(
-							Int64Request.create({
-								value: messageTs,
-							}),
-						).catch((err) => console.error("Failed to show task completion view changes:", err))
+						trpc.task.taskCompletionViewChanges.mutate({
+							value: messageTs,
+						}).catch((err) => console.error("Failed to show task completion view changes:", err))
 					}}
 					style={{
 						cursor: seeNewChangesDisabled ? "wait" : "pointer",
@@ -113,7 +110,7 @@ const CompletionOutputActionRow = memo(
 						disabled={explainChangesDisabled}
 						onClick={() => {
 							setExplainChangesDisabled(true)
-							TaskServiceClient.explainChanges({
+							trpc.task.explainChanges.mutate({
 								metadata: {},
 								messageTs,
 							}).catch((err) => {

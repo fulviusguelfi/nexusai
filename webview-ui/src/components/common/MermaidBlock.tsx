@@ -1,9 +1,8 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import mermaid from "mermaid"
 import { useEffect, useRef, useState } from "react"
 import styled from "styled-components"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { useDebounceEffect } from "@/utils/useDebounceEffect"
 
 const MERMAID_THEME = {
@@ -136,7 +135,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 
 		try {
 			const pngDataUrl = await svgToPng(svgEl)
-			FileServiceClient.openImage(StringRequest.create({ value: pngDataUrl })).catch((err) =>
+			trpc.file.openImage.mutate({ value: pngDataUrl }).catch((err) =>
 				console.error("Failed to open image:", err),
 			)
 		} catch (err) {

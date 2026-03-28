@@ -71,6 +71,7 @@ message RecordAndRespondRequest {
   optional string llm_model = 4; // "claude-3-haiku" default
   optional string tts_voice = 5; // "en-US-male" default
   optional string input_device_id = 6; // Device to record from (empty = use default/first)
+  optional int32 grace_period_ms = 8; // 2000 default (time after READY_TO_LISTEN before silence detection activates)
 }
 
 message RecordAndRespondResponse {

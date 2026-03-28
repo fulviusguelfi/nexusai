@@ -1,11 +1,10 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { highlight } from "../history/HistoryView"
 import { getModeSpecificFields } from "./utils/providerUtils"
 import { useApiConfigurationHandlers } from "./utils/useApiConfigurationHandlers"
@@ -225,9 +224,7 @@ const HicapModelPicker: React.FC<HicapModelPickerProps> = ({ isPopup, currentMod
 												isFavorite={isFavorite}
 												onClick={(e) => {
 													e.stopPropagation()
-													StateServiceClient.toggleFavoriteModel(
-														StringRequest.create({ value: item.id }),
-													).catch((error) => console.error("Failed to toggle favorite model:", error))
+													trpc.state.toggleFavoriteModel.mutate({ value: item.id }).catch((error) => console.error("Failed to toggle favorite model:", error))
 												}}
 											/>
 										</div>

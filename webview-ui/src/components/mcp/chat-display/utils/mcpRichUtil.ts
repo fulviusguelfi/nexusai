@@ -1,5 +1,4 @@
-import { StringRequest } from "@shared/proto/cline/common"
-import { WebServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 // Represents a URL found in the text with its position and metadata
 export interface UrlMatch {
@@ -186,7 +185,7 @@ export const checkIfImageUrl = async (url: string): Promise<boolean> => {
 			})
 
 			// Create the actual service call
-			const servicePromise = WebServiceClient.checkIsImageUrl(StringRequest.create({ value: url }))
+			const servicePromise = trpc.web.checkIsImageUrl.query({ value: url })
 				.then((result) => result.isImage)
 				.catch((error) => {
 					console.error("Error checking if URL is an image via gRPC:", error)

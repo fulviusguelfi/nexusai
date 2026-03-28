@@ -1,8 +1,7 @@
 import { mentionRegex, mentionRegexGlobal } from "@shared/context-mentions"
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
-import { FileSearchRequest, FileSearchType, RelativePathsRequest } from "@shared/proto/cline/file"
+import { FileSearchType } from "@shared/proto/cline/file"
 import { type LanguageModelChatSelector } from "@shared/proto/cline/models"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/cline/state"
+import { PlanActMode } from "@shared/proto/cline/state"
 import { type SlashCommand } from "@shared/slashCommands"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
@@ -21,7 +20,7 @@ import VoiceRecorder from "@/components/voice/VoiceRecorder"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { cn } from "@/lib/utils"
-import { FileServiceClient, ModelsServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import {
 	ContextMenuOptionType,
 	getContextMenuOptionIndex,
@@ -266,7 +265,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		// Fetch git commits when Git is selected or when typing a hash
 		useEffect(() => {
 			if (selectedType === ContextMenuOptionType.Git || /^[a-f0-9]+$/i.test(searchQuery)) {
-				FileServiceClient.searchCommits(StringRequest.create({ value: searchQuery || "" }))
+				trpc.file.searchCommits.query({ value: searchQuery || "" })
 					.then((response) => {
 						if (response.commits) {
 							const commits: GitCommit[] = response.commits.map(
@@ -357,13 +356,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								searchType = FileSearchType.FOLDER
 							}
 
-							FileServiceClient.searchFiles(
-								FileSearchRequest.create({
-									query: "",
-									mentionsRequestId: "",
-									selectedType: searchType,
-								}),
-							)
+							trpc.file.searchFiles.query({
+								query: "",
+								mentionsRequestId: "",
+								selectedType: searchType,
+							})
 								.then((results) => {
 									setFileSearchResults((results.results || []) as SearchResult[])
 									setSearchLoading(false)
@@ -768,14 +765,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 						// Set a timeout to debounce the search requests
 						searchTimeoutRef.current = setTimeout(() => {
-							FileServiceClient.searchFiles(
-								FileSearchRequest.create({
-									query: searchQuery,
-									mentionsRequestId: query,
-									selectedType: searchType,
-									workspaceHint: workspaceHint,
-								}),
-							)
+							trpc.file.searchFiles.query({
+								query: searchQuery,
+								mentionsRequestId: query,
+								selectedType: searchType,
+								workspaceHint: workspaceHint,
+							})
 								.then((results) => {
 									setFileSearchResults((results.results || []) as SearchResult[])
 									setSearchLoading(false)
@@ -1003,16 +998,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const onModeToggle = useCallback(() => {
 			void (async () => {
 				const convertedProtoMode = mode === "plan" ? PlanActMode.ACT : PlanActMode.PLAN
-				const response = await StateServiceClient.togglePlanActModeProto(
-					TogglePlanActModeRequest.create({
-						mode: convertedProtoMode,
-						chatContent: {
-							message: inputValue.trim() ? inputValue : undefined,
-							images: selectedImages,
-							files: selectedFiles,
-						},
-					}),
-				)
+				const response = await trpc.state.togglePlanActModeProto.mutate({
+					mode: convertedProtoMode,
+					chatContent: {
+						message: inputValue.trim() ? inputValue : undefined,
+						images: selectedImages,
+						files: selectedFiles,
+					},
+				})
 				// Focus the textarea after mode toggle with slight delay
 				setTimeout(() => {
 					if (response.value) {
@@ -1075,7 +1068,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [vsCodeLmModels, setVsCodeLmModels] = useState<LanguageModelChatSelector[]>([])
 		useEffect(() => {
 			if (currentProvider !== "vscode-lm") return
-			ModelsServiceClient.getVsCodeLmModels(EmptyRequest.create({}))
+			trpc.models.getVsCodeLmModels.query({})
 				.then((resp) => {
 					if (resp?.models) setVsCodeLmModels(resp.models)
 				})
@@ -1257,7 +1250,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				}
 				setIntendedCursorPosition(initialCursorPos)
 
-				FileServiceClient.getRelativePaths(RelativePathsRequest.create({ uris: validUris }))
+				trpc.file.getRelativePaths.query({ uris: validUris })
 					.then((response) => {
 						if (response.paths.length > 0) {
 							setPendingInsertions((prev) => [...prev, ...response.paths])

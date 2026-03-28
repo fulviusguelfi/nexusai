@@ -24,6 +24,7 @@ export interface VoiceAgentOptions {
 	maxDuration?: number // Max recording time in milliseconds (default: 30000)
 	silenceThreshold?: number // RMS threshold for silence (default: 0.01)
 	silenceDurationMs?: number // Duration of silence to detect (milliseconds, default: 700)
+	gracePeriodMs?: number // Grace period after READY_TO_LISTEN before silence can auto-stop (default: 2000)
 	deviceId?: string // Explicit device to use e.g. "audio=Device Name" (default: auto-detect)
 	stateCallback?: (state: VoiceAgentState, context?: string) => void
 	errorCallback?: (error: VoiceError) => void
@@ -55,6 +56,7 @@ export class VoiceAgent {
 			maxDuration: options.maxDuration || 30000,
 			silenceThreshold: options.silenceThreshold || 0.01,
 			silenceDurationMs: options.silenceDurationMs || 700,
+			gracePeriodMs: options.gracePeriodMs ?? 2000,
 			stateCallback: options.stateCallback || (() => {}),
 			errorCallback: options.errorCallback || (() => {}),
 		}
@@ -66,6 +68,7 @@ export class VoiceAgent {
 			maxDuration: this.options.maxDuration,
 			silenceThreshold: this.options.silenceThreshold,
 			silenceDurationMs: this.options.silenceDurationMs,
+			gracePeriodMs: this.options.gracePeriodMs,
 		})
 
 		this.setState(VoiceAgentState.IDLE, "Ready")
@@ -123,6 +126,8 @@ export class VoiceAgent {
 				this.activeDevice = { id: "explicit", name: deviceName }
 				Logger.log(`[VoiceAgent] Using device from settings: ${deviceName}`)
 			} else {
+				// Clear cache so hot-plugged devices activated after extension load are detected
+				VoiceDeviceManager.clearCache()
 				// Auto-select: first available device from VoiceDeviceManager
 				const device = await VoiceDeviceManager.getActiveDevice()
 				this.activeDevice = device
@@ -182,7 +187,7 @@ export class VoiceAgent {
 			let speechStarted = false
 
 			// === Grace period + idle timeout ===
-			const GRACE_PERIOD_MS = 2000 // 2s after READY_TO_LISTEN before silence can auto-stop
+			const GRACE_PERIOD_MS = this.options.gracePeriodMs // after READY_TO_LISTEN before silence can auto-stop
 			const IDLE_TIMEOUT_MS = 10000 // 10s without speech → auto-cancel
 			let gracePeriodActive = true
 			let gracePeriodTimer: NodeJS.Timeout | null = null

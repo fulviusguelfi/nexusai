@@ -1,4 +1,3 @@
-import type { Boolean, EmptyRequest } from "@shared/proto/cline/common"
 import { useEffect } from "react"
 import ChatView from "./components/chat/ChatView"
 import HistoryView from "./components/history/HistoryView"
@@ -11,7 +10,7 @@ import { useClineAuth } from "./context/ClineAuthContext"
 import { useExtensionState } from "./context/ExtensionStateContext"
 import { useVoiceAudioPlayer } from "./hooks/useVoiceAudioPlayer"
 import { Providers } from "./Providers"
-import { UiServiceClient } from "./services/grpc-client"
+import { trpc } from "./services/trpc-client"
 
 const AppContent = () => {
 	const {
@@ -43,9 +42,9 @@ const AppContent = () => {
 		if (shouldShowAnnouncement) {
 			setShowAnnouncement(true)
 
-			// Use the gRPC client instead of direct WebviewMessage
-			UiServiceClient.onDidShowAnnouncement({} as EmptyRequest)
-				.then((response: Boolean) => {
+			// Use the tRPC client instead of direct WebviewMessage
+			trpc.ui.onDidShowAnnouncement.mutate({})
+				.then((response) => {
 					setShouldShowAnnouncement(response.value)
 				})
 				.catch((error) => {

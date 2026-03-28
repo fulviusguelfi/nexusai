@@ -1,6 +1,4 @@
 import { flip, offset, shift, useFloating } from "@floating-ui/react"
-import { CheckpointRestoreRequest } from "@shared/proto/cline/checkpoints"
-import { Int64Request } from "@shared/proto/cline/common"
 import { ClineCheckpointRestore } from "@shared/WebviewMessage"
 import { BookmarkIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -10,7 +8,7 @@ import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
 import { Button } from "@/components/ui/button"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
-import { CheckpointsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface CheckmarkControlProps {
 	messageTs?: number
@@ -103,12 +101,10 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 		setRestoreTaskDisabled(true)
 		try {
 			const restoreType: ClineCheckpointRestore = "task"
-			await CheckpointsServiceClient.checkpointRestore(
-				CheckpointRestoreRequest.create({
-					number: messageTs,
-					restoreType,
-				}),
-			)
+			await trpc.checkpoints.checkpointRestore.mutate({
+				number: messageTs,
+				restoreType,
+			})
 		} catch (err) {
 			console.error("Checkpoint restore task error:", err)
 		} finally {
@@ -120,12 +116,10 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 		setRestoreWorkspaceDisabled(true)
 		try {
 			const restoreType: ClineCheckpointRestore = "workspace"
-			await CheckpointsServiceClient.checkpointRestore(
-				CheckpointRestoreRequest.create({
-					number: messageTs,
-					restoreType,
-				}),
-			)
+			await trpc.checkpoints.checkpointRestore.mutate({
+				number: messageTs,
+				restoreType,
+			})
 		} catch (err) {
 			console.error("Checkpoint restore workspace error:", err)
 		} finally {
@@ -137,12 +131,10 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 		setRestoreBothDisabled(true)
 		try {
 			const restoreType: ClineCheckpointRestore = "taskAndWorkspace"
-			await CheckpointsServiceClient.checkpointRestore(
-				CheckpointRestoreRequest.create({
-					number: messageTs,
-					restoreType,
-				}),
-			)
+			await trpc.checkpoints.checkpointRestore.mutate({
+				number: messageTs,
+				restoreType,
+			})
 		} catch (err) {
 			console.error("Checkpoint restore both error:", err)
 		} finally {
@@ -193,11 +185,9 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 						onClick={async () => {
 							setCompareDisabled(true)
 							try {
-								await CheckpointsServiceClient.checkpointDiff(
-									Int64Request.create({
-										value: messageTs,
-									}),
-								)
+								await trpc.checkpoints.checkpointDiff.mutate({
+									value: messageTs,
+								})
 							} catch (err) {
 								console.error("CheckpointDiff error:", err)
 							} finally {

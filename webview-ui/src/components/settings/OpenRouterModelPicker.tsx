@@ -1,5 +1,4 @@
 import { CLAUDE_SONNET_1M_SUFFIX, openRouterDefaultModelId } from "@shared/api"
-import { StringRequest } from "@shared/proto/cline/common"
 import type { Mode } from "@shared/storage/types"
 import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
@@ -8,7 +7,7 @@ import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
 import styled from "styled-components"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { highlight } from "../history/HistoryView"
 import { ContextWindowSwitcher } from "./common/ContextWindowSwitcher"
 import { ModelInfoView } from "./common/ModelInfoView"
@@ -303,9 +302,7 @@ const OpenRouterModelPicker: React.FC<OpenRouterModelPickerProps> = ({ isPopup, 
 												isFavorite={isFavorite}
 												onClick={(e) => {
 													e.stopPropagation()
-													StateServiceClient.toggleFavoriteModel(
-														StringRequest.create({ value: item.id }),
-													).catch((error) => console.error("Failed to toggle favorite model:", error))
+													trpc.state.toggleFavoriteModel.mutate({ value: item.id }).catch((error) => console.error("Failed to toggle favorite model:", error))
 												}}
 											/>
 										</div>

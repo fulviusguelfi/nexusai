@@ -1,7 +1,6 @@
 import { ClineMessage } from "@shared/ExtensionMessage"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { memo, useMemo, useState } from "react"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { CHAT_ROW_EXPANDED_BG_COLOR } from "../common/CodeBlock"
 import { HOOK_OUTPUT_STRING } from "./constants"
 
@@ -224,7 +223,7 @@ const HookMessage = memo(({ message, CommandOutput }: HookMessageProps) => {
 							onClick={(e) => {
 								e.stopPropagation()
 								// Cancel the task - cancelling a hook always cancels the entire task
-								TaskServiceClient.cancelTask(EmptyRequest.create({})).catch((err) =>
+								trpc.task.cancelTask.mutate({}).catch((err) =>
 									console.error("Failed to cancel task:", err),
 								)
 							}}

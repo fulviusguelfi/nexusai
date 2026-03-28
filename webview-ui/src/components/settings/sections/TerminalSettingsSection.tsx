@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { PlatformType } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
-import { StateServiceClient } from "../../../services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import Section from "../Section"
 import TerminalOutputLineLimitSlider from "../TerminalOutputLineLimitSlider"
 import { updateSetting } from "../utils/settingsHandlers"
@@ -42,7 +42,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 		setInputError(null)
 		const timeoutMs = Math.round(seconds * 1000)
 
-		StateServiceClient.updateTerminalConnectionTimeout({ timeoutMs })
+		trpc.state.updateTerminalConnectionTimeout.mutate({ timeoutMs })
 			.then((response: UpdateTerminalConnectionTimeoutResponse) => {
 				const timeoutMs = response.timeoutMs
 				// Backend calls postStateToWebview(), so state will update via subscription

@@ -1,9 +1,7 @@
 import type { ClineMessage } from "@shared/ExtensionMessage"
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
-import { AskResponseRequest, NewTaskRequest } from "@shared/proto/cline/task"
 import { useCallback, useRef } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import type { ButtonActionType } from "../shared/buttonConfig"
 import type { ChatState, MessageHandlers } from "../types/chatTypes"
 
@@ -45,26 +43,22 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 				let messageSent = false
 
 				if (messages.length === 0) {
-					await TaskServiceClient.newTask(
-						NewTaskRequest.create({
-							text: messageToSend,
-							images,
-							files,
-						}),
-					)
+					await trpc.task.newTask.mutate({
+						text: messageToSend,
+						images,
+						files,
+					})
 					messageSent = true
 				} else if (clineAsk) {
 					// For resume_task and resume_completed_task, use yesButtonClicked to match Resume button behavior
 					// This ensures Enter key and Resume button work identically
 					if (clineAsk === "resume_task" || clineAsk === "resume_completed_task") {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "yesButtonClicked",
 								text: messageToSend,
 								images,
 								files,
-							}),
-						)
+							})
 						messageSent = true
 					} else {
 						// All other ask types use messageResponse
@@ -83,14 +77,12 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							case "new_task":
 							case "condense":
 							case "report_bug":
-								await TaskServiceClient.askResponse(
-									AskResponseRequest.create({
+								await trpc.task.askResponse.mutate({
 										responseType: "messageResponse",
 										text: messageToSend,
 										images,
 										files,
-									}),
-								)
+									})
 								messageSent = true
 								break
 						}
@@ -104,14 +96,12 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 
 					if (isTaskRunning) {
 						// Task is running - send message as interruption/feedback
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "messageResponse",
 								text: messageToSend,
 								images,
 								files,
-							}),
-						)
+							})
 						messageSent = true
 					}
 				}
@@ -149,7 +139,7 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 	// Start a new task
 	const startNewTask = useCallback(async () => {
 		setActiveQuote(null)
-		await TaskServiceClient.clearTask(EmptyRequest.create({}))
+		await trpc.task.clearTask.mutate({})
 	}, [setActiveQuote])
 
 	// Clear input state helper
@@ -169,82 +159,66 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 			switch (actionType) {
 				case "retry":
 					// For API retry (api_req_failed), always send simple approval without content
-					await TaskServiceClient.askResponse(
-						AskResponseRequest.create({
+					await trpc.task.askResponse.mutate({
 							responseType: "yesButtonClicked",
-						}),
-					)
+						})
 					clearInputState()
 					break
 				case "approve":
 					if (hasContent) {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "yesButtonClicked",
 								text: trimmedInput,
 								images: images,
 								files: files,
-							}),
-						)
+							})
 					} else {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "yesButtonClicked",
-							}),
-						)
+							})
 					}
 					clearInputState()
 					break
 
 				case "reject":
 					if (hasContent) {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "noButtonClicked",
 								text: trimmedInput,
 								images: images,
 								files: files,
-							}),
-						)
+							})
 					} else {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "noButtonClicked",
-							}),
-						)
+							})
 					}
 					clearInputState()
 					break
 
 				case "proceed":
 					if (hasContent) {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "yesButtonClicked",
 								text: trimmedInput,
 								images: images,
 								files: files,
-							}),
-						)
+							})
 					} else {
-						await TaskServiceClient.askResponse(
-							AskResponseRequest.create({
+						await trpc.task.askResponse.mutate({
 								responseType: "yesButtonClicked",
-							}),
-						)
+							})
 					}
 					clearInputState()
 					break
 
 				case "new_task":
 					if (clineAsk === "new_task") {
-						await TaskServiceClient.newTask(
-							NewTaskRequest.create({
-								text: lastMessage?.text,
-								images: [],
-								files: [],
-							}),
-						)
+						await trpc.task.newTask.mutate({
+							text: lastMessage?.text,
+							images: [],
+							files: [],
+						})
 					} else {
 						await startNewTask()
 					}
@@ -259,11 +233,11 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 					setEnableButtons(false)
 					try {
 						if (backgroundCommandRunning) {
-							await TaskServiceClient.cancelBackgroundCommand(EmptyRequest.create({})).catch((err) =>
+							await trpc.task.cancelBackgroundCommand.mutate({}).catch((err) =>
 								console.error("Failed to cancel background command:", err),
 							)
 						}
-						await TaskServiceClient.cancelTask(EmptyRequest.create({}))
+						await trpc.task.cancelTask.mutate({})
 					} finally {
 						cancelInFlightRef.current = false
 						// Clear any pending state that might interfere with resume
@@ -276,12 +250,12 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 				case "utility":
 					switch (clineAsk) {
 						case "condense":
-							await SlashServiceClient.condense(StringRequest.create({ value: lastMessage?.text })).catch((err) =>
+							await trpc.slash.condense.mutate({ value: lastMessage?.text }).catch((err) =>
 								console.error(err),
 							)
 							break
 						case "report_bug":
-							await SlashServiceClient.reportBug(StringRequest.create({ value: lastMessage?.text })).catch((err) =>
+							await trpc.slash.reportBug.mutate({ value: lastMessage?.text }).catch((err) =>
 								console.error(err),
 							)
 							break

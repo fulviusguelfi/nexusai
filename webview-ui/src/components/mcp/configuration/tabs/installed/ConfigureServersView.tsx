@@ -1,7 +1,6 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import ServersToggleList from "./ServersToggleList"
 
 const ConfigureServersView = () => {
@@ -49,7 +48,7 @@ const ConfigureServersView = () => {
 				<VSCodeButton
 					appearance="secondary"
 					onClick={() => {
-						McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch((error) => {
+						trpc.mcp.openMcpSettings.mutate({}).catch((error) => {
 							console.error("Error opening MCP settings:", error)
 						})
 					}}

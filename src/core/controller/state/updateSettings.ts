@@ -368,6 +368,10 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("voiceSilenceThresholdMs", request.voiceSilenceThresholdMs)
 		}
 
+		if (request.voiceGracePeriodMs !== undefined) {
+			controller.stateManager.setGlobalState("voiceGracePeriodMs", request.voiceGracePeriodMs)
+		}
+
 		// Post updated state to webview
 		await controller.postStateToWebview()
 
