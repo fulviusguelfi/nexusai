@@ -4,8 +4,8 @@ import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
-import { useExtensionState } from "../../context/ExtensionStateContext"
 import { trpc } from "@/services/trpc-client"
+import { useExtensionState } from "../../context/ExtensionStateContext"
 import { highlight } from "../history/HistoryView"
 import { ModelInfoView } from "./common/ModelInfoView"
 import { getModeSpecificFields, normalizeApiConfiguration } from "./utils/providerUtils"
@@ -50,7 +50,8 @@ const HuggingFaceModelPicker: React.FC<HuggingFaceModelPickerProps> = ({ isPopup
 	}, [apiConfiguration, currentMode])
 
 	useMount(() => {
-		trpc.models.refreshHuggingFaceModels.mutate({})
+		trpc.models.refreshHuggingFaceModels
+			.mutate({})
 			.then((response) => {
 				setHuggingFaceModels({
 					[huggingFaceDefaultModelId]: huggingFaceModels[huggingFaceDefaultModelId],

@@ -33,7 +33,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 
 		setInputValue(value)
 
-		const seconds = parseFloat(value)
+		const seconds = Number.parseFloat(value)
 		if (Number.isNaN(seconds) || seconds <= 0) {
 			setInputError("Please enter a positive number")
 			return
@@ -42,7 +42,8 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 		setInputError(null)
 		const timeoutMs = Math.round(seconds * 1000)
 
-		trpc.state.updateTerminalConnectionTimeout.mutate({ timeoutMs })
+		trpc.state.updateTerminalConnectionTimeout
+			.mutate({ timeoutMs })
 			.then((response: UpdateTerminalConnectionTimeoutResponse) => {
 				const timeoutMs = response.timeoutMs
 				// Backend calls postStateToWebview(), so state will update via subscription

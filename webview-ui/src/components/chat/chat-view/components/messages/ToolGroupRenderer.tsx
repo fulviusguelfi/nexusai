@@ -146,9 +146,7 @@ export const ToolGroupRenderer = memo(({ messages, allMessages, isLastGroup }: T
 	const summary = getToolGroupSummary(filteredMessages)
 
 	const handleOpenFile = useCallback((filePath: string) => {
-		trpc.file.openFileRelativePath.mutate({ value: filePath }).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFileRelativePath.mutate({ value: filePath }).catch((err) => console.error("Failed to open file:", err))
 	}, [])
 
 	const handleItemToggle = useCallback((ts: number) => {

@@ -55,9 +55,10 @@ export const LMStudioProvider = ({ currentMode }: LMStudioProviderProps) => {
 
 	// Poll LM Studio models
 	const requestLmStudioModels = useCallback(async () => {
-		await trpc.models.getLmStudioModels.query({
-			value: endpoint,
-		})
+		await trpc.models.getLmStudioModels
+			.query({
+				value: endpoint,
+			})
 			.then((response) => {
 				if (response?.values) {
 					const models = response.values.map((v) => JSON.parse(v) as LMStudioApiModel)

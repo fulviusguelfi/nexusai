@@ -585,7 +585,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		})
 
 		// Initialize webview using gRPC
-		trpc.ui.initializeWebview.mutate({})
+		trpc.ui.initializeWebview
+			.mutate({})
 			.then(() => {
 				console.log("[DEBUG] Webview initialization completed via gRPC")
 			})
@@ -609,7 +610,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		})
 
 		// Fetch available terminal profiles on launch
-		trpc.state.getAvailableTerminalProfiles.query({})
+		trpc.state.getAvailableTerminalProfiles
+			.query({})
 			.then((response) => {
 				setAvailableTerminalProfiles(response.profiles)
 			})
@@ -693,7 +695,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshOpenRouterModels = useCallback(() => {
-		trpc.models.refreshOpenRouterModelsRpc.mutate({})
+		trpc.models.refreshOpenRouterModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setOpenRouterModels({
@@ -705,7 +708,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshHicapModels = useCallback(() => {
-		trpc.models.refreshHicapModels.mutate({})
+		trpc.models.refreshHicapModels
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = response.models
 				setHicapModels({
@@ -716,7 +720,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshLiteLlmModels = useCallback(() => {
-		return trpc.models.refreshLiteLlmModelsRpc.mutate({})
+		return trpc.models.refreshLiteLlmModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setLiteLlmModels(models)
@@ -725,7 +730,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshBasetenModels = useCallback(() => {
-		trpc.models.refreshBasetenModelsRpc.mutate({})
+		trpc.models.refreshBasetenModelsRpc
+			.mutate({})
 			.then((response) => {
 				setBasetenModels({
 					[basetenDefaultModelId]: basetenModels[basetenDefaultModelId],
@@ -736,7 +742,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshVercelAiGatewayModels = useCallback(() => {
-		trpc.models.refreshVercelAiGatewayModelsRpc.mutate({})
+		trpc.models.refreshVercelAiGatewayModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setVercelAiGatewayModels(models)
@@ -769,7 +776,8 @@ export const ExtensionStateContextProvider: React.FC<{
 
 	// Refresh Cline models function
 	const refreshClineModels = useCallback(() => {
-		trpc.models.refreshClineModelsRpc.mutate({})
+		trpc.models.refreshClineModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setClineModels((prev) => (Object.keys(models).length > 0 ? models : (prev ?? null)))

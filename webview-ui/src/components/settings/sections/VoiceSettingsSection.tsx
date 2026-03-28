@@ -24,7 +24,15 @@ const VOICE_OPTIONS = [
 ] as const
 
 const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
-	const { voiceTtsEnabled, voiceSttEnabled, voiceInputDeviceId, voiceOutputDeviceId, voicePiperVoice, voiceSilenceThresholdMs, voiceGracePeriodMs } = useExtensionState()
+	const {
+		voiceTtsEnabled,
+		voiceSttEnabled,
+		voiceInputDeviceId,
+		voiceOutputDeviceId,
+		voicePiperVoice,
+		voiceSilenceThresholdMs,
+		voiceGracePeriodMs,
+	} = useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
 	const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
@@ -51,7 +59,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					label: d.label || d.deviceId || "(unknown)",
 				})),
 			)
-
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
 			setError(msg)
@@ -194,16 +201,15 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									className="w-full cursor-pointer"
 									max="4000"
 									min="0"
-									onChange={(e) =>
-										updateSetting("voiceGracePeriodMs", Number.parseInt(e.target.value, 10))
-									}
+									onChange={(e) => updateSetting("voiceGracePeriodMs", Number.parseInt(e.target.value, 10))}
 									step="400"
 									title="Time after mic is ready before silence detection activates (0-4s)"
 									type="range"
 									value={voiceGracePeriodMs ?? 2000}
 								/>
 								<p className="text-xs text-vscode-descriptionForeground mt-1">
-									Wait {((voiceGracePeriodMs ?? 2000) / 1000).toFixed(1)}s after mic is ready before silence can stop recording
+									Wait {((voiceGracePeriodMs ?? 2000) / 1000).toFixed(1)}s after mic is ready before silence can
+									stop recording
 								</p>
 							</div>
 						</div>

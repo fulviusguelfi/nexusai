@@ -26,17 +26,16 @@ const HookRow: React.FC<HookRowProps> = ({
 	onDelete,
 }) => {
 	const handleEditClick = () => {
-		trpc.file.openFile.mutate({ value: absolutePath }).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFile.mutate({ value: absolutePath }).catch((err) => console.error("Failed to open file:", err))
 	}
 
 	const handleDeleteClick = () => {
-		trpc.file.deleteHook.mutate({
-			hookName,
-			isGlobal,
-			workspaceName,
-		})
+		trpc.file.deleteHook
+			.mutate({
+				hookName,
+				isGlobal,
+				workspaceName,
+			})
 			.then((response) => {
 				if (response.hooksToggles) {
 					onDelete(response.hooksToggles)

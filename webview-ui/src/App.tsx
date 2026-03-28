@@ -43,7 +43,8 @@ const AppContent = () => {
 			setShowAnnouncement(true)
 
 			// Use the tRPC client instead of direct WebviewMessage
-			trpc.ui.onDidShowAnnouncement.mutate({})
+			trpc.ui.onDidShowAnnouncement
+				.mutate({})
 				.then((response) => {
 					setShouldShowAnnouncement(response.value)
 				})

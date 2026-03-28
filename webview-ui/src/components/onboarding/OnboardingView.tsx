@@ -404,14 +404,16 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 				case "signup":
 					setStepNumber(stepNumber + 1)
 					setIsActionLoading(true)
-					await trpc.account.accountLoginClicked.mutate({})
+					await trpc.account.accountLoginClicked
+						.mutate({})
 						.catch(() => {})
 						.finally(() => setIsActionLoading(false))
 					await finishOnboarding(true, stepNumber + 1)
 					break
 				case "signin":
 					setIsActionLoading(true)
-					await trpc.account.accountLoginClicked.mutate({})
+					await trpc.account.accountLoginClicked
+						.mutate({})
 						.catch(() => {})
 						.finally(() => setIsActionLoading(false))
 					// Ensure provider is set to "cline" for the signin flow even if no model was selected

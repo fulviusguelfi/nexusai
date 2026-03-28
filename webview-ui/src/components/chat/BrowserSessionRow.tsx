@@ -400,9 +400,9 @@ const BrowserSessionRow = memo((props: BrowserSessionRowProps) => {
 						<img
 							alt="Browser screenshot"
 							onClick={() =>
-								trpc.file.openImage.mutate({ value: displayState.screenshot }).catch(
-									(err) => console.error("Failed to open image:", err),
-								)
+								trpc.file.openImage
+									.mutate({ value: displayState.screenshot })
+									.catch((err) => console.error("Failed to open image:", err))
 							}
 							src={displayState.screenshot}
 							style={imgScreenshotStyle}

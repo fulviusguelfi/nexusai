@@ -87,13 +87,14 @@ const ServerRow = ({
 	const handleTimeoutChange = (e: any) => {
 		const select = e.target as HTMLSelectElement
 		const value = select.value
-		const num = parseInt(value)
+		const num = Number.parseInt(value)
 		setTimeoutValue(value)
 
-		trpc.mcp.updateMcpTimeout.mutate({
-			serverName: server.name,
-			timeout: num,
-		})
+		trpc.mcp.updateMcpTimeout
+			.mutate({
+				serverName: server.name,
+				timeout: num,
+			})
 			.then((response: McpServers) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -108,9 +109,10 @@ const ServerRow = ({
 		setIsRestarting(true)
 
 		// Make the gRPC call
-		trpc.mcp.restartMcpServer.mutate({
-			value: server.name,
-		})
+		trpc.mcp.restartMcpServer
+			.mutate({
+				value: server.name,
+			})
 			.then((response: McpServers) => {
 				// Update with the final state from the server
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
@@ -126,9 +128,10 @@ const ServerRow = ({
 
 	const handleDelete = () => {
 		setIsDeleting(true)
-		trpc.mcp.deleteMcpServer.mutate({
-			value: server.name,
-		})
+		trpc.mcp.deleteMcpServer
+			.mutate({
+				value: server.name,
+			})
 			.then((response: McpServers) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -145,11 +148,12 @@ const ServerRow = ({
 			return
 		}
 
-		trpc.mcp.toggleToolAutoApprove.mutate({
-			serverName: server.name,
-			toolNames: server.tools?.map((tool) => tool.name) || [],
-			autoApprove: !server.tools?.every((tool) => tool.autoApprove),
-		})
+		trpc.mcp.toggleToolAutoApprove
+			.mutate({
+				serverName: server.name,
+				toolNames: server.tools?.map((tool) => tool.name) || [],
+				autoApprove: !server.tools?.every((tool) => tool.autoApprove),
+			})
 			.then((response) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -160,10 +164,11 @@ const ServerRow = ({
 	}
 
 	const handleToggleMcpServer = () => {
-		trpc.mcp.toggleMcpServer.mutate({
-			serverName: server.name,
-			disabled: !server.disabled,
-		})
+		trpc.mcp.toggleMcpServer
+			.mutate({
+				serverName: server.name,
+				disabled: !server.disabled,
+			})
 			.then((response) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)

@@ -520,9 +520,9 @@ export const ChatRowContent = memo(
 									})}
 									onClick={() => {
 										if (!isImage) {
-											trpc.file.openFile.mutate({ value: tool.content }).catch(
-												(err) => console.error("Failed to open file:", err),
-											)
+											trpc.file.openFile
+												.mutate({ value: tool.content })
+												.catch((err) => console.error("Failed to open file:", err))
 										}
 									}}>
 									{tool.path?.startsWith(".") && <span>.</span>}

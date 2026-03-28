@@ -486,7 +486,11 @@ const ClineModelPicker: React.FC<ClineModelPickerProps> = ({ isPopup, currentMod
 												isFavorite={isFavorite}
 												onClick={(e) => {
 													e.stopPropagation()
-													trpc.state.toggleFavoriteModel.mutate({ value: item.id }).catch((error) => console.error("Failed to toggle favorite model:", error))
+													trpc.state.toggleFavoriteModel
+														.mutate({ value: item.id })
+														.catch((error) =>
+															console.error("Failed to toggle favorite model:", error),
+														)
 												}}
 											/>
 										</div>

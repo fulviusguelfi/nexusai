@@ -146,7 +146,8 @@ const HookMessage = memo(({ message, CommandOutput }: HookMessageProps) => {
 					style={{
 						color: normalColor,
 						marginBottom: "-1.5px",
-					}}></span>
+					}}
+				/>
 				<span style={{ color: normalColor, fontWeight: "bold" }}>Hook:</span>
 				<span style={{ color: normalColor }}>{metadata.hookName}</span>
 				{metadata.toolName && (
@@ -223,9 +224,7 @@ const HookMessage = memo(({ message, CommandOutput }: HookMessageProps) => {
 							onClick={(e) => {
 								e.stopPropagation()
 								// Cancel the task - cancelling a hook always cancels the entire task
-								trpc.task.cancelTask.mutate({}).catch((err) =>
-									console.error("Failed to cancel task:", err),
-								)
+								trpc.task.cancelTask.mutate({}).catch((err) => console.error("Failed to cancel task:", err))
 							}}
 							onMouseEnter={(e) => {
 								e.currentTarget.style.background = "var(--vscode-button-secondaryHoverBackground)"

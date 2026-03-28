@@ -1,5 +1,5 @@
-import { initTRPC } from "@trpc/server"
 import type { Controller } from "@core/controller"
+import { initTRPC } from "@trpc/server"
 
 export type TRPCContext = {
 	controller: Controller

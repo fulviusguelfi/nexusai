@@ -265,7 +265,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		// Fetch git commits when Git is selected or when typing a hash
 		useEffect(() => {
 			if (selectedType === ContextMenuOptionType.Git || /^[a-f0-9]+$/i.test(searchQuery)) {
-				trpc.file.searchCommits.query({ value: searchQuery || "" })
+				trpc.file.searchCommits
+					.query({ value: searchQuery || "" })
 					.then((response) => {
 						if (response.commits) {
 							const commits: GitCommit[] = response.commits.map(
@@ -356,11 +357,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								searchType = FileSearchType.FOLDER
 							}
 
-							trpc.file.searchFiles.query({
-								query: "",
-								mentionsRequestId: "",
-								selectedType: searchType,
-							})
+							trpc.file.searchFiles
+								.query({
+									query: "",
+									mentionsRequestId: "",
+									selectedType: searchType,
+								})
 								.then((results) => {
 									setFileSearchResults((results.results || []) as SearchResult[])
 									setSearchLoading(false)
@@ -765,12 +767,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 						// Set a timeout to debounce the search requests
 						searchTimeoutRef.current = setTimeout(() => {
-							trpc.file.searchFiles.query({
-								query: searchQuery,
-								mentionsRequestId: query,
-								selectedType: searchType,
-								workspaceHint: workspaceHint,
-							})
+							trpc.file.searchFiles
+								.query({
+									query: searchQuery,
+									mentionsRequestId: query,
+									selectedType: searchType,
+									workspaceHint: workspaceHint,
+								})
 								.then((results) => {
 									setFileSearchResults((results.results || []) as SearchResult[])
 									setSearchLoading(false)
@@ -1068,7 +1071,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [vsCodeLmModels, setVsCodeLmModels] = useState<LanguageModelChatSelector[]>([])
 		useEffect(() => {
 			if (currentProvider !== "vscode-lm") return
-			trpc.models.getVsCodeLmModels.query({})
+			trpc.models.getVsCodeLmModels
+				.query({})
 				.then((resp) => {
 					if (resp?.models) setVsCodeLmModels(resp.models)
 				})
@@ -1250,7 +1254,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				}
 				setIntendedCursorPosition(initialCursorPos)
 
-				trpc.file.getRelativePaths.query({ uris: validUris })
+				trpc.file.getRelativePaths
+					.query({ uris: validUris })
 					.then((response) => {
 						if (response.paths.length > 0) {
 							setPendingInsertions((prev) => [...prev, ...response.paths])

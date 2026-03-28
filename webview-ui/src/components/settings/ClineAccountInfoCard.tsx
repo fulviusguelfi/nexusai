@@ -11,7 +11,8 @@ export const ClineAccountInfoCard = () => {
 
 	const handleLogin = () => {
 		setIsLoading(true)
-		trpc.account.accountLoginClicked.mutate({})
+		trpc.account.accountLoginClicked
+			.mutate({})
 			.catch((err) => console.error("Failed to get login URL:", err))
 			.finally(() => {
 				setIsLoading(false)
@@ -25,9 +26,9 @@ export const ClineAccountInfoCard = () => {
 		}
 
 		const billingUrl = "https://app.cline.bot/dashboard"
-		trpc.web.openInBrowser.mutate({ value: billingUrl }).catch((err) =>
-			console.error("Failed to open Cline billing dashboard:", err),
-		)
+		trpc.web.openInBrowser
+			.mutate({ value: billingUrl })
+			.catch((err) => console.error("Failed to open Cline billing dashboard:", err))
 	}
 
 	return (

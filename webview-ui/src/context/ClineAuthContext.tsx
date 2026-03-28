@@ -111,7 +111,8 @@ export const useClineSignIn = () => {
 		try {
 			setIsLoading(true)
 
-			trpc.account.accountLoginClicked.mutate({})
+			trpc.account.accountLoginClicked
+				.mutate({})
 				.catch((err) => console.error("Failed to get login URL:", err))
 				.finally(() => {
 					setIsLoading(false)
@@ -129,9 +130,7 @@ export const useClineSignIn = () => {
 
 export const handleSignOut = async () => {
 	try {
-		await trpc.account.accountLogoutClicked.mutate({}).catch((err) =>
-			console.error("Failed to logout:", err),
-		)
+		await trpc.account.accountLogoutClicked.mutate({}).catch((err) => console.error("Failed to logout:", err))
 	} catch (error) {
 		console.error("Error signing out:", error)
 		throw error

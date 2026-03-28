@@ -62,10 +62,10 @@ export const OptionsButtons = ({
 						}
 						try {
 							await trpc.task.askResponse.mutate({
-									responseType: "messageResponse",
-									text: option + (inputValue ? `: ${inputValue?.trim()}` : ""),
-									images: [],
-								})
+								responseType: "messageResponse",
+								text: option + (inputValue ? `: ${inputValue?.trim()}` : ""),
+								images: [],
+							})
 						} catch (error) {
 							console.error("Error sending option response:", error)
 						}

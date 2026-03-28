@@ -1,12 +1,12 @@
-import { memo } from "react"
-import { cn } from "@/lib/utils"
-import { MarkdownRow } from "./MarkdownRow"
 import { CheckIcon } from "lucide-react"
+import { memo } from "react"
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
+import { cn } from "@/lib/utils"
 import { trpc } from "@/services/trpc-client"
 import { CopyButton } from "../common/CopyButton"
 import SuccessButton from "../common/SuccessButton"
 import { QuoteButtonState } from "./ChatRow"
+import { MarkdownRow } from "./MarkdownRow"
 import QuoteButton from "./QuoteButton"
 
 interface CompletionOutputRowProps {
@@ -93,9 +93,11 @@ const CompletionOutputActionRow = memo(
 					disabled={seeNewChangesDisabled}
 					onClick={() => {
 						setSeeNewChangesDisabled(true)
-						trpc.task.taskCompletionViewChanges.mutate({
-							value: messageTs,
-						}).catch((err) => console.error("Failed to show task completion view changes:", err))
+						trpc.task.taskCompletionViewChanges
+							.mutate({
+								value: messageTs,
+							})
+							.catch((err) => console.error("Failed to show task completion view changes:", err))
 					}}
 					style={{
 						cursor: seeNewChangesDisabled ? "wait" : "pointer",
@@ -110,13 +112,15 @@ const CompletionOutputActionRow = memo(
 						disabled={explainChangesDisabled}
 						onClick={() => {
 							setExplainChangesDisabled(true)
-							trpc.task.explainChanges.mutate({
-								metadata: {},
-								messageTs,
-							}).catch((err) => {
-								console.error("Failed to explain changes:", err)
-								setExplainChangesDisabled(false)
-							})
+							trpc.task.explainChanges
+								.mutate({
+									metadata: {},
+									messageTs,
+								})
+								.catch((err) => {
+									console.error("Failed to explain changes:", err)
+									setExplainChangesDisabled(false)
+								})
 						}}
 						style={{
 							cursor: explainChangesDisabled ? "wait" : "pointer",

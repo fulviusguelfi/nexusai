@@ -43,9 +43,7 @@ const HistoryViewItem = ({
 	)
 
 	const handleShowTaskWithId = useCallback((id: string) => {
-		trpc.task.showTaskWithId.mutate({ value: id }).catch((error) =>
-			console.error("Error showing task:", error),
-		)
+		trpc.task.showTaskWithId.mutate({ value: id }).catch((error) => console.error("Error showing task:", error))
 	}, [])
 
 	const formatDate = useCallback((timestamp: number) => {
@@ -205,7 +203,9 @@ const HistoryViewItem = ({
 												className="m-0 p-0"
 												onClick={(e) => {
 													e.stopPropagation()
-													trpc.task.exportTaskWithId.mutate({ value: item.id }).catch((err) => console.error("Failed to export task:", err))
+													trpc.task.exportTaskWithId
+														.mutate({ value: item.id })
+														.catch((err) => console.error("Failed to export task:", err))
 												}}
 												variant="ghost">
 												<DownloadIcon />

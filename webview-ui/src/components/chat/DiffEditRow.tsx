@@ -98,9 +98,9 @@ const FileBlock = memo<{ file: Patch; isStreaming: boolean; startLineNumber?: nu
 			event.stopPropagation()
 
 			if (file.path) {
-				trpc.file.openFileRelativePath.mutate({ value: file.path }).catch((err) =>
-					console.error("Failed to open file:", err),
-				)
+				trpc.file.openFileRelativePath
+					.mutate({ value: file.path })
+					.catch((err) => console.error("Failed to open file:", err))
 			}
 		}
 

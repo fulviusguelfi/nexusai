@@ -34,7 +34,8 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 
 	// Check if we're in a git repo and get current worktree info on mount
 	useEffect(() => {
-		trpc.worktree.listWorktrees.query({})
+		trpc.worktree.listWorktrees
+			.query({})
 			.then((result) => {
 				const canUseWorktrees = result.isGitRepo && !result.isMultiRoot && !result.isSubfolder
 				setIsGitRepo(canUseWorktrees)
@@ -63,9 +64,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 
 	// Handle click on home page worktree element with telemetry
 	const handleWorktreeClick = useCallback(() => {
-		trpc.worktree.trackWorktreeViewOpened.mutate({ source: "home_page" }).catch(
-			console.error,
-		)
+		trpc.worktree.trackWorktreeViewOpened.mutate({ source: "home_page" }).catch(console.error)
 		navigateToWorktrees()
 	}, [navigateToWorktrees])
 

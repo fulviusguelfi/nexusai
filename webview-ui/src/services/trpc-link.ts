@@ -1,7 +1,7 @@
-import type { AnyTRPCRouter } from "@trpc/server"
 import type { TRPCLink } from "@trpc/client"
-import { observable } from "@trpc/server/observable"
 import { TRPCClientError } from "@trpc/client"
+import type { AnyTRPCRouter } from "@trpc/server"
+import { observable } from "@trpc/server/observable"
 import { PLATFORM_CONFIG } from "../config/platform.config"
 
 /**

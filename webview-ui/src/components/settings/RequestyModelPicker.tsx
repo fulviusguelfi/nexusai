@@ -6,8 +6,8 @@ import Fuse from "fuse.js"
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
 import styled from "styled-components"
-import { useExtensionState } from "../../context/ExtensionStateContext"
 import { trpc } from "@/services/trpc-client"
+import { useExtensionState } from "../../context/ExtensionStateContext"
 import { highlight } from "../history/HistoryView"
 import { ModelInfoView } from "./common/ModelInfoView"
 import ThinkingBudgetSlider from "./ThinkingBudgetSlider"
@@ -62,7 +62,8 @@ const RequestyModelPicker: React.FC<RequestyModelPickerProps> = ({ isPopup, base
 	}, [apiConfiguration, currentMode])
 
 	useMount(() => {
-		trpc.models.refreshRequestyModels.mutate({})
+		trpc.models.refreshRequestyModels
+			.mutate({})
 			.then((response) => {
 				setRequestyModels({
 					[requestyDefaultModelId]: requestyDefaultModelInfo,

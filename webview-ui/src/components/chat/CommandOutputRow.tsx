@@ -69,9 +69,9 @@ export const CommandOutputContent = memo(
 					<div
 						className="flex flex-wrap items-center gap-1.5 px-3 py-2 mx-2 my-1.5 rounded-sm bg-banner-background cursor-pointer hover:brightness-110 transition-colors"
 						onClick={() => {
-							trpc.file.openFile.mutate({ value: logFilePath }).catch((err) =>
-								console.error("Failed to open log file:", err),
-							)
+							trpc.file.openFile
+								.mutate({ value: logFilePath })
+								.catch((err) => console.error("Failed to open log file:", err))
 						}}
 						title={`Click to open: ${logFilePath}`}>
 						<span className="shrink-0">📋 Output is being logged to:</span>

@@ -5,8 +5,8 @@ import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
-import { useExtensionState } from "../../context/ExtensionStateContext"
 import { trpc } from "@/services/trpc-client"
+import { useExtensionState } from "../../context/ExtensionStateContext"
 import { highlight } from "../history/HistoryView"
 import { ModelInfoView } from "./common/ModelInfoView"
 import { getModeSpecificFields, normalizeApiConfiguration } from "./utils/providerUtils"
@@ -52,7 +52,8 @@ const GroqModelPicker: React.FC<GroqModelPickerProps> = ({ isPopup, currentMode 
 	}, [apiConfiguration, currentMode])
 
 	useMount(() => {
-		trpc.models.refreshGroqModelsRpc.mutate({})
+		trpc.models.refreshGroqModelsRpc
+			.mutate({})
 			.then((response) => {
 				setGroqModels({
 					[groqDefaultModelId]: groqModels[groqDefaultModelId],

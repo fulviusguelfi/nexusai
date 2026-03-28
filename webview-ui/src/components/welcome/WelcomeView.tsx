@@ -47,7 +47,8 @@ const WelcomeView = memo(() => {
 
 	const handleClineLogin = () => {
 		setIsClineLoading(true)
-		trpc.account.accountLoginClicked.mutate({})
+		trpc.account.accountLoginClicked
+			.mutate({})
 			.catch((err) => console.error("Failed to get login URL:", err))
 			.finally(() => setIsClineLoading(false))
 	}

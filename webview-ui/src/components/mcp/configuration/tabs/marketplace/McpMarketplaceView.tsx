@@ -72,7 +72,7 @@ const McpMarketplaceView = () => {
 		}
 	}, [mcpMarketplaceCatalog])
 
-	const fetchMarketplace = (forceRefresh: boolean = false) => {
+	const fetchMarketplace = (forceRefresh = false) => {
 		if (forceRefresh) {
 			setIsRefreshing(true)
 		} else {
@@ -81,7 +81,8 @@ const McpMarketplaceView = () => {
 		setError(null)
 
 		if (showMarketplace) {
-			trpc.mcp.refreshMcpMarketplace.mutate({})
+			trpc.mcp.refreshMcpMarketplace
+				.mutate({})
 				.then((response) => {
 					setMcpMarketplaceCatalog(response)
 				})

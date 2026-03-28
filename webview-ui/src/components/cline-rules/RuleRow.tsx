@@ -101,25 +101,26 @@ const RuleRow: React.FC<{
 	const handleEditClick = () => {
 		// For remote rules, use the special remote:// URI format
 		const filePath = isRemote ? `${REMOTE_URI_SCHEME}${ruleType === "workflow" ? "workflow" : "rule"}/${rulePath}` : rulePath
-		trpc.file.openFile.mutate({ value: filePath }).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFile.mutate({ value: filePath }).catch((err) => console.error("Failed to open file:", err))
 	}
 
 	const handleDeleteClick = () => {
 		if (ruleType === "skill") {
-			trpc.file.deleteSkillFile.mutate({
-				skillPath: rulePath,
-				isGlobal,
-			})
+			trpc.file.deleteSkillFile
+				.mutate({
+					skillPath: rulePath,
+					isGlobal,
+				})
 				.then(() => onDeleteSkill?.())
 				.catch((err) => console.error("Failed to delete skill:", err))
 		} else {
-			trpc.file.deleteRuleFile.mutate({
-				rulePath,
-				isGlobal,
-				type: ruleType || "cline",
-			}).catch((err) => console.error("Failed to delete rule file:", err))
+			trpc.file.deleteRuleFile
+				.mutate({
+					rulePath,
+					isGlobal,
+					type: ruleType || "cline",
+				})
+				.catch((err) => console.error("Failed to delete rule file:", err))
 		}
 	}
 

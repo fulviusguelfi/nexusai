@@ -60,14 +60,16 @@ export const OpenAICompatibleProvider = ({ showModelOptions, isPopup, currentMod
 
 		if (baseUrl && apiKey) {
 			debounceTimerRef.current = setTimeout(() => {
-				trpc.models.refreshOpenAiModels.mutate(
-					OpenAiModelsRequest.create({
-						baseUrl,
-						apiKey,
-					}),
-				).catch((error) => {
-					console.error("Failed to refresh OpenAI models:", error)
-				})
+				trpc.models.refreshOpenAiModels
+					.mutate(
+						OpenAiModelsRequest.create({
+							baseUrl,
+							apiKey,
+						}),
+					)
+					.catch((error) => {
+						console.error("Failed to refresh OpenAI models:", error)
+					})
 			}, 500)
 		}
 	}, [])

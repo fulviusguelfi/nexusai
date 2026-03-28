@@ -370,7 +370,8 @@ const InlineCodeWithFileCheck: React.FC<ComponentProps<"code"> & { [key: string]
 		let cancelled = false
 
 		// Check file existence asynchronously
-		trpc.file.ifFileExistsRelativePath.query({ value: filePath })
+		trpc.file.ifFileExistsRelativePath
+			.query({ value: filePath })
 			.then((exists) => {
 				if (!cancelled) {
 					setIsFilePath(exists.value)

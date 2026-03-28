@@ -20,7 +20,8 @@ const ServersToggleModal: React.FC = () => {
 
 	useEffect(() => {
 		if (isVisible) {
-			trpc.mcp.getLatestMcpServers.query({})
+			trpc.mcp.getLatestMcpServers
+				.query({})
 				.then((response: McpServers) => {
 					if (response.mcpServers) {
 						const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
@@ -79,7 +80,7 @@ const ServersToggleModal: React.FC = () => {
 									setIsVisible(false)
 									navigateToMcp("configure")
 								}}>
-								<span className="codicon codicon-gear text-[10px]"></span>
+								<span className="codicon codicon-gear text-[10px]" />
 							</VSCodeButton>
 						</div>
 					</div>

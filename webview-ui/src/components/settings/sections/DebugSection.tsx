@@ -27,7 +27,8 @@ const DebugSection = ({ onResetState, renderSectionHeader }: DebugSectionProps) 
 			<Section>
 				<Button
 					onClick={async () =>
-						await trpc.state.setWelcomeViewCompleted.mutate({ value: false })
+						await trpc.state.setWelcomeViewCompleted
+							.mutate({ value: false })
 							.catch(() => {})
 							.finally(() => setShowWelcome(true))
 					}

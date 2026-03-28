@@ -25,7 +25,8 @@ export const Navbar = () => {
 				icon: PlusIcon,
 				navigate: () => {
 					// Close the current task, then navigate to the chat view
-					trpc.task.clearTask.mutate({})
+					trpc.task.clearTask
+						.mutate({})
 						.catch((error) => {
 							console.error("Failed to clear task:", error)
 						})

@@ -1,4 +1,3 @@
-
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse, { FuseResult } from "fuse.js"
 import { FunnelIcon } from "lucide-react"
@@ -152,15 +151,15 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 		setSelectedItems((prev) => {
 			if (checked) {
 				return [...prev, itemId]
-			} else {
-				return prev.filter((id) => id !== itemId)
 			}
+			return prev.filter((id) => id !== itemId)
 		})
 	}, [])
 
 	const handleDeleteHistoryItem = useCallback(
 		(id: string) => {
-			trpc.task.deleteTasksWithIds.mutate({ value: [id] })
+			trpc.task.deleteTasksWithIds
+				.mutate({ value: [id] })
 				.then(() => fetchTotalTasksSize())
 				.catch((error) => console.error("Error deleting task:", error))
 		},
@@ -170,7 +169,8 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 	const handleDeleteSelectedHistoryItems = useCallback(
 		(ids: string[]) => {
 			if (ids.length > 0) {
-				trpc.task.deleteTasksWithIds.mutate({ value: ids })
+				trpc.task.deleteTasksWithIds
+					.mutate({ value: ids })
 					.then(() => fetchTotalTasksSize())
 					.catch((error) => console.error("Error deleting tasks:", error))
 				setSelectedItems([])
@@ -440,7 +440,8 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 						disabled={deleteAllDisabled || taskHistory.length === 0}
 						onClick={() => {
 							setDeleteAllDisabled(true)
-							trpc.task.deleteAllTaskHistory.mutate()
+							trpc.task.deleteAllTaskHistory
+								.mutate()
 								.then(() => fetchTotalTasksSize())
 								.catch((error) => console.error("Error deleting task history:", error))
 								.finally(() => setDeleteAllDisabled(false))
@@ -455,7 +456,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 }
 
 // https://gist.github.com/evenfrost/1ba123656ded32fb7a0cd4651efd4db0
-export const highlight = (fuseSearchResult: FuseResult<any>[], highlightClassName: string = "history-item-highlight") => {
+export const highlight = (fuseSearchResult: FuseResult<any>[], highlightClassName = "history-item-highlight") => {
 	const set = (obj: Record<string, any>, path: string, value: any) => {
 		const pathValue = path.split(".")
 		let i: number

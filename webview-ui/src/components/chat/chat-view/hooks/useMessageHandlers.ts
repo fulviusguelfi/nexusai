@@ -54,11 +54,11 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 					// This ensures Enter key and Resume button work identically
 					if (clineAsk === "resume_task" || clineAsk === "resume_completed_task") {
 						await trpc.task.askResponse.mutate({
-								responseType: "yesButtonClicked",
-								text: messageToSend,
-								images,
-								files,
-							})
+							responseType: "yesButtonClicked",
+							text: messageToSend,
+							images,
+							files,
+						})
 						messageSent = true
 					} else {
 						// All other ask types use messageResponse
@@ -78,11 +78,11 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 							case "condense":
 							case "report_bug":
 								await trpc.task.askResponse.mutate({
-										responseType: "messageResponse",
-										text: messageToSend,
-										images,
-										files,
-									})
+									responseType: "messageResponse",
+									text: messageToSend,
+									images,
+									files,
+								})
 								messageSent = true
 								break
 						}
@@ -97,11 +97,11 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 					if (isTaskRunning) {
 						// Task is running - send message as interruption/feedback
 						await trpc.task.askResponse.mutate({
-								responseType: "messageResponse",
-								text: messageToSend,
-								images,
-								files,
-							})
+							responseType: "messageResponse",
+							text: messageToSend,
+							images,
+							files,
+						})
 						messageSent = true
 					}
 				}
@@ -160,22 +160,22 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 				case "retry":
 					// For API retry (api_req_failed), always send simple approval without content
 					await trpc.task.askResponse.mutate({
-							responseType: "yesButtonClicked",
-						})
+						responseType: "yesButtonClicked",
+					})
 					clearInputState()
 					break
 				case "approve":
 					if (hasContent) {
 						await trpc.task.askResponse.mutate({
-								responseType: "yesButtonClicked",
-								text: trimmedInput,
-								images: images,
-								files: files,
-							})
+							responseType: "yesButtonClicked",
+							text: trimmedInput,
+							images: images,
+							files: files,
+						})
 					} else {
 						await trpc.task.askResponse.mutate({
-								responseType: "yesButtonClicked",
-							})
+							responseType: "yesButtonClicked",
+						})
 					}
 					clearInputState()
 					break
@@ -183,15 +183,15 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 				case "reject":
 					if (hasContent) {
 						await trpc.task.askResponse.mutate({
-								responseType: "noButtonClicked",
-								text: trimmedInput,
-								images: images,
-								files: files,
-							})
+							responseType: "noButtonClicked",
+							text: trimmedInput,
+							images: images,
+							files: files,
+						})
 					} else {
 						await trpc.task.askResponse.mutate({
-								responseType: "noButtonClicked",
-							})
+							responseType: "noButtonClicked",
+						})
 					}
 					clearInputState()
 					break
@@ -199,15 +199,15 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 				case "proceed":
 					if (hasContent) {
 						await trpc.task.askResponse.mutate({
-								responseType: "yesButtonClicked",
-								text: trimmedInput,
-								images: images,
-								files: files,
-							})
+							responseType: "yesButtonClicked",
+							text: trimmedInput,
+							images: images,
+							files: files,
+						})
 					} else {
 						await trpc.task.askResponse.mutate({
-								responseType: "yesButtonClicked",
-							})
+							responseType: "yesButtonClicked",
+						})
 					}
 					clearInputState()
 					break
@@ -233,9 +233,9 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 					setEnableButtons(false)
 					try {
 						if (backgroundCommandRunning) {
-							await trpc.task.cancelBackgroundCommand.mutate({}).catch((err) =>
-								console.error("Failed to cancel background command:", err),
-							)
+							await trpc.task.cancelBackgroundCommand
+								.mutate({})
+								.catch((err) => console.error("Failed to cancel background command:", err))
 						}
 						await trpc.task.cancelTask.mutate({})
 					} finally {
@@ -250,14 +250,10 @@ export function useMessageHandlers(messages: ClineMessage[], chatState: ChatStat
 				case "utility":
 					switch (clineAsk) {
 						case "condense":
-							await trpc.slash.condense.mutate({ value: lastMessage?.text }).catch((err) =>
-								console.error(err),
-							)
+							await trpc.slash.condense.mutate({ value: lastMessage?.text }).catch((err) => console.error(err))
 							break
 						case "report_bug":
-							await trpc.slash.reportBug.mutate({ value: lastMessage?.text }).catch((err) =>
-								console.error(err),
-							)
+							await trpc.slash.reportBug.mutate({ value: lastMessage?.text }).catch((err) => console.error(err))
 							break
 					}
 					break

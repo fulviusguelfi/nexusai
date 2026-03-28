@@ -1,82 +1,82 @@
 {
-  "permissions": {
-    "allow": [
-      "WebSearch",
-      "Bash(npm run:*)",
-      "Bash(ls tsconfig*.json)",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''exports:'''', list\\(d.get\\(''''exports'''',{}\\).keys\\(\\)\\)[:10]\\); print\\(''''types:'''', d.get\\(''''types'''',''''''''\\)\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''exports'''',{}\\).get\\(''''./wire'''',{}\\), indent=2\\)\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''exports'''',{}\\).get\\(''''./wire'''',{}\\), indent=2\\)\\); print\\(''''version:'''', d.get\\(''''version''''\\)\\)\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''version:'''', d.get\\(''''version''''\\)\\); deps=d.get\\(''''peerDependencies'''',{}\\); print\\(''''peerDeps:'''', json.dumps\\(deps, indent=2\\)\\)\")",
-      "Bash(npx tsc:*)",
-      "Bash(find . -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -not -path ./node_modules/* -not -path ./webview-ui/node_modules/*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git checkout:*)",
-      "Bash(find /c/Users/Usuario/Desktop/cline -type f \\\\\\(-name *Voice* -o -name *Audio* -o -name *Device* \\\\\\) -path */src/*)",
-      "Bash(find /c/Users/Usuario/Desktop/cline/src -type f -name *Voice* -o -name *voice*)",
-      "Bash(find /c/Users/Usuario/Desktop/cline/src/services -type f -name *Voice* -o -name *voice* -o -name *Audio*)",
-      "Bash(grep -i \"\\\\.ts$\")",
-      "Bash(python3 -c \":*)",
-      "Read(//c/Users/Usuario/.claude/plans/**)",
-      "Bash(find . -name *.proto -type f)",
-      "Bash(for f:*)",
-      "Bash(do head:*)",
-      "Bash(done)",
-      "WebFetch(domain:github.com)",
-      "Bash(gh api:*)",
-      "Bash(find /c/Users/Usuario/Desktop/cline -name *WindowsAudioCapture* -o -name *AudioCapture*)",
-      "Bash(find /c/Users/Usuario/Desktop/cline -name *.go)",
-      "Bash(go version:*)",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''\\\\n''''.join\\(f''''{k}: {v}'''' for k,v in d.get\\(''''scripts'''',{}\\).items\\(\\)\\)\\)\")",
-      "Bash(find /c/Users/Usuario/Desktop/cline/src/hosts -name *VscodeWebviewProvider* -type f)",
-      "Bash(npm list:*)",
-      "Bash(npm install:*)",
-      "Bash(npx biome:*)",
-      "Bash(grep -v \"grpc-client\\\\.ts$\\\\|grpc-client-base\\\\.ts$\")",
-      "Bash(head -1 grep \"makeStreamingRequest\\\\|static.*subscribe\\\\|static.*Subscribe\" /c/Users/Usuario/Desktop/cline/webview-ui/src/services/grpc-client.ts)",
-      "Bash(grep -v \"//\")",
-      "Read(//c/Users/Usuario/Desktop/cline/**)",
-      "Read(//tmp/**)",
-      "Bash(python3:*)",
-      "Bash(cat -A echo \"---\" grep -n \"openInBrowser\\\\|fetchOpenGraphData\" c:/Users/Usuario/Desktop/cline/webview-ui/src/components/mcp/chat-display/LinkPreview.tsx)",
-      "Bash(head -10 grep -n initializeWebview src/core/trpc/routers/*.ts)",
-      "Bash(head -5 grep -n \"EmptyRequest\\\\|import.*from.*common\" webview-ui/src/context/GitHubAuthContext.tsx)",
-      "Bash(grep -E \"vscode|node$\")",
-      "Bash(find c:/Users/Usuario/Desktop/cline/node_modules/@trpc -name *.d.ts)",
-      "Bash(find c:/Users/Usuario/Desktop/cline/node_modules/@trpc/server -name *.d.mts)",
-      "Bash(find c:/Users/Usuario/Desktop/cline/node_modules/@trpc/server -name *.d.ts)",
-      "Bash(ls c:/Users/Usuario/Desktop/cline/node_modules/@trpc/server/dist/*.d.mts)",
-      "Bash(node_modules/.bin/vite build:*)",
-      "Bash(netstat -ano)",
-      "Bash(taskkill /PID 23596 /F)",
-      "Bash(taskkill /PID 11632 /F)",
-      "Bash(powershell -Command \"Stop-Process -Id 23596 -Force; Stop-Process -Id 11632 -Force\")",
-      "Bash(node /c/Users/Usuario/Desktop/cline/esbuild.mjs)",
-      "Bash(grep -A 20 \"watch:esbuild\"\"$\" /c/Users/Usuario/Desktop/cline/.vscode/tasks.json)",
-      "Bash(node -e \":*)",
-      "Bash(node \"C:/Users/Usuario/Desktop/cline/dist/extension.js\")",
-      "Read(//c/Users/Usuario/AppData/Roaming/Code/logs/**)",
-      "Bash(find C:/Users/Usuario/AppData/Roaming/Code/logs/20260326T220642/ -name exthost* -o -name *extension*)",
-      "Bash(git -C /c/Users/Usuario/Desktop/cline diff --stat HEAD)",
-      "Bash(git -C /c/Users/Usuario/Desktop/cline log --oneline -5)",
-      "Bash(powershell -Command \"Get-PSDrive C | Select-Object Used,Free | ForEach-Object { ''Used: '' + [math]::Round\\($_Used/1GB,1\\) + '' GB | Free: '' + [math]::Round\\($_Free/1GB,1\\) + '' GB'' }\")",
-      "Bash(git -C /c/Users/Usuario/Desktop/cline diff HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/recordAndRespond.ts src/services/voice/VoiceAgent.ts)",
-      "Bash(git -C /c/Users/Usuario/Desktop/cline show HEAD:src/services/audio/WindowsAudioCapture.ts)",
-      "Bash(git -C /c/Users/Usuario/Desktop/cline show HEAD:src/core/controller/voice/enumerateAudioDevices.ts)",
-      "Bash(git -C /c/Users/Usuario/Desktop/cline checkout HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/enumerateAudioDevices.ts)"
-    ]
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/claude-code-for-web-setup.sh"
-          }
-        ]
-      }
-    ]
-  }
+	"permissions": {
+		"allow": [
+			"WebSearch",
+			"Bash(npm run:*)",
+			"Bash(ls tsconfig*.json)",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''exports:'''', list\\(d.get\\(''''exports'''',{}\\).keys\\(\\)\\)[:10]\\); print\\(''''types:'''', d.get\\(''''types'''',''''''''\\)\\)\")",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''exports'''',{}\\).get\\(''''./wire'''',{}\\), indent=2\\)\\)\")",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''exports'''',{}\\).get\\(''''./wire'''',{}\\), indent=2\\)\\); print\\(''''version:'''', d.get\\(''''version''''\\)\\)\")",
+			"Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(''''version:'''', d.get\\(''''version''''\\)\\); deps=d.get\\(''''peerDependencies'''',{}\\); print\\(''''peerDeps:'''', json.dumps\\(deps, indent=2\\)\\)\")",
+			"Bash(npx tsc:*)",
+			"Bash(find . -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -not -path ./node_modules/* -not -path ./webview-ui/node_modules/*)",
+			"Bash(git add:*)",
+			"Bash(git commit:*)",
+			"Bash(git checkout:*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline -type f \\\\\\(-name *Voice* -o -name *Audio* -o -name *Device* \\\\\\) -path */src/*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline/src -type f -name *Voice* -o -name *voice*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline/src/services -type f -name *Voice* -o -name *voice* -o -name *Audio*)",
+			"Bash(grep -i \"\\\\.ts$\")",
+			"Bash(python3 -c \":*)",
+			"Read(//c/Users/Usuario/.claude/plans/**)",
+			"Bash(find . -name *.proto -type f)",
+			"Bash(for f:*)",
+			"Bash(do head:*)",
+			"Bash(done)",
+			"WebFetch(domain:github.com)",
+			"Bash(gh api:*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline -name *WindowsAudioCapture* -o -name *AudioCapture*)",
+			"Bash(find /c/Users/Usuario/Desktop/cline -name *.go)",
+			"Bash(go version:*)",
+			"Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''\\\\n''''.join\\(f''''{k}: {v}'''' for k,v in d.get\\(''''scripts'''',{}\\).items\\(\\)\\)\\)\")",
+			"Bash(find /c/Users/Usuario/Desktop/cline/src/hosts -name *VscodeWebviewProvider* -type f)",
+			"Bash(npm list:*)",
+			"Bash(npm install:*)",
+			"Bash(npx biome:*)",
+			"Bash(grep -v \"grpc-client\\\\.ts$\\\\|grpc-client-base\\\\.ts$\")",
+			"Bash(head -1 grep \"makeStreamingRequest\\\\|static.*subscribe\\\\|static.*Subscribe\" /c/Users/Usuario/Desktop/cline/webview-ui/src/services/grpc-client.ts)",
+			"Bash(grep -v \"//\")",
+			"Read(//c/Users/Usuario/Desktop/cline/**)",
+			"Read(//tmp/**)",
+			"Bash(python3:*)",
+			"Bash(cat -A echo \"---\" grep -n \"openInBrowser\\\\|fetchOpenGraphData\" c:/Users/Usuario/Desktop/cline/webview-ui/src/components/mcp/chat-display/LinkPreview.tsx)",
+			"Bash(head -10 grep -n initializeWebview src/core/trpc/routers/*.ts)",
+			"Bash(head -5 grep -n \"EmptyRequest\\\\|import.*from.*common\" webview-ui/src/context/GitHubAuthContext.tsx)",
+			"Bash(grep -E \"vscode|node$\")",
+			"Bash(find c:/Users/Usuario/Desktop/cline/node_modules/@trpc -name *.d.ts)",
+			"Bash(find c:/Users/Usuario/Desktop/cline/node_modules/@trpc/server -name *.d.mts)",
+			"Bash(find c:/Users/Usuario/Desktop/cline/node_modules/@trpc/server -name *.d.ts)",
+			"Bash(ls c:/Users/Usuario/Desktop/cline/node_modules/@trpc/server/dist/*.d.mts)",
+			"Bash(node_modules/.bin/vite build:*)",
+			"Bash(netstat -ano)",
+			"Bash(taskkill /PID 23596 /F)",
+			"Bash(taskkill /PID 11632 /F)",
+			"Bash(powershell -Command \"Stop-Process -Id 23596 -Force; Stop-Process -Id 11632 -Force\")",
+			"Bash(node /c/Users/Usuario/Desktop/cline/esbuild.mjs)",
+			"Bash(grep -A 20 \"watch:esbuild\"\"$\" /c/Users/Usuario/Desktop/cline/.vscode/tasks.json)",
+			"Bash(node -e \":*)",
+			"Bash(node \"C:/Users/Usuario/Desktop/cline/dist/extension.js\")",
+			"Read(//c/Users/Usuario/AppData/Roaming/Code/logs/**)",
+			"Bash(find C:/Users/Usuario/AppData/Roaming/Code/logs/20260326T220642/ -name exthost* -o -name *extension*)",
+			"Bash(git -C /c/Users/Usuario/Desktop/cline diff --stat HEAD)",
+			"Bash(git -C /c/Users/Usuario/Desktop/cline log --oneline -5)",
+			"Bash(powershell -Command \"Get-PSDrive C | Select-Object Used,Free | ForEach-Object { ''Used: '' + [math]::Round\\($_Used/1GB,1\\) + '' GB | Free: '' + [math]::Round\\($_Free/1GB,1\\) + '' GB'' }\")",
+			"Bash(git -C /c/Users/Usuario/Desktop/cline diff HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/recordAndRespond.ts src/services/voice/VoiceAgent.ts)",
+			"Bash(git -C /c/Users/Usuario/Desktop/cline show HEAD:src/services/audio/WindowsAudioCapture.ts)",
+			"Bash(git -C /c/Users/Usuario/Desktop/cline show HEAD:src/core/controller/voice/enumerateAudioDevices.ts)",
+			"Bash(git -C /c/Users/Usuario/Desktop/cline checkout HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/enumerateAudioDevices.ts)"
+		]
+	},
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "$CLAUDE_PROJECT_DIR/.claude/hooks/claude-code-for-web-setup.sh"
+					}
+				]
+			}
+		]
+	}
 }

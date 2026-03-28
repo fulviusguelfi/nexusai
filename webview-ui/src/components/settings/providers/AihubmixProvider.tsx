@@ -59,7 +59,8 @@ export const AIhubmixProvider = ({ showModelOptions, isPopup, currentMode }: AIh
 			setModels(ensureSelectedPresent({}))
 		}
 
-		trpc.models.getAihubmixModels.query({})
+		trpc.models.getAihubmixModels
+			.query({})
 			.then((response) => {
 				if (response.models) {
 					const nextModels = response.models as Record<string, ModelInfo>

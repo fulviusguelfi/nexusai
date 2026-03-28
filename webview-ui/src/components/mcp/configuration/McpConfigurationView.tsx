@@ -41,7 +41,8 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 
 	useEffect(() => {
 		if (showMarketplace) {
-			trpc.mcp.refreshMcpMarketplace.mutate({})
+			trpc.mcp.refreshMcpMarketplace
+				.mutate({})
 				.then((response) => {
 					setMcpMarketplaceCatalog(response)
 				})
@@ -49,7 +50,8 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 					console.error("Error refreshing MCP marketplace:", error)
 				})
 
-			trpc.mcp.getLatestMcpServers.query({})
+			trpc.mcp.getLatestMcpServers
+				.query({})
 				.then((response: McpServers) => {
 					if (response.mcpServers) {
 						const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)

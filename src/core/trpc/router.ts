@@ -1,4 +1,3 @@
-import { router } from "./trpc"
 import { accountRouter } from "./routers/account"
 import { browserRouter } from "./routers/browser"
 import { checkpointsRouter } from "./routers/checkpoints"
@@ -14,6 +13,7 @@ import { uiRouter } from "./routers/ui"
 import { voiceRouter } from "./routers/voice"
 import { webRouter } from "./routers/web"
 import { worktreeRouter } from "./routers/worktree"
+import { router } from "./trpc"
 
 export const appRouter = router({
 	account: accountRouter,

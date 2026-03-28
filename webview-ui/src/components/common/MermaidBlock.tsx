@@ -135,9 +135,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 
 		try {
 			const pngDataUrl = await svgToPng(svgEl)
-			trpc.file.openImage.mutate({ value: pngDataUrl }).catch((err) =>
-				console.error("Failed to open image:", err),
-			)
+			trpc.file.openImage.mutate({ value: pngDataUrl }).catch((err) => console.error("Failed to open image:", err))
 		} catch (err) {
 			console.error("Error converting SVG to PNG:", err)
 		}
@@ -156,7 +154,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 			{isLoading && <LoadingMessage>Generating mermaid diagram...</LoadingMessage>}
 			<ButtonContainer>
 				<StyledVSCodeButton aria-label="Copy Code" onClick={handleCopyCode} title="Copy Code">
-					<span className="codicon codicon-copy"></span>
+					<span className="codicon codicon-copy" />
 				</StyledVSCodeButton>
 			</ButtonContainer>
 			<SvgContainer $isLoading={isLoading} onClick={handleClick} ref={containerRef} />
