@@ -64,7 +64,15 @@
 			"Bash(git -C /c/Users/Usuario/Desktop/cline diff HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/recordAndRespond.ts src/services/voice/VoiceAgent.ts)",
 			"Bash(git -C /c/Users/Usuario/Desktop/cline show HEAD:src/services/audio/WindowsAudioCapture.ts)",
 			"Bash(git -C /c/Users/Usuario/Desktop/cline show HEAD:src/core/controller/voice/enumerateAudioDevices.ts)",
-			"Bash(git -C /c/Users/Usuario/Desktop/cline checkout HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/enumerateAudioDevices.ts)"
+			"Bash(git -C /c/Users/Usuario/Desktop/cline checkout HEAD -- src/services/audio/WindowsAudioCapture.ts src/core/controller/voice/enumerateAudioDevices.ts)",
+			"Read(//c/Users/Usuario/AppData/Roaming/Code/User/globalStorage/fulviusguelfi.nexusai/voice/whisper-models 2>/dev/null && du -sh c:UsersUsuarioAppDataRoamingCodeUserglobalStoragefulviusguelfi.nexusaivoicewhisper-modelsggml-small.bin 2>/dev/**)",
+			"Read(//c/Users/Usuario/AppData/Roaming/Code/User/globalStorage/fulviusguelfi.nexusai/voice/whisper-models/**)",
+			"Bash(powershell.exe -Command \"Get-PSDrive C | Select-Object Used,Free\")",
+			"Bash(powershell.exe -NoProfile -Command \"Get-WmiObject Win32_SoundDevice | Select-Object Name, DeviceID, Status | ConvertTo-Json\")",
+			"Bash(powershell.exe -NoProfile -Command \"Get-Module -ListAvailable | Where-Object { $_Name -like ''*audio*'' }\")"
+		],
+		"additionalDirectories": [
+			"C:\\Users\\Usuario\\AppData\\Roaming\\Code\\User\\globalStorage\\fulviusguelfi.nexusai\\voice\\whisper-models"
 		]
 	},
 	"hooks": {

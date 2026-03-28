@@ -233,6 +233,29 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{voiceTtsEnabled && (
 						<div className="pl-2 flex flex-col gap-2">
 							<div>
+								<Label className="text-xs text-vscode-descriptionForeground">Audio Output Device</Label>
+								<Select
+									onValueChange={(v) => updateSetting("voiceOutputDeviceId", v === "default" ? "" : v)}
+									value={
+										voiceOutputDeviceId && outputDevices.some((d) => d.deviceId === voiceOutputDeviceId)
+											? voiceOutputDeviceId
+											: "default"
+									}>
+									<SelectTrigger className="mt-1 w-full">
+										<SelectValue placeholder="Default output" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="default">Default output</SelectItem>
+										{outputDevices.map((d) => (
+											<SelectItem key={d.deviceId} value={d.deviceId}>
+												{d.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+
+							<div>
 								<Label className="text-xs text-vscode-descriptionForeground">Voice</Label>
 								<Select
 									onValueChange={(v) => updateSetting("voicePiperVoice", v)}
@@ -253,31 +276,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									</SelectContent>
 								</Select>
 							</div>
-
-							{outputDevices.length > 0 && (
-								<div>
-									<Label className="text-xs text-vscode-descriptionForeground">Audio Output Device</Label>
-									<Select
-										onValueChange={(v) => updateSetting("voiceOutputDeviceId", v === "default" ? "" : v)}
-										value={
-											voiceOutputDeviceId && outputDevices.some((d) => d.deviceId === voiceOutputDeviceId)
-												? voiceOutputDeviceId
-												: "default"
-										}>
-										<SelectTrigger className="mt-1 w-full">
-											<SelectValue placeholder="Default output" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="default">Default output</SelectItem>
-											{outputDevices.map((d) => (
-												<SelectItem key={d.deviceId} value={d.deviceId}>
-													{d.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							)}
 						</div>
 					)}
 				</div>

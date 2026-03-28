@@ -4,7 +4,7 @@
  * No VS Code / Electron dependency - works in CLI and standalone
  */
 
-import { ChildProcess, spawn } from "child_process"
+import { ChildProcess, execFile, spawn } from "child_process"
 import { Logger } from "@/shared/services/Logger"
 
 // Get FFmpeg path from npm package or use system install
@@ -68,6 +68,76 @@ export async function enumerateWindowsAudioDevices(): Promise<string[]> {
 			}
 
 			Logger.log(`[WindowsAudioCapture] Found ${devices.length} devices total`)
+			resolve(devices)
+		})
+	})
+}
+
+// PowerShell inline C# that calls MMDeviceAPI (WASAPI) to list active render endpoints.
+// Runs entirely in-process via powershell.exe -Command — no external script file needed.
+const PS_RENDER_DEVICES = `
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
+public class WasapiRender {
+    const int CLSCTX_INPROC_SERVER = 1;
+    static Guid CLSID = new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E");
+    static Guid IID  = new Guid("A95664D2-9614-4F35-A746-DE8DB63617E6");
+    [DllImport("ole32.dll")] static extern int CoCreateInstance(ref Guid c,IntPtr i,int x,ref Guid u,out IntPtr p);
+    [ComImport,Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"),InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IMMDeviceEnumerator { int EnumAudioEndpoints(int f,uint s,out IntPtr pp); }
+    [ComImport,Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"),InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IMMDeviceCollection { int GetCount(out uint n); int Item(uint i,out IntPtr pp); }
+    [ComImport,Guid("D666063F-1587-4E43-81F1-B948E807363F"),InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IMMDevice { int Activate(ref Guid id,uint c,IntPtr p,out IntPtr pp); int OpenPropertyStore(uint a,out IntPtr pp); int GetId(out IntPtr pp); int GetState(out uint s); }
+    [ComImport,Guid("886d8eeb-8cf2-4446-8d02-cdba1dbdcf99"),InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IPropertyStore { int GetCount(out uint n); int GetAt(uint i,out IntPtr k); int GetValue(ref PK k,out PV v); int SetValue(ref PK k,ref PV v); int Commit(); }
+    [StructLayout(LayoutKind.Sequential)] public struct PK { public Guid f; public uint p; }
+    [StructLayout(LayoutKind.Sequential)] public struct PV { public ushort vt,r1,r2,r3; public IntPtr p; public uint p2; }
+    public static List<string> List() {
+        var r=new List<string>();
+        IntPtr ep; CoCreateInstance(ref CLSID,IntPtr.Zero,CLSCTX_INPROC_SERVER,ref IID,out ep);
+        var en=(IMMDeviceEnumerator)Marshal.GetObjectForIUnknown(ep);
+        IntPtr cp; en.EnumAudioEndpoints(0,1,out cp);
+        var col=(IMMDeviceCollection)Marshal.GetObjectForIUnknown(cp);
+        uint n; col.GetCount(out n);
+        for(uint i=0;i<n;i++){
+            IntPtr dp; col.Item(i,out dp);
+            var dev=(IMMDevice)Marshal.GetObjectForIUnknown(dp);
+            IntPtr sp; dev.OpenPropertyStore(0,out sp);
+            var st=(IPropertyStore)Marshal.GetObjectForIUnknown(sp);
+            var k=new PK{f=new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"),p=14};
+            PV v; st.GetValue(ref k,out v);
+            r.Add(Marshal.PtrToStringUni(v.p));
+        }
+        return r;
+    }
+}
+'@
+[WasapiRender]::List()
+`
+
+/**
+ * Enumerate Windows audio render (output/speaker) devices via WASAPI.
+ * Uses PowerShell + inline C# — no extra dependencies, no FFmpeg.
+ */
+export async function enumerateWindowsRenderDevices(): Promise<string[]> {
+	return new Promise((resolve) => {
+		execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", PS_RENDER_DEVICES], (err, stdout, stderr) => {
+			if (err) {
+				Logger.warn("[WindowsAudioCapture] PowerShell render enumeration failed:", err.message)
+				resolve([])
+				return
+			}
+			if (stderr) {
+				Logger.log("[WindowsAudioCapture] PowerShell stderr:", stderr.trim())
+			}
+			const devices = stdout
+				.split(/\r?\n/)
+				.map((l) => l.trim())
+				.filter(Boolean)
+			Logger.log(`[WindowsAudioCapture] Render devices: ${devices.join(", ")}`)
 			resolve(devices)
 		})
 	})

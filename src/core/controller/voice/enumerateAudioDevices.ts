@@ -1,4 +1,5 @@
 import type { Controller } from "@core/controller"
+import { enumerateWindowsRenderDevices } from "@services/audio/WindowsAudioCapture"
 import { VoiceDeviceManager } from "@services/voice/VoiceDeviceManager"
 import { AudioDevice, AudioDevicesResponse } from "@shared/proto/cline/voice"
 import { Logger } from "@shared/services/Logger"
@@ -35,9 +36,14 @@ export async function enumerateAudioDevices(
 
 		Logger.log("[EnumerateAudioDevices] Mapped to proto format:", inputDevices)
 
+		// Enumerate render (output/speaker) devices via WASAPI (PowerShell)
+		const renderDeviceNames = await enumerateWindowsRenderDevices()
+		const outputDevices: AudioDevice[] = renderDeviceNames.map((name) => AudioDevice.create({ deviceId: name, label: name }))
+		Logger.log("[EnumerateAudioDevices] Output devices:", outputDevices.length)
+
 		return AudioDevicesResponse.create({
 			inputDevices,
-			outputDevices: [], // Windows output enumeration not yet implemented
+			outputDevices,
 			error: undefined,
 		})
 	} catch (err) {
