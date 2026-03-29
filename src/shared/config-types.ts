@@ -5,7 +5,6 @@
 
 export enum Environment {
 	production = "production",
-	staging = "staging",
 	local = "local",
 	selfHosted = "selfHosted",
 }

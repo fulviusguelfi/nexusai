@@ -6,7 +6,7 @@ import { DEFAULT_FOCUS_CHAIN_SETTINGS } from "@shared/FocusChainSettings"
 import { DEFAULT_MCP_DISPLAY_MODE } from "@shared/McpDisplayMode"
 import type { UserInfo } from "@shared/proto/cline/account"
 import { EmptyRequest } from "@shared/proto/cline/common"
-import type { OpenRouterCompatibleModelInfo } from "@shared/proto/cline/models"
+import type { LanguageModelChatSelector, OpenRouterCompatibleModelInfo } from "@shared/proto/cline/models"
 import { OnboardingModelGroup, type TerminalProfile } from "@shared/proto/cline/state"
 import { convertProtoToClineMessage } from "@shared/proto-conversions/cline-message"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
@@ -39,6 +39,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	hicapModels: Record<string, ModelInfo>
 	liteLlmModels: Record<string, ModelInfo>
 	openAiModels: string[]
+	vsCodeLmModels: LanguageModelChatSelector[]
 	requestyModels: Record<string, ModelInfo>
 	groqModels: Record<string, ModelInfo>
 	basetenModels: Record<string, ModelInfo>
@@ -311,6 +312,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	const [availableTerminalProfiles, setAvailableTerminalProfiles] = useState<TerminalProfile[]>([])
 
 	const [openAiModels, _setOpenAiModels] = useState<string[]>([])
+	const [vsCodeLmModels, setVsCodeLmModels] = useState<LanguageModelChatSelector[]>([])
 	const [requestyModels, setRequestyModels] = useState<Record<string, ModelInfo>>({
 		[requestyDefaultModelId]: requestyDefaultModelInfo,
 	})
@@ -794,6 +796,33 @@ export const ExtensionStateContextProvider: React.FC<{
 		}
 	}, [state.apiConfiguration?.actModeApiProvider, state.apiConfiguration?.planModeApiProvider, clineModels, refreshClineModels])
 
+	// Load vscode-lm (GitHub Copilot) models at startup and retry until available
+	useEffect(() => {
+		const hasVsCodeLmProvider =
+			state.apiConfiguration?.actModeApiProvider === "vscode-lm" ||
+			state.apiConfiguration?.planModeApiProvider === "vscode-lm"
+		if (!hasVsCodeLmProvider) return
+
+		let cancelled = false
+		const attempt = async () => {
+			if (cancelled) return
+			try {
+				const resp = await trpc.models.getVsCodeLmModels.query({})
+				if (cancelled) return
+				if (resp?.models && resp.models.length > 0) {
+					setVsCodeLmModels(resp.models)
+				} else {
+					// Copilot not ready yet — retry in 2s
+					setTimeout(attempt, 2000)
+				}
+			} catch {}
+		}
+		attempt()
+		return () => {
+			cancelled = true
+		}
+	}, [state.apiConfiguration?.actModeApiProvider, state.apiConfiguration?.planModeApiProvider])
+
 	const contextValue: ExtensionStateContextType = {
 		...state,
 		didHydrateState,
@@ -805,6 +834,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		hicapModels,
 		liteLlmModels,
 		openAiModels,
+		vsCodeLmModels,
 		requestyModels,
 		groqModels: groqModelsState,
 		basetenModels: basetenModelsState,

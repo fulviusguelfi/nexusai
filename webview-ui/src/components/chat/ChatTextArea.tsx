@@ -1,6 +1,5 @@
 import { mentionRegex, mentionRegexGlobal } from "@shared/context-mentions"
 import { FileSearchType } from "@shared/proto/cline/file"
-import { type LanguageModelChatSelector } from "@shared/proto/cline/models"
 import { PlanActMode } from "@shared/proto/cline/state"
 import { type SlashCommand } from "@shared/slashCommands"
 import { Mode } from "@shared/storage/types"
@@ -42,6 +41,7 @@ import {
 	slashCommandRegexGlobal,
 	validateSlashCommand,
 } from "@/utils/slash-commands"
+import { validateApiConfiguration } from "@/utils/validate"
 import ClineRulesToggleModal from "../cline-rules/ClineRulesToggleModal"
 import ServersToggleModal from "./ServersToggleModal"
 
@@ -226,7 +226,18 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			remoteConfigSettings,
 			navigateToSettingsModelPicker,
 			mcpServers,
+			vsCodeLmModels,
 		} = useExtensionState()
+
+		// Disable input when the selected provider is not fully configured, or when
+		// vscode-lm is selected but GitHub Copilot hasn't connected yet.
+		// Declared early so downstream useCallbacks can depend on effectiveSendingDisabled.
+		const { selectedProvider: _selectedProviderForDisable } = normalizeApiConfiguration(apiConfiguration, mode)
+		const isProviderNotReady =
+			validateApiConfiguration(mode, apiConfiguration) !== undefined ||
+			(_selectedProviderForDisable === "vscode-lm" && vsCodeLmModels.length === 0)
+		const effectiveSendingDisabled = sendingDisabled || isProviderNotReady
+
 		const [isTextAreaFocused, setIsTextAreaFocused] = useState(false)
 		const [isDraggingOver, setIsDraggingOver] = useState(false)
 		const [gitCommits, setGitCommits] = useState<GitCommit[]>([])
@@ -578,7 +589,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				if (event.key === "Enter" && !event.shiftKey && !isComposing) {
 					event.preventDefault()
 
-					if (!sendingDisabled) {
+					if (!effectiveSendingDisabled) {
 						setIsTextAreaFocused(false)
 						onSend()
 					}
@@ -665,7 +676,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				selectedSlashCommandsIndex,
 				slashCommandsQuery,
 				handleSlashCommandsSelect,
-				sendingDisabled,
+				effectiveSendingDisabled,
 			],
 		)
 
@@ -1065,19 +1076,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const handleModelButtonClick = () => {
 			navigateToSettingsModelPicker({ targetSection: "api-config" })
 		}
-
-		// Fetch vscode-lm model list to resolve human-readable names for the status bar
-		const { selectedProvider: currentProvider } = normalizeApiConfiguration(apiConfiguration, mode)
-		const [vsCodeLmModels, setVsCodeLmModels] = useState<LanguageModelChatSelector[]>([])
-		useEffect(() => {
-			if (currentProvider !== "vscode-lm") return
-			trpc.models.getVsCodeLmModels
-				.query({})
-				.then((resp) => {
-					if (resp?.models) setVsCodeLmModels(resp.models)
-				})
-				.catch(() => {})
-		}, [currentProvider])
 
 		// Get model display name
 		const modelDisplayName = useMemo(() => {
@@ -1534,12 +1532,18 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs"
 						style={{ height: textAreaBaseHeight }}>
 						<div className="flex flex-row items-center gap-1">
-							{onTranscription && <VoiceRecorder disabled={sendingDisabled} onTranscription={onTranscription} />}
+							{onTranscription && (
+								<VoiceRecorder disabled={effectiveSendingDisabled} onTranscription={onTranscription} />
+							)}
 							<div
-								className={cn("input-icon-button", { disabled: sendingDisabled }, "codicon codicon-send text-sm")}
+								className={cn(
+									"input-icon-button",
+									{ disabled: effectiveSendingDisabled },
+									"codicon codicon-send text-sm",
+								)}
 								data-testid="send-button"
 								onClick={() => {
-									if (!sendingDisabled) {
+									if (!effectiveSendingDisabled) {
 										setIsTextAreaFocused(false)
 										onSend()
 									}

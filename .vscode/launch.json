@@ -31,7 +31,7 @@
 			}
 		},
 		{
-			"name": "Run Extension (production)",
+			"name": "Run Extension (production - with GitHub)",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
@@ -44,7 +44,9 @@
 				"--disable-extension",
 				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
 				"${workspaceFolder}",
-				"--disable-extensions"
+				"--disable-extensions",
+				"--enable-extension",
+				"GitHub.copilot"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
@@ -58,7 +60,7 @@
 			}
 		},
 		{
-			"name": "Run Extension (staging)",
+			"name": "Run Extension (production - no GitHub)",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
@@ -70,7 +72,9 @@
 				"saoudrizwan.cline-nightly", // Avoid conflicts with installed Cline Nightly
 				"--disable-extension",
 				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
-				"${workspaceFolder}"
+				"${workspaceFolder}",
+				"--disable-extensions",
+				"--enable-extension"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
@@ -80,7 +84,7 @@
 			"env": {
 				"IS_DEV": "true",
 				"DEV_WORKSPACE_FOLDER": "${workspaceFolder}",
-				"CLINE_ENVIRONMENT": "staging"
+				"CLINE_ENVIRONMENT": "production"
 			}
 		},
 		{

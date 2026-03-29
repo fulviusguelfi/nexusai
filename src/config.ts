@@ -278,9 +278,6 @@ class ClineEndpoint {
 		}
 
 		switch (env.toLowerCase()) {
-			case "staging":
-				this.environment = Environment.staging
-				break
 			case "local":
 				this.environment = Environment.local
 				break
@@ -307,24 +304,7 @@ class ClineEndpoint {
 
 		// Standard mode: use built-in environment URLs
 		switch (this.environment) {
-			case Environment.staging:
-				return {
-					environment: Environment.staging,
-					appBaseUrl: "https://staging-app.cline.bot",
-					apiBaseUrl: "https://core-api.staging.int.cline.bot",
-					mcpBaseUrl: "https://core-api.staging.int.cline.bot/v1/mcp",
-				}
 			case Environment.local:
-				// In local extension profile, default to Cline cloud services.
-				// Set CLINE_USE_LOCAL_SERVICES=true only when intentionally running local backends.
-				if (process?.env?.CLINE_USE_LOCAL_SERVICES === "true") {
-					return {
-						environment: Environment.local,
-						appBaseUrl: "http://localhost:3000",
-						apiBaseUrl: "http://localhost:7777",
-						mcpBaseUrl: "http://localhost:8080/mcp",
-					}
-				}
 				return {
 					environment: Environment.local,
 					appBaseUrl: "https://app.cline.bot",

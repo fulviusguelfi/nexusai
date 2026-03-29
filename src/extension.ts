@@ -612,6 +612,20 @@ ${ctx.cellJson || "{}"}
 	})
 	context.subscriptions.push({ dispose: unsubSecrets })
 
+	// Notify webview when GitHub Copilot models become available (e.g., after Copilot finishes loading)
+	// onDidChangeChatModels was added in a newer VSCode API version — guard for older hosts
+	const lmAny = vscode.lm as unknown as { onDidChangeChatModels?: (cb: () => void) => { dispose(): void } }
+	if (typeof lmAny.onDidChangeChatModels === "function") {
+		context.subscriptions.push(
+			lmAny.onDidChangeChatModels(() => {
+				const instance = WebviewProvider.getVisibleInstance()
+				if (instance) {
+					instance.controller.postStateToWebview()
+				}
+			}),
+		)
+	}
+
 	Logger.log(`[Cline] extension activated in ${performance.now() - activationStartTime} ms`)
 
 	return createClineAPI(webview.controller)
