@@ -53,7 +53,6 @@ export class VercelAIGatewayHandler implements ApiHandler {
 		const client = this.ensureClient()
 		const modelId = this.getModel().id
 		const modelInfo = this.getModel().info
-
 		try {
 			const stream = await createVercelAIGatewayStream(
 				client,

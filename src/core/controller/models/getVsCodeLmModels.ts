@@ -20,20 +20,19 @@ export async function getVsCodeLmModels(_controller: Controller, _request: Empty
 			)
 			return VsCodeLmModelsArray.create({ models: [] })
 		}
-		Logger.log("[getVsCodeLmModels] Calling vscode.lm.selectChatModels({})...")
+		Logger.debug("[getVsCodeLmModels] Calling vscode.lm.selectChatModels({})...")
 		const models = await vscode.lm.selectChatModels({})
-		Logger.log(
-			`[getVsCodeLmModels] selectChatModels returned ${models?.length ?? 0} model(s):`,
-			models?.map((m) => `${m.vendor}/${m.family}/${m.id}`),
-		)
 		if (!models || models.length === 0) {
-			Logger.warn(
-				"[getVsCodeLmModels] 0 models returned — ensure GitHub.copilot AND GitHub.copilot-chat are installed, active, and signed in",
+			Logger.debug("[getVsCodeLmModels] 0 models returned — ensure GitHub.copilot-chat is installed, active, and signed in")
+		} else {
+			Logger.log(
+				`[getVsCodeLmModels] selectChatModels returned ${models.length} model(s):`,
+				models.map((m) => `${m.vendor}/${m.family}/${m.id}`),
 			)
 		}
 
 		const protoModels = convertVsCodeNativeModelsToProtoModels(models || [])
-		Logger.log(`[getVsCodeLmModels] Converted to ${protoModels.length} proto model(s)`)
+		Logger.debug(`[getVsCodeLmModels] Converted to ${protoModels.length} proto model(s)`)
 
 		return VsCodeLmModelsArray.create({ models: protoModels })
 	} catch (error) {

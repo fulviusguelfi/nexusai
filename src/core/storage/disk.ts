@@ -3,6 +3,7 @@ import { EnvironmentMetadataEntry, TaskMetadata } from "@core/context/context-tr
 import { execa } from "@packages/execa"
 import { ClineMessage } from "@shared/ExtensionMessage"
 import { HistoryItem } from "@shared/HistoryItem"
+import { ClineStorageMessage } from "@shared/messages/content"
 import { RemoteConfig } from "@shared/remote-config/schema"
 import { GlobalState, Settings } from "@shared/storage/state-keys"
 import { fileExistsAtPath, isDirectory } from "@utils/fs"
@@ -242,11 +243,26 @@ export async function getSavedApiConversationHistory(taskId: string): Promise<An
 	return []
 }
 
-export async function saveApiConversationHistory(taskId: string, apiConversationHistory: Anthropic.MessageParam[]) {
+export async function saveApiConversationHistory(
+	taskId: string,
+	apiConversationHistory: Array<ClineStorageMessage | Anthropic.MessageParam>,
+) {
 	try {
 		if (apiConversationHistory.length > 0) {
 			const fileName = GlobalFileNames.apiConversationHistory
-			const data = JSON.stringify(apiConversationHistory)
+			// Convert ClineStorageMessage to clean Anthropic.MessageParam (removes metadata blocks)
+			const cleanedHistory = apiConversationHistory.map((msg) => {
+				if (typeof msg.content === "string") {
+					return msg as Anthropic.MessageParam
+				}
+				// Filter out metadata blocks from content array
+				const cleanedContent = msg.content.filter((block: any) => block.type !== "metadata")
+				return {
+					role: msg.role,
+					content: cleanedContent,
+				} as Anthropic.MessageParam
+			})
+			const data = JSON.stringify(cleanedHistory)
 			// Queue for remote sync without blocking
 			syncWorker().enqueue(taskId, fileName, data)
 			// Store locally

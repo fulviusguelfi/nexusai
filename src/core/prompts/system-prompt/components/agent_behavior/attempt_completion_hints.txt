@@ -1,0 +1,13 @@
+## Voice Message Handling
+
+When processing voice-transcribed input, the message will include a metadata hint block with one of these indicators:
+- `voiceMessage`: Current user message originated from voice input (speech-to-text transcription).
+- `requiresAttemptCompletion`: Your response must call the `attempt_completion` tool to terminate the agent loop properly.
+
+For voice messages, always call `attempt_completion` when you have provided a complete response, rather than waiting for further tool invocations. This ensures the audio playback completes without interruption.
+
+Example flow:
+1. User provides voice input: "What files are in the src directory?"
+2. You receive the transcribed text with the `voiceMessage` hint
+3. Complete your response and call `attempt_completion` with `didFinishSuccessfully: true`
+4. This prevents the agent loop from repeating unnecessarily for voice interactions

@@ -220,10 +220,8 @@ export const VSCodeLmProvider = ({ currentMode }: VSCodeLmProviderProps) => {
 							marginTop: "5px",
 							color: "var(--vscode-descriptionForeground)",
 						}}>
-						Use models from your GitHub Copilot subscription. Two extensions are required:{" "}
-						<a href="vscode:extension/GitHub.copilot">GitHub Copilot</a> and{" "}
-						<a href="vscode:extension/GitHub.copilot-chat">GitHub Copilot Chat</a>. Both must be installed and signed
-						in.
+						Use models from your GitHub Copilot subscription. Install and sign in to the{" "}
+						<a href="vscode:extension/GitHub.copilot-chat">GitHub Copilot Chat</a> extension.
 					</p>
 				)}
 			</DropdownContainer>

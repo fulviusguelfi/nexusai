@@ -80,6 +80,9 @@ export class Controller {
 	private backgroundCommandRunning = false
 	private backgroundCommandTaskId?: string
 
+	// Set to true when a voice transcription just completed — consumed by the next askResponse call
+	pendingVoiceInput = false
+
 	// Flag to prevent duplicate cancellations from spam clicking
 	private cancelInProgress = false
 
@@ -328,6 +331,11 @@ export class Controller {
 		if (historyItem) {
 			this.task.resumeTaskFromHistory()
 		} else if (task || images || files) {
+			// Consume voice flag so task receives <voice_input_hint> when started via voice transcription
+			if (this.pendingVoiceInput) {
+				this.task.taskState.isVoiceInput = true
+				this.pendingVoiceInput = false
+			}
 			this.task.startTask(task, images, files)
 		}
 

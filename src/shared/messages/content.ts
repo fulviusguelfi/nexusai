@@ -39,6 +39,16 @@ export interface ClineDocumentContentBlock extends Anthropic.DocumentBlockParam,
 export interface ClineUserToolResultContentBlock extends Anthropic.ToolResultBlockParam, ClineSharedMessageParam {}
 
 /**
+ * Metadata block for internal agent logic (not sent to LLM API)
+ * Used for voice messages and other context that shouldn't appear in API payloads
+ */
+export interface ClineMetadataBlock extends ClineSharedMessageParam {
+	type: "metadata"
+	hint?: "requiresAttemptCompletion" | "voiceMessage"
+	description?: string
+}
+
+/**
  * Assistant only content types
  */
 export interface ClineAssistantToolUseBlock extends Anthropic.ToolUseBlockParam, ClineSharedMessageParam {
@@ -75,12 +85,10 @@ export type ClineAssistantContent =
 export type ClineContent = ClineUserContent | ClineAssistantContent
 
 /**
- * An extension of Anthropic.MessageParam that includes Cline-specific fields.
- * This ensures backward compatibility where the messages were stored in Anthropic format,
- * while allowing for additional metadata specific to Cline to avoid unknown fields in Anthropic SDK
- * added by ignoring the type checking for those fields.
+ * Cline's internal message storage format.
+ * Similar to Anthropic.MessageParam but includes Cline-specific fields (reasoning_details, call_id, etc.).
  */
-export interface ClineStorageMessage extends Anthropic.MessageParam {
+export interface ClineStorageMessage {
 	/**
 	 * Response ID associated with this message
 	 */
@@ -125,7 +133,7 @@ export function convertClineStorageToAnthropicMessage(
 	// Handle array content - strip Cline-specific fields for non-reasoning_details providers
 	const shouldCleanContent = !REASONING_DETAILS_PROVIDERS.includes(provider)
 	const cleanedContent = shouldCleanContent
-		? filteredContent.map(cleanContentBlock)
+		? (filteredContent.map(cleanContentBlock).filter(Boolean) as Anthropic.MessageParam["content"])
 		: (filteredContent as Anthropic.MessageParam["content"])
 
 	return { role, content: cleanedContent }
@@ -134,7 +142,7 @@ export function convertClineStorageToAnthropicMessage(
 /**
  * Clean a content block by removing Cline-specific fields and returning only Anthropic-compatible fields
  */
-export function cleanContentBlock(block: ClineContent): Anthropic.ContentBlock {
+export function cleanContentBlock(block: ClineContent): Anthropic.ContentBlock | null {
 	// Fast path: if no Cline-specific fields exist, return as-is
 	const hasClineFields =
 		"reasoning_details" in block ||
@@ -155,4 +163,23 @@ export function cleanContentBlock(block: ClineContent): Anthropic.ContentBlock {
 	}
 
 	return rest satisfies Anthropic.ContentBlock
+}
+
+/**
+ * Converts an array of ClineStorageMessage to clean Anthropic.MessageParam[].
+ * Strips Cline-specific fields (reasoning_details, call_id, etc.) from content blocks.
+ */
+export function cleanClineStorageMessages(messages: ClineStorageMessage[]): Anthropic.MessageParam[] {
+	return messages.map((msg) => {
+		if (typeof msg.content === "string") {
+			return msg as Anthropic.MessageParam
+		}
+		const cleanedContent = msg.content
+			.map((block) => cleanContentBlock(block))
+			.filter(Boolean) as Anthropic.ContentBlockParam[]
+		return {
+			role: msg.role,
+			content: cleanedContent,
+		} as Anthropic.MessageParam
+	})
 }

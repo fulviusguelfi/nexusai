@@ -58,7 +58,6 @@ export class OpenRouterHandler implements ApiHandler {
 	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		const client = this.ensureClient()
 		this.lastGenerationId = undefined
-
 		const stream = await createOpenRouterStream(
 			client,
 			systemPrompt,

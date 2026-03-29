@@ -1,6 +1,7 @@
 import { findLastIndex } from "@shared/array"
 import type { ClineMessage } from "@shared/ExtensionMessage"
 import type { ClineStorageMessage } from "@shared/messages/content"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import type { ContextManager } from "../context/context-management/ContextManager"
 import type { MessageStateHandler } from "../task/message-state"
@@ -92,13 +93,17 @@ export async function writePreCompactContextFiles(
 	currentContext: ClineStorageMessage[],
 ): Promise<PreCompactContextFiles> {
 	const { writeConversationHistoryJson, writeConversationHistoryText } = await import("../storage/disk")
+	const { cleanClineStorageMessages } = await import("../../shared/messages/content")
 
 	// Generate single timestamp for both files to ensure they match
 	const hookTimestamp = Date.now()
 
+	// Convert ClineStorageMessage[] to Anthropic.MessageParam[] for disk functions
+	const cleanedContext = cleanClineStorageMessages(currentContext)
+
 	// Write context files for hook access
-	const contextJsonPath = await writeConversationHistoryJson(taskId, currentContext, hookTimestamp)
-	const contextRawPath = await writeConversationHistoryText(taskId, currentContext, hookTimestamp)
+	const contextJsonPath = await writeConversationHistoryJson(taskId, cleanedContext, hookTimestamp)
+	const contextRawPath = await writeConversationHistoryText(taskId, cleanedContext, hookTimestamp)
 
 	return { contextJsonPath, contextRawPath, hookTimestamp }
 }
@@ -193,8 +198,9 @@ export async function executePreCompactHookWithCleanup(params: PreCompactHookPar
 
 	try {
 		// Get current active context (respects previous compactions)
+		const cleanedApiHistory = cleanClineStorageMessages(params.apiConversationHistory)
 		const currentContext = params.contextManager.getTruncatedMessages(
-			params.apiConversationHistory,
+			cleanedApiHistory,
 			params.conversationHistoryDeletedRange,
 		)
 

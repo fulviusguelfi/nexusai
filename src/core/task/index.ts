@@ -59,6 +59,7 @@ import { ClineApiReqCancelReason, ClineApiReqInfo, ClineAsk, ClineMessage, Cline
 import { HistoryItem } from "@shared/HistoryItem"
 import { DEFAULT_LANGUAGE_SETTINGS, getLanguageKey, LanguageDisplay } from "@shared/Languages"
 import { USER_CONTENT_TAGS } from "@shared/messages/constants"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { convertClineMessageToProto } from "@shared/proto-conversions/cline-message"
 import { ClineDefaultTool, READ_ONLY_TOOLS } from "@shared/tools"
 import { ClineAskResponse } from "@shared/WebviewMessage"
@@ -838,7 +839,11 @@ export class Task {
 				// await this.postStateToWebview()
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
-				if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+				if (
+					(type === "text" || type === "completion_result") &&
+					text &&
+					this.stateManager.getGlobalStateKey("voiceTtsEnabled")
+				) {
 					void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 						VoiceSessionManager.getInstance().requestSpeak(text)
 					})
@@ -858,7 +863,11 @@ export class Task {
 				modelInfo,
 			})
 			await this.postStateToWebview()
-			if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+			if (
+				(type === "text" || type === "completion_result") &&
+				text &&
+				this.stateManager.getGlobalStateKey("voiceTtsEnabled")
+			) {
 				void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 					VoiceSessionManager.getInstance().requestSpeak(text)
 				})
@@ -878,7 +887,7 @@ export class Task {
 			modelInfo,
 		})
 		await this.postStateToWebview()
-		if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+		if ((type === "text" || type === "completion_result") && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
 			void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 				VoiceSessionManager.getInstance().requestSpeak(text)
 			})
@@ -1877,7 +1886,7 @@ export class Task {
 		await this.writePromptMetadataArtifacts({ systemPrompt, providerInfo })
 
 		const contextManagementMetadata = await this.contextManager.getNewContextMessagesAndMetadata(
-			this.messageStateHandler.getApiConversationHistory(),
+			cleanClineStorageMessages(this.messageStateHandler.getApiConversationHistory()),
 			this.messageStateHandler.getClineMessages(),
 			this.api,
 			this.taskState.conversationHistoryDeletedRange,
@@ -1918,8 +1927,9 @@ export class Task {
 				// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 
 				if (isContextWindowExceededError) {
+					const cleanedApiHistory = cleanClineStorageMessages(this.messageStateHandler.getApiConversationHistory())
 					const truncatedConversationHistory = this.contextManager.getTruncatedMessages(
-						this.messageStateHandler.getApiConversationHistory(),
+						cleanedApiHistory,
 						this.taskState.conversationHistoryDeletedRange,
 					)
 
@@ -2399,8 +2409,9 @@ export class Task {
 
 				// Determine whether we can save enough tokens from context rewriting to skip auto-compact
 				if (shouldCompact) {
+					const cleanedHistory = cleanClineStorageMessages(this.messageStateHandler.getApiConversationHistory())
 					shouldCompact = await this.contextManager.attemptFileReadOptimization(
-						this.messageStateHandler.getApiConversationHistory(),
+						cleanedHistory,
 						this.taskState.conversationHistoryDeletedRange,
 						this.messageStateHandler.getClineMessages(),
 						previousApiReqIndex,
@@ -2456,6 +2467,15 @@ export class Task {
 					this.cwd,
 					isMultiRootEnabled(this.stateManager),
 				),
+			})
+		}
+
+		// For voice messages, inject a text hint visible to the LLM so it calls attempt_completion
+		// instead of looping with follow-up questions (voice UX requires clean single-shot completion)
+		if (this.taskState.isVoiceInput) {
+			userContent.push({
+				type: "text",
+				text: "<voice_input_hint>\nThis message was sent via voice input. When your response is complete, call attempt_completion directly rather than asking follow-up questions or waiting for confirmation.\n</voice_input_hint>",
 			})
 		}
 

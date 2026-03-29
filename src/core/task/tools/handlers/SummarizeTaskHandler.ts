@@ -9,6 +9,7 @@ import { StateManager } from "@core/storage/StateManager"
 import { resolveWorkspacePath } from "@core/workspace"
 import { extractFileContent } from "@integrations/misc/extract-file-content"
 import { ClineSayTool } from "@shared/ExtensionMessage"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { telemetryService } from "@/services/telemetry"
 import { Logger } from "@/shared/services/Logger"
 import { ClineDefaultTool } from "@/shared/tools"
@@ -226,7 +227,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 			// clear the context history at this point in time. note that this will not include the assistant message
 			// for summarizing, which we will need to delete later
 			config.taskState.conversationHistoryDeletedRange = config.services.contextManager.getNextTruncationRange(
-				apiConversationHistory,
+				cleanClineStorageMessages(apiConversationHistory),
 				config.taskState.conversationHistoryDeletedRange,
 				keepStrategy,
 			)
@@ -234,7 +235,7 @@ export class SummarizeTaskHandler implements IToolHandler, IPartialBlockHandler 
 			await config.services.contextManager.triggerApplyStandardContextTruncationNoticeChange(
 				Date.now(),
 				await ensureTaskDirectoryExists(config.taskId),
-				apiConversationHistory,
+				cleanClineStorageMessages(apiConversationHistory),
 			)
 
 			// Set summarizing state

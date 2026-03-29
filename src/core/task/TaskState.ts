@@ -74,4 +74,7 @@ export class TaskState {
 	// Auto-context summarization
 	currentlySummarizing = false
 	lastAutoCompactTriggerIndex?: number
+
+	// Voice input indicator for LLM guidance
+	isVoiceInput = false
 }

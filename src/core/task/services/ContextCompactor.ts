@@ -4,6 +4,7 @@ import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
 import { ensureTaskDirectoryExists } from "@core/storage/disk"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { Logger } from "@shared/services/Logger"
 import type { ClineStorageMessage } from "@/shared/messages"
 import type { StateManager } from "../../storage/StateManager"
@@ -30,7 +31,7 @@ export class ContextCompactor {
 
 	calculatePreCompactDeletedRange(apiConversationHistory: ClineStorageMessage[]): [number, number] {
 		const newDeletedRange = this.deps.contextManager.getNextTruncationRange(
-			apiConversationHistory,
+			cleanClineStorageMessages(apiConversationHistory),
 			this.deps.taskState.conversationHistoryDeletedRange,
 			"quarter", // Force aggressive truncation on error
 		)
@@ -85,7 +86,7 @@ export class ContextCompactor {
 
 		// Proceed with standard truncation
 		const newDeletedRange = this.deps.contextManager.getNextTruncationRange(
-			apiConversationHistory,
+			cleanClineStorageMessages(apiConversationHistory),
 			this.deps.taskState.conversationHistoryDeletedRange,
 			"quarter", // Force aggressive truncation
 		)
@@ -96,7 +97,7 @@ export class ContextCompactor {
 		await this.deps.contextManager.triggerApplyStandardContextTruncationNoticeChange(
 			Date.now(),
 			await ensureTaskDirectoryExists(this.deps.taskId),
-			apiConversationHistory,
+			cleanClineStorageMessages(apiConversationHistory),
 		)
 
 		this.deps.taskState.didAutomaticallyRetryFailedApiRequest = true

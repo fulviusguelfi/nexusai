@@ -8,6 +8,7 @@ import { PromptRegistry } from "@core/prompts/system-prompt"
 import type { SystemPromptContext } from "@core/prompts/system-prompt/types"
 import { StreamResponseHandler } from "@core/task/StreamResponseHandler"
 import { ClineAssistantToolUseBlock, ClineStorageMessage, ClineTextContentBlock, ClineUserContent } from "@shared/messages"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { Logger } from "@shared/services/Logger"
 import { ClineDefaultTool, ClineTool } from "@shared/tools"
 import { ContextManager } from "@/core/context/context-management/ContextManager"
@@ -755,7 +756,11 @@ export class SubagentRunner {
 			}
 		}
 
-		const deletedRange = contextManager.getNextTruncationRange(conversation, conversationHistoryDeletedRange, "quarter")
+		const deletedRange = contextManager.getNextTruncationRange(
+			cleanClineStorageMessages(conversation),
+			conversationHistoryDeletedRange,
+			"quarter",
+		)
 		if (deletedRange[1] < deletedRange[0]) {
 			return {
 				didCompact,
@@ -790,7 +795,11 @@ export class SubagentRunner {
 		needToTruncate: boolean
 	} {
 		const timestamp = Date.now()
-		const optimizationResult = contextManager.attemptFileReadOptimizationInMemory(conversation, undefined, timestamp)
+		const optimizationResult = contextManager.attemptFileReadOptimizationInMemory(
+			cleanClineStorageMessages(conversation),
+			undefined,
+			timestamp,
+		)
 		if (!optimizationResult.anyContextUpdates) {
 			return { didOptimize: false, needToTruncate: true }
 		}
@@ -831,7 +840,7 @@ export class SubagentRunner {
 	) {
 		for (let attempt = 1; attempt <= MAX_INITIAL_STREAM_ATTEMPTS; attempt += 1) {
 			const truncatedConversation = contextManager
-				.getTruncatedMessages(fullConversation, contextState.conversationHistoryDeletedRange)
+				.getTruncatedMessages(cleanClineStorageMessages(fullConversation), contextState.conversationHistoryDeletedRange)
 				.map((message) => message as ClineStorageMessage)
 			const stream = api.createMessage(systemPrompt, truncatedConversation, nativeTools)
 			const iterator = stream[Symbol.asyncIterator]()

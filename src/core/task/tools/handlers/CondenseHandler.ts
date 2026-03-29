@@ -4,6 +4,7 @@ import { ensureTaskDirectoryExists } from "@core/storage/disk"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { ClineAsk } from "@shared/ExtensionMessage"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
@@ -63,7 +64,7 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 
 		// clear the context history at this point in time
 		config.taskState.conversationHistoryDeletedRange = config.services.contextManager.getNextTruncationRange(
-			apiConversationHistory,
+			cleanClineStorageMessages(apiConversationHistory),
 			config.taskState.conversationHistoryDeletedRange,
 			keepStrategy,
 		)
@@ -71,7 +72,7 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 		await config.services.contextManager.triggerApplyStandardContextTruncationNoticeChange(
 			Date.now(),
 			await ensureTaskDirectoryExists(config.taskId),
-			apiConversationHistory,
+			cleanClineStorageMessages(apiConversationHistory),
 		)
 
 		return formatResponse.toolResult(formatResponse.condense())

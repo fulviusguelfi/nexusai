@@ -96,7 +96,15 @@
 			"Bash(bash scripts/post-rename-nexusai.sh)",
 			"Bash(npm test:*)",
 			"Read(//c/Users/Usuario/AppData/Roaming/Code/User/globalStorage/fulviusguelfi.nexusai/**)",
-			"Read(//^message /{name=$0} /voice_tts/**)"
+			"Read(//^message /{name=$0} /voice_tts/**)",
+			"Bash(for file:*)",
+			"Bash(do echo:*)",
+			"Bash(git diff:*)",
+			"Bash(find c:UsersUsuarioDesktopnexusaisrccorevoice -type f -name *.ts)",
+			"Bash(find c:UsersUsuarioDesktopnexusaisrcintegrationsvoice -type f -name *.ts)",
+			"Bash(ls -la src/core/controller/*.ts)",
+			"Bash(find . -path ./src/generated -name *.ts)",
+			"Bash(xargs basename:*)"
 		],
 		"additionalDirectories": [
 			"C:\\Users\\Usuario\\AppData\\Roaming\\Code\\User\\globalStorage\\fulviusguelfi.nexusai\\voice\\whisper-models",

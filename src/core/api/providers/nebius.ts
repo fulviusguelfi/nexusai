@@ -41,7 +41,6 @@ export class NebiusHandler implements ApiHandler {
 	async *createMessage(systemPrompt: string, messages: ClineStorageMessage[], tools?: OpenAITool[]): ApiStream {
 		const client = this.ensureClient()
 		const model = this.getModel()
-
 		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = model.id.includes("DeepSeek-R1")
 			? convertToR1Format([{ role: "user", content: systemPrompt }, ...messages])
 			: [{ role: "system", content: systemPrompt }, ...convertToOpenAiMessages(messages)]

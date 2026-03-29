@@ -69,7 +69,7 @@ async function getVoiceMessenger() {
  * 4. Return transcription + detected language + response audio
  */
 export async function recordAndRespond(
-	_controller: Controller,
+	controller: Controller,
 	request: RecordAndRespondRequest,
 ): Promise<RecordAndRespondResponse> {
 	const startTime = Date.now()
@@ -173,7 +173,7 @@ export async function recordAndRespond(
 		Logger.log(`${ts()} ⚡ Whisper iniciado — ${recordResult.audioData?.length ?? 0} bytes`)
 
 		const sttResult = await VoiceResponseHandler.processSpeechToText(recordResult.audioData, {
-			globalStoragePath: _controller.context.globalStoragePath,
+			globalStoragePath: controller.context.globalStoragePath,
 			sttModel: request.sttModel || "small",
 			userLanguage: "pt", // Hint to Whisper that user likely speaks Portuguese (Brasil)
 			maxDuration: request.maxDurationMs,
@@ -201,6 +201,9 @@ export async function recordAndRespond(
 		Logger.log(`${ts()} ✍️ Transcrição: "${sttResult.transcription.text}" [${sttResult.detectedLanguage}]`)
 		Logger.log(`${ts()} 🏁 Pipeline total: ${totalDurationMs()}ms`)
 		Logger.log(`${ts()} ⏭️ Usuário enviará para o LLM — TTS após resposta`)
+
+		// Signal that the next user message submission comes from voice input
+		controller.pendingVoiceInput = true
 
 		return {
 			success: true,

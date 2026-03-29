@@ -813,7 +813,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				if (resp?.models && resp.models.length > 0) {
 					setVsCodeLmModels(resp.models)
 				} else {
-					// Copilot not ready yet — retry in 2s
+					// Copilot not ready yet — retry in 2s (silent retry)
 					setTimeout(attempt, 2000)
 				}
 			} catch (err) {
