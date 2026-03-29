@@ -1,5 +1,9 @@
 import { sendShowWebviewEvent } from "@core/controller/ui/subscribeToShowWebview"
 import { WebviewProvider } from "@core/webview"
+import { spawn } from "child_process"
+import * as fs from "fs"
+import * as os from "os"
+import * as path from "path"
 import * as vscode from "vscode"
 import { handleGrpcRequest, handleGrpcRequestCancel } from "@/core/controller/grpc-handler"
 import { HostProvider } from "@/hosts/host-provider"
@@ -7,6 +11,46 @@ import { ExtensionRegistryInfo } from "@/registry"
 import type { ExtensionMessage } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import { WebviewMessage } from "@/shared/WebviewMessage"
+
+/**
+ * Plays a WAV buffer directly on the extension host (bypasses webview autoplay restrictions).
+ * Windows: System.Media.SoundPlayer via PowerShell
+ * macOS: afplay
+ * Linux: aplay
+ */
+async function playWavOnHost(wavBuf: Buffer): Promise<void> {
+	const tmpFile = path.join(os.tmpdir(), `nexusai_tts_${Date.now()}.wav`)
+	fs.writeFileSync(tmpFile, wavBuf)
+	try {
+		await new Promise<void>((resolve, reject) => {
+			let child: ReturnType<typeof spawn>
+			const safeFile = tmpFile.replace(/'/g, "''")
+			if (process.platform === "win32") {
+				child = spawn("powershell", [
+					"-NoProfile",
+					"-NonInteractive",
+					"-Command",
+					`$p=[System.Media.SoundPlayer]::new('${safeFile}');$p.PlaySync();$p.Dispose()`,
+				])
+			} else if (process.platform === "darwin") {
+				child = spawn("afplay", [tmpFile])
+			} else {
+				child = spawn("aplay", [tmpFile])
+			}
+			child.on("close", (code) => {
+				if (code === 0 || code === null) resolve()
+				else reject(new Error(`Audio player exited with code ${code}`))
+			})
+			child.on("error", reject)
+		})
+	} finally {
+		try {
+			fs.unlinkSync(tmpFile)
+		} catch {
+			// ignore cleanup errors
+		}
+	}
+}
 
 // Global messenger instance for voice state updates
 let globalVoiceMessenger: ((message: ExtensionMessage) => Promise<boolean | undefined>) | null = null
@@ -136,10 +180,9 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						text,
 						voicePiperVoice,
 					)
-					Logger.log(`[VscodeWebviewProvider] Synthesis done, wav size=${wavBuf.length} bytes, posting to webview`)
-					const wavBase64 = wavBuf.toString("base64")
-					await this.postMessageToWebview({ type: "voice_audio_play", voice_audio_play: { wavBase64 } })
-					Logger.log("[VscodeWebviewProvider] voice_audio_play message posted")
+					Logger.log(`[VscodeWebviewProvider] Synthesis done, wav size=${wavBuf.length} bytes, playing on host`)
+					await playWavOnHost(wavBuf)
+					Logger.log("[VscodeWebviewProvider] Host audio playback complete")
 				} catch (err) {
 					Logger.error("[VscodeWebviewProvider] TTS speak error:", err)
 				}

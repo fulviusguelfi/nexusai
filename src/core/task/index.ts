@@ -844,9 +844,13 @@ export class Task {
 					text &&
 					this.stateManager.getGlobalStateKey("voiceTtsEnabled")
 				) {
-					void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
-						VoiceSessionManager.getInstance().requestSpeak(text)
-					})
+					const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+					Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+					if (ttsText) {
+						void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+							VoiceSessionManager.getInstance().requestSpeak(ttsText)
+						})
+					}
 				}
 				return undefined
 			}
@@ -888,9 +892,13 @@ export class Task {
 		})
 		await this.postStateToWebview()
 		if ((type === "text" || type === "completion_result") && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
-			void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
-				VoiceSessionManager.getInstance().requestSpeak(text)
-			})
+			const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+			Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+			if (ttsText) {
+				void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+					VoiceSessionManager.getInstance().requestSpeak(ttsText)
+				})
+			}
 		}
 		return sayTs
 	}
