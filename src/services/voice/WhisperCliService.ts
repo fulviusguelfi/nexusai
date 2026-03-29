@@ -184,6 +184,15 @@ export class WhisperCliService {
 		WhisperCliService._instance = undefined
 	}
 
+	/**
+	 * Pre-download binary and model if not already cached.
+	 * Safe to call at startup — idempotent, skips if already present.
+	 */
+	async ensureBinaries(): Promise<void> {
+		await this._ensureBinary()
+		await this._ensureModel()
+	}
+
 	// ── Private helpers ───────────────────────────────────────────────────────
 
 	private async _ensureBinary(): Promise<void> {

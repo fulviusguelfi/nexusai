@@ -121,18 +121,25 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 		// Wire VoiceSessionManager speak requests → PiperService → webview audio
 		void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+			Logger.log("[VscodeWebviewProvider] Registering onSpeakRequest listener")
 			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (text: string) => {
+				Logger.log(
+					`[VscodeWebviewProvider] onSpeakRequest fired, text length=${text?.length ?? 0}: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
+				)
 				try {
 					const { PiperService } = await import("@services/voice/PiperService")
 					const voicePiperVoice =
 						(this.controller.stateManager.getGlobalStateKey("voicePiperVoice") as string | undefined) ??
 						"en_US-lessac-medium"
+					Logger.log(`[VscodeWebviewProvider] Synthesizing with voice="${voicePiperVoice}"`)
 					const wavBuf = await PiperService.getInstance(this.controller.context.globalStoragePath).synthesize(
 						text,
 						voicePiperVoice,
 					)
+					Logger.log(`[VscodeWebviewProvider] Synthesis done, wav size=${wavBuf.length} bytes, posting to webview`)
 					const wavBase64 = wavBuf.toString("base64")
 					await this.postMessageToWebview({ type: "voice_audio_play", voice_audio_play: { wavBase64 } })
+					Logger.log("[VscodeWebviewProvider] voice_audio_play message posted")
 				} catch (err) {
 					Logger.error("[VscodeWebviewProvider] TTS speak error:", err)
 				}

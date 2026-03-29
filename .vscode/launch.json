@@ -12,6 +12,10 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--disable-workspace-trust",
+				"--install-extension",
+				"GitHub.copilot",
+				"--install-extension",
+				"GitHub.copilot-chat",
 				"--disable-extension",
 				"saoudrizwan.claude-dev",
 				"--disable-extension",
@@ -27,7 +31,8 @@
 			"env": {
 				"IS_DEV": "true",
 				"DEV_WORKSPACE_FOLDER": "${workspaceFolder}",
-				"CLINE_ENVIRONMENT": "local"
+				"CLINE_ENVIRONMENT": "local",
+				"LAUNCH_CONFIG": "dev-no-build"
 			}
 		},
 		{
@@ -43,10 +48,7 @@
 				"saoudrizwan.cline-nightly", // Avoid conflicts with installed Cline Nightly
 				"--disable-extension",
 				"fulviusguelfi.nexusai", // Avoid conflicts with installed NexusAI
-				"${workspaceFolder}",
-				"--disable-extensions",
-				"--enable-extension",
-				"GitHub.copilot"
+				"${workspaceFolder}"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
@@ -56,7 +58,8 @@
 			"env": {
 				"IS_DEV": "true",
 				"DEV_WORKSPACE_FOLDER": "${workspaceFolder}",
-				"CLINE_ENVIRONMENT": "production"
+				"CLINE_ENVIRONMENT": "production",
+				"LAUNCH_CONFIG": "prod-github"
 			}
 		},
 		{
@@ -84,7 +87,8 @@
 			"env": {
 				"IS_DEV": "true",
 				"DEV_WORKSPACE_FOLDER": "${workspaceFolder}",
-				"CLINE_ENVIRONMENT": "production"
+				"CLINE_ENVIRONMENT": "production",
+				"LAUNCH_CONFIG": "prod-no-github"
 			}
 		},
 		{
@@ -110,7 +114,8 @@
 			"env": {
 				"IS_DEV": "true",
 				"DEV_WORKSPACE_FOLDER": "${workspaceFolder}",
-				"CLINE_ENVIRONMENT": "local"
+				"CLINE_ENVIRONMENT": "local",
+				"LAUNCH_CONFIG": "local"
 			}
 		},
 		{
@@ -142,7 +147,8 @@
 				"IS_DEV": "true",
 				"TEMP_PROFILE": "true",
 				"DEV_WORKSPACE_FOLDER": "${workspaceFolder}",
-				"CLINE_ENVIRONMENT": "production"
+				"CLINE_ENVIRONMENT": "production",
+				"LAUNCH_CONFIG": "fresh-install"
 			}
 		},
 		{

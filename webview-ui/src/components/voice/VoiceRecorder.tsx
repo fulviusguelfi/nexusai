@@ -7,7 +7,7 @@ import { PLATFORM_CONFIG } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 
 interface Props {
-	onTranscription?: (text: string) => void
+	onTranscription?: (text: string, language?: string) => void
 	disabled?: boolean
 }
 
@@ -165,7 +165,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				const { state, context } = data.voice_agent_state_changed || {}
 				if (isVoiceAgentState(state)) {
 					setAgentState(state)
-					setStateContext(context || "")
+					// IDLE transitions use internal reason strings (e.g. "Destroyed", "Cancelled") — never show in UI
+					setStateContext(state === VOICE_AGENT_STATES.IDLE ? "" : context || "")
 					setErrorMessage(null)
 					if (state !== VOICE_AGENT_STATES.RECORDING) {
 						setAudioLevel(null)
@@ -206,8 +207,9 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					setAgentState(VOICE_AGENT_STATES.ERROR)
 					setIsUserRecording(false)
 				} else if (transcriptionText) {
-					console.log("[VoiceRecorder] Transcription received:", transcriptionText)
-					onTranscription?.(transcriptionText)
+					const detectedLang = voiceResult.detectedLanguage || null
+					console.log("[VoiceRecorder] Transcription received:", transcriptionText, "lang:", detectedLang)
+					onTranscription?.(transcriptionText, detectedLang ?? undefined)
 
 					// Play audio response if available
 					if (audioWavBase64) {

@@ -94,7 +94,9 @@
 			"Read(//c/Users/Usuario/AppData/Local/Temp/claude/c--Users-Usuario-Desktop-nexusai/**)",
 			"Bash(grep -r CLINE_STORAGE_BUCKET /c/Users/Usuario/Desktop/nexusai --include=*.ts --include=*.js)",
 			"Bash(bash scripts/post-rename-nexusai.sh)",
-			"Bash(npm test:*)"
+			"Bash(npm test:*)",
+			"Read(//c/Users/Usuario/AppData/Roaming/Code/User/globalStorage/fulviusguelfi.nexusai/**)",
+			"Read(//^message /{name=$0} /voice_tts/**)"
 		],
 		"additionalDirectories": [
 			"C:\\Users\\Usuario\\AppData\\Roaming\\Code\\User\\globalStorage\\fulviusguelfi.nexusai\\voice\\whisper-models",

@@ -134,9 +134,9 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 
 			await config.callbacks.say(
 				"error",
-				`Cline tried to use write_to_file for '${relPath}' without value for required parameter 'content'. ${
+				`NexusAI tried to use write_to_file for '${relPath}' without value for required parameter 'content'. ${
 					config.taskState.consecutiveMistakeCount >= 2
-						? "This has happened multiple times — Cline will try a different approach."
+						? "This has happened multiple times — NexusAI will try a different approach."
 						: "Retrying..."
 				}`,
 			)

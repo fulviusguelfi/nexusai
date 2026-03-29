@@ -9,6 +9,7 @@ import {
 	SlidersHorizontal,
 	SquareMousePointer,
 	SquareTerminal,
+	Volume2,
 	Wrench,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
@@ -85,10 +86,10 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	},
 	{
 		id: "voice",
-		name: "Voice",
-		tooltipText: "Voice Settings",
-		headerText: "Voice Settings",
-		icon: Wrench,
+		name: "Sound",
+		tooltipText: "Sound Settings",
+		headerText: "Sound Settings",
+		icon: Volume2,
 	},
 	{
 		id: "general",

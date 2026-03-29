@@ -4,7 +4,7 @@
 import assert from "node:assert"
 import { DIFF_VIEW_URI_SCHEME } from "@hosts/vscode/VscodeDiffViewProvider"
 import * as vscode from "vscode"
-import { validateFFmpegAtStartup } from "@/services/voice/PreFlightChecks"
+import { preloadVoiceModels, validateFFmpegAtStartup } from "@/services/voice/PreFlightChecks"
 import { Logger } from "@/shared/services/Logger"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
@@ -69,6 +69,12 @@ import { fileExistsAtPath } from "./utils/fs"
 export async function activate(context: vscode.ExtensionContext) {
 	const activationStartTime = performance.now()
 
+	// Log launch config identifier to help distinguish dev environments
+	const launchConfig = process.env.LAUNCH_CONFIG ?? "unknown"
+	Logger.info(`[Extension] ══════════════════════════════════════`)
+	Logger.info(`[Extension] Launch config: ${launchConfig}`)
+	Logger.info(`[Extension] ══════════════════════════════════════`)
+
 	// 1. Set up HostProvider for VSCode
 	// IMPORTANT: This must be done before any service can be registered
 	setupHostProvider(context)
@@ -122,6 +128,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		.finally(() => {
 			Logger.log("[Extension] FFmpeg validation completed (background)")
 		})
+
+	// 1.3 Pre-download Piper (TTS) and Whisper (STT) models in background if voice is enabled.
+	// Avoids download latency on the first voice interaction.
+	if (context.globalState.get<boolean>("voiceTtsEnabled") !== false) {
+		preloadVoiceModels(context.globalStorageUri.fsPath).catch((e) => {
+			Logger.warn(`[Extension] Voice model pre-load failed (non-critical): ${e}`)
+		})
+	}
 
 	// 2. Clean up legacy data patterns within VSCode's native storage.
 	// Moves workspace→global keys, task history→file, custom instructions→rules, etc.

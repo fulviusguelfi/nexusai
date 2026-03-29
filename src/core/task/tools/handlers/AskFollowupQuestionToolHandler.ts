@@ -4,6 +4,7 @@ import { findLast, parsePartialArrayString } from "@shared/array"
 import { ClineAsk, ClineAskQuestion } from "@shared/ExtensionMessage"
 import { ClineDefaultTool } from "@shared/tools"
 import { telemetryService } from "@/services/telemetry"
+import { VoiceSessionManager } from "@/services/voice/VoiceSessionManager"
 import { ToolUse } from "../../../assistant-message"
 import { formatResponse } from "../../../prompts/responses"
 import { ToolResponse } from "../.."
@@ -56,9 +57,14 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 		// Show notification if enabled
 		if (config.autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
-				subtitle: "Cline has a question...",
+				subtitle: "NexusAI has a question...",
 				message: question.replace(/\n/g, " "),
 			})
+		}
+
+		// Speak the question via TTS if voice is enabled
+		if (config.services.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+			VoiceSessionManager.getInstance().requestSpeak(question)
 		}
 
 		const sharedMessage = {

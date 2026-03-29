@@ -220,9 +220,10 @@ export const VSCodeLmProvider = ({ currentMode }: VSCodeLmProviderProps) => {
 							marginTop: "5px",
 							color: "var(--vscode-descriptionForeground)",
 						}}>
-						Use models from your GitHub Copilot subscription. Install the{" "}
-						<a href="https://marketplace.visualstudio.com/items?itemName=GitHub.copilot">Copilot extension</a> and
-						enable Claude models in Copilot settings to get started.
+						Use models from your GitHub Copilot subscription. Two extensions are required:{" "}
+						<a href="vscode:extension/GitHub.copilot">GitHub Copilot</a> and{" "}
+						<a href="vscode:extension/GitHub.copilot-chat">GitHub Copilot Chat</a>. Both must be installed and signed
+						in.
 					</p>
 				)}
 			</DropdownContainer>

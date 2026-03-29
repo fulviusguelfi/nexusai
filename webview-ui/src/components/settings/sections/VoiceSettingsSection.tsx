@@ -32,6 +32,7 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		voicePiperVoice,
 		voiceSilenceThresholdMs,
 		voiceGracePeriodMs,
+		voiceMetadataEnabled,
 	} = useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
@@ -39,9 +40,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 	const [error, setError] = useState<string | null>(null)
 	const [refreshing, setRefreshing] = useState(false)
 
-	// Enumerate devices:
-	// - Input: backend RPC (FFmpeg dshow — returns real device names for recording)
-	// - Output: browser mediaDevices API (needed for Audio.setSinkId() in webview)
 	const detectRealDevices = useCallback(async () => {
 		setError(null)
 
@@ -59,18 +57,17 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					label: d.label || d.deviceId || "(unknown)",
 				})),
 			)
+
+			setOutputDevices(
+				(resp.outputDevices || []).map((d) => ({
+					deviceId: d.deviceId || "",
+					label: d.label || d.deviceId || "(unknown)",
+				})),
+			)
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
 			setError(msg)
 		}
-
-		// Output devices come from the backend (WASAPI via FFmpeg) — already in resp.outputDevices
-		setOutputDevices(
-			(resp.outputDevices || []).map((d) => ({
-				deviceId: d.deviceId || "",
-				label: d.label || d.deviceId || "(unknown)",
-			})),
-		)
 	}, [])
 
 	const handleRefresh = useCallback(async () => {
@@ -214,6 +211,21 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 							</div>
 						</div>
 					)}
+
+					{/* Voice metadata toggle */}
+					<div className="flex items-center justify-between pt-2 border-t border-vscode-panel-border">
+						<div>
+							<Label className="text-sm font-medium">Voice Context Hints</Label>
+							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
+								Prefix voice messages with metadata (input source and detected language) so the AI can adapt its
+								response style to spoken language.
+							</p>
+						</div>
+						<Switch
+							checked={voiceMetadataEnabled ?? true}
+							onCheckedChange={(checked) => updateSetting("voiceMetadataEnabled", checked)}
+						/>
+					</div>
 
 					{/* TTS toggle */}
 					<div className="flex items-center justify-between pt-2 border-t border-vscode-panel-border">

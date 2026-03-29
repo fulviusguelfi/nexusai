@@ -167,6 +167,7 @@ export interface ExtensionState {
 	voicePiperVoice: string
 	voiceSilenceThresholdMs: number
 	voiceGracePeriodMs: number
+	voiceMetadataEnabled: boolean
 }
 
 export interface ClineMessage {

@@ -294,6 +294,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		voicePiperVoice: "en_US-lessac-medium",
 		voiceSilenceThresholdMs: 700,
 		voiceGracePeriodMs: 2000,
+		voiceMetadataEnabled: true,
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)
@@ -815,7 +816,11 @@ export const ExtensionStateContextProvider: React.FC<{
 					// Copilot not ready yet — retry in 2s
 					setTimeout(attempt, 2000)
 				}
-			} catch {}
+			} catch (err) {
+				// tRPC error — retry after delay
+				console.warn("[vsCodeLmModels] Failed to fetch models, retrying in 2s:", err)
+				setTimeout(attempt, 2000)
+			}
 		}
 		attempt()
 		return () => {
