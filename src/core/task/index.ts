@@ -839,11 +839,7 @@ export class Task {
 				// await this.postStateToWebview()
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
-				if (
-					(type === "text" || type === "completion_result") &&
-					text &&
-					this.stateManager.getGlobalStateKey("voiceTtsEnabled")
-				) {
+				if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
 					const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
 					Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
 					if (ttsText) {
@@ -867,14 +863,14 @@ export class Task {
 				modelInfo,
 			})
 			await this.postStateToWebview()
-			if (
-				(type === "text" || type === "completion_result") &&
-				text &&
-				this.stateManager.getGlobalStateKey("voiceTtsEnabled")
-			) {
-				void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
-					VoiceSessionManager.getInstance().requestSpeak(text)
-				})
+			if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+				const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+				Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+				if (ttsText) {
+					void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+						VoiceSessionManager.getInstance().requestSpeak(ttsText)
+					})
+				}
 			}
 			return sayTs
 		}
@@ -891,7 +887,7 @@ export class Task {
 			modelInfo,
 		})
 		await this.postStateToWebview()
-		if ((type === "text" || type === "completion_result") && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+		if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
 			const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
 			Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
 			if (ttsText) {

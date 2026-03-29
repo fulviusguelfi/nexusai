@@ -282,40 +282,38 @@ pull requests
 - **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) — todos fechados
 - **Wiki**: `docs/wiki/Fase-4-IoT.md`
 
-### Fase 5 — Voz Local (Piper TTS, Whisper STT) 🔄 _(em desenvolvimento — 70% completa - 2026-03-26)_
+### Fase 5 — Voz Local (Piper TTS, Whisper STT) ✅ _(concluído em 2026-03-29)_
 
- **Status**: 🔄 Em Desenvolvimento (70% completo)
+**Status**: ✅ Funcionalmente Completo (STT + TTS operacionais em produção)
+
 - **Backend**: ✅ 100% Completo
-  - WhisperService (STT) + language detection (português fixo em 2026-03-26)
-  - PiperService (TTS synthesis)
-  - VoiceResponseHandler (pipeline separation: processSpeechToText vs processTextToSpeech)
-  - VoiceSessionManager (state & events)
-  - speak_text & listen_for_speech tools (handlers complete)
-  - recordAndRespond controller (STT-only phase with Portuguese language hint)
-  
-- **Webview**: ⏳ 50% Completo
-  - VoiceRecorder component (recording UI) ✅
-  - VoiceSettingsSection component (settings panel) ✅
-  - Chat integration (connect recorder to send) ⏳ TODO (#51)
-  - Audio playback for LLM response ⏳ TODO (#52)
-  - Device selection UI ⏳ TODO (#50)
-  - Settings panel linking ⏳ TODO (#56)
-  
-- **Testing**: ⏳ 75% Completo
-  - E2E tests (voice.test.ts, voice-settings.test.ts) ✅
-  - Unit tests (VoiceSessionManager, handlers) ✅
-  - Service unit tests (WhisperService, PiperService, VoiceResponseHandler) ⏳ TODO (Phase 1)
-  - Language detection tests + Portuguese regression test ⏳ TODO (Phase 1)
+  - `WhisperService` (STT) com detecção de PT-BR e language hint `"pt"`
+  - `PiperService` (TTS synthesis) — binário + modelos `en_US-lessac-medium` e `pt_BR-faber-medium`
+  - `VoiceSessionManager` (state & events, onSpeakRequest listener)
+  - `VoiceResponseHandler` (pipeline separation: STT → LLM → TTS)
+  - `recordAndRespond` controller (entrada por voz end-to-end)
+  - `speak_text` & `listen_for_speech` tools handlers
 
-**Recentes Fixes (2026-03-26)**:
-- ✅ Portuguese language detection (Whisper returning [unknown] → now uses heuristic detection)
-- ✅ Pipeline timing (TTS was immediate on transcription → now waits for LLM response)
-- ✅ VoiceResponseHandler file structure (57 TypeScript errors → corrected)
-- ✅ Language hint parameter (added "pt" hint to Whisper)
+- **Webview / Host**: ✅ 100% Completo
+  - `VoiceRecorder` component (UI de gravação)
+  - `VoiceSettingsSection` component (painel de configurações)
+  - Chat integration — microfone conectado ao pipeline de envio
+  - **Audio playback**: movido para extension host (`System.Media.SoundPlayer` / `afplay` / `aplay`) — resolve bloqueio de autoplay do Chromium/Electron
+  - `useVoiceAudioPlayer` hook (fallback para webview, mantido)
 
-**Issues Relacionados**: [#50](https://github.com/cline-ai/cline/issues/50) (Device UI), [#51](https://github.com/cline-ai/cline/issues/51) (Chat integration), [#52](https://github.com/cline-ai/cline/issues/52) (Audio playback), [#53-56]
+- **Fixes aplicados (2026-03-29)**:
+  - ✅ Autoplay bloqueado: playback de WAV movido de `HTMLAudioElement` no webview para `System.Media.SoundPlayer` no extension host (Node.js)
+  - ✅ Double TTS: `completion_result` removido das 3 condições TTS em `say()` — fala apenas `type="text"`
+  - ✅ `<thinking>` tags strip nos 3 call sites (incluindo bug residual no call site 2)
+  - ✅ Diagnóstico LOG `[TTS] Firing requestSpeak (type=..., chars=...)` visível no Output Channel
 
-**Wiki**: `docs/wiki/Fase-5-Voice.md`, `docs/wiki/Fase-5-Voice-Integration-Status.md` (TBD)
+- **Pendências movidas para backlog**:
+  - Device selection UI (#50) — UI work não crítico para funcionalidade de voz
+  - Settings panel linking (#56) — configurações acessíveis via painel existente
+  - Testes unitários PiperService/WhisperService — não bloqueiam uso
+
+- **Issues relacionados**: [#50](https://github.com/fulviusguelfi/nexusai/issues/50), [#51](https://github.com/fulviusguelfi/nexusai/issues/51) ✅, [#52](https://github.com/fulviusguelfi/nexusai/issues/52) ✅
+- **Wiki**: `docs/wiki/Fase-5-Voice.md`
 
 ### Próximas Fases
 
