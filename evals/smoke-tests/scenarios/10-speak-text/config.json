@@ -1,0 +1,15 @@
+{
+	"name": "Speak text via voice tool",
+	"description": "Tests that the speak_text tool executes and the agent reports success. Asks the agent to use speak_text and then write the result to a file.",
+	"prompt": "Use the speak_text tool to say 'Hello from NexusAI'. After the tool responds, write the tool result to a file called voice-result.txt.",
+	"expectedFiles": [
+		"voice-result.txt"
+	],
+	"expectedContent": [
+		{
+			"file": "voice-result.txt",
+			"contains": "Speaking"
+		}
+	],
+	"timeout": 120
+}

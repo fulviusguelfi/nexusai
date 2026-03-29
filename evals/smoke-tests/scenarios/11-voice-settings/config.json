@@ -1,0 +1,15 @@
+{
+	"name": "Query voice settings state",
+	"description": "Tests that the agent can inspect voice settings (voiceTtsEnabled, voiceSttEnabled) from GlobalState and report their values. Verifies the settings surface is reachable from the agent.",
+	"prompt": "Check whether voice TTS and STT are enabled in the current settings. Write a report to a file called voice-settings.txt with the status of each setting.",
+	"expectedFiles": [
+		"voice-settings.txt"
+	],
+	"expectedContent": [
+		{
+			"file": "voice-settings.txt",
+			"contains": "TTS"
+		}
+	],
+	"timeout": 120
+}

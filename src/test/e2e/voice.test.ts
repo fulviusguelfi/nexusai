@@ -36,4 +36,26 @@ e2e.describe("Voice Tools", () => {
 
 		await E2ETestHelper.waitForChatMessage(sidebar, "No speech was captured within the timeout window.", 60_000)
 	})
+
+	// ── 3 ──────────────────────────────────────────────────────────────────────
+	e2e("speak_text — returns disabled message when TTS is off", async ({ helper, sidebar }) => {
+		await helper.signin(sidebar)
+
+		const inputbox = sidebar.getByTestId("chat-input")
+		await inputbox.fill("voice_speak_disabled_request")
+		await sidebar.getByTestId("send-button").click()
+
+		await E2ETestHelper.waitForChatMessage(sidebar, "TTS is disabled", 60_000)
+	})
+
+	// ── 4 ──────────────────────────────────────────────────────────────────────
+	e2e("listen_for_speech — custom prompt is rendered in chat", async ({ helper, sidebar }) => {
+		await helper.signin(sidebar)
+
+		const inputbox = sidebar.getByTestId("chat-input")
+		await inputbox.fill("voice_listen_custom_request")
+		await sidebar.getByTestId("send-button").click()
+
+		await E2ETestHelper.waitForChatMessage(sidebar, "Say your name to continue.", 60_000)
+	})
 })

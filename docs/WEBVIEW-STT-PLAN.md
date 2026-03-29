@@ -1,8 +1,9 @@
+> 🔴 **ARCHIVED** — 2026-03-29. Fase 5 Voice concluída. Ver [`docs/wiki/Fase-5-Voice.md`](wiki/Fase-5-Voice.md) para arquitetura final.
+
 # 🎤 Webview STT/TTS Integration Plan
 
 **Phase**: 2 - Webview Integration  
-**Status**: 📋 Planning  
-**Goal**: Integrate working CLI audio pipeline into VS Code webview
+**Status**: ✅ Concluído (arquivado)
 
 ## Architecture
 

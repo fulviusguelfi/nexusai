@@ -635,6 +635,22 @@ export class ClineApiServerMock {
 								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_REQUEST
 							}
 						}
+						// 3. speak_text with TTS disabled
+						if (body.includes("voice_speak_disabled_request")) {
+							if (body.includes("</speak_text>")) {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_DISABLED_COMPLETION
+							} else {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_SPEAK_DISABLED_REQUEST
+							}
+						}
+						// 4. listen_for_speech with custom prompt
+						if (body.includes("voice_listen_custom_request")) {
+							if (body.includes("</listen_for_speech>")) {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_CUSTOM_COMPLETION
+							} else {
+								responseText = E2E_VOICE_MOCK_API_RESPONSES.VOICE_LISTEN_CUSTOM_REQUEST
+							}
+						}
 						const pidMatch = body.match(/kill_process_request\s+(\d+)/)
 						if (pidMatch) {
 							if (body.includes("terminated successfully")) {

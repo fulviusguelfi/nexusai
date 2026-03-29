@@ -310,7 +310,12 @@ pull requests
 - **Pendências movidas para backlog**:
   - Device selection UI (#50) — UI work não crítico para funcionalidade de voz
   - Settings panel linking (#56) — configurações acessíveis via painel existente
-  - Testes unitários PiperService/WhisperService — não bloqueiam uso
+
+- **Testes (2026-03-29)**:
+  - ✅ 1421 testes unitários passando (79 novos: SilenceDetector, VoiceErrorMapper, AudioLevelMeter, PiperService, VoiceResponseHandler)
+  - ✅ Snapshots do sistema de prompts atualizados (voice input behavior section)
+  - ✅ Smoke test scenarios 10 (speak-text) e 11 (voice-settings) criados em `evals/smoke-tests/scenarios/`
+  - ✅ E2E voice tests expandidos de 2 para 4 cenários (TTS disabled + custom listen prompt)
 
 - **Issues relacionados**: [#50](https://github.com/fulviusguelfi/nexusai/issues/50), [#51](https://github.com/fulviusguelfi/nexusai/issues/51) ✅, [#52](https://github.com/fulviusguelfi/nexusai/issues/52) ✅
 - **Wiki**: `docs/wiki/Fase-5-Voice.md`
