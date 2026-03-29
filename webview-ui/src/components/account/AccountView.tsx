@@ -1,7 +1,6 @@
 import type { UsageTransaction as ClineAccountUsageTransaction, PaymentTransaction } from "@shared/ClineAccount"
 import { isClineInternalTester } from "@shared/internal/account"
 import type { UserOrganization } from "@shared/proto/cline/account"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeDivider, VSCodeDropdown, VSCodeOption, VSCodeTag } from "@vscode/webview-ui-toolkit/react"
 import deepEqual from "fast-deep-equal"
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -9,7 +8,7 @@ import { useInterval } from "react-use"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { type ClineUser, handleSignOut } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import ViewHeader from "../common/ViewHeader"
 import VSCodeButtonLink from "../common/VSCodeButtonLink"
 import { updateSetting } from "../settings/utils/settingsHandlers"
@@ -124,7 +123,7 @@ export const ClineAccountView = ({ clineUser, userOrganizations, activeOrganizat
 
 	const fetchUserCredit = useCallback(async () => {
 		try {
-			const response = await AccountServiceClient.getUserCredits(EmptyRequest.create())
+			const response = await trpc.account.getUserCredits.query({})
 			const newBalance = response?.balance?.currentBalance
 			// Always update balance, even if it's 0 or null - don't skip undefined
 			setBalance(newBalance ?? null)
@@ -153,7 +152,7 @@ export const ClineAccountView = ({ clineUser, userOrganizations, activeOrganizat
 				if (id === uid) {
 					await fetchUserCredit()
 				} else {
-					const response = await AccountServiceClient.getOrganizationCredits({
+					const response = await trpc.account.getOrganizationCredits.query({
 						organizationId: id,
 					})
 					// Update balance - handle all values including 0 and null
@@ -215,7 +214,7 @@ export const ClineAccountView = ({ clineUser, userOrganizations, activeOrganizat
 
 				// Send the change to the server
 				const organizationId = newValue === uid ? undefined : newValue
-				await AccountServiceClient.setUserOrganization({ organizationId })
+				await trpc.account.setUserOrganization.mutate({ organizationId })
 
 				// Clear the manual fetch flag after everything is done
 				manualFetchInProgressRef.current = false

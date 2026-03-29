@@ -1,11 +1,12 @@
-import { CheckpointRestoreRequest } from "@shared/proto/cline/checkpoints"
 import { ClineCheckpointRestore } from "@shared/WebviewMessage"
 import React, { forwardRef, useMemo, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"
 import Thumbnails from "@/components/common/Thumbnails"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { CheckpointsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { highlightText } from "./task-header/Highlights"
+
+const VOICE_META_REGEX = /^(\[voice input[^\]]*\])\n/
 
 interface UserMessageProps {
 	text?: string
@@ -21,7 +22,16 @@ const UserMessage: React.FC<UserMessageProps> = ({ text, images, files, messageT
 	const textAreaRef = useRef<HTMLTextAreaElement>(null)
 	const { checkpointManagerErrorMessage } = useExtensionState()
 
-	const highlightedText = useMemo(() => highlightText(editedText || text), [editedText, text])
+	const { voiceMeta, bodyText } = useMemo(() => {
+		const full = editedText || text || ""
+		const match = full.match(VOICE_META_REGEX)
+		if (match) {
+			return { voiceMeta: match[1], bodyText: full.slice(match[0].length) }
+		}
+		return { voiceMeta: null, bodyText: full }
+	}, [editedText, text])
+
+	const highlightedText = useMemo(() => highlightText(bodyText), [bodyText])
 
 	// Create refs for the buttons to check in the blur handler
 	const restoreAllButtonRef = useRef<HTMLButtonElement>(null)
@@ -49,13 +59,11 @@ const UserMessage: React.FC<UserMessageProps> = ({ text, images, files, messageT
 		}
 
 		try {
-			await CheckpointsServiceClient.checkpointRestore(
-				CheckpointRestoreRequest.create({
-					number: messageTs,
-					restoreType: type,
-					offset: 1,
-				}),
-			)
+			await trpc.checkpoints.checkpointRestore.mutate({
+				number: messageTs,
+				restoreType: type,
+				offset: 1,
+			})
 
 			setTimeout(() => {
 				sendMessageFromChatRow?.(editedText, images || [], files || [])
@@ -145,9 +153,24 @@ const UserMessage: React.FC<UserMessageProps> = ({ text, images, files, messageT
 					</div>
 				</>
 			) : (
-				<span className="ph-no-capture text-sm" style={{ display: "block" }}>
-					{highlightedText}
-				</span>
+				<>
+					{voiceMeta && (
+						<span
+							style={{
+								display: "block",
+								fontSize: "10px",
+								fontStyle: "italic",
+								opacity: 0.55,
+								marginBottom: "4px",
+								color: "var(--vscode-descriptionForeground)",
+							}}>
+							🎤 {voiceMeta}
+						</span>
+					)}
+					<span className="ph-no-capture text-sm" style={{ display: "block" }}>
+						{highlightedText}
+					</span>
+				</>
 			)}
 			{((images && images.length > 0) || (files && files.length > 0)) && (
 				<Thumbnails files={files ?? []} images={images ?? []} style={{ marginTop: "8px" }} />

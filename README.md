@@ -50,6 +50,21 @@ Notas importantes do projeto:
 - Build principal: `npm run compile`
 - Apos alterar arquivos `.proto`, execute: `npm run protos`
 
+### Recuperacao rapida (debug da extensao)
+
+Se ao iniciar no VS Code aparecer erro como:
+
+`Activating extension 'fulviusguelfi.nexusai' failed: Cannot find module .../dist/extension.js`
+
+use este fluxo:
+
+```bash
+npm install
+npm run compile
+```
+
+Depois, reinicie o host da extensao (`F5`) ou execute `Developer: Reload Window` antes de testar novamente.
+
 ## Estrutura
 
 - `src/`: backend da extensao

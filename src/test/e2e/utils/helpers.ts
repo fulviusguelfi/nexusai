@@ -307,7 +307,7 @@ export const e2e = test
 						workspacePath,
 					],
 				})
-				await E2ETestHelper.waitUntil(() => app.windows().length > 0)
+				await E2ETestHelper.waitUntil(() => app.windows().length > 0, 30_000)
 				return app
 			})
 		},

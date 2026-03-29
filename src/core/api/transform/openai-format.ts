@@ -95,7 +95,7 @@ export function convertToOpenAiMessages(
 							acc.toolMessages.push(part)
 						} else if (part.type === "text" || part.type === "image") {
 							acc.nonToolMessages.push(part)
-						} // user cannot send tool_use messages
+						} // user cannot send tool_use messages or metadata blocks
 						return acc
 					},
 					{ nonToolMessages: [], toolMessages: [] },

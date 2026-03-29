@@ -1,9 +1,9 @@
-// Backward compatibility re-exports — prefer importing from NexusAuthProvider
+// Canonical provider export (Cline) with Nexus aliases kept for compatibility.
 export {
 	type ClineAuthApiTokenExchangeResponse,
 	type ClineAuthApiTokenRefreshResponse,
+	ClineAuthProvider,
+	ClineAuthProvider as NexusAuthProvider,
 	type NexusAuthApiTokenExchangeResponse,
 	type NexusAuthApiTokenRefreshResponse,
-	NexusAuthProvider as ClineAuthProvider,
-	NexusAuthProvider,
 } from "./NexusAuthProvider"

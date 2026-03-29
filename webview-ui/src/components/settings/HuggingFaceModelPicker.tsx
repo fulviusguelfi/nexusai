@@ -1,12 +1,11 @@
 import { huggingFaceDefaultModelId, huggingFaceModels } from "@shared/api"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
+import { trpc } from "@/services/trpc-client"
 import { useExtensionState } from "../../context/ExtensionStateContext"
-import { ModelsServiceClient } from "../../services/grpc-client"
 import { highlight } from "../history/HistoryView"
 import { ModelInfoView } from "./common/ModelInfoView"
 import { getModeSpecificFields, normalizeApiConfiguration } from "./utils/providerUtils"
@@ -51,7 +50,8 @@ const HuggingFaceModelPicker: React.FC<HuggingFaceModelPickerProps> = ({ isPopup
 	}, [apiConfiguration, currentMode])
 
 	useMount(() => {
-		ModelsServiceClient.refreshHuggingFaceModels(EmptyRequest.create({}))
+		trpc.models.refreshHuggingFaceModels
+			.mutate({})
 			.then((response) => {
 				setHuggingFaceModels({
 					[huggingFaceDefaultModelId]: huggingFaceModels[huggingFaceDefaultModelId],

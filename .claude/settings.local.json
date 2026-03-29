@@ -1,0 +1,9 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(gh issue:*)",
+			"Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+			"WebSearch"
+		]
+	}
+}

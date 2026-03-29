@@ -1,8 +1,6 @@
 import { mentionRegex, mentionRegexGlobal } from "@shared/context-mentions"
-import { EmptyRequest, StringRequest } from "@shared/proto/cline/common"
-import { FileSearchRequest, FileSearchType, RelativePathsRequest } from "@shared/proto/cline/file"
-import { type LanguageModelChatSelector } from "@shared/proto/cline/models"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/cline/state"
+import { FileSearchType } from "@shared/proto/cline/file"
+import { PlanActMode } from "@shared/proto/cline/state"
 import { type SlashCommand } from "@shared/slashCommands"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
@@ -21,7 +19,7 @@ import VoiceRecorder from "@/components/voice/VoiceRecorder"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { cn } from "@/lib/utils"
-import { FileServiceClient, ModelsServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import {
 	ContextMenuOptionType,
 	getContextMenuOptionIndex,
@@ -43,6 +41,7 @@ import {
 	slashCommandRegexGlobal,
 	validateSlashCommand,
 } from "@/utils/slash-commands"
+import { validateApiConfiguration } from "@/utils/validate"
 import ClineRulesToggleModal from "../cline-rules/ClineRulesToggleModal"
 import ServersToggleModal from "./ServersToggleModal"
 
@@ -80,7 +79,7 @@ interface ChatTextAreaProps {
 	setSelectedImages: React.Dispatch<React.SetStateAction<string[]>>
 	setSelectedFiles: React.Dispatch<React.SetStateAction<string[]>>
 	onSend: () => void
-	onTranscription?: (text: string) => void
+	onTranscription?: (text: string, language?: string) => void
 	onSelectFilesAndImages: () => void
 	shouldDisableFilesAndImages: boolean
 	onHeightChange?: (height: number) => void
@@ -227,7 +226,18 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			remoteConfigSettings,
 			navigateToSettingsModelPicker,
 			mcpServers,
+			vsCodeLmModels,
 		} = useExtensionState()
+
+		// Disable input when the selected provider is not fully configured, or when
+		// vscode-lm is selected but GitHub Copilot hasn't connected yet.
+		// Declared early so downstream useCallbacks can depend on effectiveSendingDisabled.
+		const { selectedProvider: _selectedProviderForDisable } = normalizeApiConfiguration(apiConfiguration, mode)
+		const isProviderNotReady =
+			validateApiConfiguration(mode, apiConfiguration) !== undefined ||
+			(_selectedProviderForDisable === "vscode-lm" && vsCodeLmModels.length === 0)
+		const effectiveSendingDisabled = sendingDisabled || isProviderNotReady
+
 		const [isTextAreaFocused, setIsTextAreaFocused] = useState(false)
 		const [isDraggingOver, setIsDraggingOver] = useState(false)
 		const [gitCommits, setGitCommits] = useState<GitCommit[]>([])
@@ -266,7 +276,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		// Fetch git commits when Git is selected or when typing a hash
 		useEffect(() => {
 			if (selectedType === ContextMenuOptionType.Git || /^[a-f0-9]+$/i.test(searchQuery)) {
-				FileServiceClient.searchCommits(StringRequest.create({ value: searchQuery || "" }))
+				trpc.file.searchCommits
+					.query({ value: searchQuery || "" })
 					.then((response) => {
 						if (response.commits) {
 							const commits: GitCommit[] = response.commits.map(
@@ -357,13 +368,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								searchType = FileSearchType.FOLDER
 							}
 
-							FileServiceClient.searchFiles(
-								FileSearchRequest.create({
+							trpc.file.searchFiles
+								.query({
 									query: "",
 									mentionsRequestId: "",
 									selectedType: searchType,
-								}),
-							)
+								})
 								.then((results) => {
 									setFileSearchResults((results.results || []) as SearchResult[])
 									setSearchLoading(false)
@@ -579,7 +589,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				if (event.key === "Enter" && !event.shiftKey && !isComposing) {
 					event.preventDefault()
 
-					if (!sendingDisabled) {
+					if (!effectiveSendingDisabled) {
 						setIsTextAreaFocused(false)
 						onSend()
 					}
@@ -666,7 +676,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				selectedSlashCommandsIndex,
 				slashCommandsQuery,
 				handleSlashCommandsSelect,
-				sendingDisabled,
+				effectiveSendingDisabled,
 			],
 		)
 
@@ -768,14 +778,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 						// Set a timeout to debounce the search requests
 						searchTimeoutRef.current = setTimeout(() => {
-							FileServiceClient.searchFiles(
-								FileSearchRequest.create({
+							trpc.file.searchFiles
+								.query({
 									query: searchQuery,
 									mentionsRequestId: query,
 									selectedType: searchType,
 									workspaceHint: workspaceHint,
-								}),
-							)
+								})
 								.then((results) => {
 									setFileSearchResults((results.results || []) as SearchResult[])
 									setSearchLoading(false)
@@ -1003,16 +1012,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const onModeToggle = useCallback(() => {
 			void (async () => {
 				const convertedProtoMode = mode === "plan" ? PlanActMode.ACT : PlanActMode.PLAN
-				const response = await StateServiceClient.togglePlanActModeProto(
-					TogglePlanActModeRequest.create({
-						mode: convertedProtoMode,
-						chatContent: {
-							message: inputValue.trim() ? inputValue : undefined,
-							images: selectedImages,
-							files: selectedFiles,
-						},
-					}),
-				)
+				const response = await trpc.state.togglePlanActModeProto.mutate({
+					mode: convertedProtoMode,
+					chatContent: {
+						message: inputValue.trim() ? inputValue : undefined,
+						images: selectedImages,
+						files: selectedFiles,
+					},
+				})
 				// Focus the textarea after mode toggle with slight delay
 				setTimeout(() => {
 					if (response.value) {
@@ -1069,18 +1076,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const handleModelButtonClick = () => {
 			navigateToSettingsModelPicker({ targetSection: "api-config" })
 		}
-
-		// Fetch vscode-lm model list to resolve human-readable names for the status bar
-		const { selectedProvider: currentProvider } = normalizeApiConfiguration(apiConfiguration, mode)
-		const [vsCodeLmModels, setVsCodeLmModels] = useState<LanguageModelChatSelector[]>([])
-		useEffect(() => {
-			if (currentProvider !== "vscode-lm") return
-			ModelsServiceClient.getVsCodeLmModels(EmptyRequest.create({}))
-				.then((resp) => {
-					if (resp?.models) setVsCodeLmModels(resp.models)
-				})
-				.catch(() => {})
-		}, [currentProvider])
 
 		// Get model display name
 		const modelDisplayName = useMemo(() => {
@@ -1257,7 +1252,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				}
 				setIntendedCursorPosition(initialCursorPos)
 
-				FileServiceClient.getRelativePaths(RelativePathsRequest.create({ uris: validUris }))
+				trpc.file.getRelativePaths
+					.query({ uris: validUris })
 					.then((response) => {
 						if (response.paths.length > 0) {
 							setPendingInsertions((prev) => [...prev, ...response.paths])
@@ -1538,10 +1534,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						<div className="flex flex-row items-center gap-1">
 							{onTranscription && <VoiceRecorder disabled={sendingDisabled} onTranscription={onTranscription} />}
 							<div
-								className={cn("input-icon-button", { disabled: sendingDisabled }, "codicon codicon-send text-sm")}
+								className={cn(
+									"input-icon-button",
+									{ disabled: effectiveSendingDisabled },
+									"codicon codicon-send text-sm",
+								)}
 								data-testid="send-button"
 								onClick={() => {
-									if (!sendingDisabled) {
+									if (!effectiveSendingDisabled) {
 										setIsTextAreaFocused(false)
 										onSend()
 									}
@@ -1626,11 +1626,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								<Slider isAct={mode === "act"} isPlan={mode === "plan"} />
 								{["Plan", "Act"].map((m) => (
 									<div
-										aria-checked={mode === m.toLowerCase()}
+										aria-checked={mode === m.toLowerCase() ? "true" : "false"}
 										className={cn(
 											"pt-0.5 pb-px px-2 z-10 text-xs w-1/2 text-center bg-transparent",
 											mode === m.toLowerCase() ? "text-white" : "text-input-foreground",
 										)}
+										key={m}
 										onMouseLeave={() => setShownTooltipMode(null)}
 										onMouseOver={() => setShownTooltipMode(m.toLowerCase() === "plan" ? "plan" : "act")}
 										role="switch">

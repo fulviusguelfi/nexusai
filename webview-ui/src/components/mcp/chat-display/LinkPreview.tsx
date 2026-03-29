@@ -1,8 +1,7 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import DOMPurify from "dompurify"
 import React from "react"
 import ChatErrorBoundary from "@/components/chat/ChatErrorBoundary"
-import { WebServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { getSafeHostname, normalizeRelativeUrl } from "./utils/mcpRichUtil"
 
 interface OpenGraphData {
@@ -110,11 +109,9 @@ class LinkPreview extends React.Component<LinkPreviewProps, LinkPreviewState> {
 			this.setState({ fetchStartTime: startTime })
 
 			// Use the gRPC client to fetch Open Graph data
-			const response = await WebServiceClient.fetchOpenGraphData(
-				StringRequest.create({
-					value: this.props.url,
-				}),
-			)
+			const response = await trpc.web.fetchOpenGraphData.mutate({
+				value: this.props.url,
+			})
 
 			// Process the response
 			if (response) {
@@ -233,11 +230,7 @@ class LinkPreview extends React.Component<LinkPreviewProps, LinkPreviewState> {
 					className="link-preview-error"
 					onClick={async () => {
 						try {
-							await WebServiceClient.openInBrowser(
-								StringRequest.create({
-									value: DOMPurify.sanitize(url),
-								}),
-							)
+							await trpc.web.openInBrowser.mutate({ value: DOMPurify.sanitize(url) })
 						} catch (err) {
 							console.error("Error opening URL in browser:", err)
 						}
@@ -275,11 +268,7 @@ class LinkPreview extends React.Component<LinkPreviewProps, LinkPreviewState> {
 				className="link-preview"
 				onClick={async () => {
 					try {
-						await WebServiceClient.openInBrowser(
-							StringRequest.create({
-								value: DOMPurify.sanitize(url),
-							}),
-						)
+						await trpc.web.openInBrowser.mutate({ value: DOMPurify.sanitize(url) })
 					} catch (err) {
 						console.error("Error opening URL in browser:", err)
 					}

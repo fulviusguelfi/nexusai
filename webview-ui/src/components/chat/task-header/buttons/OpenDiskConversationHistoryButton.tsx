@@ -1,9 +1,8 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import { ArrowDownToLineIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 const OpenDiskConversationHistoryButton: React.FC<{
 	taskId?: string
@@ -14,7 +13,7 @@ const OpenDiskConversationHistoryButton: React.FC<{
 			return
 		}
 
-		FileServiceClient.openDiskConversationHistory(StringRequest.create({ value: taskId })).catch((err) => {
+		trpc.file.openDiskConversationHistory.mutate({ value: taskId }).catch((err) => {
 			console.error(err)
 		})
 	}

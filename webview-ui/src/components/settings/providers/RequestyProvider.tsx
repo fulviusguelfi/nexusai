@@ -1,10 +1,9 @@
 import { toRequestyServiceUrl } from "@shared/clients/requesty"
-import { StringRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { ApiKeyField } from "../common/ApiKeyField"
 import { DebouncedTextField } from "../common/DebouncedTextField"
 import RequestyModelPicker from "../RequestyModelPicker"
@@ -44,11 +43,9 @@ export const RequestyProvider = ({ showModelOptions, isPopup, currentMode }: Req
 					appearance="secondary"
 					onClick={async () => {
 						try {
-							await AccountServiceClient.requestyAuthClicked(
-								StringRequest.create({
-									value: apiConfiguration?.requestyBaseUrl || "",
-								}),
-							)
+							await trpc.account.requestyAuthClicked.mutate({
+								value: apiConfiguration?.requestyBaseUrl || "",
+							})
 						} catch (error) {
 							console.error("Failed to open Requesty auth:", error)
 						}

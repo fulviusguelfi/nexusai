@@ -1,10 +1,9 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import { TaskFeedbackType } from "@shared/WebviewMessage"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useState } from "react"
 import styled from "styled-components"
 import { cn } from "@/lib/utils"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface TaskFeedbackButtonsProps {
 	messageTs: number
@@ -51,11 +50,7 @@ const TaskFeedbackButtons: React.FC<TaskFeedbackButtonsProps> = ({ messageTs, is
 		setFeedback(type)
 
 		try {
-			await TaskServiceClient.taskFeedback(
-				StringRequest.create({
-					value: type,
-				}),
-			)
+			await trpc.task.taskFeedback.mutate({ value: type })
 
 			// Store in localStorage that feedback was provided for this message
 			try {

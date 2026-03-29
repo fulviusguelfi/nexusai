@@ -1,9 +1,8 @@
-import { StringArrayRequest } from "@shared/proto/cline/common"
 import { TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { formatSize } from "@/utils/format"
 
 const DeleteTaskButton: React.FC<{
@@ -20,7 +19,7 @@ const DeleteTaskButton: React.FC<{
 				onClick={(e) => {
 					e.preventDefault()
 					e.stopPropagation()
-					taskId && TaskServiceClient.deleteTasksWithIds(StringArrayRequest.create({ value: [taskId] }))
+					taskId && trpc.task.deleteTasksWithIds.mutate({ value: [taskId] })
 				}}
 				size="xs"
 				variant="icon">

@@ -2,7 +2,7 @@ import { openAiCodexModels } from "@shared/api"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { ModelInfoView } from "../common/ModelInfoView"
 import { ModelSelector } from "../common/ModelSelector"
 import ReasoningEffortSelector from "../ReasoningEffortSelector"
@@ -28,7 +28,7 @@ export const OpenAiCodexProvider = ({ showModelOptions, isPopup, currentMode }: 
 
 	const handleSignIn = async () => {
 		try {
-			await AccountServiceClient.openAiCodexSignIn({})
+			await trpc.account.openAiCodexSignIn.mutate({})
 		} catch (error) {
 			console.error("Failed to sign in to OpenAI Codex:", error)
 		}
@@ -36,7 +36,7 @@ export const OpenAiCodexProvider = ({ showModelOptions, isPopup, currentMode }: 
 
 	const handleSignOut = async () => {
 		try {
-			await AccountServiceClient.openAiCodexSignOut({})
+			await trpc.account.openAiCodexSignOut.mutate({})
 		} catch (error) {
 			console.error("Failed to sign out of OpenAI Codex:", error)
 		}

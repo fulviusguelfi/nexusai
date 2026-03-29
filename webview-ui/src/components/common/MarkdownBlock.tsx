@@ -1,5 +1,4 @@
-import { StringRequest } from "@shared/proto/cline/common"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/cline/state"
+import { PlanActMode } from "@shared/proto/cline/state"
 import { SquareArrowOutUpRightIcon } from "lucide-react"
 import { marked } from "marked"
 import type { ComponentProps } from "react"
@@ -13,7 +12,7 @@ import MermaidBlock from "@/components/common/MermaidBlock"
 import { Button } from "@/components/ui/button"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
-import { FileServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { WithCopyButton } from "./CopyButton"
 import UnsafeImage from "./UnsafeImage"
 
@@ -129,11 +128,9 @@ const ActModeHighlight: React.FC = () => {
 			onClick={() => {
 				// Only toggle to Act mode if we're currently in Plan mode
 				if (mode === "plan") {
-					StateServiceClient.togglePlanActModeProto(
-						TogglePlanActModeRequest.create({
-							mode: PlanActMode.ACT,
-						}),
-					)
+					trpc.state.togglePlanActModeProto.mutate({
+						mode: PlanActMode.ACT,
+					})
 				}
 			}}
 			title={mode === "plan" ? "Click to toggle to Act Mode" : "Already in Act Mode"}>
@@ -373,7 +370,8 @@ const InlineCodeWithFileCheck: React.FC<ComponentProps<"code"> & { [key: string]
 		let cancelled = false
 
 		// Check file existence asynchronously
-		FileServiceClient.ifFileExistsRelativePath(StringRequest.create({ value: filePath }))
+		trpc.file.ifFileExistsRelativePath
+			.query({ value: filePath })
 			.then((exists) => {
 				if (!cancelled) {
 					setIsFilePath(exists.value)
@@ -396,7 +394,7 @@ const InlineCodeWithFileCheck: React.FC<ComponentProps<"code"> & { [key: string]
 		return (
 			<Button
 				className="p-0 ml-0.5 leading-none align-middle transition-opacity text-preformat gap-0.5 inline text-left"
-				onClick={() => FileServiceClient.openFileRelativePath({ value: filePath })}
+				onClick={() => trpc.file.openFileRelativePath.mutate({ value: filePath })}
 				size="icon"
 				title={`Open ${filePath} in editor`}
 				type="button"

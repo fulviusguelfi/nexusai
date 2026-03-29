@@ -1,11 +1,10 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { AddRemoteMcpServerRequest, McpServers } from "@shared/proto/cline/mcp"
+import { McpServers } from "@shared/proto/cline/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { VSCodeButton, VSCodeLink, VSCodeRadio, VSCodeRadioGroup, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"
 import { LINKS } from "@/constants"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 type TransportType = "streamableHttp" | "sse"
 
@@ -41,13 +40,11 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 		setIsSubmitting(true)
 
 		try {
-			const servers: McpServers = await McpServiceClient.addRemoteMcpServer(
-				AddRemoteMcpServerRequest.create({
-					serverName: serverName.trim(),
-					serverUrl: serverUrl.trim(),
-					transportType: transportType,
-				}),
-			)
+			const servers: McpServers = await trpc.mcp.addRemoteMcpServer.mutate({
+				serverName: serverName.trim(),
+				serverUrl: serverUrl.trim(),
+				transportType: transportType,
+			})
 
 			setIsSubmitting(false)
 
@@ -128,7 +125,7 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 				<VSCodeButton
 					appearance="secondary"
 					onClick={() => {
-						McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch((error) => {
+						trpc.mcp.openMcpSettings.mutate({}).catch((error) => {
 							console.error("Error opening MCP settings:", error)
 						})
 					}}

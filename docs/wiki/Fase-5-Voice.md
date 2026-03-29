@@ -194,8 +194,13 @@ O texto do parâmetro/transcrição aparece abaixo do cabeçalho via `<MarkdownR
 | `src/services/voice/__tests__/VoiceSessionManager.test.ts` | Singleton, setters, eventos statusChange, requestSpeak, waitForTranscription (resolve + timeout) |
 | `src/core/task/tools/handlers/__tests__/SpeakTextToolHandler.test.ts` | TTS desabilitado, parâmetro ausente, fluxo de sucesso (say + requestSpeak + resultado) |
 | `src/core/task/tools/handlers/__tests__/ListenForSpeechToolHandler.test.ts` | STT desabilitado, prompt padrão/customizado, transcrição recebida, timeout sem fala |
+| `src/services/voice/__tests__/SilenceDetector.test.ts` | Float32Array e PCM Buffer, classificação silent/poor/good/excellent, clipping, threshold customizado, calculateMinSpeechSamples |
+| `src/services/voice/__tests__/VoiceErrorMapper.test.ts` | Todos os 13 VoiceErrorCode, fallback UNKNOWN_ERROR, entrada não-Error, logError() com/sem contexto |
+| `src/services/voice/__tests__/AudioLevelMeter.test.ts` | calculateRMS(), calculatePeak(), rmsToDb() (incluindo -Infinity para rms=0), analyze() nos quatro tiers |
+| `src/services/voice/__tests__/PiperService.test.ts` | Singleton, isBinaryInstalled(), binaryPath, model-not-found, 8 testes de header WAV via _pcm16ToWav() |
+| `src/services/voice/__tests__/VoiceResponseHandler.test.ts` | processSpeechToText() (sucesso, detecção PT, erro, globalStoragePath ausente, onProgress, confidence), processTextToSpeech(), process() deprecated |
 
-Total: **1307 testes unitários passando** (incluindo todos os anteriores das Fases 1–4).
+Total: **1421 testes unitários passando** (incluindo todos os anteriores das Fases 1–4).
 
 ---
 

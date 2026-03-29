@@ -4,6 +4,7 @@ import { ensureTaskDirectoryExists } from "@core/storage/disk"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { ClineAsk } from "@shared/ExtensionMessage"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IPartialBlockHandler, IToolHandler } from "../ToolExecutorCoordinator"
@@ -33,8 +34,8 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 		// Show notification if enabled
 		if (config.autoApprovalSettings.enableNotifications) {
 			showSystemNotification({
-				subtitle: "Cline wants to condense the conversation...",
-				message: `Cline is suggesting to condense your conversation with: ${context}`,
+				subtitle: "NexusAI wants to condense the conversation...",
+				message: `NexusAI is suggesting to condense your conversation with: ${context}`,
 			})
 		}
 
@@ -54,28 +55,27 @@ export class CondenseHandler implements IToolHandler, IPartialBlockHandler {
 				images,
 				fileContentString,
 			)
-		} else {
-			// If no response, the user accepted the condensed version
-			const apiConversationHistory = config.messageState.getApiConversationHistory()
-			const lastMessage = apiConversationHistory[apiConversationHistory.length - 1]
-			const summaryAlreadyAppended = lastMessage && lastMessage.role === "assistant"
-			const keepStrategy = summaryAlreadyAppended ? "lastTwo" : "none"
-
-			// clear the context history at this point in time
-			config.taskState.conversationHistoryDeletedRange = config.services.contextManager.getNextTruncationRange(
-				apiConversationHistory,
-				config.taskState.conversationHistoryDeletedRange,
-				keepStrategy,
-			)
-			await config.messageState.saveClineMessagesAndUpdateHistory()
-			await config.services.contextManager.triggerApplyStandardContextTruncationNoticeChange(
-				Date.now(),
-				await ensureTaskDirectoryExists(config.taskId),
-				apiConversationHistory,
-			)
-
-			return formatResponse.toolResult(formatResponse.condense())
 		}
+		// If no response, the user accepted the condensed version
+		const apiConversationHistory = config.messageState.getApiConversationHistory()
+		const lastMessage = apiConversationHistory[apiConversationHistory.length - 1]
+		const summaryAlreadyAppended = lastMessage && lastMessage.role === "assistant"
+		const keepStrategy = summaryAlreadyAppended ? "lastTwo" : "none"
+
+		// clear the context history at this point in time
+		config.taskState.conversationHistoryDeletedRange = config.services.contextManager.getNextTruncationRange(
+			cleanClineStorageMessages(apiConversationHistory),
+			config.taskState.conversationHistoryDeletedRange,
+			keepStrategy,
+		)
+		await config.messageState.saveClineMessagesAndUpdateHistory()
+		await config.services.contextManager.triggerApplyStandardContextTruncationNoticeChange(
+			Date.now(),
+			await ensureTaskDirectoryExists(config.taskId),
+			cleanClineStorageMessages(apiConversationHistory),
+		)
+
+		return formatResponse.toolResult(formatResponse.condense())
 	}
 
 	async handlePartialBlock(block: ToolUse, uiHelpers: StronglyTypedUIHelpers): Promise<void> {

@@ -312,11 +312,6 @@
 					"when": "view == nexusai.SidebarProvider"
 				},
 				{
-					"command": "nexusai.accountButtonClicked",
-					"group": "navigation@5",
-					"when": "view == nexusai.SidebarProvider"
-				},
-				{
 					"command": "nexusai.settingsButtonClicked",
 					"group": "navigation@6",
 					"when": "view == nexusai.SidebarProvider"
@@ -411,6 +406,7 @@
 		"dev": "npm run protos && npm run watch",
 		"watch": "npx npm-run-all -p watch:*",
 		"watch:esbuild": "node esbuild.mjs --watch",
+		"watch:esbuild:test": "node esbuild.mjs --watch",
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
 		"package": "npm run check-types && npm run build:webview && npm run lint && node esbuild.mjs --production",
 		"protos": "node scripts/build-proto.mjs",
@@ -445,6 +441,7 @@
 		"install:all": "npm install && cd webview-ui && npm install",
 		"dev:webview": "cd webview-ui && npm run dev",
 		"build:webview": "cd webview-ui && npm run build",
+		"build:webview:test": "cd webview-ui && npm run build:test",
 		"test:webview": "cd webview-ui && npm run test",
 		"publish:marketplace": "vsce publish --allow-package-secrets sendgrid && ovsx publish",
 		"publish:marketplace:prerelease": "vsce publish --allow-package-secrets sendgrid --pre-release && ovsx publish --pre-release",
@@ -511,6 +508,7 @@
 		"ts-node": "^10.9.2",
 		"ts-proto": "^2.6.1",
 		"tsconfig-paths": "^4.2.0",
+		"tsx": "^4.21.0",
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
@@ -521,6 +519,7 @@
 		"@azure/identity": "^4.13.0",
 		"@bufbuild/protobuf": "^2.2.5",
 		"@cerebras/cerebras_cloud_sdk": "^1.35.0",
+		"@ffmpeg-installer/ffmpeg": "^1.1.0",
 		"@google-cloud/vertexai": "^1.9.3",
 		"@google/genai": "^1.30.0",
 		"@grpc/grpc-js": "^1.9.15",
@@ -553,6 +552,8 @@
 		"@sap-cloud-sdk/connectivity": "^4.2.0",
 		"@streamparser/json": "^0.0.22",
 		"@tailwindcss/vite": "^4.1.14",
+		"@trpc/client": "^11.15.1",
+		"@trpc/server": "^11.15.1",
 		"@types/uuid": "^10.0.0",
 		"@vscode/codicons": "^0.0.36",
 		"archiver": "^7.0.1",

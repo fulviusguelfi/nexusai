@@ -1,11 +1,9 @@
-import { StringRequest } from "@shared/proto/cline/common"
-import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.cline"
 import { REMOTE_URI_SCHEME } from "@shared/remote-config/constants"
 import { EyeIcon, InfoIcon, PenIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 function isWin32Path(filePath: string): boolean {
 	return /^[a-zA-Z]:\\/.test(filePath)
@@ -103,29 +101,26 @@ const RuleRow: React.FC<{
 	const handleEditClick = () => {
 		// For remote rules, use the special remote:// URI format
 		const filePath = isRemote ? `${REMOTE_URI_SCHEME}${ruleType === "workflow" ? "workflow" : "rule"}/${rulePath}` : rulePath
-		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFile.mutate({ value: filePath }).catch((err) => console.error("Failed to open file:", err))
 	}
 
 	const handleDeleteClick = () => {
 		if (ruleType === "skill") {
-			FileServiceClient.deleteSkillFile(
-				DeleteSkillRequest.create({
+			trpc.file.deleteSkillFile
+				.mutate({
 					skillPath: rulePath,
 					isGlobal,
-				}),
-			)
+				})
 				.then(() => onDeleteSkill?.())
 				.catch((err) => console.error("Failed to delete skill:", err))
 		} else {
-			FileServiceClient.deleteRuleFile(
-				RuleFileRequest.create({
+			trpc.file.deleteRuleFile
+				.mutate({
 					rulePath,
 					isGlobal,
 					type: ruleType || "cline",
-				}),
-			).catch((err) => console.error("Failed to delete rule file:", err))
+				})
+				.catch((err) => console.error("Failed to delete rule file:", err))
 		}
 	}
 

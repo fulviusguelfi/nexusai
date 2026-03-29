@@ -1,10 +1,10 @@
-import { Anthropic } from "@anthropic-ai/sdk"
+import type { ClineContent } from "@shared/messages/content"
 
 /**
  * Formats a content block to markdown for display in API request messages.
  * Used by Task class to format user content for the api_req_started message.
  */
-export function formatContentBlockToMarkdown(block: Anthropic.ContentBlockParam): string {
+export function formatContentBlockToMarkdown(block: ClineContent): string {
 	switch (block.type) {
 		case "text":
 			return block.text
@@ -25,13 +25,13 @@ export function formatContentBlockToMarkdown(block: Anthropic.ContentBlockParam)
 		case "tool_result":
 			if (typeof block.content === "string") {
 				return `[Tool${block.is_error ? " (Error)" : ""}]\n${block.content}`
-			} else if (Array.isArray(block.content)) {
+			}
+			if (Array.isArray(block.content)) {
 				return `[Tool${block.is_error ? " (Error)" : ""}]\n${block.content
 					.map((contentBlock) => formatContentBlockToMarkdown(contentBlock))
 					.join("\n")}`
-			} else {
-				return `[Tool${block.is_error ? " (Error)" : ""}]`
 			}
+			return `[Tool${block.is_error ? " (Error)" : ""}]`
 		default:
 			return "[Unexpected content type]"
 	}

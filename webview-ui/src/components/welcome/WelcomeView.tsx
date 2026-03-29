@@ -1,4 +1,3 @@
-import { BooleanRequest, EmptyRequest } from "@shared/proto/cline/common"
 import { VSCodeButton, VSCodeDivider, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 import ClineLogoWhite from "@/assets/ClineLogoWhite"
@@ -6,7 +5,7 @@ import ApiOptions from "@/components/settings/ApiOptions"
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useGitHubAuth } from "@/context/GitHubAuthContext"
-import { AccountServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { validateApiConfiguration } from "@/utils/validate"
 
 const WelcomeView = memo(() => {
@@ -33,7 +32,7 @@ const WelcomeView = memo(() => {
 				planModeApiProvider: "vscode-lm",
 				actModeApiProvider: "vscode-lm",
 			})
-			await StateServiceClient.setWelcomeViewCompleted(BooleanRequest.create({ value: true }))
+			await trpc.state.setWelcomeViewCompleted.mutate({ value: true })
 		} catch (error) {
 			console.error("Failed to configure GitHub Copilot provider:", error)
 		}
@@ -48,14 +47,15 @@ const WelcomeView = memo(() => {
 
 	const handleClineLogin = () => {
 		setIsClineLoading(true)
-		AccountServiceClient.accountLoginClicked(EmptyRequest.create())
+		trpc.account.accountLoginClicked
+			.mutate({})
 			.catch((err) => console.error("Failed to get login URL:", err))
 			.finally(() => setIsClineLoading(false))
 	}
 
 	const handleSubmit = async () => {
 		try {
-			await StateServiceClient.setWelcomeViewCompleted(BooleanRequest.create({ value: true }))
+			await trpc.state.setWelcomeViewCompleted.mutate({ value: true })
 		} catch (error) {
 			console.error("Failed to update API configuration or complete welcome view:", error)
 		}
@@ -112,17 +112,17 @@ const WelcomeView = memo(() => {
 
 				<VSCodeDivider className="my-1" />
 
-				{/* Secondary: Nexus AI account */}
+				{/* Secondary: Cline account */}
 				<div className="flex flex-col gap-2">
 					<p className="text-xs text-(--vscode-descriptionForeground) text-center m-0">
 						Or sign in to your{" "}
-						<VSCodeLink className="inline text-xs" href="https://nexusai.dev">
-							Nexus AI account
+						<VSCodeLink className="inline text-xs" href="https://cline.bot">
+							Cline account
 						</VSCodeLink>{" "}
-						to use Nexus AI's free tier and frontier models
+						to use Cline's free tier and frontier models
 					</p>
 					<VSCodeButton appearance="secondary" className="w-full" disabled={isClineLoading} onClick={handleClineLogin}>
-						{isClineLoading ? "Opening browser…" : "Sign in to Nexus AI"}
+						{isClineLoading ? "Opening browser…" : "Sign in to Cline"}
 						{isClineLoading && <span className="ml-1 animate-spin codicon codicon-refresh" />}
 					</VSCodeButton>
 				</div>

@@ -1,7 +1,7 @@
 import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { ApiHandler, ApiProviderInfo, buildApiHandler } from "@core/api"
 import { ApiStream } from "@core/api/transform/stream"
-import { AssistantMessageContent, parseAssistantMessageV2, ToolUse } from "@core/assistant-message"
+import { parseAssistantMessageV2 } from "@core/assistant-message"
 import { ContextManager } from "@core/context/context-management/ContextManager"
 import { checkContextWindowExceededError } from "@core/context/context-management/context-error-handling"
 import { getContextWindowInfo } from "@core/context/context-management/context-window-utils"
@@ -22,7 +22,6 @@ import {
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage"
 import { getHookModelContext } from "@core/hooks/hook-model-context"
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
-import { executePreCompactHookWithCleanup, HookCancellationError, HookExecution } from "@core/hooks/precompact-executor"
 import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController"
 import { parseMentions } from "@core/mentions"
 import { CommandPermissionController } from "@core/permissions"
@@ -60,6 +59,7 @@ import { ClineApiReqCancelReason, ClineApiReqInfo, ClineAsk, ClineMessage, Cline
 import { HistoryItem } from "@shared/HistoryItem"
 import { DEFAULT_LANGUAGE_SETTINGS, getLanguageKey, LanguageDisplay } from "@shared/Languages"
 import { USER_CONTENT_TAGS } from "@shared/messages/constants"
+import { cleanClineStorageMessages } from "@shared/messages/content"
 import { convertClineMessageToProto } from "@shared/proto-conversions/cline-message"
 import { ClineDefaultTool, READ_ONLY_TOOLS } from "@shared/tools"
 import { ClineAskResponse } from "@shared/WebviewMessage"
@@ -117,6 +117,8 @@ import { FocusChainManager } from "./focus-chain"
 import { MessageStateHandler } from "./message-state"
 import { StreamChunkCoordinator } from "./StreamChunkCoordinator"
 import { StreamResponseHandler } from "./StreamResponseHandler"
+import { ContextCompactor } from "./services/ContextCompactor"
+import { NativeToolCallProcessor } from "./services/NativeToolCallProcessor"
 import { TaskState } from "./TaskState"
 import { ToolExecutor } from "./ToolExecutor"
 import { detectAvailableCliTools, extractProviderDomainFromUrl, updateApiReqMsg } from "./utils"
@@ -256,6 +258,10 @@ export class Task {
 
 	// Command executor for running shell commands (extracted from executeCommandTool)
 	private commandExecutor!: CommandExecutor
+
+	// Extracted services
+	private nativeToolCallProcessor: NativeToolCallProcessor
+	private contextCompactor: ContextCompactor
 
 	constructor(params: TaskParams) {
 		const {
@@ -530,6 +536,23 @@ export class Task {
 		}
 
 		this.commandExecutor = new CommandExecutor(commandExecutorConfig, commandExecutorCallbacks)
+
+		// Extracted services
+		this.nativeToolCallProcessor = new NativeToolCallProcessor(this.taskState, this.messageStateHandler)
+		this.contextCompactor = new ContextCompactor({
+			taskId: this.taskId,
+			ulid: this.ulid,
+			taskState: this.taskState,
+			messageStateHandler: this.messageStateHandler,
+			stateManager: this.stateManager,
+			contextManager: this.contextManager,
+			api: this.api,
+			say: this.say.bind(this),
+			setActiveHookExecution: this.setActiveHookExecution.bind(this),
+			clearActiveHookExecution: this.clearActiveHookExecution.bind(this),
+			postStateToWebview: this.postStateToWebview.bind(this),
+			cancelTask: this.cancelTask.bind(this),
+		})
 
 		this.toolExecutor = new ToolExecutor(
 			this.taskState,
@@ -816,6 +839,15 @@ export class Task {
 				// await this.postStateToWebview()
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
+				if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+					const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+					Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+					if (ttsText) {
+						void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+							VoiceSessionManager.getInstance().requestSpeak(ttsText)
+						})
+					}
+				}
 				return undefined
 			}
 			// this is a new partial=false message, so add it like normal
@@ -831,6 +863,15 @@ export class Task {
 				modelInfo,
 			})
 			await this.postStateToWebview()
+			if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+				const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+				Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+				if (ttsText) {
+					void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+						VoiceSessionManager.getInstance().requestSpeak(ttsText)
+					})
+				}
+			}
 			return sayTs
 		}
 		// this is a new non-partial message, so add it like normal
@@ -846,13 +887,22 @@ export class Task {
 			modelInfo,
 		})
 		await this.postStateToWebview()
+		if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+			const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+			Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+			if (ttsText) {
+				void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
+					VoiceSessionManager.getInstance().requestSpeak(ttsText)
+				})
+			}
+		}
 		return sayTs
 	}
 
 	async sayAndCreateMissingParamError(toolName: ClineDefaultTool, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
-			`Cline tried to use ${toolName}${
+			`NexusAI tried to use ${toolName}${
 				relPath ? ` for '${relPath.toPosix()}'` : ""
 			} without value for required parameter '${paramName}'. Retrying...`,
 		)
@@ -909,21 +959,6 @@ export class Task {
 
 		// Log for debugging/telemetry
 		Logger.log(`[Task ${this.taskId}] ${hookName} hook cancelled (userInitiated: ${wasCancelled})`)
-	}
-
-	/**
-	 * Calculate the new deleted range for PreCompact hook
-	 * @param apiConversationHistory The full API conversation history
-	 * @returns Tuple with start and end indices for the deleted range
-	 */
-	private calculatePreCompactDeletedRange(apiConversationHistory: ClineStorageMessage[]): [number, number] {
-		const newDeletedRange = this.contextManager.getNextTruncationRange(
-			apiConversationHistory,
-			this.taskState.conversationHistoryDeletedRange,
-			"quarter", // Force aggressive truncation on error
-		)
-
-		return newDeletedRange || [0, 0]
 	}
 
 	private async runUserPromptSubmitHook(
@@ -1720,70 +1755,6 @@ export class Task {
 		return apiLike.getLastRequestId?.() ?? apiLike.lastGenerationId
 	}
 
-	private async handleContextWindowExceededError(): Promise<void> {
-		const apiConversationHistory = this.messageStateHandler.getApiConversationHistory()
-
-		// Run PreCompact hook before truncation
-		const hooksEnabled = getHooksEnabledSafe(this.stateManager.getGlobalSettingsKey("hooksEnabled"))
-		if (hooksEnabled) {
-			try {
-				// Calculate what the new deleted range will be
-				const deletedRange = this.calculatePreCompactDeletedRange(apiConversationHistory)
-
-				// Execute hook - throws HookCancellationError if cancelled
-				await executePreCompactHookWithCleanup({
-					taskId: this.taskId,
-					ulid: this.ulid,
-					modelContext: getHookModelContext(this.api, this.stateManager),
-					apiConversationHistory,
-					conversationHistoryDeletedRange: this.taskState.conversationHistoryDeletedRange,
-					contextManager: this.contextManager,
-					clineMessages: this.messageStateHandler.getClineMessages(),
-					messageStateHandler: this.messageStateHandler,
-					compactionStrategy: "standard-truncation-lastquarter",
-					deletedRange,
-					say: this.say.bind(this),
-					setActiveHookExecution: async (hookExecution: HookExecution | undefined) => {
-						if (hookExecution) {
-							await this.setActiveHookExecution(hookExecution)
-						}
-					},
-					clearActiveHookExecution: this.clearActiveHookExecution.bind(this),
-					postStateToWebview: this.postStateToWebview.bind(this),
-					taskState: this.taskState,
-					cancelTask: this.cancelTask.bind(this),
-					hooksEnabled,
-				})
-			} catch (error) {
-				// If hook was cancelled, re-throw to stop compaction
-				if (error instanceof HookCancellationError) {
-					throw error
-				}
-
-				// Graceful degradation: Log error but continue with truncation
-				Logger.error("[PreCompact] Hook execution failed:", error)
-			}
-		}
-
-		// Proceed with standard truncation
-		const newDeletedRange = this.contextManager.getNextTruncationRange(
-			apiConversationHistory,
-			this.taskState.conversationHistoryDeletedRange,
-			"quarter", // Force aggressive truncation
-		)
-
-		this.taskState.conversationHistoryDeletedRange = newDeletedRange
-
-		await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
-		await this.contextManager.triggerApplyStandardContextTruncationNoticeChange(
-			Date.now(),
-			await ensureTaskDirectoryExists(this.taskId),
-			apiConversationHistory,
-		)
-
-		this.taskState.didAutomaticallyRetryFailedApiRequest = true
-	}
-
 	async *attemptApiRequest(previousApiReqIndex: number): ApiStream {
 		// Wait for MCP servers to be connected before generating system prompt
 		await pWaitFor(() => this.mcpHub.isConnecting !== true, {
@@ -1919,7 +1890,7 @@ export class Task {
 		await this.writePromptMetadataArtifacts({ systemPrompt, providerInfo })
 
 		const contextManagementMetadata = await this.contextManager.getNewContextMessagesAndMetadata(
-			this.messageStateHandler.getApiConversationHistory(),
+			cleanClineStorageMessages(this.messageStateHandler.getApiConversationHistory()),
 			this.messageStateHandler.getClineMessages(),
 			this.api,
 			this.taskState.conversationHistoryDeletedRange,
@@ -1954,14 +1925,15 @@ export class Task {
 			ErrorService.get().logMessage(clineError.message)
 
 			if (isContextWindowExceededError && !this.taskState.didAutomaticallyRetryFailedApiRequest) {
-				await this.handleContextWindowExceededError()
+				await this.contextCompactor.handleContextWindowExceededError()
 			} else {
 				// request failed after retrying automatically once, ask user if they want to retry again
 				// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 
 				if (isContextWindowExceededError) {
+					const cleanedApiHistory = cleanClineStorageMessages(this.messageStateHandler.getApiConversationHistory())
 					const truncatedConversationHistory = this.contextManager.getTruncatedMessages(
-						this.messageStateHandler.getApiConversationHistory(),
+						cleanedApiHistory,
 						this.taskState.conversationHistoryDeletedRange,
 					)
 
@@ -2300,14 +2272,14 @@ export class Task {
 			if (autoApprovalSettings.enableNotifications) {
 				showSystemNotification({
 					subtitle: "Error",
-					message: "Cline is having trouble. Would you like to continue the task?",
+					message: "NexusAI is having trouble. Would you like to continue the task?",
 				})
 			}
 			const { response, text, images, files } = await this.ask(
 				"mistake_limit_reached",
 				this.api.getModel().id.includes("claude")
-					? `This may indicate a failure in Cline's thought process or inability to use a tool properly, which can be mitigated with some user guidance (e.g. "Try breaking down the task into smaller steps").`
-					: "Cline uses complex prompts and iterative task execution that may be challenging for less capable models. For best results, it's recommended to use Claude 4.5 Sonnet for its advanced agentic coding capabilities.",
+					? `This may indicate a failure in NexusAI's thought process or inability to use a tool properly, which can be mitigated with some user guidance (e.g. "Try breaking down the task into smaller steps").`
+					: "NexusAI uses complex prompts and iterative task execution that may be challenging for less capable models. For best results, it's recommended to use Claude Sonnet for its advanced agentic coding capabilities.",
 			)
 			if (response === "messageResponse") {
 				// Display the user's message in the chat UI
@@ -2370,38 +2342,45 @@ export class Task {
 			this.checkpointManager &&
 			!this.taskState.checkpointManagerErrorMessage
 		) {
-			await this.say("checkpoint_created") // Now this is conditional
-			const lastCheckpointMessageIndex = findLastIndex(
-				this.messageStateHandler.getClineMessages(),
-				(m) => m.say === "checkpoint_created",
-			)
-			if (lastCheckpointMessageIndex !== -1) {
-				const commitPromise = this.checkpointManager?.commit()
-				this.initialCheckpointCommitPromise = commitPromise
-				commitPromise
-					?.then(async (commitHash) => {
-						if (commitHash) {
-							await this.messageStateHandler.updateClineMessage(lastCheckpointMessageIndex, {
-								lastCheckpointHash: commitHash,
+			const checkpointInitPromise = ensureCheckpointInitialized({ checkpointManager: this.checkpointManager })
+				.then(async () => {
+					// Checkpoint initialized successfully — create initial checkpoint
+					await this.say("checkpoint_created")
+					const lastCheckpointMessageIndex = findLastIndex(
+						this.messageStateHandler.getClineMessages(),
+						(m) => m.say === "checkpoint_created",
+					)
+					if (lastCheckpointMessageIndex !== -1) {
+						const commitPromise = this.checkpointManager?.commit()
+						this.initialCheckpointCommitPromise = commitPromise
+						commitPromise
+							?.then(async (commitHash) => {
+								if (commitHash) {
+									await this.messageStateHandler.updateClineMessage(lastCheckpointMessageIndex, {
+										lastCheckpointHash: commitHash,
+									})
+								}
 							})
-							// saveClineMessagesAndUpdateHistory will be called later after API response,
-							// so no need to call it here unless this is the only modification to this message.
-							// For now, assuming it's handled later.
-						}
+							.catch((error) => {
+								Logger.error(
+									`[TaskCheckpointManager] Failed to create checkpoint commit for task ${this.taskId}:`,
+									error,
+								)
+							})
+					}
+				})
+				.catch((error) => {
+					const errorMessage = error instanceof Error ? error.message : "Unknown error"
+					Logger.error("Failed to initialize checkpoint manager:", errorMessage)
+					this.taskState.checkpointManagerErrorMessage = errorMessage
+					HostProvider.window.showMessage({
+						type: ShowMessageType.WARNING,
+						message: `Checkpoint initialization timed out: ${errorMessage}`,
 					})
-					.catch((error) => {
-						Logger.error(`[TaskCheckpointManager] Failed to create checkpoint commit for task ${this.taskId}:`, error)
-					})
-			}
-		} else if (
-			isFirstRequest &&
-			this.stateManager.getGlobalSettingsKey("enableCheckpointsSetting") &&
-			!this.checkpointManager &&
-			this.taskState.checkpointManagerErrorMessage
-		) {
-			// Checkpoints are enabled, but tracker failed to initialize.
-			// checkpointManagerErrorMessage is already set and will be part of the state.
-			// No explicit UI message here, error message will be in ExtensionState.
+				})
+
+			// Store for later await if needed (e.g. saveCheckpoint)
+			this.initialCheckpointCommitPromise = checkpointInitPromise.then(() => undefined)
 		}
 
 		// Determine if we should compact context window
@@ -2451,8 +2430,9 @@ export class Task {
 
 				// Determine whether we can save enough tokens from context rewriting to skip auto-compact
 				if (shouldCompact) {
+					const cleanedHistory = cleanClineStorageMessages(this.messageStateHandler.getApiConversationHistory())
 					shouldCompact = await this.contextManager.attemptFileReadOptimization(
-						this.messageStateHandler.getApiConversationHistory(),
+						cleanedHistory,
 						this.taskState.conversationHistoryDeletedRange,
 						this.messageStateHandler.getClineMessages(),
 						previousApiReqIndex,
@@ -2508,6 +2488,15 @@ export class Task {
 					this.cwd,
 					isMultiRootEnabled(this.stateManager),
 				),
+			})
+		}
+
+		// For voice messages, inject a text hint visible to the LLM so it calls attempt_completion
+		// instead of looping with follow-up questions (voice UX requires clean single-shot completion)
+		if (this.taskState.isVoiceInput) {
+			userContent.push({
+				type: "text",
+				text: "<voice_input_hint>\nThis message was sent via voice input. When your response is complete, call attempt_completion directly rather than asking follow-up questions or waiting for confirmation.\n</voice_input_hint>",
 			})
 		}
 
@@ -2801,7 +2790,10 @@ export class Task {
 								this.taskState.toolUseIdMap.set(chunk.tool_call.call_id, chunk.tool_call.function.id)
 							}
 
-							await this.processNativeToolCalls(assistantTextOnly, toolUseHandler.getPartialToolUsesAsContent())
+							await this.nativeToolCallProcessor.process(
+								assistantTextOnly,
+								toolUseHandler.getPartialToolUsesAsContent(),
+							)
 							break
 						}
 						case "text": {
@@ -3060,7 +3052,7 @@ export class Task {
 			})
 			// in case there are native tool calls pending
 			const partialToolBlocks = toolUseHandler.getPartialToolUsesAsContent()?.map((block) => ({ ...block, partial: false }))
-			await this.processNativeToolCalls(assistantTextOnly, partialToolBlocks)
+			await this.nativeToolCallProcessor.process(assistantTextOnly, partialToolBlocks)
 
 			if (partialBlocks.length > 0) {
 				await this.presentAssistantMessage() // if there is content to update then it will complete and update this.userMessageContentReady to true, which we pwaitfor before making the next request. all this is really doing is presenting the last partial message that we just set to complete
@@ -3143,7 +3135,9 @@ export class Task {
 
 				let response: ClineAskResponse
 
-				const noResponseErrorMessage = "No assistant message was received. Would you like to retry the request?"
+				const noResponseErrorMessage =
+					"No assistant message was received. " +
+					"Possible fixes: try a different model, reduce context size, or check your API provider status."
 
 				if (this.taskState.autoRetryAttempts < 3) {
 					// Auto-retry enabled with max 3 attempts: automatically approve the retry
@@ -3326,53 +3320,6 @@ export class Task {
 		}
 
 		return [processedUserContent, environmentDetails, clinerulesError]
-	}
-
-	async processNativeToolCalls(assistantTextOnly: string, toolBlocks: ToolUse[]) {
-		if (!toolBlocks?.length) {
-			return
-		}
-		// For native tool calls, mark all pending tool uses as complete
-		const prevLength = this.taskState.assistantMessageContent.length
-
-		// Get finalized tool uses and mark them as complete
-		const textContent = assistantTextOnly.trim()
-		const textBlocks: AssistantMessageContent[] = textContent ? [{ type: "text", content: textContent, partial: false }] : []
-
-		// IMPORTANT: Finalize any partial text ClineMessage before we skip over it.
-		//
-		// When native tool calls are processed, we set currentStreamingContentIndex to skip
-		// the text block (line below sets it to textBlocks.length). This means presentAssistantMessage
-		// will never call say("text", content, false) for this text block.
-		//
-		// Without this fix, the partial text ClineMessage remains with partial=true. In the UI
-		// (ChatView), partial messages that are not the last message don't get displayed anywhere:
-		// - Not in completedMessages (because partial=true)
-		// - Not in currentMessage (because it's not the last message - tool message came after)
-		//
-		// The text appears to "disappear" when tool calls start, even though it's still in the array.
-		const clineMessages = this.messageStateHandler.getClineMessages()
-		const lastMessage = clineMessages.at(-1)
-		const shouldFinalizePartialText = textBlocks.length > 0
-		if (shouldFinalizePartialText && lastMessage?.partial && lastMessage.type === "say" && lastMessage.say === "text") {
-			lastMessage.text = textContent
-			lastMessage.partial = false
-			await this.messageStateHandler.saveClineMessagesAndUpdateHistory()
-			const protoMessage = convertClineMessageToProto(lastMessage)
-			await sendPartialMessageEvent(protoMessage)
-		}
-
-		this.taskState.assistantMessageContent = [...textBlocks, ...toolBlocks]
-
-		// Reset index to the first tool block position so they can be executed
-		// This fixes the issue where tools remain unexecuted because the index
-		// advanced past them or was out of bounds during streaming
-		if (toolBlocks.length > 0) {
-			this.taskState.currentStreamingContentIndex = textBlocks.length
-			this.taskState.userMessageContentReady = false
-		} else if (this.taskState.assistantMessageContent.length > prevLength) {
-			this.taskState.userMessageContentReady = false
-		}
 	}
 
 	/**

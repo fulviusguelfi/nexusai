@@ -1,8 +1,7 @@
 import { cn } from "@heroui/react"
-import { StringRequest } from "@shared/proto/cline/common"
 import React, { memo, useLayoutEffect, useRef, useState } from "react"
 import { useWindowSize } from "react-use"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface ThumbnailsProps {
 	images: string[]
@@ -43,15 +42,11 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 	const isDeletableFiles = setFiles !== undefined
 
 	const handleImageClick = (image: string) => {
-		FileServiceClient.openImage(StringRequest.create({ value: image })).catch((err) =>
-			console.error("Failed to open image:", err),
-		)
+		trpc.file.openImage.mutate({ value: image }).catch((err) => console.error("Failed to open image:", err))
 	}
 
 	const handleFileClick = (filePath: string) => {
-		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFile.mutate({ value: filePath }).catch((err) => console.error("Failed to open file:", err))
 	}
 
 	return (
@@ -103,7 +98,8 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 									color: "var(--vscode-foreground)",
 									fontSize: 10,
 									fontWeight: "bold",
-								}}></span>
+								}}
+							/>
 						</div>
 					)}
 				</div>
@@ -137,7 +133,8 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 								style={{
 									fontSize: 16,
 									color: "var(--vscode-foreground)",
-								}}></span>
+								}}
+							/>
 							<span
 								style={{
 									fontSize: 7,
@@ -174,7 +171,8 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 										color: "var(--vscode-foreground)",
 										fontSize: 10,
 										fontWeight: "bold",
-									}}></span>
+									}}
+								/>
 							</div>
 						)}
 					</div>

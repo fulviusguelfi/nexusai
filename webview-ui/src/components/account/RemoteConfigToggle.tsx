@@ -1,8 +1,8 @@
-import { UpdateSettingsRequest, UserOrganization } from "@shared/proto/index.cline"
+import { UserOrganization } from "@shared/proto/index.cline"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useRef } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { isAdminOrOwner } from "./helpers"
 
 export function RemoteConfigToggle({ activeOrganization }: { activeOrganization: UserOrganization | null }) {
@@ -15,11 +15,9 @@ export function RemoteConfigToggle({ activeOrganization }: { activeOrganization:
 	}
 
 	const onUpdateToggle = async (value: boolean) => {
-		await StateServiceClient.updateSettings(
-			UpdateSettingsRequest.create({
-				optOutOfRemoteConfig: value,
-			}),
-		)
+		await trpc.state.updateSettings.mutate({
+			optOutOfRemoteConfig: value,
+		})
 	}
 
 	return (

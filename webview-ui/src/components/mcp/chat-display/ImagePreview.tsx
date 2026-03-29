@@ -1,8 +1,7 @@
-import { StringRequest } from "@shared/proto/cline/common"
 import DOMPurify from "dompurify"
 import React from "react"
 import ChatErrorBoundary from "@/components/chat/ChatErrorBoundary"
-import { FileServiceClient, WebServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { checkIfImageUrl, formatUrlForOpening, getSafeHostname } from "./utils/mcpRichUtil"
 
 interface ImagePreviewProps {
@@ -32,7 +31,7 @@ class ImagePreview extends React.Component<
 	}
 
 	// Track aspect ratio for proper display
-	private aspectRatio: number = 1
+	private aspectRatio = 1
 
 	componentDidMount() {
 		// Set up a timeout to handle cases where the image never loads or errors
@@ -229,11 +228,7 @@ class ImagePreview extends React.Component<
 					className="image-preview-error"
 					onClick={async () => {
 						try {
-							await WebServiceClient.openInBrowser(
-								StringRequest.create({
-									value: DOMPurify.sanitize(url),
-								}),
-							)
+							await trpc.web.openInBrowser.mutate({ value: DOMPurify.sanitize(url) })
 						} catch (err) {
 							console.error("Error opening URL in browser:", err)
 						}
@@ -261,14 +256,10 @@ class ImagePreview extends React.Component<
 					try {
 						// For data URIs, open in VS Code editor (like mermaid diagrams)
 						if (url.startsWith("data:")) {
-							await FileServiceClient.openImage(StringRequest.create({ value: url }))
+							await trpc.file.openImage.mutate({ value: url })
 						} else {
 							// For regular URLs, open in browser
-							await WebServiceClient.openInBrowser(
-								StringRequest.create({
-									value: DOMPurify.sanitize(formatUrlForOpening(url)),
-								}),
-							)
+							await trpc.web.openInBrowser.mutate({ value: DOMPurify.sanitize(formatUrlForOpening(url)) })
 						}
 					} catch (err) {
 						console.error("Error opening image:", err)

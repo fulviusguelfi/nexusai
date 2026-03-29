@@ -35,8 +35,18 @@ export async function askResponse(controller: Controller, request: AskResponseRe
 				return Empty.create()
 		}
 
+		// If this message follows a voice transcription, mark it as voice input so the task
+		// injects the <voice_input_hint> text block that the LLM sees
+		if (controller.pendingVoiceInput) {
+			controller.task.taskState.isVoiceInput = true
+			controller.pendingVoiceInput = false
+		}
+
 		// Call the task's handler for webview responses
 		await controller.task.handleWebviewAskResponse(responseType, request.text, request.images, request.files)
+
+		// Reset voice flag after the message has been handed off to the task
+		controller.task.taskState.isVoiceInput = false
 
 		return Empty.create()
 	} catch (error) {

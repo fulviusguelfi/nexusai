@@ -1,5 +1,4 @@
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
-import { ResetStateRequest } from "@shared/proto/cline/state"
 import { UserOrganization } from "@shared/proto/index.cline"
 import {
 	CheckCheck,
@@ -10,6 +9,7 @@ import {
 	SlidersHorizontal,
 	SquareMousePointer,
 	SquareTerminal,
+	Volume2,
 	Wrench,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { isAdminOrOwner } from "../account/helpers"
 import { Tab, TabContent, TabList, TabTrigger } from "../common/Tab"
 import ViewHeader from "../common/ViewHeader"
@@ -86,10 +86,10 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	},
 	{
 		id: "voice",
-		name: "Voice",
-		tooltipText: "Voice Settings",
-		headerText: "Voice Settings",
-		icon: Wrench,
+		name: "Sound",
+		tooltipText: "Sound Settings",
+		headerText: "Sound Settings",
+		icon: Volume2,
 	},
 	{
 		id: "general",
@@ -176,7 +176,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 			return
 		}
 
-		const grpcMessage = message.grpc_response?.message
+		const grpcMessage = message.grpc_response?.message as { key?: string; value?: string } | undefined
 		if (grpcMessage?.key !== "scrollToSettings") {
 			return
 		}
@@ -214,7 +214,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 	// Memoized reset state handler
 	const handleResetState = useCallback(async (resetGlobalState?: boolean) => {
 		try {
-			await StateServiceClient.resetState(ResetStateRequest.create({ global: resetGlobalState }))
+			await trpc.state.resetState.mutate({ global: resetGlobalState })
 		} catch (error) {
 			console.error("Failed to reset state:", error)
 		}

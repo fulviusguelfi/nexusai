@@ -36,7 +36,7 @@ class ClineEndpoint {
 	private onPremiseConfig: EndpointsFileSchema | null = null
 	private environment: Environment = Environment.production
 	// Track if config came from bundled file (enterprise distribution)
-	private isBundled: boolean = false
+	private isBundled = false
 
 	private constructor() {
 		// Set environment at module load. Use override if provided.
@@ -278,9 +278,6 @@ class ClineEndpoint {
 		}
 
 		switch (env.toLowerCase()) {
-			case "staging":
-				this.environment = Environment.staging
-				break
 			case "local":
 				this.environment = Environment.local
 				break
@@ -307,18 +304,11 @@ class ClineEndpoint {
 
 		// Standard mode: use built-in environment URLs
 		switch (this.environment) {
-			case Environment.staging:
-				return {
-					environment: Environment.staging,
-					appBaseUrl: "https://staging-app.cline.bot",
-					apiBaseUrl: "https://core-api.staging.int.cline.bot",
-					mcpBaseUrl: "https://core-api.staging.int.cline.bot/v1/mcp",
-				}
 			case Environment.local:
 				return {
 					environment: Environment.local,
-					appBaseUrl: "http://localhost:3000",
-					apiBaseUrl: "http://localhost:7777",
+					appBaseUrl: "https://app.cline.bot",
+					apiBaseUrl: "https://api.cline.bot",
 					mcpBaseUrl: "https://api.cline.bot/v1/mcp",
 				}
 			default:

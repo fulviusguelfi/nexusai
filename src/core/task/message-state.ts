@@ -1,3 +1,4 @@
+import { Anthropic } from "@anthropic-ai/sdk"
 import CheckpointTracker from "@integrations/checkpoints/CheckpointTracker"
 import { EventEmitter } from "events"
 import getFolderSize from "get-folder-size"
@@ -8,7 +9,7 @@ import { combineCommandSequences } from "@/shared/combineCommandSequences"
 import { ClineMessage } from "@/shared/ExtensionMessage"
 import { getApiMetrics } from "@/shared/getApiMetrics"
 import { HistoryItem } from "@/shared/HistoryItem"
-import { ClineStorageMessage } from "@/shared/messages/content"
+import { ClineStorageMessage, cleanClineStorageMessages } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import { getCwd, getDesktopDir } from "@/utils/path"
 import { ensureTaskDirectoryExists, saveApiConversationHistory, saveClineMessages } from "../storage/disk"
@@ -92,6 +93,14 @@ export class MessageStateHandler extends EventEmitter<MessageStateHandlerEvents>
 
 	getApiConversationHistory(): ClineStorageMessage[] {
 		return this.apiConversationHistory
+	}
+
+	/**
+	 * Get API conversation history with metadata blocks filtered out.
+	 * Use this method when passing to functions that expect clean Anthropic.MessageParam[].
+	 */
+	getCleanApiConversationHistory(): Anthropic.MessageParam[] {
+		return cleanClineStorageMessages(this.apiConversationHistory)
 	}
 
 	setApiConversationHistory(newHistory: ClineStorageMessage[]): void {

@@ -1,8 +1,7 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useEffect, useRef, useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { BrowserServiceClient } from "../../services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface ConnectionInfo {
 	isConnected: boolean
@@ -27,7 +26,7 @@ export const BrowserSettingsMenu = () => {
 		;(async () => {
 			try {
 				console.log("[DEBUG] SENDING BROWSER CONNECTION INFO REQUEST")
-				const info = await BrowserServiceClient.getBrowserConnectionInfo(EmptyRequest.create({}))
+				const info = await trpc.browser.getBrowserConnectionInfo.query({})
 				console.log("[DEBUG] GOT BROWSER REPLY:", info, typeof info)
 				setConnectionInfo({
 					isConnected: info.isConnected,
@@ -73,7 +72,7 @@ export const BrowserSettingsMenu = () => {
 		if (!showInfoPopover) {
 			const fetchConnectionInfo = async () => {
 				try {
-					const info = await BrowserServiceClient.getBrowserConnectionInfo(EmptyRequest.create({}))
+					const info = await trpc.browser.getBrowserConnectionInfo.query({})
 					setConnectionInfo({
 						isConnected: info.isConnected,
 						isRemote: info.isRemote,
@@ -92,20 +91,19 @@ export const BrowserSettingsMenu = () => {
 	const getIconClass = () => {
 		if (connectionInfo.isRemote) {
 			return "codicon-remote"
-		} else {
-			return connectionInfo.isConnected ? "codicon-vm-running" : "codicon-info"
 		}
+		return connectionInfo.isConnected ? "codicon-vm-running" : "codicon-info"
 	}
 
 	// Determine icon color based on connection state
 	const getIconColor = () => {
 		if (connectionInfo.isRemote) {
 			return connectionInfo.isConnected ? "var(--vscode-charts-blue)" : "var(--vscode-foreground)"
-		} else if (connectionInfo.isConnected) {
-			return "var(--vscode-charts-green)"
-		} else {
-			return "var(--vscode-foreground)"
 		}
+		if (connectionInfo.isConnected) {
+			return "var(--vscode-charts-green)"
+		}
+		return "var(--vscode-foreground)"
 	}
 
 	// Check connection status every second to keep icon in sync using gRPC
@@ -113,7 +111,7 @@ export const BrowserSettingsMenu = () => {
 		// Function to fetch connection info
 		const fetchConnectionInfo = async () => {
 			try {
-				const info = await BrowserServiceClient.getBrowserConnectionInfo(EmptyRequest.create({}))
+				const info = await trpc.browser.getBrowserConnectionInfo.query({})
 				setConnectionInfo({
 					isConnected: info.isConnected,
 					isRemote: info.isRemote,

@@ -1,14 +1,13 @@
 import { requestyDefaultModelId, requestyDefaultModelInfo } from "@shared/api"
 import { toRequestyServiceUrl } from "@shared/clients/requesty"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeLink, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import Fuse from "fuse.js"
 import React, { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { useMount } from "react-use"
 import styled from "styled-components"
+import { trpc } from "@/services/trpc-client"
 import { useExtensionState } from "../../context/ExtensionStateContext"
-import { ModelsServiceClient } from "../../services/grpc-client"
 import { highlight } from "../history/HistoryView"
 import { ModelInfoView } from "./common/ModelInfoView"
 import ThinkingBudgetSlider from "./ThinkingBudgetSlider"
@@ -63,7 +62,8 @@ const RequestyModelPicker: React.FC<RequestyModelPickerProps> = ({ isPopup, base
 	}, [apiConfiguration, currentMode])
 
 	useMount(() => {
-		ModelsServiceClient.refreshRequestyModels(EmptyRequest.create({}))
+		trpc.models.refreshRequestyModels
+			.mutate({})
 			.then((response) => {
 				setRequestyModels({
 					[requestyDefaultModelId]: requestyDefaultModelInfo,

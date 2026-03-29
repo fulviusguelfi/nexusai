@@ -2,6 +2,7 @@ import { EmptyRequest } from "@shared/proto/cline/common"
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 export interface GitHubUser {
 	login?: string
@@ -55,7 +56,7 @@ export const GitHubAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 	const signIn = async (): Promise<boolean> => {
 		setIsSigningIn(true)
 		try {
-			const state = await AccountServiceClient.githubSignIn(EmptyRequest.create())
+			const state = await trpc.account.githubSignIn.mutate({})
 			setIsSignedIn(state.isSignedIn)
 			if (state.isSignedIn) {
 				setGithubUser({
@@ -76,7 +77,7 @@ export const GitHubAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
 	const signOut = async () => {
 		try {
-			await AccountServiceClient.githubSignOut(EmptyRequest.create())
+			await trpc.account.githubSignOut.mutate({})
 			setIsSignedIn(false)
 			setGithubUser(null)
 		} catch (error) {

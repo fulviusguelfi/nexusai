@@ -1,4 +1,3 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import {
 	VSCodeButton,
 	VSCodeDropdown,
@@ -10,7 +9,7 @@ import {
 } from "@vscode/webview-ui-toolkit/react"
 import { useEffect, useMemo, useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import McpMarketplaceCard from "./McpMarketplaceCard"
 import McpSubmitCard from "./McpSubmitCard"
 
@@ -73,7 +72,7 @@ const McpMarketplaceView = () => {
 		}
 	}, [mcpMarketplaceCatalog])
 
-	const fetchMarketplace = (forceRefresh: boolean = false) => {
+	const fetchMarketplace = (forceRefresh = false) => {
 		if (forceRefresh) {
 			setIsRefreshing(true)
 		} else {
@@ -82,7 +81,8 @@ const McpMarketplaceView = () => {
 		setError(null)
 
 		if (showMarketplace) {
-			McpServiceClient.refreshMcpMarketplace(EmptyRequest.create({}))
+			trpc.mcp.refreshMcpMarketplace
+				.mutate({})
 				.then((response) => {
 					setMcpMarketplaceCatalog(response)
 				})

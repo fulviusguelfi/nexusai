@@ -51,11 +51,41 @@ export class SshUploadToolHandler implements IFullyManagedTool {
 					stream.on("data", () => {})
 					stream.stderr.on("data", () => {})
 					stream.stderr.on("error", () => {})
-					stream.on("close", (code: number) => {
-						if (code && code !== 0) return reject(new Error(`upload exited with code ${code}`))
-						resolveFn()
+
+					// Guard flag to prevent double-resolution
+					let uploadDone = false
+					const finalize = (code: number | null, error?: Error) => {
+						if (uploadDone) return
+						uploadDone = true
+						if (error) {
+							reject(error)
+						} else if (code === 0 || code === undefined) {
+							resolveFn()
+						} else {
+							reject(new Error(`upload exited with code ${code}`))
+						}
+					}
+
+					stream.on("end", () => {
+						// Windows behavior: 'end' fires but NO exit code available
+						// Wait for 'close' with actual code. If only 'end' fires, timeout after 2s
+						if (!uploadDone) {
+							const timeoutId = setTimeout(() => {
+								finalize(1, new Error("SSH upload stream ended without exit code (Windows timeout)"))
+							}, 2000)
+							stream.once("close", (code: number) => {
+								clearTimeout(timeoutId)
+								finalize(code)
+							})
+						}
 					})
-					stream.on("error", reject)
+
+					stream.on("close", (code: number) => {
+						finalize(code)
+					})
+					stream.on("error", (err: Error) => {
+						finalize(1, err)
+					})
 					stream.write(content)
 					stream.end()
 				})

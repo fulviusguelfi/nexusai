@@ -1,0 +1,40 @@
+
+> nexusai@1.0.0-alpha compile
+> npm run check-types && npm run lint && node esbuild.mjs
+
+
+> nexusai@1.0.0-alpha check-types
+> npm run protos && npx tsc --noEmit && cd webview-ui && npx tsc --noEmit
+
+
+> nexusai@1.0.0-alpha protos
+> node scripts/build-proto.mjs
+
+Compiling Protocol Buffers...
+Processing 22 proto files from C:\Users\Usuario\Desktop\cline\proto
+Generated ProtoBus files at:
+- C:\Users\Usuario\Desktop\cline\webview-ui\src\services\grpc-client.ts
+- C:\Users\Usuario\Desktop\cline\src\generated\hosts\vscode\protobus-service-types.ts
+- C:\Users\Usuario\Desktop\cline\src\generated\hosts\vscode\protobus-services.ts
+- C:\Users\Usuario\Desktop\cline\src\generated\hosts\standalone\protobus-server-setup.ts
+Generated Host Bridge client files at:
+- C:\Users\Usuario\Desktop\cline\src\generated\hosts\host-bridge-client-types.ts
+- C:\Users\Usuario\Desktop\cline\src\generated\hosts\standalone\host-bridge-clients.ts
+- C:\Users\Usuario\Desktop\cline\src\generated\hosts\vscode\hostbridge-grpc-service-config.ts
+
+> nexusai@1.0.0-alpha postprotos
+> biome format src/shared/proto src/core/controller src/hosts/ webview-ui/src/services src/generated --write --no-errors-on-unmatched
+
+Formatted 273 files in 208ms. No fixes applied.
+
+> nexusai@1.0.0-alpha lint
+> biome lint --no-errors-on-unmatched --files-ignore-unknown=true --diagnostic-level=error && npm run lint:proto
+
+Checked 1417 files in 3s. No fixes applied.
+
+> nexusai@1.0.0-alpha lint:proto
+> bash ./scripts/proto-lint.sh
+
+Warning: node not found in bash PATH, skipping proto lint
+[watch] build started
+[watch] build finished

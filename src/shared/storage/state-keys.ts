@@ -92,11 +92,14 @@ const GLOBAL_STATE_FIELDS = {
 	// SSH Server Registry — persisted across sessions (credentials stored separately in SecretStorage)
 	sshServerProfiles: { default: [] as import("@shared/ssh/SshServerProfile").SshServerProfile[] },
 	// Voice settings
-	voiceTtsEnabled: { default: false as boolean },
-	voiceSttEnabled: { default: false as boolean },
+	voiceTtsEnabled: { default: true as boolean },
+	voiceSttEnabled: { default: true as boolean },
 	voiceInputDeviceId: { default: undefined as string | undefined },
 	voiceOutputDeviceId: { default: undefined as string | undefined },
 	voicePiperVoice: { default: "en_US-lessac-medium" as string },
+	voiceSilenceThresholdMs: { default: 700 as number },
+	voiceGracePeriodMs: { default: 2000 as number },
+	voiceMetadataEnabled: { default: true as boolean },
 } satisfies FieldDefinitions
 
 // Fields that map directly to ApiHandlerOptions in @shared/api.ts

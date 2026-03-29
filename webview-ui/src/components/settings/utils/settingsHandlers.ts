@@ -1,5 +1,5 @@
 import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/cline/state"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 /**
  * Converts values to their corresponding proto format
@@ -36,7 +36,7 @@ export const updateSetting = (field: keyof UpdateSettingsRequest, value: any) =>
 	const convertedValue = convertToProtoValue(field, value)
 	updateRequest[field] = convertedValue
 
-	StateServiceClient.updateSettings(UpdateSettingsRequest.create(updateRequest)).catch((error) => {
+	trpc.state.updateSettings.mutate(updateRequest).catch((error) => {
 		console.error(`Failed to update setting ${field}:`, error)
 	})
 }

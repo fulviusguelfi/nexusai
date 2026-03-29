@@ -1,18 +1,10 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { NewTaskRequest } from "@shared/proto/cline/task"
 import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/cline/worktree"
-import {
-	CreateWorktreeIncludeRequest,
-	DeleteWorktreeRequest,
-	MergeWorktreeRequest,
-	SwitchWorktreeRequest,
-} from "@shared/proto/cline/worktree"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { AlertCircle, Check, ExternalLink, FolderOpen, GitBranch, GitMerge, Loader2, Plus, Trash2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useState } from "react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { FileServiceClient, TaskServiceClient, WorktreeServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { getEnvironmentColor } from "@/utils/environmentColors"
 import CreateWorktreeModal from "./CreateWorktreeModal"
 import DeleteWorktreeModal from "./DeleteWorktreeModal"
@@ -60,7 +52,7 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 	// Load worktrees - only updates state if data changed to prevent flickering
 	const loadWorktrees = useCallback(async () => {
 		try {
-			const response = await WorktreeServiceClient.listWorktrees(EmptyRequest.create({}))
+			const response = await trpc.worktree.listWorktrees.query({})
 			// Only update state if data actually changed (prevents flickering)
 			setWorktrees((prev) => {
 				const newData = JSON.stringify(response.worktrees)
@@ -82,7 +74,7 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 	// Load .worktreeinclude status
 	const loadWorktreeIncludeStatus = useCallback(async () => {
 		try {
-			const status = await WorktreeServiceClient.getWorktreeIncludeStatus(EmptyRequest.create({}))
+			const status = await trpc.worktree.getWorktreeIncludeStatus.query({})
 			setHasWorktreeInclude(status.exists)
 			setHasGitignore(status.hasGitignore)
 			setGitignoreContent(status.gitignoreContent)
@@ -95,15 +87,13 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 	const handleCreateWorktreeInclude = useCallback(async () => {
 		setIsCreatingWorktreeInclude(true)
 		try {
-			const result = await WorktreeServiceClient.createWorktreeInclude(
-				CreateWorktreeIncludeRequest.create({
-					content: gitignoreContent,
-				}),
-			)
+			const result = await trpc.worktree.createWorktreeInclude.mutate({
+				content: gitignoreContent,
+			})
 			if (result.success) {
 				setHasWorktreeInclude(true)
 				// Open the file in the editor
-				await FileServiceClient.openFileRelativePath({ value: ".worktreeinclude" })
+				await trpc.file.openFileRelativePath.mutate({ value: ".worktreeinclude" })
 			} else {
 				setError(result.message)
 			}
@@ -129,14 +119,12 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 	const handleDeleteWorktree = useCallback(
 		async (path: string, deleteBranch: boolean, branchName: string) => {
 			try {
-				const result = await WorktreeServiceClient.deleteWorktree(
-					DeleteWorktreeRequest.create({
-						path,
-						force: false,
-						deleteBranch,
-						branchName,
-					}),
-				)
+				const result = await trpc.worktree.deleteWorktree.mutate({
+					path,
+					force: false,
+					deleteBranch,
+					branchName,
+				})
 
 				if (!result.success) {
 					setError(result.message)
@@ -152,12 +140,10 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 
 	const handleSwitchWorktree = useCallback(async (path: string, newWindow: boolean) => {
 		try {
-			await WorktreeServiceClient.switchWorktree(
-				SwitchWorktreeRequest.create({
-					path,
-					newWindow,
-				}),
-			)
+			await trpc.worktree.switchWorktree.mutate({
+				path,
+				newWindow,
+			})
 		} catch (err) {
 			console.error("Failed to switch worktree:", err)
 		}
@@ -193,13 +179,11 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 		setMergeResult(null)
 
 		try {
-			const result = await WorktreeServiceClient.mergeWorktree(
-				MergeWorktreeRequest.create({
-					worktreePath: mergeWorktree.path,
-					targetBranch: getMainBranch(),
-					deleteAfterMerge,
-				}),
-			)
+			const result = await trpc.worktree.mergeWorktree.mutate({
+				worktreePath: mergeWorktree.path,
+				targetBranch: getMainBranch(),
+				deleteAfterMerge,
+			})
 
 			setMergeResult(result)
 
@@ -227,7 +211,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 
 		try {
 			// Create a new task with this prompt
-			await TaskServiceClient.newTask(NewTaskRequest.create({ text: prompt }))
+			await trpc.task.newTask.mutate({ text: prompt })
 			closeMergeModal()
 			// Close worktrees view to show the chat with the new task
 			onDone()

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react"
+import React, { useCallback, useRef } from "react"
 import ChatTextArea from "@/components/chat/ChatTextArea"
 import QuotedMessagePreview from "@/components/chat/QuotedMessagePreview"
 import { useExtensionState } from "@/context/ExtensionStateContext"
@@ -40,14 +40,30 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	} = chatState
 
 	const { isAtBottom, scrollToBottomAuto } = scrollBehavior
-	const { voiceSttEnabled } = useExtensionState()
+	const { voiceSttEnabled, voiceMetadataEnabled } = useExtensionState()
+
+	// Stores metadata to inject at send time — keeps textarea clean
+	const pendingVoiceMetadataRef = useRef<string>("")
 
 	const handleTranscription = useCallback(
-		(text: string) => {
-			setInputValue((prev) => (prev ? prev + " " + text : text))
+		(text: string, language?: string) => {
+			if (voiceMetadataEnabled) {
+				const langNote = language ? `, spoken in ${language}` : ""
+				pendingVoiceMetadataRef.current = `[voice input${langNote} — respond naturally as spoken]\n`
+			} else {
+				pendingVoiceMetadataRef.current = ""
+			}
+			setInputValue((prev) => (prev ? `${prev} ${text}` : text))
 		},
-		[setInputValue],
+		[setInputValue, voiceMetadataEnabled],
 	)
+
+	const handleSendWithVoiceMetadata = useCallback(() => {
+		const meta = pendingVoiceMetadataRef.current
+		pendingVoiceMetadataRef.current = ""
+		const textToSend = meta ? `${meta}${inputValue}` : inputValue
+		messageHandlers.handleSendMessage(textToSend, selectedImages, selectedFiles)
+	}, [inputValue, selectedImages, selectedFiles, messageHandlers])
 
 	return (
 		<>
@@ -71,7 +87,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 					}
 				}}
 				onSelectFilesAndImages={selectFilesAndImages}
-				onSend={() => messageHandlers.handleSendMessage(inputValue, selectedImages, selectedFiles)}
+				onSend={handleSendWithVoiceMetadata}
 				onTranscription={voiceSttEnabled ? handleTranscription : undefined}
 				placeholderText={placeholderText}
 				ref={textAreaRef}

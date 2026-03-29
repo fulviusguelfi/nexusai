@@ -1,9 +1,8 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useEffect } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { AccountServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { DebouncedTextField } from "../common/DebouncedTextField"
 import HicapModelPicker from "../HicapModelPicker"
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
@@ -61,7 +60,7 @@ export const HicapProvider = ({ showModelOptions, isPopup, currentMode }: HicapP
 						appearance="secondary"
 						onClick={async () => {
 							try {
-								await AccountServiceClient.hicapAuthClicked(EmptyRequest.create())
+								await trpc.account.hicapAuthClicked.mutate({})
 							} catch (error) {
 								console.error("Failed to open Hicap auth:", error)
 							}

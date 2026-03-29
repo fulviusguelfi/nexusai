@@ -282,11 +282,48 @@ pull requests
 - **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) — todos fechados
 - **Wiki**: `docs/wiki/Fase-4-IoT.md`
 
+### Fase 5 — Voz Local (Piper TTS, Whisper STT) ✅ _(concluído em 2026-03-29)_
+
+**Status**: ✅ Funcionalmente Completo (STT + TTS operacionais em produção)
+
+- **Backend**: ✅ 100% Completo
+  - `WhisperService` (STT) com detecção de PT-BR e language hint `"pt"`
+  - `PiperService` (TTS synthesis) — binário + modelos `en_US-lessac-medium` e `pt_BR-faber-medium`
+  - `VoiceSessionManager` (state & events, onSpeakRequest listener)
+  - `VoiceResponseHandler` (pipeline separation: STT → LLM → TTS)
+  - `recordAndRespond` controller (entrada por voz end-to-end)
+  - `speak_text` & `listen_for_speech` tools handlers
+
+- **Webview / Host**: ✅ 100% Completo
+  - `VoiceRecorder` component (UI de gravação)
+  - `VoiceSettingsSection` component (painel de configurações)
+  - Chat integration — microfone conectado ao pipeline de envio
+  - **Audio playback**: movido para extension host (`System.Media.SoundPlayer` / `afplay` / `aplay`) — resolve bloqueio de autoplay do Chromium/Electron
+  - `useVoiceAudioPlayer` hook (fallback para webview, mantido)
+
+- **Fixes aplicados (2026-03-29)**:
+  - ✅ Autoplay bloqueado: playback de WAV movido de `HTMLAudioElement` no webview para `System.Media.SoundPlayer` no extension host (Node.js)
+  - ✅ Double TTS: `completion_result` removido das 3 condições TTS em `say()` — fala apenas `type="text"`
+  - ✅ `<thinking>` tags strip nos 3 call sites (incluindo bug residual no call site 2)
+  - ✅ Diagnóstico LOG `[TTS] Firing requestSpeak (type=..., chars=...)` visível no Output Channel
+
+- **Pendências movidas para backlog**:
+  - Device selection UI (#50) — UI work não crítico para funcionalidade de voz
+  - Settings panel linking (#56) — configurações acessíveis via painel existente
+
+- **Testes (2026-03-29)**:
+  - ✅ 1421 testes unitários passando (79 novos: SilenceDetector, VoiceErrorMapper, AudioLevelMeter, PiperService, VoiceResponseHandler)
+  - ✅ Snapshots do sistema de prompts atualizados (voice input behavior section)
+  - ✅ Smoke test scenarios 10 (speak-text) e 11 (voice-settings) criados em `evals/smoke-tests/scenarios/`
+  - ✅ E2E voice tests expandidos de 2 para 4 cenários (TTS disabled + custom listen prompt)
+
+- **Issues relacionados**: [#50](https://github.com/fulviusguelfi/nexusai/issues/50), [#51](https://github.com/fulviusguelfi/nexusai/issues/51) ✅, [#52](https://github.com/fulviusguelfi/nexusai/issues/52) ✅
+- **Wiki**: `docs/wiki/Fase-5-Voice.md`
+
 ### Próximas Fases
 
 | # | Descrição | Issues Relacionados |
 |---|---|---|
-| Fase 5 | Voz — Piper TTS, Whisper STT | — |
 | Fase 6 | Agentes Autônomos e multi-IA | — |
 
 ### Backlog — Tech Debt e Bugs Pendentes

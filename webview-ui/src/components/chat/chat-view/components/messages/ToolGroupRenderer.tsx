@@ -1,11 +1,10 @@
 import { ClineMessage, ClineSayTool } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/cline/common"
 import { memo, useCallback, useMemo, useState } from "react"
 import { TypewriterText } from "@/components/chat/TypewriterText"
 import { cleanPathPrefix } from "@/components/common/CodeAccordian"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { getIconByToolName, getToolsNotInCurrentActivities, isLowStakesTool } from "../../utils/messageUtils"
 
 interface ToolGroupRendererProps {
@@ -147,9 +146,7 @@ export const ToolGroupRenderer = memo(({ messages, allMessages, isLastGroup }: T
 	const summary = getToolGroupSummary(filteredMessages)
 
 	const handleOpenFile = useCallback((filePath: string) => {
-		FileServiceClient.openFileRelativePath(StringRequest.create({ value: filePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFileRelativePath.mutate({ value: filePath }).catch((err) => console.error("Failed to open file:", err))
 	}, [])
 
 	const handleItemToggle = useCallback((ts: number) => {

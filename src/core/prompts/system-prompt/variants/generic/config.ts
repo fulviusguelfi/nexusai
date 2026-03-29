@@ -54,6 +54,7 @@ export const config = createVariant(ModelFamily.GENERIC)
 		SystemPromptSection.OBJECTIVE,
 		SystemPromptSection.USER_INSTRUCTIONS,
 		SystemPromptSection.SKILLS,
+		SystemPromptSection.VOICE_BEHAVIOR,
 	)
 	.tools(
 		ClineDefaultTool.BASH,

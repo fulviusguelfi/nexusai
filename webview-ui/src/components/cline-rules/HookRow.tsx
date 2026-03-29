@@ -1,9 +1,8 @@
-import { StringRequest } from "@shared/proto/cline/common"
-import { DeleteHookRequest, HooksToggles } from "@shared/proto/cline/file"
+import { HooksToggles } from "@shared/proto/cline/file"
 import { PenIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { FileServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface HookRowProps {
 	hookName: string
@@ -27,19 +26,16 @@ const HookRow: React.FC<HookRowProps> = ({
 	onDelete,
 }) => {
 	const handleEditClick = () => {
-		FileServiceClient.openFile(StringRequest.create({ value: absolutePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
+		trpc.file.openFile.mutate({ value: absolutePath }).catch((err) => console.error("Failed to open file:", err))
 	}
 
 	const handleDeleteClick = () => {
-		FileServiceClient.deleteHook(
-			DeleteHookRequest.create({
+		trpc.file.deleteHook
+			.mutate({
 				hookName,
 				isGlobal,
 				workspaceName,
-			}),
-		)
+			})
 			.then((response) => {
 				if (response.hooksToggles) {
 					onDelete(response.hooksToggles)

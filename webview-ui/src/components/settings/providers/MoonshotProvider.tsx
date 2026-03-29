@@ -3,7 +3,7 @@ import { UpdateApiConfigurationRequestNew } from "@shared/proto/index.cline"
 import { Mode } from "@shared/storage/types"
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { ApiKeyField } from "../common/ApiKeyField"
 import { ModelInfoView } from "../common/ModelInfoView"
 import { DropdownContainer, ModelSelector } from "../common/ModelSelector"
@@ -37,7 +37,7 @@ export const MoonshotProvider = ({ showModelOptions, isPopup, currentMode }: Moo
 					id="moonshot-entrypoint"
 					onChange={async (e) => {
 						const value = (e.target as any).value
-						await ModelsServiceClient.updateApiConfiguration(
+						await trpc.models.updateApiConfiguration.mutate(
 							UpdateApiConfigurationRequestNew.create({
 								updates: {
 									options: {
@@ -61,7 +61,7 @@ export const MoonshotProvider = ({ showModelOptions, isPopup, currentMode }: Moo
 				helpText="This key is stored locally and only used to make API requests from this extension."
 				initialValue={apiConfiguration?.moonshotApiKey || ""}
 				onChange={async (value) => {
-					await ModelsServiceClient.updateApiConfiguration(
+					await trpc.models.updateApiConfiguration.mutate(
 						UpdateApiConfigurationRequestNew.create({
 							updates: {
 								secrets: {
@@ -88,7 +88,7 @@ export const MoonshotProvider = ({ showModelOptions, isPopup, currentMode }: Moo
 						onChange={async (e: any) => {
 							const value = e.target.value
 
-							await ModelsServiceClient.updateApiConfiguration(
+							await trpc.models.updateApiConfiguration.mutate(
 								UpdateApiConfigurationRequestNew.create(
 									currentMode === "plan"
 										? {

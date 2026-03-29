@@ -21,9 +21,7 @@ describe("ClineEndpoint configuration", () => {
 
 		// Stub os.homedir to return our temp directory
 		originalHomedir = os.homedir
-		sandbox
-			.stub(os, "homedir")
-			.returns(tempDir)
+		sandbox.stub(os, "homedir").returns(tempDir)
 
 		// Reset the singleton state using internal method
 		;(ClineEndpoint as any)._instance = null
@@ -410,7 +408,7 @@ describe("ClineEndpoint configuration", () => {
 
 			// Try to change environment - should throw
 			try {
-				ClineEnv.setEnvironment("staging")
+				ClineEnv.setEnvironment("local")
 				throw new Error("Should have thrown")
 			} catch (error: any) {
 				error.message.should.containEql("Cannot change environment in on-premise mode")
@@ -428,7 +426,7 @@ describe("ClineEndpoint configuration", () => {
 
 			await ClineEndpoint.initialize(tempDir)
 
-			const environments = ["staging", "local", "production", "anything"]
+			const environments = ["local", "production", "anything"]
 			for (const env of environments) {
 				try {
 					ClineEnv.setEnvironment(env)
@@ -448,9 +446,6 @@ describe("ClineEndpoint configuration", () => {
 			ClineEndpoint.config.environment.should.not.equal(Environment.selfHosted)
 
 			// Should be able to change environment
-			ClineEnv.setEnvironment("staging")
-			ClineEnv.getEnvironment().environment.should.equal("staging")
-
 			ClineEnv.setEnvironment("local")
 			ClineEnv.getEnvironment().environment.should.equal("local")
 

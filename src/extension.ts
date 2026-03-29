@@ -4,6 +4,7 @@
 import assert from "node:assert"
 import { DIFF_VIEW_URI_SCHEME } from "@hosts/vscode/VscodeDiffViewProvider"
 import * as vscode from "vscode"
+import { preloadVoiceModels, validateFFmpegAtStartup } from "@/services/voice/PreFlightChecks"
 import { Logger } from "@/shared/services/Logger"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
@@ -14,7 +15,7 @@ import { sendWorktreesButtonClickedEvent } from "./core/controller/ui/subscribeT
 import { WebviewProvider } from "./core/webview"
 import { createClineAPI } from "./exports"
 import { initializeTestMode } from "./services/test/TestMode"
-import "./utils/path"; // necessary to have access to String.prototype.toPosix
+import "./utils/path" // necessary to have access to String.prototype.toPosix
 import path from "node:path"
 import type { ExtensionContext } from "vscode"
 import { HostProvider } from "@/hosts/host-provider"
@@ -68,9 +69,73 @@ import { fileExistsAtPath } from "./utils/fs"
 export async function activate(context: vscode.ExtensionContext) {
 	const activationStartTime = performance.now()
 
+	// Log launch config identifier to help distinguish dev environments
+	const launchConfig = process.env.LAUNCH_CONFIG ?? "unknown"
+	Logger.info(`[Extension] ══════════════════════════════════════`)
+	Logger.info(`[Extension] Launch config: ${launchConfig}`)
+	Logger.info(`[Extension] ══════════════════════════════════════`)
+
 	// 1. Set up HostProvider for VSCode
 	// IMPORTANT: This must be done before any service can be registered
 	setupHostProvider(context)
+
+	// 1.1 Grant media (microphone/camera) permissions for webview panels so that
+	// navigator.mediaDevices.getUserMedia() works inside the extension's sidebar webview.
+	// This is only possible when running locally inside VS Code (Electron). In remote or
+	// CI environments `require('electron')` either throws or doesn't expose `session`.
+	try {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const electron = require("electron") as {
+			session?: {
+				defaultSession?: {
+					setPermissionRequestHandler: (
+						handler: (webContents: unknown, permission: string, callback: (granted: boolean) => void) => void,
+					) => void
+					setPermissionCheckHandler: (handler: (webContents: unknown, permission: string) => boolean) => void
+				}
+			}
+		}
+		const sess = electron?.session?.defaultSession
+		if (sess) {
+			sess.setPermissionRequestHandler(
+				(_webContents: unknown, permission: string, callback: (granted: boolean) => void) => {
+					const isGranted = permission === "media" || permission === "microphone" || permission === "camera"
+					if (isGranted && (permission === "microphone" || permission === "camera")) {
+						Logger.info(`[Extension] Electron permission handler: granted '${permission}' (OS level may still block)`)
+					}
+					callback(isGranted)
+				},
+			)
+			sess.setPermissionCheckHandler((_webContents: unknown, permission: string) => {
+				const isAllowed = permission === "media" || permission === "microphone" || permission === "camera"
+				if ((permission === "microphone" || permission === "camera") && isAllowed) {
+					Logger.info(`[Extension] Electron permission check: '${permission}' allowed (OS: ${process.platform})`)
+				}
+				return isAllowed
+			})
+			Logger.info("[Extension] Electron permission handlers registered successfully")
+		}
+	} catch {
+		// Not in a local Electron context (remote SSH, Dev Containers, tests) — skip.
+	}
+
+	// 1.2 Start FFmpeg validation in background (non-blocking)
+	// Don't await this - let it run in background so extension initializes quickly
+	validateFFmpegAtStartup()
+		.catch((error) => {
+			Logger.warn(`[Extension] FFmpeg validation (background) result: ${error}`)
+		})
+		.finally(() => {
+			Logger.log("[Extension] FFmpeg validation completed (background)")
+		})
+
+	// 1.3 Pre-download Piper (TTS) and Whisper (STT) models in background if voice is enabled.
+	// Avoids download latency on the first voice interaction.
+	if (context.globalState.get<boolean>("voiceTtsEnabled") !== false) {
+		preloadVoiceModels(context.globalStorageUri.fsPath).catch((e) => {
+			Logger.warn(`[Extension] Voice model pre-load failed (non-critical): ${e}`)
+		})
+	}
 
 	// 2. Clean up legacy data patterns within VSCode's native storage.
 	// Moves workspace→global keys, task history→file, custom instructions→rules, etc.
@@ -560,6 +625,20 @@ ${ctx.cellJson || "{}"}
 		}
 	})
 	context.subscriptions.push({ dispose: unsubSecrets })
+
+	// Notify webview when GitHub Copilot models become available (e.g., after Copilot finishes loading)
+	// onDidChangeChatModels was added in a newer VSCode API version — guard for older hosts
+	const lmAny = vscode.lm as unknown as { onDidChangeChatModels?: (cb: () => void) => { dispose(): void } }
+	if (typeof lmAny.onDidChangeChatModels === "function") {
+		context.subscriptions.push(
+			lmAny.onDidChangeChatModels(() => {
+				const instance = WebviewProvider.getVisibleInstance()
+				if (instance) {
+					instance.controller.postStateToWebview()
+				}
+			}),
+		)
+	}
 
 	Logger.log(`[Cline] extension activated in ${performance.now() - activationStartTime} ms`)
 

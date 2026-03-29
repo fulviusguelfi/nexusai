@@ -58,13 +58,12 @@ export class MinimaxHandler implements ApiHandler {
 
 		const budget_tokens = this.options.thinkingBudgetTokens || 0
 		const reasoningOn = (model.info.supportsReasoning ?? false) && budget_tokens !== 0
-
 		// MiniMax M2 uses Anthropic API format
 		const stream: AnthropicStream<Anthropic.RawMessageStreamEvent> = await client.messages.create({
 			model: model.id,
 			max_tokens: model.info.maxTokens || 8192,
 			system: [{ text: systemPrompt, type: "text" }],
-			messages,
+			messages: messages,
 			stream: true,
 			tools: nativeToolsOn ? (tools as AnthropicTool[]) : undefined,
 			thinking: reasoningOn ? { type: "enabled", budget_tokens: budget_tokens } : undefined,

@@ -1,10 +1,9 @@
-import { EmptyRequest } from "@shared/proto/index.cline"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useEffect, useRef, useState } from "react"
 import { RemoteConfigToggle } from "@/components/account/RemoteConfigToggle"
 import { useClineAuth } from "@/context/ClineAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import Section from "../Section"
 
 interface RemoteConfigSectionProps {
@@ -37,7 +36,7 @@ function RefreshButton() {
 
 	const onRefresh = () => {
 		setIsLoading(true)
-		StateServiceClient.refreshRemoteConfig(EmptyRequest.create()).finally(() => {
+		trpc.state.refreshRemoteConfig.mutate({}).finally(() => {
 			setIsLoading(false)
 			setRetryIn(AUTOMATIC_DELAY_MS / 1000)
 
@@ -163,7 +162,7 @@ function OtelSettingsSection() {
 	}
 
 	const handleTestOtel = async () => {
-		const response = await StateServiceClient.testOtelConnection(EmptyRequest.create({}))
+		const response = await trpc.state.testOtelConnection.mutate({})
 		if (!response.success) {
 			throw new Error(response.error || "Test failed")
 		}
@@ -236,7 +235,7 @@ function PromptUploadingSection() {
 	}
 
 	const handleTestPromptUploading = async () => {
-		const response = await StateServiceClient.testPromptUploading(EmptyRequest.create({}))
+		const response = await trpc.state.testPromptUploading.mutate({})
 		if (!response.success) {
 			throw new Error(response.error || "Test failed")
 		}

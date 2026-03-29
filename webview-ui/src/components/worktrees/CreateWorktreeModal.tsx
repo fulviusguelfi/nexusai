@@ -1,9 +1,7 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
-import { CreateWorktreeRequest, SwitchWorktreeRequest } from "@shared/proto/cline/worktree"
 import { VSCodeButton, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { AlertCircle, AlertTriangle, Loader2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useState } from "react"
-import { WorktreeServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 
 interface CreateWorktreeModalProps {
 	open: boolean
@@ -27,8 +25,8 @@ const CreateWorktreeModal = ({ open, onClose, openAfterCreate = false, onSuccess
 		setIsLoadingDefaults(true)
 		try {
 			const [defaults, includeStatus] = await Promise.all([
-				WorktreeServiceClient.getWorktreeDefaults(EmptyRequest.create({})),
-				WorktreeServiceClient.getWorktreeIncludeStatus(EmptyRequest.create({})),
+				trpc.worktree.getWorktreeDefaults.query({}),
+				trpc.worktree.getWorktreeIncludeStatus.query({}),
 			])
 			setNewBranchName(defaults.suggestedBranch)
 			setNewWorktreePath(defaults.suggestedPath)
@@ -64,25 +62,21 @@ const CreateWorktreeModal = ({ open, onClose, openAfterCreate = false, onSuccess
 		setIsCreating(true)
 		setCreateError(null)
 		try {
-			const result = await WorktreeServiceClient.createWorktree(
-				CreateWorktreeRequest.create({
-					path: newWorktreePath,
-					branch: newBranchName,
-					createNewBranch: true,
-				}),
-			)
+			const result = await trpc.worktree.createWorktree.mutate({
+				path: newWorktreePath,
+				branch: newBranchName,
+				createNewBranch: true,
+			})
 
 			if (!result.success) {
 				setCreateError(result.message)
 			} else {
 				// If openAfterCreate is true, open the worktree in a new window
 				if (openAfterCreate && result.worktree?.path) {
-					await WorktreeServiceClient.switchWorktree(
-						SwitchWorktreeRequest.create({
-							path: result.worktree.path,
-							newWindow: true,
-						}),
-					)
+					await trpc.worktree.switchWorktree.mutate({
+						path: result.worktree.path,
+						newWindow: true,
+					})
 				}
 				onSuccess?.()
 				onClose()

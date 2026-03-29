@@ -238,7 +238,7 @@ export const E2E_MOCK_API_RESPONSES = {
 
 // ─ 1. speak_text ─────────────────────────────────────────────────────────
 
-/** Turn 1 for speak_text — TTS is disabled by default so the tool returns a "TTS disabled" message. */
+/** Turn 1 for speak_text with TTS enabled by default. */
 const VOICE_SPEAK_REQUEST = `I'll speak the text using text-to-speech.
 
 <speak_text>
@@ -249,12 +249,12 @@ const VOICE_SPEAK_REQUEST = `I'll speak the text using text-to-speech.
 const VOICE_SPEAK_COMPLETION = `The text-to-speech attempt has been processed.
 
 <attempt_completion>
-<result>speak_text executed. TTS is disabled. The user can enable it in Settings → Voice. Text was: Hello, NexusAI voice is working.</result>
+<result>speak_text executed. Speaking: "Hello, NexusAI voice is working."</result>
 </attempt_completion>`
 
 // ─ 2. listen_for_speech ──────────────────────────────────────────────────
 
-/** Turn 1 for listen_for_speech — STT is disabled by default. */
+/** Turn 1 for listen_for_speech with STT enabled by default. */
 const VOICE_LISTEN_REQUEST = `I'll listen for speech input from the user.
 
 <listen_for_speech>
@@ -265,7 +265,39 @@ const VOICE_LISTEN_REQUEST = `I'll listen for speech input from the user.
 const VOICE_LISTEN_COMPLETION = `The speech-to-text attempt has been processed.
 
 <attempt_completion>
-<result>listen_for_speech executed. STT is disabled. The user can enable it in Settings → Voice.</result>
+<result>listen_for_speech executed. No speech was captured within the timeout window.</result>
+</attempt_completion>`
+
+// ─ 3. speak_text — TTS disabled ──────────────────────────────────────────
+
+/** Turn 1 for speak_text when TTS is disabled (voiceTtsEnabled = false). */
+const VOICE_SPEAK_DISABLED_REQUEST = `I'll try to speak the text, but TTS may be disabled.
+
+<speak_text>
+<text>Testing disabled TTS path.</text>
+</speak_text>`
+
+/** Completion after speak_text returns the "TTS is disabled" message. */
+const VOICE_SPEAK_DISABLED_COMPLETION = `TTS is currently disabled for this session.
+
+<attempt_completion>
+<result>TTS is disabled. The user can enable it in Settings → Voice.</result>
+</attempt_completion>`
+
+// ─ 4. listen_for_speech — custom prompt ──────────────────────────────────
+
+/** Turn 1 for listen_for_speech with a custom prompt. */
+const VOICE_LISTEN_CUSTOM_REQUEST = `I'll listen for speech using a custom prompt.
+
+<listen_for_speech>
+<prompt>Say your name to continue.</prompt>
+</listen_for_speech>`
+
+/** Completion after listen_for_speech with custom prompt times out. */
+const VOICE_LISTEN_CUSTOM_COMPLETION = `The custom-prompt speech capture completed.
+
+<attempt_completion>
+<result>listen_for_speech executed. No speech was captured within the timeout window.</result>
 </attempt_completion>`
 
 export const E2E_VOICE_MOCK_API_RESPONSES = {
@@ -273,6 +305,10 @@ export const E2E_VOICE_MOCK_API_RESPONSES = {
 	VOICE_SPEAK_COMPLETION,
 	VOICE_LISTEN_REQUEST,
 	VOICE_LISTEN_COMPLETION,
+	VOICE_SPEAK_DISABLED_REQUEST,
+	VOICE_SPEAK_DISABLED_COMPLETION,
+	VOICE_LISTEN_CUSTOM_REQUEST,
+	VOICE_LISTEN_CUSTOM_COMPLETION,
 }
 
 // ── IoT mock responses ────────────────────────────────────────────────────

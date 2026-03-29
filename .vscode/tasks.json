@@ -246,7 +246,7 @@
 			"label": "tasks: watch-tests",
 			"dependsOn": [
 				"npm: protos",
-				"npm: watch",
+				"watch",
 				"npm: watch-tests"
 			],
 			"problemMatcher": []
@@ -259,9 +259,6 @@
 		{
 			"label": "clean-tmp-user",
 			"type": "shell",
-			"dependsOn": [
-				"watch"
-			],
 			"command": "rm -rf ${workspaceFolder}/dist/tmp/user && mkdir -p ${workspaceFolder}/dist/tmp/user"
 		},
 		{
@@ -272,8 +269,7 @@
 			"isBackground": false,
 			"label": "npm: storybook",
 			"dependsOn": [
-				"npm: protos",
-				"npm: build:webview"
+				"npm: protos"
 			],
 			"presentation": {
 				"reveal": "always"

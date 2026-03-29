@@ -12,6 +12,7 @@ import { getSystemInfo } from "./system_info"
 import { getUpdatingTaskProgress } from "./task_progress"
 import { getToolUseSection } from "./tool_use"
 import { getUserInstructions } from "./user_instructions"
+import { getVoiceBehaviorSection } from "./voice_behavior"
 
 /**
  * Registers all tool variants with the ClineToolSet provider.
@@ -48,5 +49,6 @@ export function getSystemPromptComponents() {
 			fn: getFeedbackSection,
 		},
 		{ id: SystemPromptSection.TASK_PROGRESS, fn: getUpdatingTaskProgress },
+		{ id: SystemPromptSection.VOICE_BEHAVIOR, fn: getVoiceBehaviorSection },
 	]
 }

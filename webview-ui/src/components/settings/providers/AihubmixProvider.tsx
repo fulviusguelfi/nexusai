@@ -1,9 +1,8 @@
 import { ModelInfo } from "@shared/api"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { Mode } from "@shared/storage/types"
 import { useEffect, useState } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { ApiKeyField } from "../common/ApiKeyField"
 import { ModelInfoView } from "../common/ModelInfoView"
 import { ModelSelector } from "../common/ModelSelector"
@@ -60,7 +59,8 @@ export const AIhubmixProvider = ({ showModelOptions, isPopup, currentMode }: AIh
 			setModels(ensureSelectedPresent({}))
 		}
 
-		ModelsServiceClient.getAihubmixModels(EmptyRequest.create({}))
+		trpc.models.getAihubmixModels
+			.query({})
 			.then((response) => {
 				if (response.models) {
 					const nextModels = response.models as Record<string, ModelInfo>

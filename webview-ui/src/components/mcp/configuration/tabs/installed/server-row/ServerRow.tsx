@@ -1,11 +1,5 @@
 import { DEFAULT_MCP_TIMEOUT_SECONDS, McpServer } from "@shared/mcp"
-import { StringRequest } from "@shared/proto/cline/common"
-import {
-	McpServers,
-	ToggleMcpServerRequest,
-	ToggleToolAutoApproveRequest,
-	UpdateMcpTimeoutRequest,
-} from "@shared/proto/cline/mcp"
+import { McpServers } from "@shared/proto/cline/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import {
 	VSCodeCheckbox,
@@ -22,7 +16,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { getMcpServerDisplayName } from "@/utils/mcp"
 import McpPromptRow from "./McpPromptRow"
 import McpResourceRow from "./McpResourceRow"
@@ -93,13 +87,14 @@ const ServerRow = ({
 	const handleTimeoutChange = (e: any) => {
 		const select = e.target as HTMLSelectElement
 		const value = select.value
-		const num = parseInt(value)
+		const num = Number.parseInt(value)
 		setTimeoutValue(value)
 
-		McpServiceClient.updateMcpTimeout({
-			serverName: server.name,
-			timeout: num,
-		} as UpdateMcpTimeoutRequest)
+		trpc.mcp.updateMcpTimeout
+			.mutate({
+				serverName: server.name,
+				timeout: num,
+			})
 			.then((response: McpServers) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -114,9 +109,10 @@ const ServerRow = ({
 		setIsRestarting(true)
 
 		// Make the gRPC call
-		McpServiceClient.restartMcpServer({
-			value: server.name,
-		} as StringRequest)
+		trpc.mcp.restartMcpServer
+			.mutate({
+				value: server.name,
+			})
 			.then((response: McpServers) => {
 				// Update with the final state from the server
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
@@ -132,9 +128,10 @@ const ServerRow = ({
 
 	const handleDelete = () => {
 		setIsDeleting(true)
-		McpServiceClient.deleteMcpServer({
-			value: server.name,
-		} as StringRequest)
+		trpc.mcp.deleteMcpServer
+			.mutate({
+				value: server.name,
+			})
 			.then((response: McpServers) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -151,13 +148,12 @@ const ServerRow = ({
 			return
 		}
 
-		McpServiceClient.toggleToolAutoApprove(
-			ToggleToolAutoApproveRequest.create({
+		trpc.mcp.toggleToolAutoApprove
+			.mutate({
 				serverName: server.name,
 				toolNames: server.tools?.map((tool) => tool.name) || [],
 				autoApprove: !server.tools?.every((tool) => tool.autoApprove),
-			}),
-		)
+			})
 			.then((response) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -168,12 +164,11 @@ const ServerRow = ({
 	}
 
 	const handleToggleMcpServer = () => {
-		McpServiceClient.toggleMcpServer(
-			ToggleMcpServerRequest.create({
+		trpc.mcp.toggleMcpServer
+			.mutate({
 				serverName: server.name,
 				disabled: !server.disabled,
-			}),
-		)
+			})
 			.then((response) => {
 				const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
 				setMcpServers(mcpServers)
@@ -285,7 +280,7 @@ const ServerRow = ({
 							className="m-2.5 mt-0 max-w-[calc(100%-20px)]"
 							onClick={(e) => {
 								e.stopPropagation()
-								McpServiceClient.authenticateMcpServer(StringRequest.create({ value: server.name }))
+								trpc.mcp.authenticateMcpServer.mutate({ value: server.name })
 							}}
 							variant="default">
 							Authenticate

@@ -6,7 +6,7 @@ import { DEFAULT_FOCUS_CHAIN_SETTINGS } from "@shared/FocusChainSettings"
 import { DEFAULT_MCP_DISPLAY_MODE } from "@shared/McpDisplayMode"
 import type { UserInfo } from "@shared/proto/cline/account"
 import { EmptyRequest } from "@shared/proto/cline/common"
-import type { OpenRouterCompatibleModelInfo } from "@shared/proto/cline/models"
+import type { LanguageModelChatSelector, OpenRouterCompatibleModelInfo } from "@shared/proto/cline/models"
 import { OnboardingModelGroup, type TerminalProfile } from "@shared/proto/cline/state"
 import { convertProtoToClineMessage } from "@shared/proto-conversions/cline-message"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
@@ -27,6 +27,7 @@ import {
 import { Environment } from "../../../src/shared/config-types"
 import type { McpMarketplaceCatalog, McpServer, McpViewTab } from "../../../src/shared/mcp"
 import { McpServiceClient, ModelsServiceClient, StateServiceClient, UiServiceClient } from "../services/grpc-client"
+import { trpc } from "../services/trpc-client"
 
 export interface ExtensionStateContextType extends ExtensionState {
 	didHydrateState: boolean
@@ -38,6 +39,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	hicapModels: Record<string, ModelInfo>
 	liteLlmModels: Record<string, ModelInfo>
 	openAiModels: string[]
+	vsCodeLmModels: LanguageModelChatSelector[]
 	requestyModels: Record<string, ModelInfo>
 	groqModels: Record<string, ModelInfo>
 	basetenModels: Record<string, ModelInfo>
@@ -200,12 +202,14 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [setShowSettings, closeMcpView, setShowAccount, setShowWorktrees, setShowHistory])
 
 	const navigateToAccount = useCallback(() => {
-		setShowSettings(false)
-		closeMcpView()
 		setShowHistory(false)
+		closeMcpView()
 		setShowWorktrees(false)
-		setShowAccount(true)
-	}, [setShowSettings, closeMcpView, setShowHistory, setShowWorktrees, setShowAccount])
+		setShowAccount(false)
+		setSettingsTargetSection("api-config")
+		setSettingsInitialModelTab(undefined)
+		setShowSettings(true)
+	}, [closeMcpView, setShowHistory, setShowWorktrees, setShowAccount, setSettingsTargetSection, setSettingsInitialModelTab])
 
 	const navigateToWorktrees = useCallback(() => {
 		setShowSettings(false)
@@ -283,11 +287,14 @@ export const ExtensionStateContextProvider: React.FC<{
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
 		activeSshSessions: [],
-		voiceTtsEnabled: false,
-		voiceSttEnabled: false,
+		voiceTtsEnabled: true,
+		voiceSttEnabled: true,
 		voiceInputDeviceId: undefined,
 		voiceOutputDeviceId: undefined,
 		voicePiperVoice: "en_US-lessac-medium",
+		voiceSilenceThresholdMs: 700,
+		voiceGracePeriodMs: 2000,
+		voiceMetadataEnabled: true,
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)
@@ -306,6 +313,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	const [availableTerminalProfiles, setAvailableTerminalProfiles] = useState<TerminalProfile[]>([])
 
 	const [openAiModels, _setOpenAiModels] = useState<string[]>([])
+	const [vsCodeLmModels, setVsCodeLmModels] = useState<LanguageModelChatSelector[]>([])
 	const [requestyModels, setRequestyModels] = useState<Record<string, ModelInfo>>({
 		[requestyDefaultModelId]: requestyDefaultModelInfo,
 	})
@@ -580,7 +588,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		})
 
 		// Initialize webview using gRPC
-		UiServiceClient.initializeWebview(EmptyRequest.create({}))
+		trpc.ui.initializeWebview
+			.mutate({})
 			.then(() => {
 				console.log("[DEBUG] Webview initialization completed via gRPC")
 			})
@@ -591,9 +600,9 @@ export const ExtensionStateContextProvider: React.FC<{
 		// Set up account button clicked subscription
 		accountButtonClickedSubscriptionRef.current = UiServiceClient.subscribeToAccountButtonClicked(EmptyRequest.create(), {
 			onResponse: () => {
-				// When account button is clicked, navigate to account view
+				// Route account actions into API settings; standalone account view is deprecated.
 				console.log("[DEBUG] Received account button clicked event from gRPC stream")
-				navigateToAccount()
+				navigateToSettings("api-config")
 			},
 			onError: (error) => {
 				console.error("Error in account button clicked subscription:", error)
@@ -604,7 +613,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		})
 
 		// Fetch available terminal profiles on launch
-		StateServiceClient.getAvailableTerminalProfiles(EmptyRequest.create({}))
+		trpc.state.getAvailableTerminalProfiles
+			.query({})
 			.then((response) => {
 				setAvailableTerminalProfiles(response.profiles)
 			})
@@ -688,7 +698,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshOpenRouterModels = useCallback(() => {
-		ModelsServiceClient.refreshOpenRouterModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshOpenRouterModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setOpenRouterModels({
@@ -700,7 +711,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshHicapModels = useCallback(() => {
-		ModelsServiceClient.refreshHicapModels(EmptyRequest.create({}))
+		trpc.models.refreshHicapModels
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = response.models
 				setHicapModels({
@@ -711,7 +723,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshLiteLlmModels = useCallback(() => {
-		return ModelsServiceClient.refreshLiteLlmModelsRpc(EmptyRequest.create({}))
+		return trpc.models.refreshLiteLlmModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setLiteLlmModels(models)
@@ -720,7 +733,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshBasetenModels = useCallback(() => {
-		ModelsServiceClient.refreshBasetenModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshBasetenModelsRpc
+			.mutate({})
 			.then((response) => {
 				setBasetenModels({
 					[basetenDefaultModelId]: basetenModels[basetenDefaultModelId],
@@ -731,7 +745,8 @@ export const ExtensionStateContextProvider: React.FC<{
 	}, [])
 
 	const refreshVercelAiGatewayModels = useCallback(() => {
-		ModelsServiceClient.refreshVercelAiGatewayModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshVercelAiGatewayModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setVercelAiGatewayModels(models)
@@ -764,7 +779,8 @@ export const ExtensionStateContextProvider: React.FC<{
 
 	// Refresh Cline models function
 	const refreshClineModels = useCallback(() => {
-		ModelsServiceClient.refreshClineModelsRpc(EmptyRequest.create({}))
+		trpc.models.refreshClineModelsRpc
+			.mutate({})
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setClineModels((prev) => (Object.keys(models).length > 0 ? models : (prev ?? null)))
@@ -781,6 +797,37 @@ export const ExtensionStateContextProvider: React.FC<{
 		}
 	}, [state.apiConfiguration?.actModeApiProvider, state.apiConfiguration?.planModeApiProvider, clineModels, refreshClineModels])
 
+	// Load vscode-lm (GitHub Copilot) models at startup and retry until available
+	useEffect(() => {
+		const hasVsCodeLmProvider =
+			state.apiConfiguration?.actModeApiProvider === "vscode-lm" ||
+			state.apiConfiguration?.planModeApiProvider === "vscode-lm"
+		if (!hasVsCodeLmProvider) return
+
+		let cancelled = false
+		const attempt = async () => {
+			if (cancelled) return
+			try {
+				const resp = await trpc.models.getVsCodeLmModels.query({})
+				if (cancelled) return
+				if (resp?.models && resp.models.length > 0) {
+					setVsCodeLmModels(resp.models)
+				} else {
+					// Copilot not ready yet — retry in 2s (silent retry)
+					setTimeout(attempt, 2000)
+				}
+			} catch (err) {
+				// tRPC error — retry after delay
+				console.warn("[vsCodeLmModels] Failed to fetch models, retrying in 2s:", err)
+				setTimeout(attempt, 2000)
+			}
+		}
+		attempt()
+		return () => {
+			cancelled = true
+		}
+	}, [state.apiConfiguration?.actModeApiProvider, state.apiConfiguration?.planModeApiProvider])
+
 	const contextValue: ExtensionStateContextType = {
 		...state,
 		didHydrateState,
@@ -792,6 +839,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		hicapModels,
 		liteLlmModels,
 		openAiModels,
+		vsCodeLmModels,
 		requestyModels,
 		groqModels: groqModelsState,
 		basetenModels: basetenModelsState,

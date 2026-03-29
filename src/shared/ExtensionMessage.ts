@@ -27,18 +27,61 @@ import { TelemetrySetting } from "./TelemetrySetting"
 import { UserInfo } from "./UserInfo"
 // webview will hold state
 export interface ExtensionMessage {
-	type: "grpc_response" | "voice_audio_play" | "voice_transcription"
+	type:
+		| "grpc_response"
+		| "trpc_response"
+		| "voice_audio_play"
+		| "voice_transcription"
+		| "voice_result"
+		| "voice_agent_state_changed"
+		| "voice_audio_level"
+		| "voice_error"
+		| "voice_language_detected"
 	grpc_response?: GrpcResponse
+	trpc_response?: TrpcResponse
 	voice_audio_play?: { wavBase64: string }
 	voice_transcription?: { text: string }
+	voice_result?: {
+		transcriptionText: string
+		llmResponseText: string
+		audioWavBase64: string
+		totalDurationMs: number
+		success: boolean
+		errorMessage?: string
+		detectedLanguage?: string
+	}
+	voice_language_detected?: {
+		languageCode: string
+		languageName: string
+	}
+	voice_agent_state_changed?: {
+		state: "IDLE" | "INITIALIZING" | "READY_TO_LISTEN" | "RECORDING" | "PROCESSING" | "PLAYING" | "ERROR"
+		context: string
+	}
+	voice_audio_level?: {
+		rms_level: number
+		db_level: number
+		quality: "excellent" | "good" | "poor" | "silent"
+		clipping: boolean
+	}
+	voice_error?: {
+		code: string
+		message: string
+	}
 }
 
 export type GrpcResponse = {
-	message?: any // JSON serialized protobuf message
+	message?: unknown // JSON serialized protobuf message
 	request_id: string // Same ID as the request
 	error?: string // Optional error message
 	is_streaming?: boolean // Whether this is part of a streaming response
 	sequence_number?: number // For ordering chunks in streaming responses
+}
+
+export type TrpcResponse = {
+	id: string
+	result?: unknown
+	error?: string
 }
 
 export type Platform = "aix" | "darwin" | "freebsd" | "linux" | "openbsd" | "sunos" | "win32" | "unknown"
@@ -122,6 +165,9 @@ export interface ExtensionState {
 	voiceInputDeviceId?: string
 	voiceOutputDeviceId?: string
 	voicePiperVoice: string
+	voiceSilenceThresholdMs: number
+	voiceGracePeriodMs: number
+	voiceMetadataEnabled: boolean
 }
 
 export interface ClineMessage {

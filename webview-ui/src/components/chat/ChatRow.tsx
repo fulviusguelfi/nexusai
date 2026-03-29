@@ -9,7 +9,7 @@ import {
 	ClineSayTool,
 	COMPLETION_RESULT_CHANGES_FLAG,
 } from "@shared/ExtensionMessage"
-import { BooleanRequest, StringRequest } from "@shared/proto/cline/common"
+
 import { Mode } from "@shared/storage/types"
 import deepEqual from "fast-deep-equal"
 import {
@@ -46,7 +46,7 @@ import McpResourceRow from "@/components/mcp/configuration/tabs/installed/server
 import McpToolRow from "@/components/mcp/configuration/tabs/installed/server-row/McpToolRow"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
-import { FileServiceClient, UiServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { findMatchingResourceOrTemplate, getMcpServerDisplayName } from "@/utils/mcp"
 import CodeAccordian, { cleanPathPrefix } from "../common/CodeAccordian"
 import { CommandOutputContent, CommandOutputRow } from "./CommandOutputRow"
@@ -520,9 +520,9 @@ export const ChatRowContent = memo(
 									})}
 									onClick={() => {
 										if (!isImage) {
-											FileServiceClient.openFile(StringRequest.create({ value: tool.content })).catch(
-												(err) => console.error("Failed to open file:", err),
-											)
+											trpc.file.openFile
+												.mutate({ value: tool.content })
+												.catch((err) => console.error("Failed to open file:", err))
 										}
 									}}>
 									{tool.path?.startsWith(".") && <span>.</span>}
@@ -680,7 +680,7 @@ export const ChatRowContent = memo(
 								onClick={() => {
 									// Open the URL in the default browser using gRPC
 									if (tool.path) {
-										UiServiceClient.openUrl(StringRequest.create({ value: tool.path })).catch((err) => {
+										trpc.ui.openUrl.mutate({ value: tool.path }).catch((err) => {
 											console.error("Failed to open URL:", err)
 										})
 									}
@@ -1173,8 +1173,9 @@ export const ChatRowContent = memo(
 										<div className="text-foreground opacity-80">
 											{isFailed ? (
 												<span>
-													Auto-retry failed after <strong>{maxAttempts}</strong> attempts. Manual
-													intervention required.
+													Auto-retry failed after <strong>{maxAttempts}</strong> attempts. Try switching
+													to a different model, reducing context size, or checking your API provider
+													status.
 												</span>
 											) : (
 												<span>
@@ -1224,7 +1225,7 @@ export const ChatRowContent = memo(
 									onClick={async () => {
 										try {
 											// Enable background terminal execution mode
-											await UiServiceClient.setTerminalExecutionMode(BooleanRequest.create({ value: true }))
+											await trpc.ui.setTerminalExecutionMode.mutate({ value: true })
 										} catch (error) {
 											console.error("Failed to enable background terminal:", error)
 										}

@@ -1,5 +1,4 @@
 import { HistoryItem } from "@shared/HistoryItem"
-import { StringRequest } from "@shared/proto/cline/common"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import {
 	ArrowDownIcon,
@@ -15,7 +14,7 @@ import {
 import { memo, useCallback, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { formatLargeNumber, formatSize } from "@/utils/format"
 
 type HistoryViewItemProps = {
@@ -44,9 +43,7 @@ const HistoryViewItem = ({
 	)
 
 	const handleShowTaskWithId = useCallback((id: string) => {
-		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch((error) =>
-			console.error("Error showing task:", error),
-		)
+		trpc.task.showTaskWithId.mutate({ value: id }).catch((error) => console.error("Error showing task:", error))
 	}, [])
 
 	const formatDate = useCallback((timestamp: number) => {
@@ -206,9 +203,9 @@ const HistoryViewItem = ({
 												className="m-0 p-0"
 												onClick={(e) => {
 													e.stopPropagation()
-													TaskServiceClient.exportTaskWithId(
-														StringRequest.create({ value: item.id }),
-													).catch((err) => console.error("Failed to export task:", err))
+													trpc.task.exportTaskWithId
+														.mutate({ value: item.id })
+														.catch((err) => console.error("Failed to export task:", err))
 												}}
 												variant="ghost">
 												<DownloadIcon />

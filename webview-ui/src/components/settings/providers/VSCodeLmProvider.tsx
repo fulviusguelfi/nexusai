@@ -1,11 +1,10 @@
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { LanguageModelChatSelector } from "@shared/proto/cline/models"
 import { Mode } from "@shared/storage/types"
 import { useCallback, useEffect, useRef, useState } from "react"
 // isOpenRef lets requestVsCodeLmModels see the current isOpen without being a dependency
 import { useInterval } from "react-use"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ModelsServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import { DROPDOWN_Z_INDEX, DropdownContainer } from "../ApiOptions"
 import { getModeSpecificFields } from "../utils/providerUtils"
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
@@ -29,7 +28,7 @@ export const VSCodeLmProvider = ({ currentMode }: VSCodeLmProviderProps) => {
 	// Poll VS Code LM models — only update state when the list actually changes and dropdown is closed
 	const requestVsCodeLmModels = useCallback(async () => {
 		try {
-			const response = await ModelsServiceClient.getVsCodeLmModels(EmptyRequest.create({}))
+			const response = await trpc.models.getVsCodeLmModels.query({})
 			if (response && response.models) {
 				setVsCodeLmModels((prev) => {
 					// Don't disrupt the dropdown while the user is interacting with it
@@ -221,9 +220,8 @@ export const VSCodeLmProvider = ({ currentMode }: VSCodeLmProviderProps) => {
 							marginTop: "5px",
 							color: "var(--vscode-descriptionForeground)",
 						}}>
-						Use models from your GitHub Copilot subscription. Install the{" "}
-						<a href="https://marketplace.visualstudio.com/items?itemName=GitHub.copilot">Copilot extension</a> and
-						enable Claude models in Copilot settings to get started.
+						Use models from your GitHub Copilot subscription. Install and sign in to the{" "}
+						<a href="vscode:extension/GitHub.copilot-chat">GitHub Copilot Chat</a> extension.
 					</p>
 				)}
 			</DropdownContainer>

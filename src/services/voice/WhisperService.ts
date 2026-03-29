@@ -46,21 +46,45 @@ export class WhisperService {
 		}
 	}
 
-	/** Transcribe Float32 PCM audio (16kHz mono) to text. */
-	async transcribe(float32PCM: Float32Array, sampleRate: number): Promise<string> {
+	/** Transcribe Float32 PCM audio (16kHz mono) to text with automatic language detection. */
+	async transcribeWithLanguageDetection(
+		float32PCM: Float32Array,
+		sampleRate: number,
+		languageHint?: string, // Optional: hint to Whisper about the expected language (e.g., "pt" for Portuguese)
+	): Promise<{ text: string; language: string }> {
 		const worker = await this._getWorker()
 
-		return new Promise<string>((resolve, reject) => {
+		return new Promise<{ text: string; language: string }>((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error("Whisper transcription timed out after 60s"))
 			}, TRANSCRIPTION_TIMEOUT_MS)
 
 			const onMessage = (msg: any) => {
+				if (msg.type === "debug") {
+					// Log all debug messages from worker for language detection troubleshooting
+					Logger.log(`[WhisperWorker] ${msg.message || "Debug info"}`)
+					if (msg.resultStructure) {
+						Logger.log(
+							`  Result structure: type=${msg.resultStructure.resultType}, keys=[${msg.resultStructure.resultKeys}]`,
+						)
+						if (msg.resultStructure.firstElementKeys) {
+							Logger.log(`  First element keys: [${msg.resultStructure.firstElementKeys}]`)
+						}
+						Logger.log(
+							`  Has language field: ${msg.resultStructure.hasLanguageField}, First element has language: ${msg.resultStructure.firstElementHasLanguage}`,
+						)
+					}
+					// Don't resolve/reject for debug messages, just log them
+					return
+				}
 				if (msg.type === "result") {
 					clearTimeout(timeout)
 					worker.off("message", onMessage)
 					worker.off("error", onError)
-					resolve(msg.text)
+					resolve({
+						text: msg.text,
+						language: msg.language ?? "unknown",
+					})
 				} else if (msg.type === "error") {
 					clearTimeout(timeout)
 					worker.off("message", onMessage)
@@ -83,8 +107,21 @@ export class WhisperService {
 
 			// Transfer the buffer for zero-copy
 			const buffer = float32PCM.buffer.slice(0) as ArrayBuffer
-			worker.postMessage({ type: "transcribe", float32PCM: buffer, sampleRate }, [buffer])
+			const message: any = { type: "transcribe", float32PCM: buffer, sampleRate }
+
+			// Add language hint if provided
+			if (languageHint) {
+				message.language = languageHint
+			}
+
+			worker.postMessage(message, [buffer])
 		})
+	}
+
+	/** Transcribe Float32 PCM audio (16kHz mono) to text. */
+	async transcribe(float32PCM: Float32Array, sampleRate: number): Promise<string> {
+		const result = await this.transcribeWithLanguageDetection(float32PCM, sampleRate)
+		return result.text
 	}
 
 	/** Terminate the worker and clean up the singleton. */
@@ -108,7 +145,20 @@ export class WhisperService {
 		}
 
 		// The worker file is bundled to dist/whisper.worker.js by esbuild
-		const workerPath = path.join(__dirname, "whisper.worker.js")
+		// Try multiple paths for different execution contexts (compiled vs tsx)
+		let workerPath = path.join(__dirname, "whisper.worker.js")
+
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const fs = require("fs")
+		if (!fs.existsSync(workerPath)) {
+			// Try dist/ relative to project root (for tsx execution)
+			const altPath = path.join(process.cwd(), "dist", "whisper.worker.js")
+			if (fs.existsSync(altPath)) {
+				workerPath = altPath
+			} else {
+				throw new Error(`Whisper worker not found at ${workerPath} or ${altPath}`)
+			}
+		}
 
 		return new Promise<Worker>((resolve, reject) => {
 			const worker = new this._WorkerClass(workerPath)

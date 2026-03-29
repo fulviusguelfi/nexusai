@@ -1,11 +1,10 @@
 import { McpViewTab } from "@shared/mcp"
-import { EmptyRequest } from "@shared/proto/cline/common"
 import { McpServers } from "@shared/proto/cline/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { useEffect, useState } from "react"
 import styled from "styled-components"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { trpc } from "@/services/trpc-client"
 import ViewHeader from "../../common/ViewHeader"
 import AddRemoteServerForm from "./tabs/add-server/AddRemoteServerForm"
 import ConfigureServersView from "./tabs/installed/ConfigureServersView"
@@ -42,7 +41,8 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 
 	useEffect(() => {
 		if (showMarketplace) {
-			McpServiceClient.refreshMcpMarketplace(EmptyRequest.create({}))
+			trpc.mcp.refreshMcpMarketplace
+				.mutate({})
 				.then((response) => {
 					setMcpMarketplaceCatalog(response)
 				})
@@ -50,7 +50,8 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 					console.error("Error refreshing MCP marketplace:", error)
 				})
 
-			McpServiceClient.getLatestMcpServers(EmptyRequest.create({}))
+			trpc.mcp.getLatestMcpServers
+				.query({})
 				.then((response: McpServers) => {
 					if (response.mcpServers) {
 						const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)

@@ -302,6 +302,11 @@ describe("State Keys Type Safety", () => {
 			}
 		})
 
+		it("should enable voice features by default", () => {
+			expect(getDefaultValue("voiceTtsEnabled")).to.equal(true)
+			expect(getDefaultValue("voiceSttEnabled")).to.equal(true)
+		})
+
 		it("should return undefined for keys without defaults", () => {
 			// Keys with `undefined` as default should return undefined
 			const keysWithUndefinedDefaults = GlobalStateAndSettingKeys.filter((key) => {
