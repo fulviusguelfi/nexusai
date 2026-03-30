@@ -39,7 +39,10 @@ export interface ExtensionMessage {
 		| "voice_language_detected"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
-	voice_audio_play?: { wavBase64: string }
+	voice_audio_play?: {
+		wavBase64: string
+		phonemeTimeline?: Array<{ start: number; end: number; value: string }>
+	}
 	voice_transcription?: { text: string }
 	voice_result?: {
 		transcriptionText: string
@@ -168,6 +171,13 @@ export interface ExtensionState {
 	voiceSilenceThresholdMs: number
 	voiceGracePeriodMs: number
 	voiceMetadataEnabled: boolean
+	// Avatar settings
+	avatarEnabled: boolean
+	avatarName: string
+	avatarPosition: "bottom-right" | "bottom-left" | "inline"
+	avatarPersonalityTone: "formal" | "casual" | "technical"
+	avatarPersonalityResponseMode: "concise" | "detailed" | "conversational"
+	avatarPersonalityLanguage: string
 }
 
 export interface ClineMessage {

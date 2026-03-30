@@ -61,13 +61,21 @@
 - [ ] Interface de controle IoT na webview
 - [ ] E2E cobertura — IoT tools
 
-#### Fase 5: Voz
-- [ ] Integrar Piper (TTS)
-- [ ] Integrar Whisper (STT)
-- [ ] Avatar interativo
-- [ ] Sistema de detecção de locutor
+#### Fase 5: Voz ✅ Concluída (via Fase 6 — `2026-03-30`)
+- [x] Integrar Piper (TTS)
+- [x] Integrar Whisper (STT)
+- [x] Avatar interativo (lip sync, SVG 2D, framer-motion) — entregue na Fase 6
+- [x] Sistema de detecção de locutor (SpeakerGate) — entregue na Fase 6
+- [x] Personalidade configurável (tom, modo de resposta, nome) — entregue na Fase 6
 
-#### Fase 6: Agentes Autônomos
+#### Fase 6: Avatar Animado + Lip Sync ✅ Concluída (`2026-03-30`)
+- [x] 6.1 SpeakerGate — bloqueia STT durante reprodução TTS (evita loop de feedback)
+- [x] 6.2 AvatarOverlay + AvatarSvg — componente SVG 2D inline, framer-motion, 9 visemas
+- [x] 6.3 RhubarbService + LipSyncController — extração de fonemas WASM, RAF loop, timing sync
+- [x] 6.4 Personalidade — voice_behavior.ts com tom/modo/nome, settings UI "Avatar & Personalidade"
+- [x] 6.5 Integração, snapshots, docs, 46+ novos testes (total ~1450+)
+
+#### Fase 7: Agentes Autônomos
 - [ ] Multi-IA (usar outras IAs como ferramentas)
 - [ ] Agent loop autônomo
 - [ ] Memory persistente entre sessões

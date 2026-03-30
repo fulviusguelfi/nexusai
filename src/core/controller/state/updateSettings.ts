@@ -376,6 +376,39 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("voiceMetadataEnabled", request.voiceMetadataEnabled)
 		}
 
+		if (request.avatarEnabled !== undefined) {
+			controller.stateManager.setGlobalState("avatarEnabled", request.avatarEnabled)
+		}
+
+		if (request.avatarName !== undefined) {
+			controller.stateManager.setGlobalState("avatarName", request.avatarName)
+		}
+
+		if (request.avatarPosition !== undefined) {
+			controller.stateManager.setGlobalState(
+				"avatarPosition",
+				request.avatarPosition as "bottom-right" | "bottom-left" | "inline",
+			)
+		}
+
+		if (request.avatarPersonalityTone !== undefined) {
+			controller.stateManager.setGlobalState(
+				"avatarPersonalityTone",
+				request.avatarPersonalityTone as "formal" | "casual" | "technical",
+			)
+		}
+
+		if (request.avatarPersonalityResponseMode !== undefined) {
+			controller.stateManager.setGlobalState(
+				"avatarPersonalityResponseMode",
+				request.avatarPersonalityResponseMode as "concise" | "detailed" | "conversational",
+			)
+		}
+
+		if (request.avatarPersonalityLanguage !== undefined) {
+			controller.stateManager.setGlobalState("avatarPersonalityLanguage", request.avatarPersonalityLanguage)
+		}
+
 		// Post updated state to webview
 		await controller.postStateToWebview()
 

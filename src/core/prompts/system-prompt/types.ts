@@ -126,6 +126,10 @@ export interface SystemPromptContext {
 	readonly enableNativeToolCalls?: boolean
 	readonly enableParallelToolCalling?: boolean
 	readonly terminalExecutionMode?: "vscodeTerminal" | "backgroundExec"
+	// Avatar personality
+	readonly avatarName?: string
+	readonly avatarPersonalityTone?: "formal" | "casual" | "technical"
+	readonly avatarPersonalityResponseMode?: "concise" | "detailed" | "conversational"
 }
 
 /**

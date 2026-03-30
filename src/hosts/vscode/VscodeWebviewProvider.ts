@@ -172,6 +172,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				)
 				try {
 					const { PiperService } = await import("@services/voice/PiperService")
+					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
 					const voicePiperVoice =
 						(this.controller.stateManager.getGlobalStateKey("voicePiperVoice") as string | undefined) ??
 						"en_US-lessac-medium"
@@ -181,7 +182,35 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						voicePiperVoice,
 					)
 					Logger.log(`[VscodeWebviewProvider] Synthesis done, wav size=${wavBuf.length} bytes, playing on host`)
-					await playWavOnHost(wavBuf)
+
+					// Extract lip sync phoneme timeline (non-blocking — fallback to empty on error)
+					const { RhubarbService } = await import("@services/voice/RhubarbService")
+					const phonemeTimeline = await new RhubarbService().extractTimeline(wavBuf)
+					Logger.log(`[VscodeWebviewProvider] Lip sync timeline: ${phonemeTimeline.length} entries`)
+
+					// Send WAV + phoneme timeline to webview for lip sync timing
+					void this.postMessageToWebview({
+						type: "voice_audio_play",
+						voice_audio_play: {
+							wavBase64: wavBuf.toString("base64"),
+							phonemeTimeline,
+						},
+					})
+
+					SpeakerGate.getInstance().activate()
+					void this.postMessageToWebview({
+						type: "voice_agent_state_changed",
+						voice_agent_state_changed: { state: "PLAYING", context: "" },
+					})
+					try {
+						await playWavOnHost(wavBuf)
+					} finally {
+						SpeakerGate.getInstance().deactivate()
+						void this.postMessageToWebview({
+							type: "voice_agent_state_changed",
+							voice_agent_state_changed: { state: "IDLE", context: "" },
+						})
+					}
 					Logger.log("[VscodeWebviewProvider] Host audio playback complete")
 				} catch (err) {
 					Logger.error("[VscodeWebviewProvider] TTS speak error:", err)
@@ -331,6 +360,11 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			case "start_voice_recording": {
 				if (message.start_voice_recording) {
 					try {
+						const { SpeakerGate } = await import("@services/voice/SpeakerGate")
+						if (SpeakerGate.getInstance().isBlocked()) {
+							Logger.log("[VscodeWebviewProvider] Speaker gate active — ignoring recording request during TTS")
+							break
+						}
 						const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 						const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
 						const gracePeriodMs = message.start_voice_recording.gracePeriodMs ?? 2000

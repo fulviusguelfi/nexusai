@@ -8,9 +8,11 @@ import { useMount } from "react-use"
 import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useShowNavbar } from "@/context/PlatformContext"
+import { useAvatarState } from "@/hooks/useAvatarState"
 import { UiServiceClient } from "@/services/grpc-client"
 import { trpc } from "@/services/trpc-client"
 import { Navbar } from "../menu/Navbar"
+import { AvatarOverlay } from "../voice/avatar"
 import AutoApproveBar from "./auto-approve-menu/AutoApproveBar"
 // Import utilities and hooks from the new structure
 import {
@@ -70,6 +72,8 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 	const apiMetrics = useMemo(() => getApiMetrics(modifiedMessages), [modifiedMessages])
 
 	const lastApiReqTotalTokens = useMemo(() => getLastApiReqTotalTokens(modifiedMessages) || undefined, [modifiedMessages])
+
+	const avatarState = useAvatarState()
 
 	// Use custom hooks for state management
 	const chatState = useChatState(messages)
@@ -390,6 +394,11 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 					shouldDisableFilesAndImages={shouldDisableFilesAndImages}
 				/>
 			</footer>
+			<AvatarOverlay
+				agentState={avatarState.agentState}
+				currentViseme={avatarState.currentViseme}
+				isVisible={avatarState.isVisible}
+			/>
 		</ChatLayout>
 	)
 }

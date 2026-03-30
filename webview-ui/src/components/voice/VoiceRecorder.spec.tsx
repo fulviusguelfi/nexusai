@@ -1,134 +1,97 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import VoiceRecorder from "./VoiceRecorder"
 
 let mockExtensionState: {
 	voiceSttEnabled: boolean
 	voiceInputDeviceId: string
+	voiceSilenceThresholdMs?: number
+	voiceGracePeriodMs?: number
 }
 
 vi.mock("@/context/ExtensionStateContext", () => ({
 	useExtensionState: vi.fn(() => mockExtensionState),
 }))
 
-describe("VoiceRecorder", () => {
-	let originalMediaDevices: MediaDevices | undefined
-	let originalMediaRecorder: typeof MediaRecorder | undefined
+const mockPostMessage = vi.fn()
+vi.mock("@/config/platform.config", () => ({
+	PLATFORM_CONFIG: {
+		postMessage: (msg: unknown) => mockPostMessage(msg),
+	},
+}))
 
+describe("VoiceRecorder", () => {
 	beforeEach(() => {
 		mockExtensionState = {
 			voiceSttEnabled: true,
 			voiceInputDeviceId: "",
 		}
-
-		originalMediaDevices = navigator.mediaDevices
-		originalMediaRecorder = globalThis.MediaRecorder
-
-		class MockMediaRecorder {
-			state: RecordingState = "inactive"
-			mimeType = "audio/webm"
-			ondataavailable: ((event: BlobEvent) => void) | null = null
-			onstop: (() => void) | null = null
-
-			constructor(_stream: MediaStream) {}
-
-			start() {
-				this.state = "recording"
-			}
-
-			stop() {
-				this.state = "inactive"
-				this.onstop?.()
-			}
-		}
-
-		Object.defineProperty(globalThis, "MediaRecorder", {
-			value: MockMediaRecorder,
-			configurable: true,
-		})
+		mockPostMessage.mockClear()
 	})
 
 	afterEach(() => {
-		Object.defineProperty(navigator, "mediaDevices", {
-			value: originalMediaDevices,
-			configurable: true,
-		})
-
-		Object.defineProperty(globalThis, "MediaRecorder", {
-			value: originalMediaRecorder,
-			configurable: true,
-		})
+		vi.clearAllMocks()
 	})
 
-	it("uses selected input device when available", async () => {
+	it("renders mic button when STT is enabled", () => {
+		render(<VoiceRecorder onTranscription={vi.fn()} />)
+		expect(screen.getByRole("button")).toBeTruthy()
+		expect(screen.getByRole("button").getAttribute("aria-label")).toBe("Start recording (Press)")
+	})
+
+	it("renders nothing when STT is disabled", () => {
+		mockExtensionState = { voiceSttEnabled: false, voiceInputDeviceId: "" }
+		const { container } = render(<VoiceRecorder onTranscription={vi.fn()} />)
+		expect(container.firstChild).toBeNull()
+	})
+
+	it("uses selected input device when available", () => {
 		mockExtensionState = {
 			voiceSttEnabled: true,
 			voiceInputDeviceId: "mic-1",
 		}
 
-		const stream = { getTracks: () => [] } as unknown as MediaStream
-		const getUserMedia = vi.fn().mockResolvedValue(stream)
-		Object.defineProperty(navigator, "mediaDevices", {
-			value: { getUserMedia },
-			configurable: true,
-		})
-
 		render(<VoiceRecorder onTranscription={vi.fn()} />)
-		fireEvent.mouseDown(screen.getByRole("button"))
+		fireEvent.click(screen.getByRole("button"))
 
-		await waitFor(() => {
-			expect(getUserMedia).toHaveBeenCalledWith({
-				audio: { deviceId: { exact: "mic-1" } },
-				video: false,
-			})
-		})
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "start_voice_recording",
+			}),
+		)
 	})
 
-	it("falls back to default input when selected device is unavailable", async () => {
+	it("falls back to default input when selected device is unavailable", () => {
 		mockExtensionState = {
 			voiceSttEnabled: true,
 			voiceInputDeviceId: "missing-mic",
 		}
 
-		const stream = { getTracks: () => [] } as unknown as MediaStream
-		const getUserMedia = vi.fn().mockRejectedValueOnce(new Error("NotFoundError")).mockResolvedValueOnce(stream)
-
-		Object.defineProperty(navigator, "mediaDevices", {
-			value: { getUserMedia },
-			configurable: true,
-		})
-
 		render(<VoiceRecorder onTranscription={vi.fn()} />)
-		fireEvent.mouseDown(screen.getByRole("button"))
+		fireEvent.click(screen.getByRole("button"))
 
-		await waitFor(() => {
-			expect(getUserMedia).toHaveBeenNthCalledWith(1, {
-				audio: { deviceId: { exact: "missing-mic" } },
-				video: false,
-			})
-			expect(getUserMedia).toHaveBeenNthCalledWith(2, { audio: true, video: false })
-		})
+		// Host handles device fallback — webview posts start_voice_recording and host uses saved deviceId
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "start_voice_recording",
+			}),
+		)
 	})
 
-	it("uses default input when no device is selected", async () => {
+	it("uses default input when no device is selected", () => {
 		mockExtensionState = {
 			voiceSttEnabled: true,
 			voiceInputDeviceId: "",
 		}
 
-		const stream = { getTracks: () => [] } as unknown as MediaStream
-		const getUserMedia = vi.fn().mockResolvedValue(stream)
-		Object.defineProperty(navigator, "mediaDevices", {
-			value: { getUserMedia },
-			configurable: true,
-		})
-
 		render(<VoiceRecorder onTranscription={vi.fn()} />)
-		fireEvent.mouseDown(screen.getByRole("button"))
+		fireEvent.click(screen.getByRole("button"))
 
-		await waitFor(() => {
-			expect(getUserMedia).toHaveBeenCalledTimes(1)
-			expect(getUserMedia).toHaveBeenCalledWith({ audio: true, video: false })
-		})
+		expect(mockPostMessage).toHaveBeenCalledTimes(1)
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "start_voice_recording",
+			}),
+		)
 	})
 })

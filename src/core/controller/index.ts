@@ -1003,6 +1003,12 @@ export class Controller {
 			voiceSilenceThresholdMs: this.stateManager.getGlobalStateKey("voiceSilenceThresholdMs"),
 			voiceGracePeriodMs: this.stateManager.getGlobalStateKey("voiceGracePeriodMs"),
 			voiceMetadataEnabled: this.stateManager.getGlobalStateKey("voiceMetadataEnabled"),
+			avatarEnabled: this.stateManager.getGlobalStateKey("avatarEnabled"),
+			avatarName: this.stateManager.getGlobalStateKey("avatarName"),
+			avatarPosition: this.stateManager.getGlobalStateKey("avatarPosition"),
+			avatarPersonalityTone: this.stateManager.getGlobalStateKey("avatarPersonalityTone"),
+			avatarPersonalityResponseMode: this.stateManager.getGlobalStateKey("avatarPersonalityResponseMode"),
+			avatarPersonalityLanguage: this.stateManager.getGlobalStateKey("avatarPersonalityLanguage"),
 		}
 	}
 

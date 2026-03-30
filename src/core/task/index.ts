@@ -1877,6 +1877,17 @@ export class Task {
 				this.stateManager.getGlobalStateKey("nativeToolCallEnabled"),
 			enableParallelToolCalling: this.isParallelToolCallingEnabled(),
 			terminalExecutionMode: this.terminalExecutionMode,
+			avatarName: this.stateManager.getGlobalStateKey("avatarName") as string | undefined,
+			avatarPersonalityTone: this.stateManager.getGlobalStateKey("avatarPersonalityTone") as
+				| "formal"
+				| "casual"
+				| "technical"
+				| undefined,
+			avatarPersonalityResponseMode: this.stateManager.getGlobalStateKey("avatarPersonalityResponseMode") as
+				| "concise"
+				| "detailed"
+				| "conversational"
+				| undefined,
 		}
 
 		// Notify user if any conditional rules were applied for this request

@@ -265,7 +265,13 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	return (
 		<div className="flex items-center gap-2">
 			<button
-				aria-label={isUserRecording ? "Stop recording (Release)" : "Start recording (Press)"}
+				aria-label={
+					agentState === VOICE_AGENT_STATES.PLAYING
+						? "Aguardando fim da fala da IA"
+						: isUserRecording
+							? "Stop recording (Release)"
+							: "Start recording (Press)"
+				}
 				className={[
 					"codicon p-0 m-0 transition-all text-[14px] w-5 h-5",
 					isError
