@@ -146,17 +146,6 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 			setStateContext("Listening for audio...")
 			setIsUserRecording(true)
 
-			// Set a timeout to detect if recording doesn't start
-			const timeoutId = setTimeout(() => {
-				if (agentState !== VOICE_AGENT_STATES.RECORDING) {
-					voiceLogStore.error(
-						"VoiceRecorder",
-						"Recording did not start within 3 seconds - user may need to check device permissions",
-					)
-					setErrorMessage("Microphone not responding - check device or permissions")
-				}
-			}, 3000)
-
 			PLATFORM_CONFIG.postMessage({
 				type: "start_voice_recording",
 				start_voice_recording: {
@@ -165,14 +154,6 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					gracePeriodMs: voiceGracePeriodMs ?? 2000,
 				},
 			})
-
-			// Cleanup timeout when recording starts
-			const stateCheckInterval = setInterval(() => {
-				if (agentState === VOICE_AGENT_STATES.RECORDING) {
-					clearTimeout(timeoutId)
-					clearInterval(stateCheckInterval)
-				}
-			}, 100)
 		}
 	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs, agentState])
 
