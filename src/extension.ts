@@ -187,11 +187,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
+	// 🔕 DISABLED: Sidebar hidden - chat only in editor panel
+	// All infrastructure (event listeners, state management) still active
+	// To re-enable sidebar: uncomment below
+	/*
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(VscodeWebviewProvider.SIDEBAR_ID, webview, {
 			webviewOptions: { retainContextWhenHidden: true },
 		}),
 	)
+	*/
 
 	DeviceRegistry.initialize(context)
 	SshServerProfileRegistry.initialize(context)
