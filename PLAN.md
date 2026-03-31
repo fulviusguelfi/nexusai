@@ -340,3 +340,68 @@ pull requests
 | [#8](https://github.com/fulviusguelfi/nexusai/issues/8) | refactor | Extract ContextCompactor de Task.ts |
 | [#7](https://github.com/fulviusguelfi/nexusai/issues/7) | refactor | Extract NativeToolCallProcessor de Task.ts |
 | [#6](https://github.com/fulviusguelfi/nexusai/issues/6) | refactor | Extract EnvironmentDetailsService de Task.ts |
+
+---
+
+## 14. QA & Documentation Agent — Utilidade para Desenvolvimento ✅
+
+**Data de Criação**: 31 de março de 2026  
+**Tipo**: Subagente especializado para análise de cobertura de testes e consolidação de documentação
+
+### Propósito
+O `qa-documentation-agent` é um subagente personalizado projetado para:
+1. **Análise de Cobertura de Testes** — Verifica quais funções têm testes, identifica lacunas
+2. **Correção de Testes Falhando** — Debug e finalização de suites de testes incompletas
+3. **Consolidação de Documentação** — Alinha código com documentação sem perda de informação
+4. **Manutenção do Conhecimento** — Atualiza wiki, PLAN.md e rastreia progresso do desenvolvimento
+
+### Arquivos Relacionados
+- **Configuração principal**: `.agents/qa-documentation-agent.md` (885 linhas, sistema prompt + 5-step QA cycle)
+- **Guia de uso rápido**: `.agents/qa-documentation-agent-usage.md` (exemplos práticos + referência)
+- **Memória de sessão**: `/memories/session/nexusai-qa-agent-task.md` (rastreamento de progresso)
+
+### Workflow: 5-Step QA Cycle
+```
+1. ASSESS & PLAN  → Definir escopo e estratégia
+2. ANALYZE        → Ler código/testes, identificar lacunas
+3. IMPLEMENT      → Escrever/corrigir testes
+4. DOCUMENT       → Reconciliar documentação com código
+5. REPORT         → Rastrear progresso, atualizar PLAN.md
+```
+
+### Como Usar
+```bash
+# Invocar o agente via subagent tool:
+"Analyze test coverage for src/core/prompts/"
+"Fix failing tests in src/api/ and write missing ones"
+"Consolidate docs/ to match latest code state"
+```
+
+### Benefícios para o Projeto
+✅ **Automação**: Análise sistemática de cobertura por módulo  
+✅ **Consistência**: Testes e docs sincronizados automaticamente  
+✅ **Rastreamento**: Progresso salvo entre sessões via memória  
+✅ **Conhecimento**: Base de dados de cobertura por módulo para futuras auditorias  
+
+### Estado Atual do Projeto
+- **181 arquivos de teste** descobertos
+- **Estrutura TypeScript/Jest** consistente
+- **Necessidade**: Consolidação de cobertura e alinhamento de documentação
+- **Próximo passo**: Executar agente em módulos críticos (core, api, services)
+
+### Comandos de Referência
+```bash
+npm run test:unit                    # Rodar todos os testes
+npm run test:unit -- --grep "test"   # Teste específico
+npm run compile                      # Compilar TypeScript
+npm run protos                       # Gerar código Protobuf
+npm run watch                        # Modo watch com auto-compile
+UPDATE_SNAPSHOTS=true npm run test:unit  # Atualizar snapshots
+```
+
+### Próximas Ações
+1. Invocar agente: `"Analyze test coverage for src/core/prompts/"`
+2. Aguardar relatório de cobertura
+3. Executar ciclo QA sobre módulos prioritários (core → api → services)
+4. Consolidar documentação conforme testes são completados
+5. Manter PLAN.md atualizado com progresso

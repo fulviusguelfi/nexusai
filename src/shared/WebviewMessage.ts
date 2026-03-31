@@ -7,6 +7,7 @@ export interface WebviewMessage {
 		| "debug_voice_error"
 		| "start_voice_recording"
 		| "stop_voice_recording"
+		| "webview_ready"
 	grpc_request?: GrpcRequest
 	grpc_request_cancel?: GrpcCancel
 	trpc_request?: TrpcRequest
@@ -27,6 +28,9 @@ export interface WebviewMessage {
 	}
 	stop_voice_recording?: {
 		timestamp: number // Unix milliseconds for request tracking
+	}
+	webview_ready?: {
+		webviewType: "sidebar" | "editor"
 	}
 }
 

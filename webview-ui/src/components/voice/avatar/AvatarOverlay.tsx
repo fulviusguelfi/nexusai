@@ -33,7 +33,7 @@ export function AvatarOverlay({ agentState, currentViseme, avatarName, isVisible
 		<AnimatePresence>
 			<motion.div
 				animate="visible"
-				className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-1 select-none"
+				className="flex flex-col items-center justify-center gap-1 select-none w-full h-full p-4"
 				data-state={agentState}
 				data-testid="avatar-overlay"
 				exit="hidden"
@@ -43,7 +43,7 @@ export function AvatarOverlay({ agentState, currentViseme, avatarName, isVisible
 				{/* Avatar SVG with breathing/state animation */}
 				<motion.div
 					animate={breathingVariants[agentState] ?? breathingVariants.IDLE}
-					className="w-20 h-20 drop-shadow-lg">
+					className="w-40 h-40 drop-shadow-lg">
 					<AvatarSvg agentState={agentState} viseme={currentViseme} />
 				</motion.div>
 

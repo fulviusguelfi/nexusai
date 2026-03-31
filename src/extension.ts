@@ -43,6 +43,7 @@ import { SshSessionsPanelProvider } from "./core/webview/panels/SshSessionsPanel
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
 import { abortCommitGeneration, generateCommitMsg } from "./hosts/vscode/commit-message-generator"
+import { EditorWebviewPanelProvider } from "./hosts/vscode/EditorWebviewPanelProvider"
 import { registerClineOutputChannel } from "./hosts/vscode/hostbridge/env/debugLog"
 import {
 	disposeVscodeCommentReviewController,
@@ -221,6 +222,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand(commands.HistoryButton, () => sendHistoryButtonClickedEvent()))
 	context.subscriptions.push(vscode.commands.registerCommand(commands.AccountButton, () => sendAccountButtonClickedEvent()))
 	context.subscriptions.push(vscode.commands.registerCommand(commands.WorktreesButton, () => sendWorktreesButtonClickedEvent()))
+
+	// Register command to open NexusAI in editor panel
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.OpenEditorPanel, async () => {
+			try {
+				await EditorWebviewPanelProvider.createOrShow()
+			} catch (error) {
+				Logger.error("[Extension] Failed to open editor panel:", error)
+				HostProvider.window.showMessage({
+					type: ShowMessageType.ERROR,
+					message: "Failed to open NexusAI in editor",
+				})
+			}
+		}),
+	)
 
 	/*
 	We use the text document content provider API to show the left side for diff view by creating a

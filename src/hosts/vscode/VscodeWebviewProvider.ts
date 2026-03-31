@@ -132,6 +132,16 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				if (this.webview?.visible) {
 					// View becoming visible should not steal editor focus.
 					await sendShowWebviewEvent(true)
+
+					// Automatically open editor panel when sidebar becomes visible
+					// (safe now with per-context storage keys)
+					try {
+						const { EditorWebviewPanelProvider } = await import("./EditorWebviewPanelProvider")
+						await EditorWebviewPanelProvider.createOrShow()
+						Logger.log("[VscodeWebviewProvider] Automatically opened editor panel with sidebar")
+					} catch (error) {
+						Logger.warn("[VscodeWebviewProvider] Failed to auto-open editor panel:", error)
+					}
 				}
 			},
 			null,
@@ -168,7 +178,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			Logger.log("[VscodeWebviewProvider] Registering onSpeakRequest listener")
 			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (text: string) => {
 				Logger.log(
-					`[VscodeWebviewProvider] onSpeakRequest fired, text length=${text?.length ?? 0}: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
+					`[TTS] 🎙️ onSpeakRequest EVENT FIRED! text length=${text?.length ?? 0}: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
 				)
 				try {
 					const { PiperService } = await import("@services/voice/PiperService")
@@ -176,17 +186,17 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					const voicePiperVoice =
 						(this.controller.stateManager.getGlobalStateKey("voicePiperVoice") as string | undefined) ??
 						"en_US-lessac-medium"
-					Logger.log(`[VscodeWebviewProvider] Synthesizing with voice="${voicePiperVoice}"`)
+					Logger.log(`[TTS] 🎵 Synthesizing with voice="${voicePiperVoice}"`)
 					const wavBuf = await PiperService.getInstance(this.controller.context.globalStoragePath).synthesize(
 						text,
 						voicePiperVoice,
 					)
-					Logger.log(`[VscodeWebviewProvider] Synthesis done, wav size=${wavBuf.length} bytes, playing on host`)
+					Logger.log(`[TTS] ✅ Synthesis done: ${wavBuf.length} bytes WAV`)
 
 					// Extract lip sync phoneme timeline (non-blocking — fallback to empty on error)
 					const { RhubarbService } = await import("@services/voice/RhubarbService")
 					const phonemeTimeline = await new RhubarbService().extractTimeline(wavBuf)
-					Logger.log(`[VscodeWebviewProvider] Lip sync timeline: ${phonemeTimeline.length} entries`)
+					Logger.log(`[TTS] 👄 Lip sync timeline extracted: ${phonemeTimeline.length} phoneme entries`)
 
 					// Send WAV + phoneme timeline to webview for lip sync timing
 					void this.postMessageToWebview({
@@ -196,6 +206,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 							phonemeTimeline,
 						},
 					})
+					Logger.log(`[TTS] 📤 voice_audio_play message sent to webview`)
 
 					SpeakerGate.getInstance().activate()
 					void this.postMessageToWebview({
@@ -203,7 +214,9 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						voice_agent_state_changed: { state: "PLAYING", context: "" },
 					})
 					try {
+						Logger.log("[TTS] 🔊 Playing audio on host...")
 						await playWavOnHost(wavBuf)
+						Logger.log("[TTS] ✅ Host audio playback complete")
 					} finally {
 						SpeakerGate.getInstance().deactivate()
 						void this.postMessageToWebview({
@@ -211,9 +224,8 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 							voice_agent_state_changed: { state: "IDLE", context: "" },
 						})
 					}
-					Logger.log("[VscodeWebviewProvider] Host audio playback complete")
 				} catch (err) {
-					Logger.error("[VscodeWebviewProvider] TTS speak error:", err)
+					Logger.error("[TTS] ❌ TTS speak error:", err)
 				}
 			})
 			this.disposables.push({ dispose })
@@ -371,6 +383,13 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
 							| string
 							| undefined
+
+						Logger.log("[VscodeWebviewProvider] Recording requested", {
+							voiceInputDeviceId: voiceInputDeviceId || "UNDEFINED - will try first available device",
+							silenceThresholdMs,
+							gracePeriodMs,
+						})
+
 						const response = await recordAndRespond(this.controller, {
 							silenceDurationMs: silenceThresholdMs,
 							gracePeriodMs,
@@ -463,9 +482,24 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 	/**
 	 * Implementation of abstract method - sends extension message to webview
+	 * Also routes message to editor panel if it exists (dual-panel support)
 	 */
 	async postExtensionMessage(message: any): Promise<boolean | undefined> {
-		return this.postMessageToWebview(message)
+		// Send to sidebar
+		const sidebarResult = await this.postMessageToWebview(message)
+
+		// Also send to editor panel if it's open (for state sync between sidebar and editor)
+		try {
+			// Dynamic import to avoid circular dependency
+			const { EditorWebviewPanelProvider } = await import("./EditorWebviewPanelProvider")
+			if (EditorWebviewPanelProvider.INSTANCE) {
+				await EditorWebviewPanelProvider.INSTANCE.postMessageToWebview(message)
+			}
+		} catch (error) {
+			// Silently fail if editor panel is not available
+		}
+
+		return sidebarResult
 	}
 
 	/**

@@ -205,6 +205,11 @@
 				"category": "NexusAI"
 			},
 			{
+				"command": "nexusai.openEditorPanel",
+				"title": "Open NexusAI in Editor",
+				"category": "NexusAI"
+			},
+			{
 				"command": "nexusai.generateGitCommitMessage",
 				"title": "Generate Commit Message with NexusAI",
 				"category": "NexusAI",

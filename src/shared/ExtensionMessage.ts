@@ -30,6 +30,7 @@ export interface ExtensionMessage {
 	type:
 		| "grpc_response"
 		| "trpc_response"
+		| "setLayoutOrientation"
 		| "voice_audio_play"
 		| "voice_transcription"
 		| "voice_result"
@@ -39,6 +40,7 @@ export interface ExtensionMessage {
 		| "voice_language_detected"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
+	orientation?: "horizontal" | "vertical"
 	voice_audio_play?: {
 		wavBase64: string
 		phonemeTimeline?: Array<{ start: number; end: number; value: string }>

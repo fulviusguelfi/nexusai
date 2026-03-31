@@ -3,6 +3,7 @@ import type { VoiceAgentState } from "@/components/voice/avatar/AvatarOverlay"
 import type { PhonemeTimeline, VisemeLabel } from "@/components/voice/avatar/LipSyncController"
 import { LipSyncController } from "@/components/voice/avatar/LipSyncController"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { voiceLogStore } from "@/utils/voiceDebugger"
 
 interface AvatarState {
 	agentState: VoiceAgentState
@@ -41,13 +42,21 @@ export function useAvatarState(): AvatarState {
 
 			if (data?.type === "voice_agent_state_changed") {
 				const state = data.voice_agent_state_changed?.state as VoiceAgentState | undefined
-				if (state) setAgentState(state)
+				if (state) {
+					voiceLogStore.info("useAvatarState", "Voice agent state changed", { state })
+					setAgentState(state)
+				}
 				return
 			}
 
 			if (data?.type === "voice_audio_play") {
 				const wavBase64: string | undefined = data.voice_audio_play?.wavBase64
 				const phonemeTimeline: PhonemeTimeline | undefined = data.voice_audio_play?.phonemeTimeline
+
+				voiceLogStore.info("useAvatarState", "Received voice_audio_play message", {
+					hasWav: !!wavBase64,
+					phonemeCount: phonemeTimeline?.length ?? 0,
+				})
 
 				// Cleanup previous playback
 				if (rafRef.current !== undefined) {
@@ -61,6 +70,7 @@ export function useAvatarState(): AvatarState {
 				}
 
 				if (!phonemeTimeline || phonemeTimeline.length === 0 || !wavBase64) {
+					voiceLogStore.warn("useAvatarState", "Missing phoneme timeline or WAV data")
 					setCurrentViseme("X")
 					return
 				}

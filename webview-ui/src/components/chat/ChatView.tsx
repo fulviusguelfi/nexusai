@@ -12,7 +12,6 @@ import { useAvatarState } from "@/hooks/useAvatarState"
 import { UiServiceClient } from "@/services/grpc-client"
 import { trpc } from "@/services/trpc-client"
 import { Navbar } from "../menu/Navbar"
-import { AvatarOverlay } from "../voice/avatar"
 import AutoApproveBar from "./auto-approve-menu/AutoApproveBar"
 // Import utilities and hooks from the new structure
 import {
@@ -135,14 +134,16 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 						}
 
 						// Stop searching if we reach a known chat message boundary or body
-						if (
-							currentElement.classList.contains("chat-row-assistant-message-container") ||
-							currentElement.classList.contains("chat-row-user-message-container") ||
-							currentElement.tagName === "BODY"
-						) {
-							break
+						if (currentElement) {
+							if (
+								currentElement.classList?.contains("chat-row-assistant-message-container") ||
+								currentElement.classList?.contains("chat-row-user-message-container") ||
+								currentElement.tagName === "BODY"
+							) {
+								break
+							}
+							currentElement = currentElement.parentElement
 						}
-						currentElement = currentElement.parentElement
 					}
 
 					if (preferPlainTextCopy) {
@@ -394,11 +395,6 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 					shouldDisableFilesAndImages={shouldDisableFilesAndImages}
 				/>
 			</footer>
-			<AvatarOverlay
-				agentState={avatarState.agentState}
-				currentViseme={avatarState.currentViseme}
-				isVisible={avatarState.isVisible}
-			/>
 		</ChatLayout>
 	)
 }

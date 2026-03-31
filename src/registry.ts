@@ -18,6 +18,7 @@ const ClineCommands = {
 	WorktreesButton: `${prefix}.worktreesButtonClicked`,
 	TerminalOutput: `${prefix}.addTerminalOutputToChat`,
 	AddToChat: `${prefix}.addToChat`,
+	OpenEditorPanel: `${prefix}.openEditorPanel`,
 	FixWithCline: `${prefix}.fixWithCline`,
 	ExplainCode: `${prefix}.explainCode`,
 	ImproveCode: `${prefix}.improveCode`,

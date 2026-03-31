@@ -34,24 +34,29 @@ export function AvatarSvg({ viseme, agentState }: AvatarSvgProps) {
 
 	return (
 		<svg aria-label="NexusAI avatar" fill="none" role="img" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-			{/* Head background */}
-			<circle cx="100" cy="100" fill="#0f3460" r="90" />
-			<circle cx="100" cy="100" fill="none" r="90" stroke="#1a1a2e" strokeWidth="4" />
+			{/* Head background - bright yellow smiley face */}
+			<defs>
+				<radialGradient cx="35%" cy="35%" id="headGradient">
+					<stop offset="0%" stopColor="#FFD700" />
+					<stop offset="100%" stopColor="#FFA700" />
+				</radialGradient>
+			</defs>
 
-			{/* Left eye */}
-			<motion.ellipse
+			<circle cx="100" cy="100" fill="url(#headGradient)" r="90" />
+			<circle cx="100" cy="100" fill="none" r="90" stroke="#FF9500" strokeWidth="3" />
+
+			{/* Left eye - simple filled circle */}
+			<motion.circle
 				animate={
 					agentState === "ERROR"
-						? { scaleY: 0.4 }
+						? { r: 8 }
 						: agentState === "PROCESSING"
-							? { x: [-5, 5, -5] }
-							: { scaleY: [1, 1, 0.05, 1] }
+							? { cx: [66, 78, 66] }
+							: { r: [11, 11, 6, 11] }
 				}
 				cx="72"
-				cy="85"
-				fill="#e94560"
-				rx="10"
-				ry="12"
+				cy="80"
+				fill="#1a1a2e"
 				transition={
 					agentState === "PROCESSING"
 						? { duration: 0.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }
@@ -59,20 +64,18 @@ export function AvatarSvg({ viseme, agentState }: AvatarSvgProps) {
 				}
 			/>
 
-			{/* Right eye */}
-			<motion.ellipse
+			{/* Right eye - simple filled circle */}
+			<motion.circle
 				animate={
 					agentState === "ERROR"
-						? { scaleY: 0.4 }
+						? { r: 8 }
 						: agentState === "PROCESSING"
-							? { x: [-5, 5, -5] }
-							: { scaleY: [1, 1, 0.05, 1] }
+							? { cx: [122, 134, 122] }
+							: { r: [11, 11, 6, 11] }
 				}
 				cx="128"
-				cy="85"
-				fill="#e94560"
-				rx="10"
-				ry="12"
+				cy="80"
+				fill="#1a1a2e"
 				transition={
 					agentState === "PROCESSING"
 						? { duration: 0.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 }
@@ -80,28 +83,28 @@ export function AvatarSvg({ viseme, agentState }: AvatarSvgProps) {
 				}
 			/>
 
-			{/* Left eyebrow */}
+			{/* Left eyebrow - expressive arc */}
 			<motion.path
-				animate={agentState === "RECORDING" ? { y: -4 } : { y: 0 }}
-				d="M58,65 Q72,60 86,65"
-				stroke="#e94560"
+				animate={agentState === "RECORDING" ? { y: -6, strokeWidth: 4 } : { y: 0, strokeWidth: 3 }}
+				d="M58,62 Q72,55 86,62"
+				stroke="#1a1a2e"
 				strokeLinecap="round"
 				strokeWidth="3"
 				transition={{ duration: 0.2 }}
 			/>
 
-			{/* Right eyebrow */}
+			{/* Right eyebrow - expressive arc */}
 			<motion.path
-				animate={agentState === "RECORDING" ? { y: -4 } : { y: 0 }}
-				d="M114,65 Q128,60 142,65"
-				stroke="#e94560"
+				animate={agentState === "RECORDING" ? { y: -6, strokeWidth: 4 } : { y: 0, strokeWidth: 3 }}
+				d="M114,62 Q128,55 142,62"
+				stroke="#1a1a2e"
 				strokeLinecap="round"
 				strokeWidth="3"
 				transition={{ duration: 0.2 }}
 			/>
 
-			{/* Mouth group — only the active viseme is visible */}
-			<g transform="translate(100, 130)">
+			{/* Mouth group — lip-sync animation */}
+			<g transform="translate(100, 135)">
 				{allVisemes.map((v) => (
 					<g
 						data-active={v === viseme ? "true" : "false"}
@@ -111,14 +114,18 @@ export function AvatarSvg({ viseme, agentState }: AvatarSvgProps) {
 						<path
 							d={MOUTH_PATHS[v]}
 							fill={v === "E" || v === "F" ? "#1a1a2e" : "none"}
-							stroke="#e94560"
+							stroke="#1a1a2e"
 							strokeLinecap="round"
 							strokeLinejoin="round"
-							strokeWidth="3"
+							strokeWidth="4"
 						/>
 					</g>
 				))}
 			</g>
+
+			{/* Cute blush marks */}
+			<circle cx="45" cy="110" fill="#FF69B4" fillOpacity="0.4" r="12" />
+			<circle cx="155" cy="110" fill="#FF69B4" fillOpacity="0.4" r="12" />
 		</svg>
 	)
 }

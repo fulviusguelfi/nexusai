@@ -88,6 +88,24 @@ export async function recordAndRespond(
 
 			Logger.error(`${ts()} ❌ Preflight check failed: ${blockerMessages}`)
 
+			// Send error state to webview immediately so VoiceRecorder shows error
+			try {
+				const messenger = await getVoiceMessenger()
+				if (messenger) {
+					const message: ExtensionMessage = {
+						type: "voice_agent_state_changed" as const,
+						voice_agent_state_changed: {
+							state: "IDLE" as VoiceAgentState,
+							context: `System not ready: ${blockerMessages}`,
+						},
+					}
+					Logger.log(`[recordAndRespond] Sending error state to webview: ${blockerMessages}`)
+					await messenger(message)
+				}
+			} catch (err) {
+				Logger.error("[recordAndRespond] Failed to send error state:", err)
+			}
+
 			return {
 				success: false,
 				transcriptionText: "",
