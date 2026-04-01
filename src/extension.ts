@@ -187,16 +187,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
-	// 🔕 DISABLED: Sidebar hidden - chat only in editor panel
-	// All infrastructure (event listeners, state management) still active
-	// To re-enable sidebar: uncomment below
-	/*
+	// ✅ Sidebar re-enabled: Settings, History, MCP Servers, Worktrees
+	// Chat-only mode is in editor panel (separate webview with horizontal layout)
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(VscodeWebviewProvider.SIDEBAR_ID, webview, {
 			webviewOptions: { retainContextWhenHidden: true },
 		}),
 	)
-	*/
 
 	DeviceRegistry.initialize(context)
 	SshServerProfileRegistry.initialize(context)
@@ -216,9 +213,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
-			const sidebarInstance = WebviewProvider.getInstance()
-			await sidebarInstance.controller.clearTask()
-			await sidebarInstance.controller.postStateToWebview()
+			// Open chat-only editor panel with Chat + Avatar layout
+			const editorPanel = await EditorWebviewPanelProvider.createOrShow()
+			await editorPanel.controller.clearTask()
+			await editorPanel.controller.postStateToWebview()
 			await sendChatButtonClickedEvent()
 		}),
 	)
@@ -480,23 +478,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
-			const webview = WebviewProvider.getInstance() as VscodeWebviewProvider
-
-			// Show the webview
-			const webviewView = webview.getWebview()
-			if (webviewView) {
-				if (preserveEditorFocus) {
-					// Only make webview visible without forcing focus
-					webviewView.show(false)
-				} else {
-					// Show and force focus (default behavior for explicit focus actions)
-					webviewView.show(true)
-				}
-			}
+			// Open/focus chat-only editor panel with Chat + Avatar layout
+			const editorPanel = await EditorWebviewPanelProvider.createOrShow()
 
 			// Send show webview event with preserveEditorFocus flag
 			sendShowWebviewEvent(preserveEditorFocus)
-			telemetryService.captureButtonClick("command_focusChatInput", webview.controller?.task?.ulid)
+			telemetryService.captureButtonClick("command_focusChatInput", editorPanel.controller?.task?.ulid)
 		}),
 	)
 

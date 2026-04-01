@@ -79,21 +79,37 @@ const AppContent = () => {
 	// In sidebar mode (vertical), hide avatar when overlays are open
 	const showAvatarOverlay = !showingOverlay
 
+	// SIDEBAR MODE (vertical): Show Settings/History/MCP/Worktrees (NO Chat)
+	if (orientation === "vertical") {
+		return (
+			<div className="flex h-screen w-full flex-col relative">
+				{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
+				{showHistory && <HistoryView onDone={hideHistory} />}
+				{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
+				{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
+				{/* Sidebar never shows Chat - that's editor-only */}
+				{!showingOverlay && (
+					<div className="flex-1 flex items-center justify-center text-center px-4">
+						<div className="text-sm text-gray-500">
+							<p>Use the Chat button to open the editor panel</p>
+						</div>
+					</div>
+				)}
+			</div>
+		)
+	}
+
+	// EDITOR PANEL MODE (horizontal): Show Chat + Avatar ONLY (NO overlays)
 	const mainContent = (
 		<div className="flex h-screen w-full flex-col relative">
-			{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
-			{showHistory && <HistoryView onDone={hideHistory} />}
-			{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
-			{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
+			{/* Editor panel never shows overlays - they're sidebar-only */}
 			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose */}
-			{!showingOverlay && (
-				<ChatView
-					hideAnnouncement={hideAnnouncement}
-					isHidden={false}
-					showAnnouncement={showAnnouncement}
-					showHistoryView={navigateToHistory}
-				/>
-			)}
+			<ChatView
+				hideAnnouncement={hideAnnouncement}
+				isHidden={false}
+				showAnnouncement={showAnnouncement}
+				showHistoryView={navigateToHistory}
+			/>
 		</div>
 	)
 

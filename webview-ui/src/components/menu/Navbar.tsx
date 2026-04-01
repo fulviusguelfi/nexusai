@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { trpc } from "@/services/trpc-client"
 import { useExtensionState } from "../../context/ExtensionStateContext"
+import { useLayout } from "../../context/LayoutContext"
 
 // Custom MCP Server Icon component using VSCode codicon
 // Custom MCP Server Icon component
@@ -20,7 +21,14 @@ const McpServerIcon = ({ className, size }: { className?: string; size?: number 
 
 export const Navbar = () => {
 	const { navigateToHistory, navigateToSettings, navigateToMcp, navigateToChat } = useExtensionState()
+	const { orientation } = useLayout()
 
+	// Editor panel doesn't show navbar - chat-only mode
+	if (orientation === "horizontal") {
+		return null
+	}
+
+	// Sidebar navbar: Settings, History, MCP, New Task
 	const SETTINGS_TABS = useMemo(
 		() => [
 			{

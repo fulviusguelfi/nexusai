@@ -1,6 +1,7 @@
 import { getWebviewHtml } from "@core/controller/ui/getWebviewHtml"
 import { initializeWebview } from "@core/controller/ui/initializeWebview"
 import { onDidShowAnnouncement } from "@core/controller/ui/onDidShowAnnouncement"
+import { openEditorPanel } from "@core/controller/ui/openEditorPanel"
 import { openUrl } from "@core/controller/ui/openUrl"
 import { openWalkthrough } from "@core/controller/ui/openWalkthrough"
 import { scrollToSettings } from "@core/controller/ui/scrollToSettings"
@@ -22,6 +23,7 @@ export const uiRouter = router({
 	getWebviewHtml: publicProcedure.input(e).query(({ ctx, input }) => getWebviewHtml(ctx.controller, input)),
 	openUrl: publicProcedure.input(z.custom()).mutation(({ ctx, input }) => openUrl(ctx.controller, input as any)),
 	openWalkthrough: publicProcedure.input(e).mutation(({ ctx, input }) => openWalkthrough(ctx.controller, input)),
+	openEditorPanel: publicProcedure.input(e).mutation(({ ctx, input }) => openEditorPanel(ctx.controller, input)),
 	// subscribeToAddToInput — streaming, stays on gRPC
 	// subscribeTo{Mcp,History,Chat,Account,Settings,Worktrees}ButtonClicked — streaming, stays on gRPC
 	// subscribeToPartialMessage — streaming, stays on gRPC
