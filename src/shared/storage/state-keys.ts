@@ -99,6 +99,7 @@ const GLOBAL_STATE_FIELDS = {
 	voicePiperVoice: { default: "en_US-lessac-medium" as string },
 	voiceSilenceThresholdMs: { default: 700 as number },
 	voiceGracePeriodMs: { default: 2000 as number },
+	voiceMaxRecordingDurationMs: { default: 120000 as number },
 	voiceMetadataEnabled: { default: true as boolean },
 	// Avatar settings
 	avatarEnabled: { default: true as boolean },

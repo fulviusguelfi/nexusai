@@ -25,7 +25,7 @@ export const CheckpointError: React.FC<CheckpointErrorProps> = ({
 
 	return (
 		<div className="flex items-center justify-center w-full">
-			<Alert title={messages.message} variant="danger">
+			<Alert title={messages.message} variant="warning">
 				<AlertDescription className="flex gap-2 justify-end">
 					{messages.showDisableButton && (
 						<Button aria-label="Disable Checkpoints" onClick={handleCheckpointSettingsClick} variant="ghost">

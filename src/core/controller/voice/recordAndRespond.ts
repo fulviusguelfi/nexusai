@@ -122,7 +122,7 @@ export async function recordAndRespond(
 		Logger.log(`${ts()} 🎙️ Step 2: Recording audio...`)
 
 		const agent = new VoiceAgent({
-			maxDuration: request.maxDurationMs || 30000,
+			maxDuration: request.maxDurationMs || 120000,
 			silenceThreshold: request.silenceThreshold || 0.01,
 			silenceDurationMs: request.silenceDurationMs || 700,
 			gracePeriodMs: request.gracePeriodMs ?? 2000,

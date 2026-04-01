@@ -82,7 +82,7 @@ const WAVEFORM_BARS = [
 ]
 
 const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
-	const { voiceSttEnabled, voiceSilenceThresholdMs, voiceGracePeriodMs } = useExtensionState()
+	const { voiceSttEnabled, voiceSilenceThresholdMs, voiceGracePeriodMs, voiceMaxRecordingDurationMs } = useExtensionState()
 
 	// UI State
 	const [agentState, setAgentState] = useState<VoiceAgentState>(VOICE_AGENT_STATES.IDLE)
@@ -112,7 +112,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 			case VOICE_AGENT_STATES.INITIALIZING:
 				return { icon: "⏳", label: "Starting...", isActive: true }
 			case VOICE_AGENT_STATES.READY_TO_LISTEN:
-				return { icon: "🎙️", label: "Pode falar!", isActive: true }
+				return { icon: "🎙️", label: "Pode falar!", isActive: false }
 			case VOICE_AGENT_STATES.RECORDING:
 				return { icon: "🎙️", label: "Listening...", isActive: true }
 			case VOICE_AGENT_STATES.PROCESSING:
@@ -152,10 +152,11 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					timestamp: Date.now(),
 					silenceThresholdMs: voiceSilenceThresholdMs || 700,
 					gracePeriodMs: voiceGracePeriodMs ?? 2000,
+					maxDurationMs: voiceMaxRecordingDurationMs || 120000,
 				},
 			})
 		}
-	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs, agentState])
+	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs, voiceMaxRecordingDurationMs, agentState])
 
 	// Listen for state changes from extension host
 	useEffect(() => {

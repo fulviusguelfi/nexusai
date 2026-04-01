@@ -172,6 +172,7 @@ export interface ExtensionState {
 	voicePiperVoice: string
 	voiceSilenceThresholdMs: number
 	voiceGracePeriodMs: number
+	voiceMaxRecordingDurationMs: number
 	voiceMetadataEnabled: boolean
 	// Avatar settings
 	avatarEnabled: boolean

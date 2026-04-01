@@ -298,6 +298,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		voicePiperVoice: "en_US-lessac-medium",
 		voiceSilenceThresholdMs: 700,
 		voiceGracePeriodMs: 2000,
+		voiceMaxRecordingDurationMs: 120000,
 		voiceMetadataEnabled: true,
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)

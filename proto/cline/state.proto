@@ -99,7 +99,7 @@ message Secrets {
   optional string oca_refresh_token = 42;
   optional string mcp_o_auth_secrets = 43;
   optional string cline_api_key = 44;
-  optional string openai_codex_oauth_credentials = 60;
+  optional string openai_codex_oauth_credentials = 61;
 }
 
 // NOTE: Add new fields under API_HANDLER_SETTINGS_FIELDS or USER_SETTINGS_FIELDS
@@ -428,6 +428,7 @@ message UpdateSettingsRequest {
   optional int32 voice_silence_threshold_ms = 47;
   optional int32 voice_grace_period_ms = 48;
   optional bool voice_metadata_enabled = 49;
+  optional int32 voice_max_recording_duration_ms = 56;
   // Avatar settings
   optional bool avatar_enabled = 50;
   optional string avatar_name = 51;

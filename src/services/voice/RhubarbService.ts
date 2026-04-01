@@ -130,7 +130,10 @@ export class RhubarbService {
 			timeline.sort((a, b) => a.start - b.start)
 			return timeline
 		} catch (err) {
-			Logger.debug("[RhubarbService] Extraction failed, returning fallback:", err)
+			Logger.debug(
+				"[RhubarbService] Extraction failed, returning fallback:",
+				err instanceof Error ? err.message : String(err),
+			)
 			return this._silentFallback(1.0)
 		}
 	}

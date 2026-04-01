@@ -32,6 +32,7 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		voicePiperVoice,
 		voiceSilenceThresholdMs,
 		voiceGracePeriodMs,
+		voiceMaxRecordingDurationMs,
 		voiceMetadataEnabled,
 		avatarEnabled,
 		avatarName,
@@ -151,10 +152,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									{refreshing ? "↻ Refreshing…" : "↻ Refresh"}
 								</button>
 							</div>
-
 							{/* Show error if detection failed */}
 							{error && <p className="text-xs text-red-400">Detection failed: {error}</p>}
-
 							<Select
 								onValueChange={(v) => updateSetting("voiceInputDeviceId", v === "default" ? "" : v)}
 								value={
@@ -174,7 +173,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									))}
 								</SelectContent>
 							</Select>
-
 							{/* Silence threshold slider */}
 							<div className="flex flex-col gap-2 mt-3">
 								<div className="flex items-center justify-between">
@@ -199,7 +197,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									Wait {((voiceSilenceThresholdMs || 700) / 1000).toFixed(3)}s of silence to auto-stop recording
 								</p>
 							</div>
-
 							{/* Grace period slider */}
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
@@ -223,6 +220,30 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									stop recording
 								</p>
 							</div>
+							{/* Max recording duration slider */}
+							<div className="flex flex-col gap-2">
+								<div className="flex items-center justify-between">
+									<Label className="text-xs text-vscode-descriptionForeground">Max Recording Duration</Label>
+									<span className="text-xs font-mono bg-vscode-editor-background px-2 py-1 rounded">
+										{((voiceMaxRecordingDurationMs || 120000) / 1000).toFixed(0)}s
+									</span>
+								</div>
+								<input
+									className="w-full cursor-pointer"
+									max="300000"
+									min="10000"
+									onChange={(e) =>
+										updateSetting("voiceMaxRecordingDurationMs", Number.parseInt(e.target.value, 10))
+									}
+									step="10000"
+									title="Maximum recording duration before auto-stop (10s-5min)"
+									type="range"
+									value={voiceMaxRecordingDurationMs || 120000}
+								/>
+								<p className="text-xs text-vscode-descriptionForeground mt-1">
+									Auto-stop recording after {((voiceMaxRecordingDurationMs || 120000) / 1000).toFixed(0)}s
+								</p>
+							</div>{" "}
 						</div>
 					)}
 

@@ -1002,6 +1002,7 @@ export class Controller {
 			voicePiperVoice: this.stateManager.getGlobalStateKey("voicePiperVoice"),
 			voiceSilenceThresholdMs: this.stateManager.getGlobalStateKey("voiceSilenceThresholdMs"),
 			voiceGracePeriodMs: this.stateManager.getGlobalStateKey("voiceGracePeriodMs"),
+			voiceMaxRecordingDurationMs: this.stateManager.getGlobalStateKey("voiceMaxRecordingDurationMs"),
 			voiceMetadataEnabled: this.stateManager.getGlobalStateKey("voiceMetadataEnabled"),
 			avatarEnabled: this.stateManager.getGlobalStateKey("avatarEnabled"),
 			avatarName: this.stateManager.getGlobalStateKey("avatarName"),

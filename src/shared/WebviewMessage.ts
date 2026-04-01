@@ -25,6 +25,7 @@ export interface WebviewMessage {
 		timestamp: number // Unix milliseconds for request tracking
 		silenceThresholdMs?: number // Optional silence threshold in milliseconds
 		gracePeriodMs?: number // Optional grace period before silence detection activates
+		maxDurationMs?: number // Optional max recording duration in milliseconds
 	}
 	stop_voice_recording?: {
 		timestamp: number // Unix milliseconds for request tracking

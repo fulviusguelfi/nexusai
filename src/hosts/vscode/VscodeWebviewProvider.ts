@@ -380,6 +380,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 						const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
 						const gracePeriodMs = message.start_voice_recording.gracePeriodMs ?? 2000
+						const maxDurationMs = message.start_voice_recording.maxDurationMs || 120000
 						const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
 							| string
 							| undefined
@@ -388,11 +389,13 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 							voiceInputDeviceId: voiceInputDeviceId || "UNDEFINED - will try first available device",
 							silenceThresholdMs,
 							gracePeriodMs,
+							maxDurationMs,
 						})
 
 						const response = await recordAndRespond(this.controller, {
 							silenceDurationMs: silenceThresholdMs,
 							gracePeriodMs,
+							maxDurationMs,
 							inputDeviceId: voiceInputDeviceId || undefined,
 						})
 

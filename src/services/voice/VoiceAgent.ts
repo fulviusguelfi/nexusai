@@ -53,7 +53,7 @@ export class VoiceAgent {
 	constructor(options: VoiceAgentOptions = {}) {
 		this.deviceId = options.deviceId || undefined
 		this.options = {
-			maxDuration: options.maxDuration || 30000,
+			maxDuration: options.maxDuration || 120000,
 			silenceThreshold: options.silenceThreshold || 0.01,
 			silenceDurationMs: options.silenceDurationMs || 700,
 			gracePeriodMs: options.gracePeriodMs ?? 2000,

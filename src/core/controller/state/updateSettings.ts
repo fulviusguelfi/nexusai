@@ -372,6 +372,10 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("voiceGracePeriodMs", request.voiceGracePeriodMs)
 		}
 
+		if (request.voiceMaxRecordingDurationMs !== undefined) {
+			controller.stateManager.setGlobalState("voiceMaxRecordingDurationMs", request.voiceMaxRecordingDurationMs)
+		}
+
 		if (request.voiceMetadataEnabled !== undefined) {
 			controller.stateManager.setGlobalState("voiceMetadataEnabled", request.voiceMetadataEnabled)
 		}
