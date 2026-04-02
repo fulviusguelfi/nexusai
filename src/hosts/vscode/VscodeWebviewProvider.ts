@@ -370,23 +370,57 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				break
 			}
 			case "start_voice_recording": {
-				// Whisper/FFmpeg push-to-talk removed — use streaming STT (Web Speech API) instead.
-				Logger.warn("[VscodeWebviewProvider] start_voice_recording: Whisper STT removed. Use streaming STT.")
-				postMessageToWebview({
-					type: "voice_result",
-					voice_result: {
-						transcriptionText: "",
-						llmResponseText: "",
-						audioWavBase64: "",
-						totalDurationMs: 0,
-						success: false,
-						errorMessage: "Push-to-talk recording removed. Please use the streaming voice button instead.",
-					},
-				})
+				try {
+					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
+					if (SpeakerGate.getInstance().isBlocked()) {
+						Logger.log("[VscodeWebviewProvider] Speaker gate active — ignoring recording request during TTS")
+						break
+					}
+					const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
+					const rec = message.start_voice_recording!
+					const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
+						| string
+						| undefined
+					Logger.log("[VscodeWebviewProvider] Recording requested", {
+						voiceInputDeviceId: voiceInputDeviceId || "UNDEFINED - will try first available device",
+					})
+					const response = await recordAndRespond(this.controller, {
+						silenceDurationMs: rec.silenceThresholdMs || 700,
+						gracePeriodMs: rec.gracePeriodMs ?? 2000,
+						maxDurationMs: rec.maxDurationMs || 120000,
+						inputDeviceId: voiceInputDeviceId || undefined,
+					})
+					postMessageToWebview({
+						type: "voice_result",
+						voice_result: {
+							transcriptionText: response.transcriptionText,
+							llmResponseText: response.llmResponseText,
+							audioWavBase64: response.audioWavBase64,
+							totalDurationMs: response.totalDurationMs,
+							success: response.success,
+							errorMessage: response.errorMessage,
+							detectedLanguage: response.detectedLanguage,
+						},
+					})
+				} catch (err) {
+					Logger.error("[VscodeWebviewProvider] Voice record and respond failed:", err)
+					postMessageToWebview({
+						type: "voice_result",
+						voice_result: {
+							transcriptionText: "",
+							llmResponseText: "",
+							audioWavBase64: "",
+							totalDurationMs: 0,
+							success: false,
+							errorMessage: `Voice recording error: ${err instanceof Error ? err.message : String(err)}`,
+						},
+					})
+				}
 				break
 			}
 			case "stop_voice_recording": {
-				// No-op: Whisper/FFmpeg recording removed.
+				const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
+				getActiveVoiceAgent()?.destroy()
 				break
 			}
 			case "voice_mic_diagnostic_result": {
