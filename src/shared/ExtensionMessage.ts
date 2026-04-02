@@ -30,6 +30,7 @@ export interface ExtensionMessage {
 	type:
 		| "grpc_response"
 		| "trpc_response"
+		| "setLayoutOrientation"
 		| "voice_audio_play"
 		| "voice_transcription"
 		| "voice_result"
@@ -39,7 +40,11 @@ export interface ExtensionMessage {
 		| "voice_language_detected"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
-	voice_audio_play?: { wavBase64: string }
+	orientation?: "horizontal" | "vertical"
+	voice_audio_play?: {
+		wavBase64: string
+		phonemeTimeline?: Array<{ start: number; end: number; value: string }>
+	}
 	voice_transcription?: { text: string }
 	voice_result?: {
 		transcriptionText: string
@@ -167,7 +172,15 @@ export interface ExtensionState {
 	voicePiperVoice: string
 	voiceSilenceThresholdMs: number
 	voiceGracePeriodMs: number
+	voiceMaxRecordingDurationMs: number
 	voiceMetadataEnabled: boolean
+	// Avatar settings
+	avatarEnabled: boolean
+	avatarName: string
+	avatarPosition: "bottom-right" | "bottom-left" | "inline"
+	avatarPersonalityTone: "formal" | "casual" | "technical"
+	avatarPersonalityResponseMode: "concise" | "detailed" | "conversational"
+	avatarPersonalityLanguage: string
 }
 
 export interface ClineMessage {

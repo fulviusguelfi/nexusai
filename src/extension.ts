@@ -43,6 +43,7 @@ import { SshSessionsPanelProvider } from "./core/webview/panels/SshSessionsPanel
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
 import { abortCommitGeneration, generateCommitMsg } from "./hosts/vscode/commit-message-generator"
+import { EditorWebviewPanelProvider } from "./hosts/vscode/EditorWebviewPanelProvider"
 import { registerClineOutputChannel } from "./hosts/vscode/hostbridge/env/debugLog"
 import {
 	disposeVscodeCommentReviewController,
@@ -186,6 +187,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
+	// ✅ Sidebar re-enabled: Settings, History, MCP Servers, Worktrees
+	// Chat-only mode is in editor panel (separate webview with horizontal layout)
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(VscodeWebviewProvider.SIDEBAR_ID, webview, {
 			webviewOptions: { retainContextWhenHidden: true },
@@ -210,9 +213,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
-			const sidebarInstance = WebviewProvider.getInstance()
-			await sidebarInstance.controller.clearTask()
-			await sidebarInstance.controller.postStateToWebview()
+			// Open chat-only editor panel with Chat + Avatar layout
+			const editorPanel = await EditorWebviewPanelProvider.createOrShow()
+			await editorPanel.controller.clearTask()
+			await editorPanel.controller.postStateToWebview()
 			await sendChatButtonClickedEvent()
 		}),
 	)
@@ -221,6 +225,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand(commands.HistoryButton, () => sendHistoryButtonClickedEvent()))
 	context.subscriptions.push(vscode.commands.registerCommand(commands.AccountButton, () => sendAccountButtonClickedEvent()))
 	context.subscriptions.push(vscode.commands.registerCommand(commands.WorktreesButton, () => sendWorktreesButtonClickedEvent()))
+
+	// Register command to open NexusAI in editor panel
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.OpenEditorPanel, async () => {
+			try {
+				await EditorWebviewPanelProvider.createOrShow()
+			} catch (error) {
+				Logger.error("[Extension] Failed to open editor panel:", error)
+				HostProvider.window.showMessage({
+					type: ShowMessageType.ERROR,
+					message: "Failed to open NexusAI in editor",
+				})
+			}
+		}),
+	)
 
 	/*
 	We use the text document content provider API to show the left side for diff view by creating a
@@ -459,23 +478,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
-			const webview = WebviewProvider.getInstance() as VscodeWebviewProvider
-
-			// Show the webview
-			const webviewView = webview.getWebview()
-			if (webviewView) {
-				if (preserveEditorFocus) {
-					// Only make webview visible without forcing focus
-					webviewView.show(false)
-				} else {
-					// Show and force focus (default behavior for explicit focus actions)
-					webviewView.show(true)
-				}
-			}
+			// Open/focus chat-only editor panel with Chat + Avatar layout
+			const editorPanel = await EditorWebviewPanelProvider.createOrShow()
 
 			// Send show webview event with preserveEditorFocus flag
 			sendShowWebviewEvent(preserveEditorFocus)
-			telemetryService.captureButtonClick("command_focusChatInput", webview.controller?.task?.ulid)
+			telemetryService.captureButtonClick("command_focusChatInput", editorPanel.controller?.task?.ulid)
 		}),
 	)
 

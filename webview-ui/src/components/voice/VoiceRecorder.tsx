@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useState } from "react"
 import { PLATFORM_CONFIG } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { voiceLogStore } from "@/utils/voiceDebugger"
 
 interface Props {
 	onTranscription?: (text: string, language?: string) => void
@@ -81,7 +82,7 @@ const WAVEFORM_BARS = [
 ]
 
 const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
-	const { voiceSttEnabled, voiceSilenceThresholdMs, voiceGracePeriodMs } = useExtensionState()
+	const { voiceSttEnabled, voiceSilenceThresholdMs, voiceGracePeriodMs, voiceMaxRecordingDurationMs } = useExtensionState()
 
 	// UI State
 	const [agentState, setAgentState] = useState<VoiceAgentState>(VOICE_AGENT_STATES.IDLE)
@@ -111,7 +112,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 			case VOICE_AGENT_STATES.INITIALIZING:
 				return { icon: "⏳", label: "Starting...", isActive: true }
 			case VOICE_AGENT_STATES.READY_TO_LISTEN:
-				return { icon: "🎙️", label: "Pode falar!", isActive: true }
+				return { icon: "🎙️", label: "Pode falar!", isActive: false }
 			case VOICE_AGENT_STATES.RECORDING:
 				return { icon: "🎙️", label: "Listening...", isActive: true }
 			case VOICE_AGENT_STATES.PROCESSING:
@@ -129,7 +130,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	const handleToggleRecording = useCallback(async () => {
 		if (isUserRecording) {
 			// Stop recording
-			console.log("[VoiceRecorder] User stopped recording (push-to-talk release)")
+			voiceLogStore.info("VoiceRecorder", "User stopped recording (push-to-talk release)")
 			setIsUserRecording(false)
 			setStateContext("Processing...")
 			PLATFORM_CONFIG.postMessage({
@@ -140,7 +141,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 			})
 		} else {
 			// Start recording
-			console.log("[VoiceRecorder] User started recording (push-to-talk press)")
+			voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
 			setErrorMessage(null)
 			setStateContext("Listening for audio...")
 			setIsUserRecording(true)
@@ -151,10 +152,11 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					timestamp: Date.now(),
 					silenceThresholdMs: voiceSilenceThresholdMs || 700,
 					gracePeriodMs: voiceGracePeriodMs ?? 2000,
+					maxDurationMs: voiceMaxRecordingDurationMs || 120000,
 				},
 			})
 		}
-	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs])
+	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs, voiceMaxRecordingDurationMs, agentState])
 
 	// Listen for state changes from extension host
 	useEffect(() => {
@@ -165,9 +167,15 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				const { state, context } = data.voice_agent_state_changed || {}
 				if (isVoiceAgentState(state)) {
 					setAgentState(state)
-					// IDLE transitions use internal reason strings (e.g. "Destroyed", "Cancelled") — never show in UI
-					setStateContext(state === VOICE_AGENT_STATES.IDLE ? "" : context || "")
-					setErrorMessage(null)
+					// Handle error states from backend (e.g., preflight check failures)
+					if (state === VOICE_AGENT_STATES.IDLE && context?.startsWith("System not ready:")) {
+						setErrorMessage(context)
+						setStateContext("")
+					} else {
+						// IDLE transitions use internal reason strings (e.g. "Destroyed", "Cancelled") — never show in UI
+						setStateContext(state === VOICE_AGENT_STATES.IDLE ? "" : context || "")
+						setErrorMessage(null)
+					}
 					if (state !== VOICE_AGENT_STATES.RECORDING) {
 						setAudioLevel(null)
 					}
@@ -265,7 +273,13 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	return (
 		<div className="flex items-center gap-2">
 			<button
-				aria-label={isUserRecording ? "Stop recording (Release)" : "Start recording (Press)"}
+				aria-label={
+					agentState === VOICE_AGENT_STATES.PLAYING
+						? "Aguardando fim da fala da IA"
+						: isUserRecording
+							? "Stop recording (Release)"
+							: "Start recording (Press)"
+				}
 				className={[
 					"codicon p-0 m-0 transition-all text-[14px] w-5 h-5",
 					isError

@@ -32,7 +32,13 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		voicePiperVoice,
 		voiceSilenceThresholdMs,
 		voiceGracePeriodMs,
+		voiceMaxRecordingDurationMs,
 		voiceMetadataEnabled,
+		avatarEnabled,
+		avatarName,
+		avatarPosition,
+		avatarPersonalityTone,
+		avatarPersonalityResponseMode,
 	} = useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
@@ -84,8 +90,9 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 	// Re-detect when system audio devices change (e.g., headset plugged/unplugged)
 	useEffect(() => {
 		if (!navigator.mediaDevices) return
-		navigator.mediaDevices.addEventListener("devicechange", detectRealDevices)
-		return () => navigator.mediaDevices.removeEventListener("devicechange", detectRealDevices)
+		const mediaDevices = navigator.mediaDevices
+		mediaDevices.addEventListener("devicechange", detectRealDevices)
+		return () => mediaDevices.removeEventListener("devicechange", detectRealDevices)
 	}, [detectRealDevices])
 
 	useEffect(() => {
@@ -95,6 +102,14 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 			updateSetting("voiceInputDeviceId", "")
 		}
 	}, [voiceInputDeviceId, inputDevices])
+
+	useEffect(() => {
+		if (!voiceOutputDeviceId) return
+		const exists = outputDevices.some((d) => d.deviceId === voiceOutputDeviceId)
+		if (!exists) {
+			updateSetting("voiceOutputDeviceId", "")
+		}
+	}, [voiceOutputDeviceId, outputDevices])
 
 	useEffect(() => {
 		if (!voicePiperVoice) return
@@ -108,8 +123,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		<div>
 			{renderSectionHeader("voice")}
 			<Section>
-				{/* STT toggle */}
 				<div className="flex flex-col gap-3">
+					{/* STT toggle */}
 					<div className="flex items-center justify-between">
 						<div>
 							<Label className="text-sm font-medium">Speech-to-Text (Whisper)</Label>
@@ -137,10 +152,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									{refreshing ? "↻ Refreshing…" : "↻ Refresh"}
 								</button>
 							</div>
-
 							{/* Show error if detection failed */}
 							{error && <p className="text-xs text-red-400">Detection failed: {error}</p>}
-
 							<Select
 								onValueChange={(v) => updateSetting("voiceInputDeviceId", v === "default" ? "" : v)}
 								value={
@@ -160,7 +173,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									))}
 								</SelectContent>
 							</Select>
-
 							{/* Silence threshold slider */}
 							<div className="flex flex-col gap-2 mt-3">
 								<div className="flex items-center justify-between">
@@ -185,7 +197,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									Wait {((voiceSilenceThresholdMs || 700) / 1000).toFixed(3)}s of silence to auto-stop recording
 								</p>
 							</div>
-
 							{/* Grace period slider */}
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
@@ -209,6 +220,30 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									stop recording
 								</p>
 							</div>
+							{/* Max recording duration slider */}
+							<div className="flex flex-col gap-2">
+								<div className="flex items-center justify-between">
+									<Label className="text-xs text-vscode-descriptionForeground">Max Recording Duration</Label>
+									<span className="text-xs font-mono bg-vscode-editor-background px-2 py-1 rounded">
+										{((voiceMaxRecordingDurationMs || 120000) / 1000).toFixed(0)}s
+									</span>
+								</div>
+								<input
+									className="w-full cursor-pointer"
+									max="300000"
+									min="10000"
+									onChange={(e) =>
+										updateSetting("voiceMaxRecordingDurationMs", Number.parseInt(e.target.value, 10))
+									}
+									step="10000"
+									title="Maximum recording duration before auto-stop (10s-5min)"
+									type="range"
+									value={voiceMaxRecordingDurationMs || 120000}
+								/>
+								<p className="text-xs text-vscode-descriptionForeground mt-1">
+									Auto-stop recording after {((voiceMaxRecordingDurationMs || 120000) / 1000).toFixed(0)}s
+								</p>
+							</div>{" "}
 						</div>
 					)}
 
@@ -290,6 +325,95 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 							</div>
 						</div>
 					)}
+
+					{/* Avatar & Personality subsection */}
+					<div className="mt-4 pt-4 border-t border-vscode-panel-border">
+						<p className="text-sm font-semibold mb-3 text-vscode-foreground">Avatar &amp; Personalidade</p>
+
+						<div className="flex items-center justify-between mb-3">
+							<div>
+								<Label className="text-sm">Mostrar avatar</Label>
+								<p className="text-xs mt-0.5 text-vscode-descriptionForeground">
+									Exibe avatar animado durante interações por voz
+								</p>
+							</div>
+							<Switch
+								checked={avatarEnabled ?? true}
+								onCheckedChange={(checked) => updateSetting("avatarEnabled", checked)}
+							/>
+						</div>
+
+						{(avatarEnabled ?? true) && (
+							<>
+								<div className="mb-3">
+									<Label className="text-sm mb-1 block" htmlFor="avatar-name-input">
+										Nome do avatar
+									</Label>
+									<input
+										className="w-full px-2 py-1 text-sm rounded bg-vscode-input-background text-vscode-input-foreground border border-vscode-input-border"
+										defaultValue={avatarName ?? "Nexus"}
+										id="avatar-name-input"
+										onBlur={(e) => updateSetting("avatarName", e.target.value || "Nexus")}
+										placeholder="Nexus"
+										title="Nome do avatar"
+										type="text"
+									/>
+								</div>
+
+								<div className="mb-3">
+									<Label className="text-sm mb-1 block">Tom de voz</Label>
+									<Select
+										onValueChange={(v) => updateSetting("avatarPersonalityTone", v)}
+										value={avatarPersonalityTone ?? "casual"}>
+										<SelectTrigger className="w-full text-sm">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="casual">Casual</SelectItem>
+											<SelectItem value="formal">Formal</SelectItem>
+											<SelectItem value="technical">Técnico</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+
+								<div className="mb-3">
+									<Label className="text-sm mb-1 block">Modo de resposta</Label>
+									<Select
+										onValueChange={(v) => updateSetting("avatarPersonalityResponseMode", v)}
+										value={avatarPersonalityResponseMode ?? "concise"}>
+										<SelectTrigger className="w-full text-sm">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="concise">Conciso</SelectItem>
+											<SelectItem value="detailed">Detalhado</SelectItem>
+											<SelectItem value="conversational">Conversacional</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+
+								<div className="mb-3">
+									<Label className="text-sm mb-1 block">Posição do avatar</Label>
+									<Select
+										onValueChange={(v) => updateSetting("avatarPosition", v)}
+										value={avatarPosition ?? "bottom-right"}>
+										<SelectTrigger className="w-full text-sm">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="bottom-right">Inferior direito</SelectItem>
+											<SelectItem value="bottom-left">Inferior esquerdo</SelectItem>
+											<SelectItem value="inline">Inline</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+
+								<p className="text-xs text-vscode-descriptionForeground">
+									O idioma do avatar segue automaticamente o idioma detectado na fala.
+								</p>
+							</>
+						)}
+					</div>
 				</div>
 			</Section>
 		</div>

@@ -1,0 +1,109 @@
+/* LayoutContainer Styles */
+
+.layout-container {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: 100vh;
+	overflow: hidden;
+}
+
+/* Horizontal Layout: Chat (left) + Avatar (right) */
+.layout-container.layout-horizontal {
+	flex-direction: row;
+	gap: 0;
+}
+
+.layout-horizontal .chat-section {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.layout-horizontal .avatar-section {
+	flex: 0 0 30%;
+	min-width: 250px;
+	max-width: 400px;
+	flex-shrink: 0;
+	border-left: 1px solid var(--vscode-editorGroup-border, #e0e0e0);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	padding: 1rem;
+}
+
+/* Vertical Layout: Chat (top) + Avatar (bottom) */
+.layout-container.layout-vertical {
+	flex-direction: column;
+	gap: 0;
+}
+
+.layout-vertical .chat-section {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.layout-vertical .avatar-section {
+	height: 300px;
+	min-height: 300px;
+	flex-shrink: 0;
+	border-top: 1px solid var(--vscode-editorGroup-border, #e0e0e0);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+/* Layout Section Base */
+.layout-section {
+	background-color: var(--vscode-editor-background, #1e1e1e);
+	color: var(--vscode-editor-foreground, #d4d4d4);
+}
+
+.chat-section {
+	position: relative;
+}
+
+.avatar-section {
+	background-color: var(--vscode-editor-background, #1e1e1e);
+	position: relative;
+}
+.layout-container {
+	transition: flex-direction 0.2s ease-in-out;
+}
+
+.layout-section {
+	transition:
+		width 0.2s ease-in-out,
+		height 0.2s ease-in-out;
+}
+
+/* Avatar positioning inside AvatarSection (removed position:fixed) */
+.avatar-section > div {
+	position: relative;
+	bottom: auto;
+	right: auto;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Responsive: Stack vertically on very small screens */
+@media (max-width: 640px) {
+	.layout-container.layout-horizontal {
+		flex-direction: column;
+	}
+
+	.layout-horizontal .avatar-section {
+		width: 100%;
+		height: 250px;
+		border-left: none;
+		border-top: 1px solid var(--vscode-editorGroup-border, #e0e0e0);
+	}
+}

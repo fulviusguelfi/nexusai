@@ -1,18 +1,25 @@
 import { useEffect } from "react"
 import ChatView from "./components/chat/ChatView"
 import HistoryView from "./components/history/HistoryView"
+import { AvatarSection, ChatSection, LayoutContainer } from "./components/layout/LayoutContainer"
 import McpView from "./components/mcp/configuration/McpConfigurationView"
 import OnboardingView from "./components/onboarding/OnboardingView"
 import SettingsView from "./components/settings/SettingsView"
+import { AvatarOverlay } from "./components/voice/avatar"
 import WelcomeView from "./components/welcome/WelcomeView"
 import WorktreesView from "./components/worktrees/WorktreesView"
 import { useClineAuth } from "./context/ClineAuthContext"
 import { useExtensionState } from "./context/ExtensionStateContext"
+import { useLayout } from "./context/LayoutContext"
+import { useAvatarState } from "./hooks/useAvatarState"
+import { useExtensionMessages } from "./hooks/useExtensionMessages"
 import { useVoiceAudioPlayer } from "./hooks/useVoiceAudioPlayer"
 import { Providers } from "./Providers"
 import { trpc } from "./services/trpc-client"
 
 const AppContent = () => {
+	const { orientation } = useLayout()
+	const avatarState = useAvatarState()
 	const {
 		didHydrateState,
 		showWelcome,
@@ -37,6 +44,7 @@ const AppContent = () => {
 
 	useClineAuth()
 	useVoiceAudioPlayer()
+	useExtensionMessages()
 
 	useEffect(() => {
 		if (shouldShowAnnouncement) {
@@ -62,19 +70,72 @@ const AppContent = () => {
 		return onboardingModels ? <OnboardingView onboardingModels={onboardingModels} /> : <WelcomeView />
 	}
 
-	return (
-		<div className="flex h-screen w-full flex-col">
-			{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
-			{showHistory && <HistoryView onDone={hideHistory} />}
-			{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
-			{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
-			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose (user input, disableInput, askResponse promise, etc.) */}
+	const showingOverlay = showSettings || showHistory || showMcp || showWorktrees
+
+	// Use LayoutContainer only for horizontal layout (editor mode)
+	const shouldUseLayout = orientation === "horizontal"
+
+	// In editor mode (horizontal), don't show overlays - they're sidebar-only
+	// In sidebar mode (vertical), hide avatar when overlays are open
+	const showAvatarOverlay = !showingOverlay
+
+	// SIDEBAR MODE (vertical): Show Settings/History/MCP/Worktrees (NO Chat)
+	if (orientation === "vertical") {
+		return (
+			<div className="flex h-screen w-full flex-col relative">
+				{showSettings && <SettingsView onDone={hideSettings} targetSection={settingsTargetSection} />}
+				{showHistory && <HistoryView onDone={hideHistory} />}
+				{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
+				{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
+				{/* Sidebar never shows Chat - that's editor-only */}
+				{!showingOverlay && (
+					<div className="flex-1 flex items-center justify-center text-center px-4">
+						<div className="text-sm text-gray-500">
+							<p>Use the Chat button to open the editor panel</p>
+						</div>
+					</div>
+				)}
+			</div>
+		)
+	}
+
+	// EDITOR PANEL MODE (horizontal): Show Chat + Avatar ONLY (NO overlays)
+	const mainContent = (
+		<div className="flex h-screen w-full flex-col relative">
+			{/* Editor panel never shows overlays - they're sidebar-only */}
+			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose */}
 			<ChatView
 				hideAnnouncement={hideAnnouncement}
-				isHidden={showSettings || showHistory || showMcp || showWorktrees}
+				isHidden={false}
 				showAnnouncement={showAnnouncement}
 				showHistoryView={navigateToHistory}
 			/>
+		</div>
+	)
+
+	return shouldUseLayout ? (
+		<LayoutContainer>
+			<ChatSection>{mainContent}</ChatSection>
+			<AvatarSection>
+				{/* Avatar always visible in editor panel (horizontal layout) */}
+				<AvatarOverlay
+					agentState={avatarState.agentState}
+					currentViseme={avatarState.currentViseme}
+					isVisible={avatarState.isVisible}
+				/>
+			</AvatarSection>
+		</LayoutContainer>
+	) : (
+		<div className="flex h-screen w-full flex-col">
+			{mainContent}
+			{/* Avatar only visible when no overlays are open and voice is enabled */}
+			{showAvatarOverlay && (
+				<AvatarOverlay
+					agentState={avatarState.agentState}
+					currentViseme={avatarState.currentViseme}
+					isVisible={avatarState.isVisible}
+				/>
+			)}
 		</div>
 	)
 }

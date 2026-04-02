@@ -13,6 +13,8 @@
 			"Bash(git add:*)",
 			"Bash(git commit:*)",
 			"Bash(git checkout:*)",
+			"Bash(git fetch:*)",
+			"Bash(git rebase:*)",
 			"Bash(find /c/Users/Usuario/Desktop/nexusai -type f \\\\\\(-name *Voice* -o -name *Audio* -o -name *Device* \\\\\\) -path */src/*)",
 			"Bash(find /c/Users/Usuario/Desktop/nexusai/src -type f -name *Voice* -o -name *voice*)",
 			"Bash(find /c/Users/Usuario/Desktop/nexusai/src/services -type f -name *Voice* -o -name *voice* -o -name *Audio*)",
@@ -104,7 +106,10 @@
 			"Bash(find c:UsersUsuarioDesktopnexusaisrcintegrationsvoice -type f -name *.ts)",
 			"Bash(ls -la src/core/controller/*.ts)",
 			"Bash(find . -path ./src/generated -name *.ts)",
-			"Bash(xargs basename:*)"
+			"Bash(xargs basename:*)",
+			"Bash(npm --prefix c:/Users/Usuario/Desktop/nexusai/webview-ui test)",
+			"Bash(UPDATE_SNAPSHOTS=true npm run test:unit)",
+			"Bash(npm --prefix c:/Users/Usuario/Desktop/nexusai run test:unit -- --update-snapshots)"
 		],
 		"additionalDirectories": [
 			"C:\\Users\\Usuario\\AppData\\Roaming\\Code\\User\\globalStorage\\fulviusguelfi.nexusai\\voice\\whisper-models",

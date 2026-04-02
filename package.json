@@ -205,6 +205,11 @@
 				"category": "NexusAI"
 			},
 			{
+				"command": "nexusai.openEditorPanel",
+				"title": "Open NexusAI in Editor",
+				"category": "NexusAI"
+			},
+			{
 				"command": "nexusai.generateGitCommitMessage",
 				"title": "Generate Commit Message with NexusAI",
 				"category": "NexusAI",
@@ -598,6 +603,7 @@
 		"puppeteer-chromium-resolver": "^23.0.0",
 		"puppeteer-core": "^23.4.0",
 		"reconnecting-eventsource": "^1.6.4",
+		"rhubarb-lip-sync-wasm": "^0.1.8",
 		"serialize-error": "^11.0.3",
 		"shell-quote": "^1.8.3",
 		"simple-git": "^3.27.0",

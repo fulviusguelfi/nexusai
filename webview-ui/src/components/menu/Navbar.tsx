@@ -1,21 +1,34 @@
 import { HistoryIcon, PlusIcon, SettingsIcon } from "lucide-react"
 import { useMemo } from "react"
+import { LayoutToggle } from "@/components/layout/LayoutToggle"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { trpc } from "@/services/trpc-client"
 import { useExtensionState } from "../../context/ExtensionStateContext"
+import { useLayout } from "../../context/LayoutContext"
 
 // Custom MCP Server Icon component using VSCode codicon
+// Custom MCP Server Icon component
 const McpServerIcon = ({ className, size }: { className?: string; size?: number }) => (
 	<span
 		className={`codicon codicon-server flex items-center ${className || ""}`}
-		style={{ fontSize: size ? `${size}px` : "12.5px", marginBottom: "1px" }}
+		style={{
+			fontSize: size ? `${size}px` : "12.5px",
+			marginBottom: "1px",
+		}}
 	/>
 )
 
 export const Navbar = () => {
 	const { navigateToHistory, navigateToSettings, navigateToMcp, navigateToChat } = useExtensionState()
+	const { orientation } = useLayout()
 
+	// Editor panel doesn't show navbar - chat-only mode
+	if (orientation === "horizontal") {
+		return null
+	}
+
+	// Sidebar navbar: Settings, History, MCP, New Task
 	const SETTINGS_TABS = useMemo(
 		() => [
 			{
@@ -62,6 +75,7 @@ export const Navbar = () => {
 		<nav
 			className="flex-none inline-flex justify-end bg-transparent gap-2 mb-1 z-10 border-none items-center mr-4!"
 			id="cline-navbar-container">
+			<LayoutToggle />
 			{SETTINGS_TABS.map((tab) => (
 				<Tooltip key={`navbar-tooltip-${tab.id}`}>
 					<TooltipContent side="bottom">{tab.tooltip}</TooltipContent>

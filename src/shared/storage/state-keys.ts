@@ -99,7 +99,16 @@ const GLOBAL_STATE_FIELDS = {
 	voicePiperVoice: { default: "en_US-lessac-medium" as string },
 	voiceSilenceThresholdMs: { default: 700 as number },
 	voiceGracePeriodMs: { default: 2000 as number },
+	voiceMaxRecordingDurationMs: { default: 120000 as number },
 	voiceMetadataEnabled: { default: true as boolean },
+	// Avatar settings
+	avatarEnabled: { default: true as boolean },
+	avatarName: { default: "Nexus" as string },
+	avatarPosition: { default: "bottom-right" as "bottom-right" | "bottom-left" | "inline" },
+	// Avatar personality
+	avatarPersonalityTone: { default: "casual" as "formal" | "casual" | "technical" },
+	avatarPersonalityResponseMode: { default: "concise" as "concise" | "detailed" | "conversational" },
+	avatarPersonalityLanguage: { default: "auto" as string },
 } satisfies FieldDefinitions
 
 // Fields that map directly to ApiHandlerOptions in @shared/api.ts

@@ -225,6 +225,10 @@ export const ExtensionStateContextProvider: React.FC<{
 		setShowHistory(false)
 		setShowAccount(false)
 		setShowWorktrees(false)
+		// Open editor panel with Chat + Avatar layout from sidebar
+		trpc.ui.openEditorPanel.mutate({}).catch((error) => {
+			console.error("Failed to open editor panel:", error)
+		})
 	}, [setShowSettings, closeMcpView, setShowHistory, setShowAccount, setShowWorktrees])
 
 	const [state, setState] = useState<ExtensionState>({
@@ -294,6 +298,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		voicePiperVoice: "en_US-lessac-medium",
 		voiceSilenceThresholdMs: 700,
 		voiceGracePeriodMs: 2000,
+		voiceMaxRecordingDurationMs: 120000,
 		voiceMetadataEnabled: true,
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)

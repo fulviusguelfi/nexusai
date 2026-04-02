@@ -159,11 +159,47 @@ Soluções em nuvem têm latência perceptível, custo por uso e enviam áudio p
 
 | # | Tarefa | Descrição |
 | - | ------ | --------- |
-| 5.1 | Integrar Piper (TTS) | Síntese de voz local, seleção de voz/idioma |
-| 5.2 | Integrar Whisper (STT) | Captura de microfone, transcrição em tempo real |
-| 5.3 | Speaker gate | Desativa captura durante playback TTS |
-| 5.4 | Avatar interativo | Visualização animada no webview |
-| 5.5 | Personalidade configurável | Nome, tom, idioma, modo de resposta |
+| 5.1 | ✅ Integrar Piper (TTS) | Síntese de voz local, seleção de voz/idioma |
+| 5.2 | ✅ Integrar Whisper (STT) | Captura de microfone, transcrição em tempo real |
+| 5.3 | ✅ Speaker gate | Desativa captura durante playback TTS — entregue na Fase 6 |
+| 5.4 | ✅ Avatar interativo | Visualização animada no webview — entregue na Fase 6 |
+| 5.5 | ✅ Personalidade configurável | Nome, tom, idioma, modo de resposta — entregue na Fase 6 |
+
+---
+
+## Fase 6 — Avatar Animado com Lip Sync 🎭 ✅ Concluída (`2026-03-30`)
+
+> **Objetivo**: Completar as entregas pendentes da Fase 5 e dar identidade visual "voice-first" ao NexusAI — avatar 2D animado com sincronização labial offline.
+
+### Entregas
+
+| Sub-fase | Entrega | Status |
+| -------- | ------- | ------ |
+| 6.1 | **SpeakerGate** — singleton que bloqueia STT durante TTS, evitando loop de feedback | ✅ |
+| 6.2 | **AvatarOverlay + AvatarSvg** — SVG 2D inline, 9 visemas Hanna-Barbera, framer-motion | ✅ |
+| 6.3 | **RhubarbService + LipSyncController** — extração de fonemas via WASM no host, RAF loop no webview | ✅ |
+| 6.4 | **Personalidade do Avatar** — voice_behavior.ts com tom/modo/nome, settings UI "Avatar & Personalidade" | ✅ |
+| 6.5 | **Integração e QA** — 46+ novos testes, snapshots atualizados, docs | ✅ |
+
+### Arquitetura
+
+- **Host (Node.js)**: Piper sintetiza WAV → RhubarbService extrai timeline de fonemas (WASM) → envia `voice_audio_play` com `phonemeTimeline`
+- **Webview**: Recebe timeline → cria `HTMLAudioElement` mudo como referência de tempo → RAF loop anima visema correto via `LipSyncController.getVisemeAt(audio.currentTime)`
+- **SpeakerGate**: Ativado antes do playback, desativado após — impede que STT inicie durante TTS
+
+### Contagem de Testes
+
+| Módulo | Novos Testes |
+| ------ | ------------ |
+| SpeakerGate | 13 |
+| RhubarbService | 7 |
+| LipSyncController | 10 |
+| AvatarOverlay | 18 |
+| useAvatarState | 5 |
+| voice_behavior | 8 |
+| VoiceSettingsSection | 3 |
+| VoiceRecorder (refatorados) | 5 |
+| **Total novos** | **~69** |
 
 ---
 

@@ -865,12 +865,30 @@ export class Task {
 			await this.postStateToWebview()
 			if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
 				const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
-				Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
+				Logger.log(
+					`[TTS] 🎙️ Firing requestSpeak: type=${type}, chars=${ttsText.length}, isVoiceInput=${this.taskState.isVoiceInput}`,
+				)
 				if (ttsText) {
-					void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
-						VoiceSessionManager.getInstance().requestSpeak(ttsText)
-					})
+					try {
+						void import("@services/voice/VoiceSessionManager")
+							.then(({ VoiceSessionManager }) => {
+								Logger.log("[TTS] ✅ VoiceSessionManager imported, calling requestSpeak...")
+								VoiceSessionManager.getInstance().requestSpeak(ttsText)
+								Logger.log("[TTS] ✅ requestSpeak called successfully")
+							})
+							.catch((err) => {
+								Logger.error("[TTS] ❌ Failed to import VoiceSessionManager:", err)
+							})
+					} catch (err) {
+						Logger.error("[TTS] ❌ requestSpeak error:", err)
+					}
+				} else {
+					Logger.log("[TTS] ⚠️ ttsText is empty after filtering thinking blocks")
 				}
+			} else {
+				Logger.log(
+					`[TTS] ⏭️ TTS skipped: type=${type}, hasText=${!!text}, voiceTtsEnabled=${this.stateManager.getGlobalStateKey("voiceTtsEnabled")}`,
+				)
 			}
 			return sayTs
 		}
@@ -1877,6 +1895,17 @@ export class Task {
 				this.stateManager.getGlobalStateKey("nativeToolCallEnabled"),
 			enableParallelToolCalling: this.isParallelToolCallingEnabled(),
 			terminalExecutionMode: this.terminalExecutionMode,
+			avatarName: this.stateManager.getGlobalStateKey("avatarName") as string | undefined,
+			avatarPersonalityTone: this.stateManager.getGlobalStateKey("avatarPersonalityTone") as
+				| "formal"
+				| "casual"
+				| "technical"
+				| undefined,
+			avatarPersonalityResponseMode: this.stateManager.getGlobalStateKey("avatarPersonalityResponseMode") as
+				| "concise"
+				| "detailed"
+				| "conversational"
+				| undefined,
 		}
 
 		// Notify user if any conditional rules were applied for this request

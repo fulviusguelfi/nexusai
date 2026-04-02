@@ -8,6 +8,7 @@ import { useMount } from "react-use"
 import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useShowNavbar } from "@/context/PlatformContext"
+import { useAvatarState } from "@/hooks/useAvatarState"
 import { UiServiceClient } from "@/services/grpc-client"
 import { trpc } from "@/services/trpc-client"
 import { Navbar } from "../menu/Navbar"
@@ -71,6 +72,8 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 
 	const lastApiReqTotalTokens = useMemo(() => getLastApiReqTotalTokens(modifiedMessages) || undefined, [modifiedMessages])
 
+	const avatarState = useAvatarState()
+
 	// Use custom hooks for state management
 	const chatState = useChatState(messages)
 	const {
@@ -131,14 +134,16 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 						}
 
 						// Stop searching if we reach a known chat message boundary or body
-						if (
-							currentElement.classList.contains("chat-row-assistant-message-container") ||
-							currentElement.classList.contains("chat-row-user-message-container") ||
-							currentElement.tagName === "BODY"
-						) {
-							break
+						if (currentElement) {
+							if (
+								currentElement.classList?.contains("chat-row-assistant-message-container") ||
+								currentElement.classList?.contains("chat-row-user-message-container") ||
+								currentElement.tagName === "BODY"
+							) {
+								break
+							}
+							currentElement = currentElement.parentElement
 						}
-						currentElement = currentElement.parentElement
 					}
 
 					if (preferPlainTextCopy) {

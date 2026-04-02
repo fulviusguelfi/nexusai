@@ -1,0 +1,46 @@
+/* LayoutToggle Button Styles */
+
+.layout-toggle-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 4px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	background-color: transparent;
+	color: var(--vscode-foreground, #d4d4d4);
+	cursor: pointer;
+	transition: all 0.2s ease-in-out;
+	font-size: 12px;
+	font-weight: 500;
+	outline: none;
+}
+
+.layout-toggle-btn:hover {
+	background-color: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.1));
+	border-color: var(--vscode-focusBorder, rgba(255, 255, 255, 0.2));
+}
+
+.layout-toggle-btn:active {
+	background-color: var(--vscode-toolbar-activeBackground, rgba(255, 255, 255, 0.15));
+}
+
+.layout-toggle-btn:focus-visible {
+	outline: 2px solid var(--vscode-focusBorder, #007acc);
+	outline-offset: -2px;
+}
+
+.layout-toggle-btn svg {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+	.layout-toggle-btn {
+		transition: none;
+	}
+}
