@@ -56,8 +56,25 @@ export function useWebSpeechSTT(options: UseWebSpeechSTTOptions = {}): UseWebSpe
 		}
 	}, [])
 
-	const start = useCallback(() => {
+	const start = useCallback(async () => {
 		if (!SpeechRecognitionCtor) return
+
+		// Pre-request microphone permission via getUserMedia so the Electron session
+		// permission handler (and OS dialog) fires before SpeechRecognition.start().
+		// Without this, Web Speech API silently fails with "not-allowed" inside
+		// VS Code's sandboxed webview even though the session handler grants "media".
+		if (navigator.mediaDevices) {
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+				stream.getTracks().forEach((track) => track.stop())
+			} catch (err) {
+				const name = err instanceof Error ? err.name : ""
+				setError(name === "NotAllowedError" || name === "PermissionDeniedError" ? "not-allowed" : "audio-capture")
+				setIsListening(false)
+				return
+			}
+		}
+
 		if (recognitionRef.current) {
 			recognitionRef.current.abort()
 		}

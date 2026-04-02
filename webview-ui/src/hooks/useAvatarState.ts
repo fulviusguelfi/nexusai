@@ -31,7 +31,6 @@ export function useAvatarState(): AvatarState {
 	const [currentViseme, setCurrentViseme] = useState<VisemeLabel>("X")
 
 	const rafRef = useRef<number | undefined>(undefined)
-	const audioRef = useRef<HTMLAudioElement | undefined>(undefined)
 	const lipSyncRef = useRef<LipSyncController | undefined>(undefined)
 
 	const isVisible = Boolean(avatarEnabled !== false && (voiceTtsEnabled || voiceSttEnabled))
@@ -63,11 +62,7 @@ export function useAvatarState(): AvatarState {
 					cancelAnimationFrame(rafRef.current)
 					rafRef.current = undefined
 				}
-				if (audioRef.current) {
-					audioRef.current.onplay = null
-					audioRef.current.onended = null
-					audioRef.current = undefined
-				}
+				lipSyncRef.current = undefined
 
 				if (!phonemeTimeline || phonemeTimeline.length === 0 || !wavBase64) {
 					voiceLogStore.warn("useAvatarState", "Missing phoneme timeline or WAV data")
@@ -75,43 +70,28 @@ export function useAvatarState(): AvatarState {
 					return
 				}
 
-				// Create muted timing reference audio element
-				try {
-					const bytes = Uint8Array.from(atob(wavBase64), (c) => c.charCodeAt(0))
-					const blob = new Blob([bytes], { type: "audio/wav" })
-					const url = URL.createObjectURL(blob)
-					const audio = new Audio(url)
-					audio.muted = true // timing reference only — host plays the real audio
-					audioRef.current = audio
-					lipSyncRef.current = new LipSyncController(phonemeTimeline)
+				// Use performance.now() for timing instead of a muted Audio element.
+				// VS Code webview blocks audio.play() via autoplay policy even for muted
+				// elements, which would silently prevent the RAF loop from ever starting.
+				lipSyncRef.current = new LipSyncController(phonemeTimeline)
+				const durationSeconds = lipSyncRef.current.getDurationSeconds()
+				const startMs = performance.now()
 
-					const tick = () => {
-						if (!audioRef.current || !lipSyncRef.current) return
-						const viseme = lipSyncRef.current.getVisemeAt(audioRef.current.currentTime)
-						setCurrentViseme(viseme)
+				voiceLogStore.info("useAvatarState", "Starting lip sync RAF loop", { durationSeconds })
+
+				const tick = () => {
+					if (!lipSyncRef.current) return
+					const elapsedSeconds = (performance.now() - startMs) / 1000
+					const viseme = lipSyncRef.current.getVisemeAt(elapsedSeconds)
+					setCurrentViseme(viseme)
+					if (elapsedSeconds < durationSeconds) {
 						rafRef.current = requestAnimationFrame(tick)
-					}
-
-					audio.onplay = () => {
-						rafRef.current = requestAnimationFrame(tick)
-					}
-
-					audio.onended = () => {
-						if (rafRef.current !== undefined) {
-							cancelAnimationFrame(rafRef.current)
-							rafRef.current = undefined
-						}
+					} else {
+						rafRef.current = undefined
 						setCurrentViseme("X")
-						URL.revokeObjectURL(url)
 					}
-
-					void audio.play().catch(() => {
-						// Muted audio play might be blocked in some environments — visemes stay at X
-						setCurrentViseme("X")
-					})
-				} catch {
-					setCurrentViseme("X")
 				}
+				rafRef.current = requestAnimationFrame(tick)
 			}
 		}
 

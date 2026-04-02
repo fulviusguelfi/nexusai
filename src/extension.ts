@@ -4,7 +4,7 @@
 import assert from "node:assert"
 import { DIFF_VIEW_URI_SCHEME } from "@hosts/vscode/VscodeDiffViewProvider"
 import * as vscode from "vscode"
-import { preloadVoiceModels, validateFFmpegAtStartup } from "@/services/voice/PreFlightChecks"
+import { preloadVoiceModels } from "@/services/voice/PreFlightChecks"
 import { Logger } from "@/shared/services/Logger"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
@@ -115,17 +115,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Not in a local Electron context (remote SSH, Dev Containers, tests) — skip.
 	}
 
-	// 1.2 Start FFmpeg validation in background (non-blocking)
-	// Don't await this - let it run in background so extension initializes quickly
-	validateFFmpegAtStartup()
-		.catch((error) => {
-			Logger.warn(`[Extension] FFmpeg validation (background) result: ${error}`)
-		})
-		.finally(() => {
-			Logger.log("[Extension] FFmpeg validation completed (background)")
-		})
-
-	// 1.3 Pre-download Piper (TTS) and Whisper (STT) models in background if voice is enabled.
+	// 1.3 Pre-download Piper (TTS) model in background if voice is enabled.
+	// Whisper STT has been removed; FFmpeg validation is no longer needed at startup.
 	// Avoids download latency on the first voice interaction.
 	if (context.globalState.get<boolean>("voiceTtsEnabled") !== false) {
 		preloadVoiceModels(context.globalStorageUri.fsPath).catch((e) => {

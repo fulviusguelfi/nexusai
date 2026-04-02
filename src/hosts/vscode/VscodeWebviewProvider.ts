@@ -303,21 +303,10 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				break
 			}
 			case "voice_float32_audio": {
-				if (message.voice_float32_audio) {
-					const { buffer, sampleRate } = message.voice_float32_audio
-					const float32 = new Float32Array(buffer)
-					try {
-						const { VoiceSessionManager } = await import("@services/voice/VoiceSessionManager")
-						const { WhisperService } = await import("@services/voice/WhisperService")
-						const whisper = WhisperService.getInstance(this.controller.context.globalStoragePath)
-						const text = await whisper.transcribe(float32, sampleRate)
-						VoiceSessionManager.getInstance().setLastTranscription(text)
-						postMessageToWebview({ type: "voice_transcription", voice_transcription: { text } })
-					} catch (err) {
-						Logger.error("[VscodeWebviewProvider] voice transcription failed:", err)
-						postMessageToWebview({ type: "voice_transcription", voice_transcription: { text: "" } })
-					}
-				}
+				// Whisper STT removed — streaming STT (Web Speech API) is the only STT path.
+				// This message type is kept as a no-op to avoid "unhandled message" errors
+				// from any existing clients that may still send it.
+				Logger.warn("[VscodeWebviewProvider] voice_float32_audio: Whisper STT removed, ignoring")
 				break
 			}
 			case "debug_voice_error": {
@@ -370,91 +359,23 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				break
 			}
 			case "start_voice_recording": {
-				if (message.start_voice_recording) {
-					try {
-						const { SpeakerGate } = await import("@services/voice/SpeakerGate")
-						if (SpeakerGate.getInstance().isBlocked()) {
-							Logger.log("[VscodeWebviewProvider] Speaker gate active — ignoring recording request during TTS")
-							break
-						}
-						const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
-						const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
-						const gracePeriodMs = message.start_voice_recording.gracePeriodMs ?? 2000
-						const maxDurationMs = message.start_voice_recording.maxDurationMs || 120000
-						const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
-							| string
-							| undefined
-
-						Logger.log("[VscodeWebviewProvider] Recording requested", {
-							voiceInputDeviceId: voiceInputDeviceId || "UNDEFINED - will try first available device",
-							silenceThresholdMs,
-							gracePeriodMs,
-							maxDurationMs,
-						})
-
-						const response = await recordAndRespond(this.controller, {
-							silenceDurationMs: silenceThresholdMs,
-							gracePeriodMs,
-							maxDurationMs,
-							inputDeviceId: voiceInputDeviceId || undefined,
-						})
-
-						// Send detected language as separate event for UI badge display
-						if (response.detectedLanguage && response.detectedLanguage !== "en") {
-							postMessageToWebview({
-								type: "voice_language_detected",
-								voice_language_detected: {
-									languageCode: response.detectedLanguage,
-									languageName: this.getLanguageName(response.detectedLanguage),
-								},
-							})
-						}
-
-						postMessageToWebview({
-							type: "voice_result",
-							voice_result: {
-								transcriptionText: response.transcriptionText,
-								llmResponseText: response.llmResponseText,
-								audioWavBase64: response.audioWavBase64,
-								totalDurationMs: response.totalDurationMs,
-								success: response.success,
-								errorMessage: response.errorMessage,
-								detectedLanguage: response.detectedLanguage,
-							},
-						})
-					} catch (err) {
-						Logger.error("[VscodeWebviewProvider] Voice record and respond failed:", err)
-						postMessageToWebview({
-							type: "voice_result",
-							voice_result: {
-								transcriptionText: "",
-								llmResponseText: "",
-								audioWavBase64: "",
-								totalDurationMs: 0,
-								success: false,
-								errorMessage: err instanceof Error ? err.message : "Unknown error",
-							},
-						})
-					}
-				}
+				// Whisper/FFmpeg push-to-talk removed — use streaming STT (Web Speech API) instead.
+				Logger.warn("[VscodeWebviewProvider] start_voice_recording: Whisper STT removed. Use streaming STT.")
+				postMessageToWebview({
+					type: "voice_result",
+					voice_result: {
+						transcriptionText: "",
+						llmResponseText: "",
+						audioWavBase64: "",
+						totalDurationMs: 0,
+						success: false,
+						errorMessage: "Push-to-talk recording removed. Please use the streaming voice button instead.",
+					},
+				})
 				break
 			}
 			case "stop_voice_recording": {
-				// Stop active recording (push-to-talk release)
-				if (message.stop_voice_recording) {
-					try {
-						const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
-						const agent = getActiveVoiceAgent()
-						if (agent) {
-							Logger.log("[VscodeWebviewProvider] Stopping voice recording...")
-							agent.stop()
-						} else {
-							Logger.warn("[VscodeWebviewProvider] No active voice agent to stop")
-						}
-					} catch (err) {
-						Logger.error("[VscodeWebviewProvider] Failed to stop voice recording:", err)
-					}
-				}
+				// No-op: Whisper/FFmpeg recording removed.
 				break
 			}
 			default: {
@@ -498,42 +419,11 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			if (EditorWebviewPanelProvider.INSTANCE) {
 				await EditorWebviewPanelProvider.INSTANCE.postMessageToWebview(message)
 			}
-		} catch (error) {
+		} catch {
 			// Silently fail if editor panel is not available
 		}
 
 		return sidebarResult
-	}
-
-	/**
-	 * Convert ISO 639-1 language code to human-readable name
-	 * Used for displaying language badge in UI (e.g., "pt" → "Português")
-	 */
-	private getLanguageName(languageCode: string): string {
-		const languageMap: Record<string, string> = {
-			en: "English",
-			pt: "Português",
-			"pt-BR": "Português (Brasil)",
-			"pt-PT": "Português (Portugal)",
-			es: "Español",
-			"es-ES": "Español (España)",
-			"es-MX": "Español (México)",
-			fr: "Français",
-			de: "Deutsch",
-			it: "Italiano",
-			ja: "日本語",
-			zh: "中文",
-			"zh-CN": "中文 (简体)",
-			"zh-TW": "中文 (繁體)",
-			ko: "한국어",
-			ru: "Русский",
-			nl: "Nederlands",
-			pl: "Polski",
-			tr: "Türkçe",
-			ar: "العربية",
-			hi: "हिन्दी",
-		}
-		return languageMap[languageCode] || languageCode
 	}
 
 	override async dispose() {

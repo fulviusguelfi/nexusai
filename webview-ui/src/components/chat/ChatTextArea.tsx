@@ -245,6 +245,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			isSupported: sttSupported,
 			isListening: sttListening,
 			interimText: sttInterimText,
+			error: sttError,
 			start: sttStart,
 			stop: sttStop,
 		} = useWebSpeechSTT({
@@ -1541,29 +1542,51 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							}}
 						/>
 					)}
-					{sttListening && (
+					{(sttListening || sttError) && (
 						<div className="absolute top-0 left-0 right-0 flex items-center gap-1.5 px-3 py-1.5 bg-vscode-input-background/90 text-xs text-(--vscode-descriptionForeground) border-b border-vscode-input-border z-20 pointer-events-none">
-							<MicIcon className="w-3 h-3 animate-pulse text-red-400" />
-							<span className="truncate">{sttInterimText || "Listening…"}</span>
+							<MicIcon className={`w-3 h-3 ${sttListening ? "animate-pulse text-red-400" : "text-yellow-400"}`} />
+							<span className="truncate">
+								{sttError
+									? sttError === "not-allowed" || sttError === "audio-capture"
+										? "Mic access denied — allow VS Code microphone in Windows Settings → Privacy → Microphone"
+										: `Voice input error: ${sttError}`
+									: sttInterimText || "Listening…"}
+							</span>
 						</div>
 					)}
 					<div
 						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs"
 						style={{ height: textAreaBaseHeight }}>
 						<div className="flex flex-row items-center gap-1">
-							{voiceStreamingSTT && sttSupported && (
-								<button
-									aria-label={sttListening ? "Stop listening" : "Start voice input"}
-									className={cn(
-										"input-icon-button flex items-center justify-center",
-										sttListening ? "text-red-400" : "",
-									)}
-									disabled={sendingDisabled}
-									onClick={() => (sttListening ? sttStop() : sttStart())}
-									type="button">
-									<MicIcon className="w-3.5 h-3.5" />
-								</button>
-							)}
+							{voiceStreamingSTT &&
+								(sttSupported ? (
+									<button
+										aria-label={sttListening ? "Stop listening" : "Start voice input"}
+										className={cn(
+											"input-icon-button flex items-center justify-center",
+											sttListening ? "text-red-400" : "",
+										)}
+										disabled={sendingDisabled}
+										onClick={() => (sttListening ? sttStop() : sttStart())}
+										type="button">
+										<MicIcon className="w-3.5 h-3.5" />
+									</button>
+								) : (
+									<Tooltip>
+										<TooltipContent side="top">
+											Streaming voice input not supported in this environment
+										</TooltipContent>
+										<TooltipTrigger asChild>
+											<button
+												aria-label="Voice input not supported"
+												className="input-icon-button flex items-center justify-center opacity-40 cursor-not-allowed"
+												disabled
+												type="button">
+												<MicIcon className="w-3.5 h-3.5" />
+											</button>
+										</TooltipTrigger>
+									</Tooltip>
+								))}
 							{onTranscription && <VoiceRecorder disabled={sendingDisabled} onTranscription={onTranscription} />}
 							<div
 								className={cn(

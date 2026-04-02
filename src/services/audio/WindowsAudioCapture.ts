@@ -292,6 +292,7 @@ export class WindowsAudioCapture {
 	 * (warmup chunks before recordingStartChunkIndex are excluded)
 	 */
 	stopCapture(): Buffer {
+		const wasRunning = this.ffmpegProcess !== null
 		if (this.ffmpegProcess) {
 			this.ffmpegProcess.kill()
 			this.ffmpegProcess = null
@@ -301,9 +302,11 @@ export class WindowsAudioCapture {
 		const recordingChunks = this.audioBuffer.slice(this.recordingStartChunkIndex)
 		const allChunks = [...this.preRollData, ...recordingChunks]
 		const totalBytes = allChunks.reduce((sum, b) => sum + b.length, 0)
-		Logger.log(
-			`[WindowsAudioCapture] stopCapture: preroll=${this.preRollData.length} chunks, recording=${recordingChunks.length} chunks, total=${totalBytes} bytes`,
-		)
+		if (wasRunning) {
+			Logger.log(
+				`[WindowsAudioCapture] stopCapture: preroll=${this.preRollData.length} chunks, recording=${recordingChunks.length} chunks, total=${totalBytes} bytes`,
+			)
+		}
 		return Buffer.concat(allChunks)
 	}
 
