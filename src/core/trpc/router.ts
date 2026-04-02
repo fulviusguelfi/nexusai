@@ -10,6 +10,7 @@ import { slashRouter } from "./routers/slash"
 import { stateRouter } from "./routers/state"
 import { taskRouter } from "./routers/task"
 import { uiRouter } from "./routers/ui"
+import { vaultRouter } from "./routers/vault"
 import { voiceRouter } from "./routers/voice"
 import { webRouter } from "./routers/web"
 import { worktreeRouter } from "./routers/worktree"
@@ -28,6 +29,7 @@ export const appRouter = router({
 	state: stateRouter,
 	task: taskRouter,
 	ui: uiRouter,
+	vault: vaultRouter,
 	voice: voiceRouter,
 	web: webRouter,
 	worktree: worktreeRouter,

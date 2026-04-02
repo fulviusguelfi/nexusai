@@ -27,6 +27,7 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 	const {
 		voiceTtsEnabled,
 		voiceSttEnabled,
+		voiceStreamingSTT,
 		voiceInputDeviceId,
 		voiceOutputDeviceId,
 		voicePiperVoice,
@@ -136,6 +137,21 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 						<Switch
 							checked={voiceSttEnabled ?? false}
 							onCheckedChange={(checked) => updateSetting("voiceSttEnabled", checked)}
+						/>
+					</div>
+
+					{/* Streaming STT toggle */}
+					<div className="flex items-center justify-between">
+						<div>
+							<Label className="text-sm font-medium">Speech-to-Text (Streaming)</Label>
+							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
+								Real-time transcription using the browser's built-in Web Speech API. Requires internet and uses
+								Google's servers. Shows live text in the chat input as you speak.
+							</p>
+						</div>
+						<Switch
+							checked={voiceStreamingSTT ?? true}
+							onCheckedChange={(checked) => updateSetting("voiceStreamingSTT", checked)}
 						/>
 					</div>
 

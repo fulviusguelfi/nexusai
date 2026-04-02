@@ -1906,6 +1906,7 @@ export class Task {
 				| "detailed"
 				| "conversational"
 				| undefined,
+			vaultSystemPromptInstructions: this.stateManager.getGlobalStateKey("vaultSystemPrompt") as string | undefined,
 		}
 
 		// Notify user if any conditional rules were applied for this request

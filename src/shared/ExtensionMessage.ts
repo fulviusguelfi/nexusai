@@ -162,6 +162,7 @@ export interface ExtensionState {
 	// Voice settings
 	voiceTtsEnabled: boolean
 	voiceSttEnabled: boolean
+	voiceStreamingSTT: boolean
 	voiceInputDeviceId?: string
 	voiceOutputDeviceId?: string
 	voicePiperVoice: string
@@ -176,6 +177,9 @@ export interface ExtensionState {
 	avatarPersonalityTone: "formal" | "casual" | "technical"
 	avatarPersonalityResponseMode: "concise" | "detailed" | "conversational"
 	avatarPersonalityLanguage: string
+	// Secure Vault — metadata only, values live in SecretStorage
+	vaultEntries: import("@shared/vault").UserVaultEntry[]
+	vaultSystemPrompt: string
 }
 
 export interface ClineMessage {

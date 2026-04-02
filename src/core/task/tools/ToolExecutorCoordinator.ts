@@ -1,4 +1,6 @@
 import type { ToolUse } from "@core/assistant-message"
+import { VaultResolver } from "@services/vault/VaultResolver"
+import { VaultService } from "@services/vault/VaultService"
 import { CLINE_MCP_TOOL_IDENTIFIER } from "@/shared/mcp"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../index"
@@ -173,6 +175,18 @@ export class ToolExecutorCoordinator {
 		const handler = this.getHandler(block.name)
 		if (!handler) {
 			throw new Error(`No handler registered for tool: ${block.name}`)
+		}
+		// Resolve [VAULT:id] tokens in all string params before execution
+		const hasVaultToken = Object.values(block.params).some((v) => typeof v === "string" && v.includes("[VAULT:"))
+		if (hasVaultToken) {
+			const vault = new VaultService(config.services.stateManager)
+			block = {
+				...block,
+				params: VaultResolver.resolveBlockParams(
+					block.params as Record<string, string | undefined>,
+					vault,
+				) as typeof block.params,
+			}
 		}
 		return handler.execute(config, block)
 	}

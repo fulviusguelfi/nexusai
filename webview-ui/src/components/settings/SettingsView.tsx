@@ -5,6 +5,7 @@ import {
 	FlaskConical,
 	HardDriveDownload,
 	Info,
+	KeyRound,
 	type LucideIcon,
 	SlidersHorizontal,
 	SquareMousePointer,
@@ -31,6 +32,7 @@ import FeatureSettingsSection from "./sections/FeatureSettingsSection"
 import GeneralSettingsSection from "./sections/GeneralSettingsSection"
 import { RemoteConfigSection } from "./sections/RemoteConfigSection"
 import TerminalSettingsSection from "./sections/TerminalSettingsSection"
+import VaultSection from "./sections/VaultSection"
 import VoiceSettingsSection from "./sections/VoiceSettingsSection"
 
 const IS_DEV = process.env.IS_DEV
@@ -42,6 +44,7 @@ type SettingsTabID =
 	| "browser"
 	| "terminal"
 	| "voice"
+	| "vault"
 	| "general"
 	| "about"
 	| "debug"
@@ -90,6 +93,13 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		tooltipText: "Sound Settings",
 		headerText: "Sound Settings",
 		icon: Volume2,
+	},
+	{
+		id: "vault",
+		name: "Vault",
+		tooltipText: "Secure Vault",
+		headerText: "Secure Vault",
+		icon: KeyRound,
 	},
 	{
 		id: "general",
@@ -157,6 +167,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 			browser: BrowserSettingsSection,
 			terminal: TerminalSettingsSection,
 			voice: VoiceSettingsSection,
+			vault: VaultSection,
 			"remote-config": RemoteConfigSection,
 			about: AboutSection,
 			debug: DebugSection,

@@ -292,6 +292,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		enableParallelToolCalling: false,
 		voiceTtsEnabled: true,
 		voiceSttEnabled: true,
+		voiceStreamingSTT: true,
 		voiceInputDeviceId: undefined,
 		voiceOutputDeviceId: undefined,
 		voicePiperVoice: "en_US-lessac-medium",
@@ -299,6 +300,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		voiceGracePeriodMs: 2000,
 		voiceMaxRecordingDurationMs: 120000,
 		voiceMetadataEnabled: true,
+		vaultEntries: [],
+		vaultSystemPrompt: "",
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)
