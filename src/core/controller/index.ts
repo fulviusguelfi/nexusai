@@ -1021,6 +1021,9 @@ export class Controller {
 			avatarPersonalityTone: this.stateManager.getGlobalStateKey("avatarPersonalityTone"),
 			avatarPersonalityResponseMode: this.stateManager.getGlobalStateKey("avatarPersonalityResponseMode"),
 			avatarPersonalityLanguage: this.stateManager.getGlobalStateKey("avatarPersonalityLanguage"),
+			voiceStreamingSTT: this.stateManager.getGlobalStateKey("voiceStreamingSTT") ?? true,
+			vaultEntries: this.stateManager.getGlobalStateKey("vaultEntries") ?? [],
+			vaultSystemPrompt: this.stateManager.getGlobalStateKey("vaultSystemPrompt") ?? "",
 		}
 	}
 
