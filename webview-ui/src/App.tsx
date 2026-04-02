@@ -1,3 +1,4 @@
+import { HistoryIcon, PlusIcon, ServerIcon, SettingsIcon } from "lucide-react"
 import { useEffect } from "react"
 import ChatView from "./components/chat/ChatView"
 import HistoryView from "./components/history/HistoryView"
@@ -36,6 +37,9 @@ const AppContent = () => {
 		setShouldShowAnnouncement,
 		closeMcpView,
 		navigateToHistory,
+		navigateToSettings,
+		navigateToMcp,
+		navigateToChat,
 		hideSettings,
 		hideHistory,
 		hideWorktrees,
@@ -89,9 +93,37 @@ const AppContent = () => {
 				{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
 				{/* Sidebar never shows Chat - that's editor-only */}
 				{!showingOverlay && (
-					<div className="flex-1 flex items-center justify-center text-center px-4">
-						<div className="text-sm text-gray-500">
-							<p>Use the Chat button to open the editor panel</p>
+					<div className="flex-1 flex items-center justify-center px-4">
+						<div className="grid grid-cols-2 gap-3 w-full">
+							<button
+								className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-[var(--vscode-panel-border)] bg-[var(--vscode-editor-background)] hover:bg-[var(--vscode-list-hoverBackground)] cursor-pointer transition-colors aspect-square"
+								onClick={() => {
+									trpc.task.clearTask
+										.mutate({})
+										.catch(console.error)
+										.finally(() => navigateToChat())
+								}}>
+								<PlusIcon size={28} strokeWidth={1.5} />
+								<span className="text-xs font-medium">New Task</span>
+							</button>
+							<button
+								className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-[var(--vscode-panel-border)] bg-[var(--vscode-editor-background)] hover:bg-[var(--vscode-list-hoverBackground)] cursor-pointer transition-colors aspect-square"
+								onClick={() => navigateToMcp()}>
+								<ServerIcon size={28} strokeWidth={1.5} />
+								<span className="text-xs font-medium">MCP Servers</span>
+							</button>
+							<button
+								className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-[var(--vscode-panel-border)] bg-[var(--vscode-editor-background)] hover:bg-[var(--vscode-list-hoverBackground)] cursor-pointer transition-colors aspect-square"
+								onClick={() => navigateToHistory()}>
+								<HistoryIcon size={28} strokeWidth={1.5} />
+								<span className="text-xs font-medium">History</span>
+							</button>
+							<button
+								className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border border-[var(--vscode-panel-border)] bg-[var(--vscode-editor-background)] hover:bg-[var(--vscode-list-hoverBackground)] cursor-pointer transition-colors aspect-square"
+								onClick={() => navigateToSettings()}>
+								<SettingsIcon size={28} strokeWidth={1.5} />
+								<span className="text-xs font-medium">Settings</span>
+							</button>
 						</div>
 					</div>
 				)}
