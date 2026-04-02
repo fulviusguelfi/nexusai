@@ -81,12 +81,23 @@ export class PromptRegistry {
 		return variant
 	}
 	/**
+	 * Returns the native tools available for the given context without building the full prompt.
+	 * Prefer calling this directly over reading the `nativeTools` property, which is set as a
+	 * side effect of `get()` for backward-compatibility with existing callers.
+	 */
+	getNativeTools(context: SystemPromptContext): ClineTool[] | undefined {
+		const variant = this.getVariant(context)
+		return ClineToolSet.getNativeTools(variant, context)
+	}
+
+	/**
 	 * Get prompt by matching against all registered variants
 	 */
 	async get(context: SystemPromptContext): Promise<string> {
 		const variant = this.getVariant(context)
 
-		// Hacky way to get native tools for the current variant - it's bad and ugly
+		// Populate nativeTools for backward-compatible callers that read the property directly.
+		// New code should call getNativeTools(context) instead.
 		this.nativeTools = ClineToolSet.getNativeTools(variant, context)
 
 		const builder = new PromptBuilder(variant, context, this.components)

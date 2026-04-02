@@ -16,6 +16,7 @@ import {
 	ModelInfo,
 	OcaModelInfo,
 } from "../../api"
+import { Logger } from "../../services/Logger"
 import { OpenaiReasoningEffort } from "../../storage/types"
 
 // Convert application ThinkingConfig to proto ThinkingConfig
@@ -327,6 +328,10 @@ function convertApiProviderToProto(provider: string | undefined): ProtoApiProvid
 		case "openai-codex":
 			return ProtoApiProvider.OPENAI_CODEX
 		default:
+			Logger.warn(
+				`[ApiProvider] Unknown provider "${provider}" in convertApiProviderToProto() — falling back to ANTHROPIC. ` +
+					"Add a case to this function and to the proto ApiProvider enum.",
+			)
 			return ProtoApiProvider.ANTHROPIC
 	}
 }
@@ -417,6 +422,10 @@ export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvid
 		case ProtoApiProvider.OPENAI_CODEX:
 			return "openai-codex"
 		default:
+			Logger.warn(
+				`[ApiProvider] Unknown proto provider "${provider}" in convertProtoToApiProvider() — falling back to "anthropic". ` +
+					"Add a case to this function and to convertApiProviderToProto().",
+			)
 			return "anthropic"
 	}
 }
