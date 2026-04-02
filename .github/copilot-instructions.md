@@ -44,8 +44,8 @@ For Responses API providers: add to `isNextGenModelProvider()` in `src/utils/mod
 ## Modifying System Prompt
 Modular: `components/` (shared) + `variants/` (model-specific) + `templates/` (`{{PLACEHOLDER}}`). Variants override components via `componentOverrides` in `config.ts` or custom `template.ts`. XS variant is heavily condensed inline. Always regenerate snapshots after changes.
 
-## Global State Keys (silent failure risk)
-Adding a key requires: type in `src/shared/storage/state-keys.ts`, read via `context.globalState.get()` in `src/core/storage/utils/state-helpers.ts` `readGlobalStateFromDisk()`, and add to return object. Missing the `.get()` call compiles fine but value is always `undefined`.
+## Global State Keys
+Adding a key requires: add the type to `src/shared/storage/state-keys.ts` (the `GlobalStateAndSettingKeys` array). Reading is **automatic** — `readGlobalStateFromStorage()` in `src/core/storage/utils/state-helpers.ts` iterates over all keys in that array. No manual `.get()` call needed; just add the key and a default if required.
 
 ## Slash Commands (3 places)
 - `src/core/slash-commands/index.ts` — definitions.

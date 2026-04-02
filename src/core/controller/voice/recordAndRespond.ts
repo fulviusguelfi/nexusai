@@ -197,7 +197,12 @@ export async function recordAndRespond(
 			maxDuration: request.maxDurationMs,
 			onProgress: (progress: number) => {
 				Logger.log(`  STT: ${progress}%`)
-				// TODO: Send progress updates to webview
+				void getVoiceMessenger().then((messenger) => {
+					messenger?.({
+						type: "voice_stt_progress",
+						voice_stt_progress: { progress, stage: "transcribing" },
+					})
+				})
 			},
 		})
 

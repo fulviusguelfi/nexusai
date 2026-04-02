@@ -1,5 +1,32 @@
 # Changelog
 
+<!-- NexusAI entries below — upstream Cline entries preserved for reference -->
+
+## [NexusAI] Voice Pipeline — Phase 5/6 Complete
+
+### Added
+- **Voice Recording Progress Feedback** (#103): `voice_stt_progress` message emitted during STT, progress bar shown in VoiceRecorder during PROCESSING state
+- **RECORD Button UX Polish** (#79): Recording timer (Xs display), `startTimer`/`stopTimer`, Ctrl+Shift+V keyboard shortcut
+- **AudioPlayer Widget** (#80): Inline TTS player with play/pause, seek bar, and duration display — rendered when agent is in PLAYING state
+- **Voice Unit Tests** (#81): `WhisperService.test.ts` and `recordAndRespond.test.ts` added covering transcription flows, languageHint, and preflight failures
+- **Task State Persistence Fix** (#98): Concurrent write race condition resolved in `StorageService.ts` via mutex
+- **Shell Detection Windows** (#100): PowerShell detection fallback added for Windows compatibility
+- **Tool Resolution Registry** (#99): `PromptRegistry.ts` improved with better error handling
+
+### Fixed
+- **Silent Global State Bug** (#86): Docs updated to reflect auto-keyed `readGlobalStateFromStorage()` — no manual `.get()` calls needed
+- **API Provider Silent Reset** (#85): Added `convertApiProviderToProto()` / `convertProtoToApiProvider()` guards
+
+### Docs
+- CONTRIBUTING.md: Updated all Cline URLs → NexusAI repository (#92)
+- `.clinerules/cli.md`: Corrected — `cli/src/` does not exist yet (#69)
+- `.github/copilot-instructions.md` + `.clinerules/general.md`: Updated Global State Keys section (#86)
+- Webview UI: Replaced user-facing "Cline" text with "NexusAI" throughout (#75)
+
+---
+
+<!-- Upstream Cline CHANGELOG below -->
+
 ## [3.71.0]
 
 ### Added

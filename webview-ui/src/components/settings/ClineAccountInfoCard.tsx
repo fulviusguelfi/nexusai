@@ -34,7 +34,7 @@ export const ClineAccountInfoCard = () => {
 	return (
 		<div className="max-w-[600px] flex flex-wrap gap-2 items-center">
 			<VSCodeButton className="mt-0" disabled={isLoading} onClick={handleLogin}>
-				{user ? "Refresh Cline session" : "Sign in to Cline"}
+				{user ? "Refresh NexusAI session" : "Sign in to NexusAI"}
 				{isLoading && (
 					<span className="ml-1 animate-spin">
 						<span className="codicon codicon-refresh" />

@@ -43,9 +43,9 @@ Modular: `components/` (shared) + `variants/` (model-specific) + `templates/` (`
 ## Modifying Default Slash Commands — 3 places:
 - `src/core/slash-commands/index.ts`, `src/core/prompts/commands.ts`, `webview-ui/src/utils/slash-commands.ts`
 
-## Adding New Global State Keys — silent failure risk
-1. `src/shared/storage/state-keys.ts` — add type
-2. `src/core/storage/utils/state-helpers.ts` — add BOTH the `context.globalState.get()` call AND the return value in `readGlobalStateFromDisk()`. Missing just the `.get()` call compiles fine but value is always `undefined`.
+## Adding New Global State Keys
+1. `src/shared/storage/state-keys.ts` — add key to `GlobalStateAndSettingKeys` array and update the `GlobalStateAndSettings` type
+2. Reading is **automatic** — `readGlobalStateFromStorage()` iterates all keys in `GlobalStateAndSettingKeys`, no manual `.get()` call required. Add a default in `getDefaultValue()` if needed.
 3. If user-toggleable: wire BOTH `updateSettings.ts` (webview) AND `updateSettingsCli.ts` (CLI). Wire the round-trip: add to `UpdateSettingsRequest` in `proto/cline/state.proto`, include in `Controller.getStateToPostToWebview()`, and ensure `ExtensionState`/webview defaults include the key.
 
 ## StateManager: Startup Exception

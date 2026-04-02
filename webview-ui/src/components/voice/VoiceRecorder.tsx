@@ -2,10 +2,11 @@
  * VoiceRecorder - Voice input button with audio level visualization.
  * Receive-only component: Host handles capture & processing.
  */
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { PLATFORM_CONFIG } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { voiceLogStore } from "@/utils/voiceDebugger"
+import AudioPlayer from "./AudioPlayer"
 
 interface Props {
 	onTranscription?: (text: string, language?: string) => void
@@ -91,6 +92,13 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	const [isUserRecording, setIsUserRecording] = useState(false) // Track user intent (push-to-talk)
 	const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null) // Language badge
 
+	// STT progress (during PROCESSING state)
+	const [sttProgress, setSttProgress] = useState<number | null>(null)
+
+	// Recording timer (elapsed seconds)
+	const [recordingSeconds, setRecordingSeconds] = useState(0)
+	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
 	// Audio level feedback (during RECORDING state)
 	const [audioLevel, setAudioLevel] = useState<{
 		rmsLevel: number // 0-1 normalized
@@ -126,12 +134,41 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		}
 	}
 
+	// Start/stop elapsed timer
+	const startTimer = useCallback(() => {
+		setRecordingSeconds(0)
+		timerRef.current = setInterval(() => {
+			setRecordingSeconds((s) => s + 1)
+		}, 1000)
+	}, [])
+
+	const stopTimer = useCallback(() => {
+		if (timerRef.current) {
+			clearInterval(timerRef.current)
+			timerRef.current = null
+		}
+		setRecordingSeconds(0)
+	}, [])
+
+	// Keyboard shortcut: Ctrl+Shift+V
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.ctrlKey && e.shiftKey && e.key === "V") {
+				e.preventDefault()
+				handleToggleRecording()
+			}
+		}
+		window.addEventListener("keydown", handleKeyDown)
+		return () => window.removeEventListener("keydown", handleKeyDown)
+	}, []) // eslint-disable-line -- handleToggleRecording stable via useCallback
+
 	// Handle button click - toggle recording on/off (push-to-talk style)
 	const handleToggleRecording = useCallback(async () => {
 		if (isUserRecording) {
 			// Stop recording
 			voiceLogStore.info("VoiceRecorder", "User stopped recording (push-to-talk release)")
 			setIsUserRecording(false)
+			stopTimer()
 			setStateContext("Processing...")
 			PLATFORM_CONFIG.postMessage({
 				type: "stop_voice_recording",
@@ -145,6 +182,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 			setErrorMessage(null)
 			setStateContext("Listening for audio...")
 			setIsUserRecording(true)
+			startTimer()
 
 			PLATFORM_CONFIG.postMessage({
 				type: "start_voice_recording",
@@ -163,6 +201,10 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		const handler = (event: MessageEvent) => {
 			const data = event.data
 
+			if (data?.type === "voice_stt_progress" && data.voice_stt_progress) {
+				setSttProgress(data.voice_stt_progress.progress)
+			}
+
 			if (data?.type === "voice_agent_state_changed") {
 				const { state, context } = data.voice_agent_state_changed || {}
 				if (isVoiceAgentState(state)) {
@@ -178,6 +220,9 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					}
 					if (state !== VOICE_AGENT_STATES.RECORDING) {
 						setAudioLevel(null)
+						if (state !== VOICE_AGENT_STATES.PROCESSING) {
+							setSttProgress(null)
+						}
 					}
 				}
 			}
@@ -214,6 +259,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					setErrorMessage(errorMessage)
 					setAgentState(VOICE_AGENT_STATES.ERROR)
 					setIsUserRecording(false)
+					stopTimer()
+					setSttProgress(null)
 				} else if (transcriptionText) {
 					const detectedLang = voiceResult.detectedLanguage || null
 					console.log("[VoiceRecorder] Transcription received:", transcriptionText, "lang:", detectedLang)
@@ -244,6 +291,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 						setAgentState(VOICE_AGENT_STATES.IDLE)
 						setIsUserRecording(false)
 						setStateContext("")
+						setSttProgress(null)
+						stopTimer()
 					}, 500)
 				}
 			}
@@ -260,7 +309,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 
 		window.addEventListener("message", handler)
 		return () => window.removeEventListener("message", handler)
-	}, [onTranscription])
+	}, [onTranscription, stopTimer])
 
 	const display = getStateDisplay()
 	const isLoading = display.isActive || isUserRecording
@@ -308,6 +357,9 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					<span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
 				</span>
 			)}
+			{agentState === VOICE_AGENT_STATES.RECORDING && recordingSeconds > 0 && (
+				<span className="text-xs tabular-nums text-red-400 font-mono">{recordingSeconds}s</span>
+			)}
 			{agentState === VOICE_AGENT_STATES.RECORDING && audioLevel && (
 				<div className="flex items-end gap-[2px] h-4 mx-1">
 					{WAVEFORM_BARS.map(({ id, scale }) => (
@@ -322,6 +374,17 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					))}
 				</div>
 			)}
+			{agentState === VOICE_AGENT_STATES.PROCESSING && sttProgress !== null && (
+				<div className="flex items-center gap-1 min-w-[60px]">
+					<div className="flex-1 h-1 bg-vscode-editor-background rounded-full overflow-hidden border border-vscode-focusBorder/30">
+						<div
+							className="h-full bg-blue-400 transition-all duration-200 rounded-full"
+							style={{ width: `${sttProgress}%` }}
+						/>
+					</div>
+					<span className="text-xs tabular-nums text-blue-400 font-mono">{sttProgress}%</span>
+				</div>
+			)}
 			{detectedLanguage && (
 				<div className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-500/10 border border-blue-500/30">
 					<span>🌐</span>
@@ -330,6 +393,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 			)}
 			{stateContext && <span className="text-xs opacity-70">{stateContext}</span>}
 			{errorMessage && <span className="text-xs text-red-400">{errorMessage}</span>}
+			{agentState === VOICE_AGENT_STATES.PLAYING && <AudioPlayer />}
 		</div>
 	)
 }

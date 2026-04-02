@@ -38,6 +38,7 @@ export interface ExtensionMessage {
 		| "voice_audio_level"
 		| "voice_error"
 		| "voice_language_detected"
+		| "voice_stt_progress"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
 	orientation?: "horizontal" | "vertical"
@@ -72,6 +73,10 @@ export interface ExtensionMessage {
 	voice_error?: {
 		code: string
 		message: string
+	}
+	voice_stt_progress?: {
+		progress: number // 0–100
+		stage: "recording" | "transcribing" | "processing"
 	}
 }
 
