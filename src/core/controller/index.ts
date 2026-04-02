@@ -806,22 +806,35 @@ export class Controller {
 			const uiMessagesFilePath = path.join(taskDirPath, GlobalFileNames.uiMessages)
 			const contextHistoryFilePath = path.join(taskDirPath, GlobalFileNames.contextHistory)
 			const taskMetadataFilePath = path.join(taskDirPath, GlobalFileNames.taskMetadata)
-			const fileExists = await fileExistsAtPath(apiConversationHistoryFilePath)
-			if (fileExists) {
-				const apiConversationHistory = JSON.parse(await fs.readFile(apiConversationHistoryFilePath, "utf8"))
-				return {
-					historyItem,
-					taskDirPath,
-					apiConversationHistoryFilePath,
-					uiMessagesFilePath,
-					contextHistoryFilePath,
-					taskMetadataFilePath,
-					apiConversationHistory,
+
+			// Retry once with backoff to guard against I/O race conditions where the
+			// JSON file has not been flushed to disk yet (e.g. rapid task creation).
+			const RETRY_DELAYS_MS = [0, 500, 1500]
+			for (const delay of RETRY_DELAYS_MS) {
+				if (delay > 0) {
+					Logger.warn(`[Task] File not found for task ${id}, retrying after ${delay}ms (I/O race condition guard)`)
+					await new Promise<void>((resolve) => setTimeout(resolve, delay))
+				}
+				const fileExists = await fileExistsAtPath(apiConversationHistoryFilePath)
+				if (fileExists) {
+					const apiConversationHistory = JSON.parse(await fs.readFile(apiConversationHistoryFilePath, "utf8"))
+					return {
+						historyItem,
+						taskDirPath,
+						apiConversationHistoryFilePath,
+						uiMessagesFilePath,
+						contextHistoryFilePath,
+						taskMetadataFilePath,
+						apiConversationHistory,
+					}
 				}
 			}
+			Logger.error(
+				`[Task] Task ${id} file still missing after retries. ` +
+					`path=${apiConversationHistoryFilePath} — removing from state to prevent orphan entry.`,
+			)
 		}
-		// if we tried to get a task that doesn't exist, remove it from state
-		// FIXME: this seems to happen sometimes when the json file doesn't save to disk for some reason
+		// Task not found in state or file permanently missing — remove orphan entry
 		await this.deleteTaskFromState(id)
 		throw new Error("Task not found")
 	}
