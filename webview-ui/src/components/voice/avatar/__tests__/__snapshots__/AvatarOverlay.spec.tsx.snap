@@ -3,13 +3,13 @@
 exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
 <div>
   <div
-    class="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-1 select-none"
+    class="flex flex-col items-center justify-center gap-1 select-none w-full h-full p-4"
     data-state="IDLE"
     data-testid="avatar-overlay"
     style="opacity: 0; transform: translateY(20px) scale(0.8);"
   >
     <div
-      class="w-20 h-20 drop-shadow-lg"
+      class="w-40 h-40 drop-shadow-lg"
     >
       <svg
         aria-label="NexusAI avatar"
@@ -18,10 +18,26 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
         viewBox="0 0 200 200"
         xmlns="http://www.w3.org/2000/svg"
       >
+        <defs>
+          <radialgradient
+            cx="35%"
+            cy="35%"
+            id="headGradient"
+          >
+            <stop
+              offset="0%"
+              stop-color="#FFD700"
+            />
+            <stop
+              offset="100%"
+              stop-color="#FFA700"
+            />
+          </radialgradient>
+        </defs>
         <circle
           cx="100"
           cy="100"
-          fill="#0f3460"
+          fill="url(#headGradient)"
           r="90"
         />
         <circle
@@ -29,37 +45,33 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
           cy="100"
           fill="none"
           r="90"
-          stroke="#1a1a2e"
-          stroke-width="4"
+          stroke="#FF9500"
+          stroke-width="3"
         />
-        <ellipse
+        <circle
           cx="72"
-          cy="85"
-          fill="#e94560"
-          rx="10"
-          ry="12"
+          cy="80"
+          fill="#1a1a2e"
         />
-        <ellipse
+        <circle
           cx="128"
-          cy="85"
-          fill="#e94560"
-          rx="10"
-          ry="12"
+          cy="80"
+          fill="#1a1a2e"
         />
         <path
-          d="M58,65 Q72,60 86,65"
-          stroke="#e94560"
+          d="M58,62 Q72,55 86,62"
+          stroke="#1a1a2e"
           stroke-linecap="round"
           stroke-width="3"
         />
         <path
-          d="M114,65 Q128,60 142,65"
-          stroke="#e94560"
+          d="M114,62 Q128,55 142,62"
+          stroke="#1a1a2e"
           stroke-linecap="round"
           stroke-width="3"
         />
         <g
-          transform="translate(100, 130)"
+          transform="translate(100, 135)"
         >
           <g
             data-active="false"
@@ -69,10 +81,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-12,0 Q0,2 12,0 Q0,-2 -12,0"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -83,10 +95,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-12,-4 Q0,8 12,-4"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -97,10 +109,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-10,-2 Q0,5 10,-2"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -111,10 +123,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-14,-6 Q0,12 14,-6"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -125,10 +137,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-14,-5 L14,-5 Q14,8 0,8 Q-14,8 -14,-5"
               fill="#1a1a2e"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -139,10 +151,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-12,-4 L12,-4 M-8,2 Q0,6 8,2"
               fill="#1a1a2e"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -153,10 +165,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-8,-3 Q0,6 8,-3 Q0,-6 -8,-3"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -167,10 +179,10 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-10,-4 Q0,10 10,-4 Q0,-8 -10,-4"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -181,13 +193,27 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
             <path
               d="M-12,0 Q0,-3 12,0"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
         </g>
+        <circle
+          cx="45"
+          cy="110"
+          fill="#FF69B4"
+          fill-opacity="0.4"
+          r="12"
+        />
+        <circle
+          cx="155"
+          cy="110"
+          fill="#FF69B4"
+          fill-opacity="0.4"
+          r="12"
+        />
       </svg>
     </div>
   </div>
@@ -197,13 +223,13 @@ exports[`AvatarOverlay > snapshot: IDLE state 1`] = `
 exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
 <div>
   <div
-    class="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-1 select-none"
+    class="flex flex-col items-center justify-center gap-1 select-none w-full h-full p-4"
     data-state="PLAYING"
     data-testid="avatar-overlay"
     style="opacity: 0; transform: translateY(20px) scale(0.8);"
   >
     <div
-      class="w-20 h-20 drop-shadow-lg"
+      class="w-40 h-40 drop-shadow-lg"
     >
       <svg
         aria-label="NexusAI avatar"
@@ -212,10 +238,26 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
         viewBox="0 0 200 200"
         xmlns="http://www.w3.org/2000/svg"
       >
+        <defs>
+          <radialgradient
+            cx="35%"
+            cy="35%"
+            id="headGradient"
+          >
+            <stop
+              offset="0%"
+              stop-color="#FFD700"
+            />
+            <stop
+              offset="100%"
+              stop-color="#FFA700"
+            />
+          </radialgradient>
+        </defs>
         <circle
           cx="100"
           cy="100"
-          fill="#0f3460"
+          fill="url(#headGradient)"
           r="90"
         />
         <circle
@@ -223,37 +265,33 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
           cy="100"
           fill="none"
           r="90"
-          stroke="#1a1a2e"
-          stroke-width="4"
+          stroke="#FF9500"
+          stroke-width="3"
         />
-        <ellipse
+        <circle
           cx="72"
-          cy="85"
-          fill="#e94560"
-          rx="10"
-          ry="12"
+          cy="80"
+          fill="#1a1a2e"
         />
-        <ellipse
+        <circle
           cx="128"
-          cy="85"
-          fill="#e94560"
-          rx="10"
-          ry="12"
+          cy="80"
+          fill="#1a1a2e"
         />
         <path
-          d="M58,65 Q72,60 86,65"
-          stroke="#e94560"
+          d="M58,62 Q72,55 86,62"
+          stroke="#1a1a2e"
           stroke-linecap="round"
           stroke-width="3"
         />
         <path
-          d="M114,65 Q128,60 142,65"
-          stroke="#e94560"
+          d="M114,62 Q128,55 142,62"
+          stroke="#1a1a2e"
           stroke-linecap="round"
           stroke-width="3"
         />
         <g
-          transform="translate(100, 130)"
+          transform="translate(100, 135)"
         >
           <g
             data-active="false"
@@ -263,10 +301,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-12,0 Q0,2 12,0 Q0,-2 -12,0"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -277,10 +315,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-12,-4 Q0,8 12,-4"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -291,10 +329,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-10,-2 Q0,5 10,-2"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -305,10 +343,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-14,-6 Q0,12 14,-6"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -319,10 +357,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-14,-5 L14,-5 Q14,8 0,8 Q-14,8 -14,-5"
               fill="#1a1a2e"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -333,10 +371,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-12,-4 L12,-4 M-8,2 Q0,6 8,2"
               fill="#1a1a2e"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -347,10 +385,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-8,-3 Q0,6 8,-3 Q0,-6 -8,-3"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -361,10 +399,10 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-10,-4 Q0,10 10,-4 Q0,-8 -10,-4"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
           <g
@@ -375,13 +413,27 @@ exports[`AvatarOverlay > snapshot: PLAYING state with viseme B 1`] = `
             <path
               d="M-12,0 Q0,-3 12,0"
               fill="none"
-              stroke="#e94560"
+              stroke="#1a1a2e"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="3"
+              stroke-width="4"
             />
           </g>
         </g>
+        <circle
+          cx="45"
+          cy="110"
+          fill="#FF69B4"
+          fill-opacity="0.4"
+          r="12"
+        />
+        <circle
+          cx="155"
+          cy="110"
+          fill="#FF69B4"
+          fill-opacity="0.4"
+          r="12"
+        />
       </svg>
     </div>
   </div>
