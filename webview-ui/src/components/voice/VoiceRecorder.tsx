@@ -95,6 +95,9 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	// STT progress (during PROCESSING state)
 	const [sttProgress, setSttProgress] = useState<number | null>(null)
 
+	// Live partial transcription (streaming preview during RECORDING)
+	const [livePreview, setLivePreview] = useState<string | null>(null)
+
 	// Recording timer (elapsed seconds)
 	const [recordingSeconds, setRecordingSeconds] = useState(0)
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -201,6 +204,12 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		const handler = (event: MessageEvent) => {
 			const data = event.data
 
+			if (data?.type === "voice_stt_partial" && data.voice_stt_partial?.text) {
+				const partialText = data.voice_stt_partial.text
+				console.log("[VoiceRecorder] Live partial:", partialText)
+				setLivePreview(partialText)
+			}
+
 			if (data?.type === "voice_stt_progress" && data.voice_stt_progress) {
 				setSttProgress(data.voice_stt_progress.progress)
 			}
@@ -242,6 +251,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 
 			if (data?.type === "voice_result") {
 				const voiceResult = data.voice_result || {}
+				setLivePreview(null) // clear streaming preview on final result
 				const transcriptionText = voiceResult.transcriptionText || voiceResult.text // Try both field names
 				const llmResponseText = voiceResult.llmResponseText || voiceResult.response
 				const audioWavBase64 = voiceResult.audioWavBase64 || voiceResult.audioBase64
@@ -389,6 +399,13 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				<div className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-500/10 border border-blue-500/30">
 					<span>🌐</span>
 					<span className="font-medium text-blue-400">{getLanguageName(detectedLanguage)}</span>
+				</div>
+			)}
+			{livePreview && agentState === VOICE_AGENT_STATES.RECORDING && (
+				<div
+					className="text-xs italic text-vscode-descriptionForeground opacity-80 max-w-[200px] truncate"
+					title={livePreview}>
+					…{livePreview}
 				</div>
 			)}
 			{stateContext && <span className="text-xs opacity-70">{stateContext}</span>}

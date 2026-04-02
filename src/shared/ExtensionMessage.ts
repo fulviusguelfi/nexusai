@@ -30,6 +30,7 @@ export interface ExtensionMessage {
 		| "voice_error"
 		| "voice_language_detected"
 		| "voice_stt_progress"
+		| "voice_stt_partial"
 		| "voice_mic_diagnostic"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
@@ -69,6 +70,9 @@ export interface ExtensionMessage {
 	voice_stt_progress?: {
 		progress: number // 0–100
 		stage: "recording" | "transcribing" | "processing"
+	}
+	voice_stt_partial?: {
+		text: string // Partial transcription text streamed during recording
 	}
 }
 

@@ -121,12 +121,45 @@ export async function recordAndRespond(
 		// Step 2: Record audio with VoiceAgent
 		Logger.log(`${ts()} 🎙️ Step 2: Recording audio...`)
 
+		// Streaming partial transcription: fire Whisper every 3s of speech during recording
+		let isTranscribingPartial = false
+
 		const agent = new VoiceAgent({
 			maxDuration: request.maxDurationMs || 120000,
 			silenceThreshold: request.silenceThreshold || 0.01,
 			silenceDurationMs: request.silenceDurationMs || 700,
 			gracePeriodMs: request.gracePeriodMs ?? 2000,
 			deviceId: request.inputDeviceId || undefined,
+			onPartialAudio: (buffer: Buffer, durationMs: number) => {
+				if (isTranscribingPartial) {
+					Logger.log("[recordAndRespond] Skipping partial transcription — previous still running")
+					return
+				}
+				isTranscribingPartial = true
+				Logger.log(`[recordAndRespond] Partial STT start: ${durationMs.toFixed(0)}ms of audio`)
+				VoiceResponseHandler.processSpeechToText(buffer, {
+					globalStoragePath: controller.context.globalStoragePath,
+					sttModel: "whisper-tiny",
+					userLanguage: "pt",
+				})
+					.then(async (result) => {
+						const partialText = result.transcription.text
+						if (partialText) {
+							Logger.log(`[recordAndRespond] Partial: "${partialText}"`)
+							const messenger = await getVoiceMessenger()
+							if (messenger) {
+								await messenger({
+									type: "voice_stt_partial",
+									voice_stt_partial: { text: partialText },
+								})
+							}
+						}
+					})
+					.catch((err) => Logger.warn("[recordAndRespond] Partial transcription error:", err))
+					.finally(() => {
+						isTranscribingPartial = false
+					})
+			},
 			stateCallback: (state: VoiceAgentState, context?: string) => {
 				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
 				// Send state updates to webview (async, non-blocking)

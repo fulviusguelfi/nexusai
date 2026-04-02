@@ -28,6 +28,8 @@ export interface VoiceAgentOptions {
 	deviceId?: string // Explicit device to use e.g. "audio=Device Name" (default: auto-detect)
 	stateCallback?: (state: VoiceAgentState, context?: string) => void
 	errorCallback?: (error: VoiceError) => void
+	/** Called every ~3 seconds with accumulated raw PCM (16kHz, 16-bit LE, mono) during recording */
+	onPartialAudio?: (buffer: Buffer, durationMs: number) => void
 }
 
 export interface VoiceResponse {
@@ -43,8 +45,9 @@ export class VoiceAgent {
 	private audioCapture: WindowsAudioCapture | null = null
 	private abortController: AbortController | null = null
 	private activeDevice: { name: string; id: string } | null = null
-	private options: Required<Omit<VoiceAgentOptions, "deviceId">>
+	private options: Required<Omit<VoiceAgentOptions, "deviceId" | "onPartialAudio">>
 	private readonly deviceId: string | undefined
+	private readonly onPartialAudio: ((buffer: Buffer, durationMs: number) => void) | undefined
 
 	// State callbacks
 	private stateCallback: (state: VoiceAgentState, context?: string) => void
@@ -52,6 +55,7 @@ export class VoiceAgent {
 
 	constructor(options: VoiceAgentOptions = {}) {
 		this.deviceId = options.deviceId || undefined
+		this.onPartialAudio = options.onPartialAudio
 		this.options = {
 			maxDuration: options.maxDuration || 120000,
 			silenceThreshold: options.silenceThreshold || 0.01,
@@ -185,6 +189,12 @@ export class VoiceAgent {
 			const PREROLL_MAX_CHUNKS = 3
 			const preRollBuffer: Buffer[] = []
 			let speechStarted = false
+
+			// === Streaming partial transcription accumulation ===
+			// Every ~3 seconds of speech, call onPartialAudio with the full accumulated buffer
+			const PARTIAL_INTERVAL_BYTES = 16000 * 2 * 3 // 3s at 16kHz 16-bit mono = 96000 bytes
+			const streamingAcc: Buffer[] = []
+			let streamingBytesSinceCallback = 0
 
 			// === Grace period + idle timeout ===
 			const GRACE_PERIOD_MS = this.options.gracePeriodMs // after READY_TO_LISTEN before silence can auto-stop
@@ -325,6 +335,18 @@ export class VoiceAgent {
 											`${tsc()} 🔇 Silence threshold reached — stopping capture (recorded: ${totalRecordedMs.toFixed(0)}ms)`,
 										)
 										capture.stopCapture()
+									}
+								}
+
+								// === STREAMING PARTIAL: accumulate speech chunks and fire callback every 3s ===
+								if (this.onPartialAudio) {
+									streamingAcc.push(chunk)
+									streamingBytesSinceCallback += chunk.length
+									if (streamingBytesSinceCallback >= PARTIAL_INTERVAL_BYTES) {
+										streamingBytesSinceCallback = 0
+										const partialBuf = Buffer.concat(streamingAcc)
+										const durationMs = (partialBuf.length / 2 / 16000) * 1000
+										this.onPartialAudio(partialBuf, durationMs)
 									}
 								}
 							}
