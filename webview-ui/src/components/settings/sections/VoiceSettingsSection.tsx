@@ -26,8 +26,6 @@ const VOICE_OPTIONS = [
 const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 	const {
 		voiceTtsEnabled,
-		voiceStreamingSTT,
-		voiceInputDeviceId,
 		voiceOutputDeviceId,
 		voicePiperVoice,
 		voiceMetadataEnabled,
@@ -38,10 +36,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		avatarPersonalityResponseMode,
 	} = useExtensionState()
 
-	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
 	const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
 	const [error, setError] = useState<string | null>(null)
-	const [refreshing, setRefreshing] = useState(false)
 
 	const detectRealDevices = useCallback(async () => {
 		setError(null)
@@ -53,13 +49,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 				setError(resp.error)
 				return
 			}
-
-			setInputDevices(
-				(resp.inputDevices || []).map((d) => ({
-					deviceId: d.deviceId || "",
-					label: d.label || d.deviceId || "(unknown)",
-				})),
-			)
 
 			setOutputDevices(
 				(resp.outputDevices || []).map((d) => ({
@@ -73,12 +62,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		}
 	}, [])
 
-	const handleRefresh = useCallback(async () => {
-		setRefreshing(true)
-		await detectRealDevices()
-		setRefreshing(false)
-	}, [detectRealDevices])
-
 	// Auto-detect on mount
 	useEffect(() => {
 		detectRealDevices()
@@ -91,14 +74,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		mediaDevices.addEventListener("devicechange", detectRealDevices)
 		return () => mediaDevices.removeEventListener("devicechange", detectRealDevices)
 	}, [detectRealDevices])
-
-	useEffect(() => {
-		if (!voiceInputDeviceId) return
-		const exists = inputDevices.some((d) => d.deviceId === voiceInputDeviceId)
-		if (!exists) {
-			updateSetting("voiceInputDeviceId", "")
-		}
-	}, [voiceInputDeviceId, inputDevices])
 
 	useEffect(() => {
 		if (!voiceOutputDeviceId) return
@@ -121,57 +96,19 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 			{renderSectionHeader("voice")}
 			<Section>
 				<div className="flex flex-col gap-3">
-					{/* Streaming STT toggle */}
-					<div className="flex items-center justify-between">
-						<div>
-							<Label className="text-sm font-medium">Speech-to-Text (Streaming)</Label>
-							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
-								Real-time transcription using the browser's built-in Web Speech API. Requires internet and uses
-								Google's servers. Shows live text in the chat input as you speak.
-							</p>
-						</div>
-						<Switch
-							checked={voiceStreamingSTT ?? true}
-							onCheckedChange={(checked) => updateSetting("voiceStreamingSTT", checked)}
-						/>
+					{/* STT — permanent technical impossibility in VS Code webview */}
+					<div className="flex flex-col gap-1 rounded p-2 bg-vscode-inputValidation-warningBackground border border-vscode-inputValidation-warningBorder">
+						<Label className="text-sm font-medium">Speech-to-Text (Streaming)</Label>
+						<p className="text-xs text-vscode-descriptionForeground mt-0.5">
+							Microphone access is not available inside the VS Code webview. The extension iframe runs in a
+							sandboxed context that permanently blocks <code>getUserMedia</code> regardless of OS-level permissions
+							(see{" "}
+							<a href="https://github.com/microsoft/vscode/issues/119127" rel="noreferrer" target="_blank">
+								vscode#119127
+							</a>
+							). TTS still works normally.
+						</p>
 					</div>
-
-					{voiceStreamingSTT && (
-						<div className="pl-2 flex flex-col gap-2">
-							<div className="flex items-center justify-between">
-								<Label className="text-xs text-vscode-descriptionForeground">Microphone Input Device</Label>
-								<button
-									className="text-xs text-vscode-descriptionForeground hover:text-vscode-foreground disabled:opacity-50"
-									disabled={refreshing}
-									onClick={handleRefresh}
-									title="Refresh device list"
-									type="button">
-									{refreshing ? "↻ Refreshing…" : "↻ Refresh"}
-								</button>
-							</div>
-							{/* Show error if detection failed */}
-							{error && <p className="text-xs text-red-400">Detection failed: {error}</p>}
-							<Select
-								onValueChange={(v) => updateSetting("voiceInputDeviceId", v === "default" ? "" : v)}
-								value={
-									voiceInputDeviceId && inputDevices.some((d) => d.deviceId === voiceInputDeviceId)
-										? voiceInputDeviceId
-										: "default"
-								}>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Default microphone" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="default">Default microphone</SelectItem>
-									{inputDevices.map((d) => (
-										<SelectItem key={d.deviceId} value={d.deviceId}>
-											{d.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-					)}
 
 					{/* Voice metadata toggle */}
 					<div className="flex items-center justify-between pt-2 border-t border-vscode-panel-border">

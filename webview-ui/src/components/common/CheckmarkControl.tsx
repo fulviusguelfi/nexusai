@@ -200,8 +200,8 @@ export const CheckmarkControl = ({ messageTs, isCheckpointCheckedOut }: Checkmar
 					<DottedLine $isCheckedOut={isCheckpointCheckedOut} small />
 					<div ref={refs.setReference} style={{ position: "relative", marginTop: -2 }}>
 						<CustomButton
+							$isActive={showRestoreConfirm}
 							$isCheckedOut={isCheckpointCheckedOut}
-							isActive={showRestoreConfirm}
 							onClick={() => setShowRestoreConfirm(true)}>
 							Restore
 						</CustomButton>
@@ -347,16 +347,16 @@ const ButtonGroup = styled.div`
 	shrink: 0;
 `
 
-const CustomButton = styled.button<{ disabled?: boolean; isActive?: boolean; $isCheckedOut?: boolean }>`
+const CustomButton = styled.button<{ disabled?: boolean; $isActive?: boolean; $isCheckedOut?: boolean }>`
 	background: ${(props) =>
-		props.isActive || props.disabled
+		props.$isActive || props.disabled
 			? props.$isCheckedOut
 				? "var(--vscode-textLink-foreground)"
 				: "var(--vscode-descriptionForeground)"
 			: "transparent"};
 	border: none;
 	color: ${(props) =>
-		props.isActive || props.disabled
+		props.$isActive || props.disabled
 			? "var(--vscode-editor-background)"
 			: props.$isCheckedOut
 				? "var(--vscode-textLink-foreground)"
@@ -375,13 +375,13 @@ const CustomButton = styled.button<{ disabled?: boolean; isActive?: boolean; $is
 		bottom: 0;
 		border-radius: 1px;
 		background-image: ${(props) =>
-			props.isActive || props.disabled
+			props.$isActive || props.disabled
 				? "none"
 				: `linear-gradient(to right, ${props.$isCheckedOut ? "var(--vscode-textLink-foreground)" : "var(--vscode-descriptionForeground)"} 50%, transparent 50%),
             linear-gradient(to bottom, ${props.$isCheckedOut ? "var(--vscode-textLink-foreground)" : "var(--vscode-descriptionForeground)"} 50%, transparent 50%),
             linear-gradient(to right, ${props.$isCheckedOut ? "var(--vscode-textLink-foreground)" : "var(--vscode-descriptionForeground)"} 50%, transparent 50%),
             linear-gradient(to bottom, ${props.$isCheckedOut ? "var(--vscode-textLink-foreground)" : "var(--vscode-descriptionForeground)"} 50%, transparent 50%)`};
-		background-size: ${(props) => (props.isActive || props.disabled ? "auto" : `4px 1px, 1px 4px, 4px 1px, 1px 4px`)};
+		background-size: ${(props) => (props.$isActive || props.disabled ? "auto" : `4px 1px, 1px 4px, 4px 1px, 1px 4px`)};
 		background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
 		background-position:
 			0 0,

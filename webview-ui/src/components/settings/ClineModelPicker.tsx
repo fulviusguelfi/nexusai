@@ -384,10 +384,10 @@ const ClineModelPicker: React.FC<ClineModelPickerProps> = ({ isPopup, currentMod
 				<>
 					{/* Tabs */}
 					<TabsContainer style={{ marginTop: 4 }}>
-						<Tab active={activeTab === "recommended"} onClick={() => setActiveTab("recommended")}>
+						<Tab $active={activeTab === "recommended"} onClick={() => setActiveTab("recommended")}>
 							Recommended
 						</Tab>
-						<Tab active={activeTab === "free"} onClick={() => setActiveTab("free")}>
+						<Tab $active={activeTab === "free"} onClick={() => setActiveTab("free")}>
 							Free
 						</Tab>
 					</TabsContainer>
@@ -606,13 +606,13 @@ const TabsContainer = styled.div`
 	border-bottom: 1px solid #333;
 `
 
-const Tab = styled.div<{ active: boolean }>`
+const Tab = styled.div<{ $active: boolean }>`
 	padding: 8px 16px;
 	cursor: pointer;
 	font-size: 12px;
 	font-weight: 500;
-	color: ${({ active }) => (active ? "var(--vscode-foreground)" : "var(--vscode-descriptionForeground)")};
-	border-bottom: 2px solid ${({ active }) => (active ? "var(--vscode-textLink-foreground)" : "transparent")};
+	color: ${({ $active }) => ($active ? "var(--vscode-foreground)" : "var(--vscode-descriptionForeground)")};
+	border-bottom: 2px solid ${({ $active }) => ($active ? "var(--vscode-textLink-foreground)" : "transparent")};
 	transition: all 0.15s ease;
 
 	&:hover {

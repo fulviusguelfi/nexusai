@@ -233,6 +233,17 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 		Logger.log("[VscodeWebviewProvider] Webview view resolved")
 
+		// One-time mic diagnostic checkpoint: detect whether getUserMedia works inside the
+		// VS Code webview sandbox. Fires once per install (guarded by voice_mic_diagnostic_v1).
+		const alreadyRan = this.controller.stateManager.getGlobalStateKey("voice_mic_diagnostic_v1")
+		if (!alreadyRan) {
+			this.controller.stateManager.setGlobalState("voice_mic_diagnostic_v1", true)
+			// Give the webview a moment to render before posting
+			setTimeout(() => {
+				void this.postMessageToWebview({ type: "voice_mic_diagnostic" })
+			}, 2000)
+		}
+
 		// Title setting logic removed to allow VSCode to use the container title primarily.
 	}
 
@@ -376,6 +387,33 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			}
 			case "stop_voice_recording": {
 				// No-op: Whisper/FFmpeg recording removed.
+				break
+			}
+			case "voice_mic_diagnostic_result": {
+				// Receive the one-time mic permission probe result from the webview.
+				const { granted, errorName } = message.voice_mic_diagnostic_result ?? {}
+				if (granted) {
+					Logger.log("[VoiceDiagnostic] Mic access: GRANTED (getUserMedia succeeded inside webview)")
+				} else {
+					Logger.warn(
+						`[VoiceDiagnostic] Mic access: DENIED — errorName=${errorName}. ` +
+							"This is a permanent VS Code webview sandbox restriction (issue #119127). " +
+							"STT is permanently disabled; TTS works normally.",
+					)
+					void vscode.window
+						.showWarningMessage(
+							"NexusAI: Microphone is not accessible in the VS Code webview (sandbox restriction). " +
+								"Voice STT has been disabled. TTS continues to work normally.",
+							"Learn More",
+						)
+						.then((choice) => {
+							if (choice === "Learn More") {
+								void vscode.env.openExternal(
+									vscode.Uri.parse("https://github.com/microsoft/vscode/issues/119127"),
+								)
+							}
+						})
+				}
 				break
 			}
 			default: {

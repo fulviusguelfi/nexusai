@@ -98,6 +98,8 @@ const GLOBAL_STATE_FIELDS = {
 	voiceGracePeriodMs: { default: 2000 as number },
 	voiceMaxRecordingDurationMs: { default: 120000 as number },
 	voiceMetadataEnabled: { default: true as boolean },
+	/** One-time diagnostic flag: true once we have attempted mic permission check */
+	voice_mic_diagnostic_v1: { default: false as boolean },
 	// Avatar settings
 	avatarEnabled: { default: true as boolean },
 	avatarName: { default: "Nexus" as string },

@@ -30,6 +30,7 @@ export interface ExtensionMessage {
 		| "voice_error"
 		| "voice_language_detected"
 		| "voice_stt_progress"
+		| "voice_mic_diagnostic"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
 	orientation?: "horizontal" | "vertical"

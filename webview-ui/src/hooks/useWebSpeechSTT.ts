@@ -39,7 +39,11 @@ export function useWebSpeechSTT(options: UseWebSpeechSTTOptions = {}): UseWebSpe
 	const SpeechRecognitionCtor =
 		typeof window !== "undefined" ? (window.SpeechRecognition ?? window.webkitSpeechRecognition) : undefined
 
-	const isSupported = Boolean(SpeechRecognitionCtor)
+	// VS Code WebviewView sandboxes the iframe without `allow="microphone"`,
+	// so getUserMedia and Web Speech API are permanently blocked at the iframe level
+	// regardless of OS permissions (VS Code issue #119127, open since 2021).
+	const isVSCode = typeof window !== "undefined" && typeof (window as any).acquireVsCodeApi !== "undefined"
+	const isSupported = Boolean(SpeechRecognitionCtor) && !isVSCode
 
 	const recognitionRef = useRef<SpeechRecognition | null>(null)
 	const onFinalRef = useRef(onFinalTranscript)

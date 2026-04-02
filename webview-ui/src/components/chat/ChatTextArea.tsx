@@ -4,7 +4,7 @@ import { PlanActMode } from "@shared/proto/cline/state"
 import { type SlashCommand } from "@shared/slashCommands"
 import { Mode } from "@shared/storage/types"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
-import { AtSignIcon, MicIcon, PlusIcon } from "lucide-react"
+import { AtSignIcon, PlusIcon } from "lucide-react"
 import type React from "react"
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"
@@ -18,7 +18,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import VoiceRecorder from "@/components/voice/VoiceRecorder"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
-import { useWebSpeechSTT } from "@/hooks/useWebSpeechSTT"
 import { cn } from "@/lib/utils"
 import { trpc } from "@/services/trpc-client"
 import {
@@ -228,7 +227,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			navigateToSettingsModelPicker,
 			mcpServers,
 			vsCodeLmModels,
-			voiceStreamingSTT,
 		} = useExtensionState()
 
 		// Disable input when the selected provider is not fully configured, or when
@@ -239,18 +237,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			validateApiConfiguration(mode, apiConfiguration) !== undefined ||
 			(_selectedProviderForDisable === "vscode-lm" && vsCodeLmModels.length === 0)
 		const effectiveSendingDisabled = sendingDisabled || isProviderNotReady
-
-		// Web Speech API streaming STT
-		const {
-			isSupported: sttSupported,
-			isListening: sttListening,
-			interimText: sttInterimText,
-			error: sttError,
-			start: sttStart,
-			stop: sttStop,
-		} = useWebSpeechSTT({
-			onFinalTranscript: (text) => setInputValue(inputValue ? `${inputValue} ${text}` : text),
-		})
 
 		const [isTextAreaFocused, setIsTextAreaFocused] = useState(false)
 		const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -1542,51 +1528,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							}}
 						/>
 					)}
-					{(sttListening || sttError) && (
-						<div className="absolute top-0 left-0 right-0 flex items-center gap-1.5 px-3 py-1.5 bg-vscode-input-background/90 text-xs text-(--vscode-descriptionForeground) border-b border-vscode-input-border z-20 pointer-events-none">
-							<MicIcon className={`w-3 h-3 ${sttListening ? "animate-pulse text-red-400" : "text-yellow-400"}`} />
-							<span className="truncate">
-								{sttError
-									? sttError === "not-allowed" || sttError === "audio-capture"
-										? "Mic access denied — allow VS Code microphone in Windows Settings → Privacy → Microphone"
-										: `Voice input error: ${sttError}`
-									: sttInterimText || "Listening…"}
-							</span>
-						</div>
-					)}
 					<div
 						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs"
 						style={{ height: textAreaBaseHeight }}>
 						<div className="flex flex-row items-center gap-1">
-							{voiceStreamingSTT &&
-								(sttSupported ? (
-									<button
-										aria-label={sttListening ? "Stop listening" : "Start voice input"}
-										className={cn(
-											"input-icon-button flex items-center justify-center",
-											sttListening ? "text-red-400" : "",
-										)}
-										disabled={sendingDisabled}
-										onClick={() => (sttListening ? sttStop() : sttStart())}
-										type="button">
-										<MicIcon className="w-3.5 h-3.5" />
-									</button>
-								) : (
-									<Tooltip>
-										<TooltipContent side="top">
-											Streaming voice input not supported in this environment
-										</TooltipContent>
-										<TooltipTrigger asChild>
-											<button
-												aria-label="Voice input not supported"
-												className="input-icon-button flex items-center justify-center opacity-40 cursor-not-allowed"
-												disabled
-												type="button">
-												<MicIcon className="w-3.5 h-3.5" />
-											</button>
-										</TooltipTrigger>
-									</Tooltip>
-								))}
 							{onTranscription && <VoiceRecorder disabled={sendingDisabled} onTranscription={onTranscription} />}
 							<div
 								className={cn(
