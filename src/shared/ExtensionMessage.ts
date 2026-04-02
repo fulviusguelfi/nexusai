@@ -1,14 +1,5 @@
 // type that represents json data that is sent from extension to webview, called ExtensionMessage and has 'type' enum which can be 'plusButtonClicked' or 'settingsButtonClicked' or 'hello'
 
-/** Shared type — also imported by SshSessionRegistry.ts to avoid circular deps */
-export interface SshSessionInfo {
-	taskId: string
-	host: string
-	port: number
-	user: string
-	connectedAt: number // unix ms
-}
-
 import { WorkspaceRoot } from "@shared/multi-root/types"
 import { RemoteConfigFields } from "@shared/storage/state-keys"
 import type { Environment } from "../config"
@@ -168,7 +159,6 @@ export interface ExtensionState {
 	optOutOfRemoteConfig?: boolean
 	doubleCheckCompletionEnabled?: boolean
 	openAiCodexIsAuthenticated?: boolean
-	activeSshSessions: SshSessionInfo[]
 	// Voice settings
 	voiceTtsEnabled: boolean
 	voiceSttEnabled: boolean
@@ -284,11 +274,6 @@ export interface ClineSayTool {
 		| "summarizeTask"
 		| "useSkill"
 		| "list_processes"
-		| "ssh_connect"
-		| "ssh_execute"
-		| "ssh_disconnect"
-		| "ssh_upload"
-		| "ssh_download"
 		| "discover_network_hosts"
 	path?: string
 	diff?: string

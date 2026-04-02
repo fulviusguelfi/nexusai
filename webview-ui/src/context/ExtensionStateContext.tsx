@@ -290,7 +290,6 @@ export const ExtensionStateContextProvider: React.FC<{
 		hooksEnabled: false,
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
-		activeSshSessions: [],
 		voiceTtsEnabled: true,
 		voiceSttEnabled: true,
 		voiceInputDeviceId: undefined,

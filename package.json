@@ -133,22 +133,6 @@
 					"name": "",
 					"icon": "assets/icons/icon.svg"
 				}
-			],
-			"nexusai-panels": [
-				{
-					"type": "webview",
-					"id": "nexusai.sshPanel",
-					"name": "SSH Sessions",
-					"icon": "$(plug)",
-					"visibility": "visible"
-				},
-				{
-					"type": "webview",
-					"id": "nexusai.iotPanel",
-					"name": "IoT Devices",
-					"icon": "$(broadcast)",
-					"visibility": "visible"
-				}
 			]
 		},
 		"commands": [

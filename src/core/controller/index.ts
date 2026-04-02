@@ -8,7 +8,6 @@ import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { cleanupLegacyCheckpoints } from "@integrations/checkpoints/CheckpointMigration"
 import { ClineAccountService } from "@services/account/ClineAccountService"
 import { McpHub } from "@services/mcp/McpHub"
-import { SshSessionRegistry } from "@services/ssh/SshSessionRegistry"
 import type { ApiProvider, ModelInfo } from "@shared/api"
 import type { ChatContent } from "@shared/ChatContent"
 import type { ExtensionState, Platform } from "@shared/ExtensionMessage"
@@ -1007,7 +1006,6 @@ export class Controller {
 			optOutOfRemoteConfig: this.stateManager.getGlobalSettingsKey("optOutOfRemoteConfig"),
 			doubleCheckCompletionEnabled,
 			openAiCodexIsAuthenticated,
-			activeSshSessions: SshSessionRegistry.getActiveSessions(),
 			voiceTtsEnabled: this.stateManager.getGlobalStateKey("voiceTtsEnabled"),
 			voiceSttEnabled: this.stateManager.getGlobalStateKey("voiceSttEnabled"),
 			voiceInputDeviceId: this.stateManager.getGlobalStateKey("voiceInputDeviceId"),

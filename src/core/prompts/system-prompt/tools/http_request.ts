@@ -10,7 +10,7 @@ const generic: ClineToolSpec = {
 	name: "http_request",
 	description:
 		"Make an HTTP/HTTPS request to an external URL and return the response status, headers, and body. " +
-		"Private/local IPs are blocked by default (SSRF protection) — use register_device with trusted_local=true to allow local device APIs. " +
+		"Private/local IPs are blocked by default (SSRF protection). " +
 		"Requires user approval.",
 	parameters: [
 		{
