@@ -3,7 +3,7 @@ import type { ExtensionMessage } from "@shared/ExtensionMessage"
 import type { RecordAndRespondRequest, RecordAndRespondResponse } from "@shared/proto/cline/voice"
 import { PreFlightChecks } from "@/services/voice/PreFlightChecks"
 import { VoiceAgent, VoiceAgentState } from "@/services/voice/VoiceAgent"
-import { VoiceResponseHandler } from "@/services/voice/VoiceResponseHandler"
+import { VoskService } from "@/services/voice/VoskService"
 import { Logger } from "@/shared/services/Logger"
 
 /**
@@ -118,11 +118,30 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Preflight checks passed`)
 
-		// Step 2: Record audio with VoiceAgent
-		Logger.log(`${ts()} 🎙️ Step 2: Recording audio...`)
+		// Step 2: Record audio with VoiceAgent + real-time Vosk STT
+		Logger.log(`${ts()} 🎙️ Step 2: Recording audio with Vosk streaming STT...`)
 
-		// Streaming partial transcription: fire Whisper every 3s of speech during recording
-		let isTranscribingPartial = false
+		// Init Vosk streaming recognizer for real-time partials
+		const voskInitStart = Date.now()
+		const voskService = new VoskService(controller.context.globalStoragePath, async (partialText: string) => {
+			// Fired for every new word — send live preview to webview
+			if (partialText) {
+				Logger.log(`[recordAndRespond] Vosk partial: "${partialText}"`)
+				const messenger = await getVoiceMessenger()
+				if (messenger) {
+					await messenger({
+						type: "voice_stt_partial",
+						voice_stt_partial: { text: partialText },
+					})
+				}
+			}
+		})
+
+		const voskReady = await voskService.init()
+		Logger.log(`${ts()} ⏱ Vosk init: ${Date.now() - voskInitStart}ms, ready=${voskReady}`)
+		if (!voskReady) {
+			Logger.warn("[recordAndRespond] Vosk model not available — STT will return empty transcript")
+		}
 
 		const agent = new VoiceAgent({
 			maxDuration: request.maxDurationMs || 120000,
@@ -130,36 +149,8 @@ export async function recordAndRespond(
 			silenceDurationMs: request.silenceDurationMs || 700,
 			gracePeriodMs: request.gracePeriodMs ?? 2000,
 			deviceId: request.inputDeviceId || undefined,
-			onPartialAudio: (buffer: Buffer, durationMs: number) => {
-				if (isTranscribingPartial) {
-					Logger.log("[recordAndRespond] Skipping partial transcription — previous still running")
-					return
-				}
-				isTranscribingPartial = true
-				Logger.log(`[recordAndRespond] Partial STT start: ${durationMs.toFixed(0)}ms of audio`)
-				VoiceResponseHandler.processSpeechToText(buffer, {
-					globalStoragePath: controller.context.globalStoragePath,
-					sttModel: "whisper-tiny",
-					userLanguage: "pt",
-				})
-					.then(async (result) => {
-						const partialText = result.transcription.text
-						if (partialText) {
-							Logger.log(`[recordAndRespond] Partial: "${partialText}"`)
-							const messenger = await getVoiceMessenger()
-							if (messenger) {
-								await messenger({
-									type: "voice_stt_partial",
-									voice_stt_partial: { text: partialText },
-								})
-							}
-						}
-					})
-					.catch((err) => Logger.warn("[recordAndRespond] Partial transcription error:", err))
-					.finally(() => {
-						isTranscribingPartial = false
-					})
-			},
+			// Feed each speech chunk directly to Vosk (sub-200ms real-time partials)
+			onSpeechChunk: voskReady ? (chunk: Buffer) => voskService.acceptChunk(chunk) : undefined,
 			stateCallback: (state: VoiceAgentState, context?: string) => {
 				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
 				// Send state updates to webview (async, non-blocking)
@@ -204,6 +195,7 @@ export async function recordAndRespond(
 		}
 
 		if (!recordResult || recordResult.error) {
+			voskService.free()
 			const errorMsg = recordResult?.error?.userMessage || "Recording failed"
 			Logger.error(`❌ Recording failed: ${errorMsg}`)
 
@@ -219,42 +211,19 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Audio recorded: ${recordResult.duration}ms`)
 
-		// Step 3: ONLY Speech-to-Text (transcription only, NO TTS)
-		Logger.log(`${ts()} 🔄 Step 3: Processing with STT only...`)
-		Logger.log(`${ts()} ⚡ Whisper iniciado — ${recordResult.audioData?.length ?? 0} bytes`)
+		// Step 3: Get final transcript from Vosk (no Whisper needed)
+		Logger.log(`${ts()} 🔄 Step 3: Flushing Vosk final transcript...`)
+		const finalStart = Date.now()
+		const transcriptionText = voskReady ? await voskService.getFinalTranscript() : ""
+		Logger.log(`${ts()} ⏱ Vosk finalize: ${Date.now() - finalStart}ms`)
+		voskService.free()
 
-		const sttResult = await VoiceResponseHandler.processSpeechToText(recordResult.audioData, {
-			globalStoragePath: controller.context.globalStoragePath,
-			sttModel: request.sttModel || "small",
-			userLanguage: "pt", // Hint to Whisper that user likely speaks Portuguese (Brasil)
-			maxDuration: request.maxDurationMs,
-			onProgress: (progress: number) => {
-				Logger.log(`  STT: ${progress}%`)
-				void getVoiceMessenger().then((messenger) => {
-					messenger?.({
-						type: "voice_stt_progress",
-						voice_stt_progress: { progress, stage: "transcribing" },
-					})
-				})
-			},
-		})
+		Logger.log(`${ts()} ✍️ Transcrição Vosk: "${transcriptionText}"`)
 
-		if (sttResult.error) {
-			Logger.error(`❌ STT failed: ${sttResult.error.message}`)
-
-			return {
-				success: false,
-				transcriptionText: sttResult.transcription.text,
-				llmResponseText: "",
-				audioWavBase64: "",
-				totalDurationMs: totalDurationMs(),
-				errorMessage: sttResult.error.message,
-				detectedLanguage: sttResult.detectedLanguage,
-			}
+		if (!transcriptionText && voskReady) {
+			Logger.warn("[recordAndRespond] Vosk returned empty transcript")
 		}
 
-		// Step 4: Return transcribed text ONLY (without audio)
-		Logger.log(`${ts()} ✍️ Transcrição: "${sttResult.transcription.text}" [${sttResult.detectedLanguage}]`)
 		Logger.log(`${ts()} 🏁 Pipeline total: ${totalDurationMs()}ms`)
 		Logger.log(`${ts()} ⏭️ Usuário enviará para o LLM — TTS após resposta`)
 
@@ -263,11 +232,11 @@ export async function recordAndRespond(
 
 		return {
 			success: true,
-			transcriptionText: sttResult.transcription.text,
-			llmResponseText: "", // Empty - LLM hasn't responded yet
-			audioWavBase64: "", // Empty - no TTS yet! TTS happens after LLM response
+			transcriptionText,
+			llmResponseText: "",
+			audioWavBase64: "",
 			totalDurationMs: totalDurationMs(),
-			detectedLanguage: sttResult.detectedLanguage,
+			detectedLanguage: "pt",
 		}
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error)

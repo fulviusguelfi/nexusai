@@ -64,6 +64,20 @@ export async function preloadVoiceModels(globalStoragePath: string): Promise<voi
 	} catch (e) {
 		Logger.warn(`[Preload] Piper pre-load failed (non-critical): ${e}`)
 	}
+
+	// Vosk STT — download small Portuguese model in background
+	try {
+		const { VoskService } = await import("@/services/voice/VoskService")
+		if (!VoskService.isModelReady(globalStoragePath)) {
+			Logger.log("[Preload] Vosk model not found — starting background download...")
+			await VoskService.downloadModel(globalStoragePath)
+			Logger.log("[Preload] Vosk model ready")
+		} else {
+			Logger.log("[Preload] Vosk model already present")
+		}
+	} catch (e) {
+		Logger.warn(`[Preload] Vosk model download failed (non-critical): ${e}`)
+	}
 }
 
 /**
@@ -451,8 +465,6 @@ export class PreFlightChecks {
 		if (cached) return cached
 
 		try {
-			const modelsDir = PreFlightChecks.getModelsDir()
-
 			// Rough estimate: check if drive has > 500MB free
 			const freeSpace = os.freemem() / (1024 * 1024) // MB
 

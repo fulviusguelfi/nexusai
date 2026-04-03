@@ -30,6 +30,8 @@ export interface VoiceAgentOptions {
 	errorCallback?: (error: VoiceError) => void
 	/** Called every ~3 seconds with accumulated raw PCM (16kHz, 16-bit LE, mono) during recording */
 	onPartialAudio?: (buffer: Buffer, durationMs: number) => void
+	/** Called for every PCM chunk received after speech onset (16kHz, 16-bit LE, mono) */
+	onSpeechChunk?: (chunk: Buffer) => void
 }
 
 export interface VoiceResponse {
@@ -45,9 +47,10 @@ export class VoiceAgent {
 	private audioCapture: WindowsAudioCapture | null = null
 	private abortController: AbortController | null = null
 	private activeDevice: { name: string; id: string } | null = null
-	private options: Required<Omit<VoiceAgentOptions, "deviceId" | "onPartialAudio">>
+	private options: Required<Omit<VoiceAgentOptions, "deviceId" | "onPartialAudio" | "onSpeechChunk">>
 	private readonly deviceId: string | undefined
 	private readonly onPartialAudio: ((buffer: Buffer, durationMs: number) => void) | undefined
+	private readonly onSpeechChunk: ((chunk: Buffer) => void) | undefined
 
 	// State callbacks
 	private stateCallback: (state: VoiceAgentState, context?: string) => void
@@ -56,6 +59,7 @@ export class VoiceAgent {
 	constructor(options: VoiceAgentOptions = {}) {
 		this.deviceId = options.deviceId || undefined
 		this.onPartialAudio = options.onPartialAudio
+		this.onSpeechChunk = options.onSpeechChunk
 		this.options = {
 			maxDuration: options.maxDuration || 120000,
 			silenceThreshold: options.silenceThreshold || 0.01,
@@ -302,7 +306,12 @@ export class VoiceAgent {
 
 									if (preRollBuffer.length > 0) {
 										const preRollData = Buffer.concat(preRollBuffer)
-										capture.prependToBuffer(preRollData)
+										capture.prependToBuffer(preRollData) // Also feed pre-roll to Vosk so it hears the word onset
+										if (this.onSpeechChunk) {
+											for (const preChunk of preRollBuffer) {
+												this.onSpeechChunk(preChunk)
+											}
+										}
 										Logger.log(
 											`${tsc()} 🗣️ Speech detected — pre-roll injetado: ${preRollBuffer.length} chunks (${preRollData.length}B)`,
 										)
@@ -338,8 +347,13 @@ export class VoiceAgent {
 									}
 								}
 
-								// === STREAMING PARTIAL: accumulate speech chunks and fire callback every 3s ===
-								if (this.onPartialAudio) {
+								// === PER-CHUNK CALLBACK: feed each speech chunk to Vosk (or legacy 3s partial) ===
+								if (this.onSpeechChunk) {
+									// Vosk streaming: deliver every chunk immediately
+									Logger.log(`[VoiceAgent] 🔊 onSpeechChunk chunk#${chunkIndex} (${chunk.length}B)`)
+									this.onSpeechChunk(chunk)
+								} else if (this.onPartialAudio) {
+									// Legacy: accumulate and fire every 3s (Whisper batch mode)
 									streamingAcc.push(chunk)
 									streamingBytesSinceCallback += chunk.length
 									if (streamingBytesSinceCallback >= PARTIAL_INTERVAL_BYTES) {

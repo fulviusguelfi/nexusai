@@ -46,14 +46,17 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	const pendingVoiceMetadataRef = useRef<string>("")
 
 	const handleTranscription = useCallback(
-		(text: string, language?: string) => {
-			if (voiceMetadataEnabled) {
-				const langNote = language ? `, spoken in ${language}` : ""
-				pendingVoiceMetadataRef.current = `[voice input${langNote} — respond naturally as spoken]\n`
-			} else {
-				pendingVoiceMetadataRef.current = ""
+		(text: string, language?: string, isPartial?: boolean) => {
+			if (!isPartial) {
+				if (voiceMetadataEnabled) {
+					const langNote = language ? `, spoken in ${language}` : ""
+					pendingVoiceMetadataRef.current = `[voice input${langNote} — respond naturally as spoken]\n`
+				} else {
+					pendingVoiceMetadataRef.current = ""
+				}
 			}
-			setInputValue((prev) => (prev ? `${prev} ${text}` : text))
+			// Partials and finals both replace (Vosk returns cumulative text each time)
+			setInputValue(text)
 		},
 		[setInputValue, voiceMetadataEnabled],
 	)

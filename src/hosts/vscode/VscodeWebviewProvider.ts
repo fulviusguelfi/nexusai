@@ -1,9 +1,5 @@
 import { sendShowWebviewEvent } from "@core/controller/ui/subscribeToShowWebview"
 import { WebviewProvider } from "@core/webview"
-import { spawn } from "child_process"
-import * as fs from "fs"
-import * as os from "os"
-import * as path from "path"
 import * as vscode from "vscode"
 import { handleGrpcRequest, handleGrpcRequestCancel } from "@/core/controller/grpc-handler"
 import { HostProvider } from "@/hosts/host-provider"
@@ -13,42 +9,18 @@ import { Logger } from "@/shared/services/Logger"
 import { WebviewMessage } from "@/shared/WebviewMessage"
 
 /**
- * Plays a WAV buffer directly on the extension host (bypasses webview autoplay restrictions).
- * Windows: System.Media.SoundPlayer via PowerShell
- * macOS: afplay
- * Linux: aplay
+ * Reads audio duration from a WAV buffer's RIFF header.
+ * Returns duration in milliseconds. Falls back to 2000ms on parse error.
  */
-async function playWavOnHost(wavBuf: Buffer): Promise<void> {
-	const tmpFile = path.join(os.tmpdir(), `nexusai_tts_${Date.now()}.wav`)
-	fs.writeFileSync(tmpFile, wavBuf)
+function getWavDurationMs(wavBuf: Buffer): number {
 	try {
-		await new Promise<void>((resolve, reject) => {
-			let child: ReturnType<typeof spawn>
-			const safeFile = tmpFile.replace(/'/g, "''")
-			if (process.platform === "win32") {
-				child = spawn("powershell", [
-					"-NoProfile",
-					"-NonInteractive",
-					"-Command",
-					`$p=[System.Media.SoundPlayer]::new('${safeFile}');$p.PlaySync();$p.Dispose()`,
-				])
-			} else if (process.platform === "darwin") {
-				child = spawn("afplay", [tmpFile])
-			} else {
-				child = spawn("aplay", [tmpFile])
-			}
-			child.on("close", (code) => {
-				if (code === 0 || code === null) resolve()
-				else reject(new Error(`Audio player exited with code ${code}`))
-			})
-			child.on("error", reject)
-		})
-	} finally {
-		try {
-			fs.unlinkSync(tmpFile)
-		} catch {
-			// ignore cleanup errors
-		}
+		if (wavBuf.length < 44) return 2000
+		const byteRate = wavBuf.readUInt32LE(28) // bytes/second
+		const dataSize = wavBuf.readUInt32LE(40) // PCM data chunk size
+		if (byteRate === 0) return 2000
+		return Math.ceil((dataSize / byteRate) * 1000)
+	} catch {
+		return 2000
 	}
 }
 
@@ -61,6 +33,29 @@ export function setGlobalVoiceMessenger(messenger: ((message: ExtensionMessage) 
 
 export function getGlobalVoiceMessenger(): ((message: ExtensionMessage) => Promise<boolean | undefined>) | null {
 	return globalVoiceMessenger
+}
+
+/**
+ * Split a text block into individual sentences for streaming TTS.
+ * Splits on sentence-ending punctuation followed by whitespace or end-of-string.
+ * Preserves non-empty segments; short fragments are merged with the previous sentence.
+ */
+function splitIntoSentences(text: string): string[] {
+	// Split on . ! ? followed by space/newline/end, keeping the delimiter on the left side
+	const raw = text.split(/(?<=[.!?。！？])\s+/)
+	const result: string[] = []
+	for (const part of raw) {
+		const trimmed = part.trim()
+		if (!trimmed) continue
+		// Merge very short tails (e.g. single character) onto the previous sentence
+		if (trimmed.length < 4 && result.length > 0) {
+			result[result.length - 1] += " " + trimmed
+		} else {
+			result.push(trimmed)
+		}
+	}
+	// If no splits happened, return the whole text as one sentence
+	return result.length > 0 ? result : [text.trim()].filter(Boolean)
 }
 
 export class VscodeWebviewProvider extends WebviewProvider implements vscode.WebviewViewProvider {
@@ -173,53 +168,101 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// if the extension is starting a new session, clear previous task state
 		this.controller.clearTask()
 
-		// Wire VoiceSessionManager speak requests → PiperService → webview audio
+		// Wire VoiceSessionManager speak requests → PiperService → webview audio (sentence streaming)
 		void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 			Logger.log("[VscodeWebviewProvider] Registering onSpeakRequest listener")
 			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (text: string) => {
+				const ttsStart = Date.now()
+				const tts = () => `[T+${Date.now() - ttsStart}ms]`
 				Logger.log(
-					`[TTS] 🎙️ onSpeakRequest EVENT FIRED! text length=${text?.length ?? 0}: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
+					`[TTS] 🎙️ ${tts()} onSpeakRequest FIRED — ${text?.length ?? 0} chars: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
 				)
 				try {
 					const { PiperService } = await import("@services/voice/PiperService")
+					const { RhubarbService } = await import("@services/voice/RhubarbService")
 					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
 					const voicePiperVoice =
 						(this.controller.stateManager.getGlobalStateKey("voicePiperVoice") as string | undefined) ??
 						"en_US-lessac-medium"
-					Logger.log(`[TTS] 🎵 Synthesizing with voice="${voicePiperVoice}"`)
-					const wavBuf = await PiperService.getInstance(this.controller.context.globalStoragePath).synthesize(
-						text,
-						voicePiperVoice,
-					)
-					Logger.log(`[TTS] ✅ Synthesis done: ${wavBuf.length} bytes WAV`)
 
-					// Extract lip sync phoneme timeline (non-blocking — fallback to empty on error)
-					const { RhubarbService } = await import("@services/voice/RhubarbService")
-					const phonemeTimeline = await new RhubarbService().extractTimeline(wavBuf)
-					Logger.log(`[TTS] 👄 Lip sync timeline extracted: ${phonemeTimeline.length} phoneme entries`)
+					const sentences = splitIntoSentences(text).filter((s) => s.trim())
+					Logger.log(`[TTS] ${tts()} 🎵 ${sentences.length} sentence(s), voice="${voicePiperVoice}"`)
 
-					// Send WAV + phoneme timeline to webview for lip sync timing
-					void this.postMessageToWebview({
-						type: "voice_audio_play",
-						voice_audio_play: {
-							wavBase64: wavBuf.toString("base64"),
-							phonemeTimeline,
-						},
-					})
-					Logger.log(`[TTS] 📤 voice_audio_play message sent to webview`)
+					// ── Pipeline helper: synthesize one sentence + extract lip sync ────────────
+					const synthesize = async (sentence: string, idx: number) => {
+						const t0 = Date.now()
+						Logger.log(`[TTS] ${tts()} 🔤 Synth[${idx + 1}]: "${sentence.substring(0, 60)}"`)
+						const wavBuf = await PiperService.getInstance(this.controller.context.globalStoragePath).synthesize(
+							sentence,
+							voicePiperVoice,
+						)
+						const synthMs = Date.now() - t0
+						Logger.log(`[TTS] ${tts()} ✅ Synth[${idx + 1}] done: ${wavBuf.length}B in ${synthMs}ms`)
+						const lipT = Date.now()
+						const phonemeTimeline = await new RhubarbService().extractTimeline(wavBuf)
+						Logger.log(
+							`[TTS] ${tts()} 👄 LipSync[${idx + 1}]: ${phonemeTimeline.length} phonemes in ${Date.now() - lipT}ms`,
+						)
+						return { wavBuf, phonemeTimeline }
+					}
+
+					// ── Broadcast helpers — route to BOTH editor panel and sidebar ────────────
+					// EditorPanel: useAvatarState drives lip sync via performance.now() ✅
+					//              audio.play() blocked by autoplay policy there — silent fail ✅
+					// Sidebar:     AudioPlayer (in VoiceRecorder) plays actual audio after user
+					//              gesture — succeeds because user just clicked the mic button ✅
+					const broadcast = (msg: ExtensionMessage) => {
+						const gm = getGlobalVoiceMessenger()
+						if (gm) {
+							void gm(msg)
+						}
+						// Always also send to sidebar: AudioPlayer needs voice_agent_state_changed
+						// to mount (PLAYING state) and voice_audio_play to play the WAV.
+						void this.postMessageToWebview(msg)
+					}
 
 					SpeakerGate.getInstance().activate()
-					void this.postMessageToWebview({
-						type: "voice_agent_state_changed",
-						voice_agent_state_changed: { state: "PLAYING", context: "" },
-					})
+					broadcast({ type: "voice_agent_state_changed", voice_agent_state_changed: { state: "PLAYING", context: "" } })
+
 					try {
-						Logger.log("[TTS] 🔊 Playing audio on host...")
-						await playWavOnHost(wavBuf)
-						Logger.log("[TTS] ✅ Host audio playback complete")
+						if (sentences.length === 0) return
+
+						// Give React a moment to mount AudioPlayer before the first voice_audio_play arrives.
+						// Pre-synthesize the first sentence during this window (net zero extra delay).
+						Logger.log(`[TTS] ${tts()} 🚀 Pre-synthesizing sentence 1 (AudioPlayer mounting...)`)
+						const preDelay = new Promise<void>((r) => setTimeout(r, 80)) // ~2 React render cycles
+						let nextSynth: Promise<{ wavBuf: Buffer; phonemeTimeline: any[] }> = synthesize(sentences[0], 0)
+						await preDelay // wait for AudioPlayer to mount
+
+						for (let i = 0; i < sentences.length; i++) {
+							// Await synthesis of the current sentence
+							const { wavBuf, phonemeTimeline } = await nextSynth
+
+							// Kick off synthesis of NEXT sentence NOW (parallel with playback below)
+							if (i + 1 < sentences.length) {
+								Logger.log(`[TTS] ${tts()} ⏩ Pipeline: pre-synthesizing sentence ${i + 2}`)
+								nextSynth = synthesize(sentences[i + 1], i + 1)
+							}
+
+							const durationMs = getWavDurationMs(wavBuf)
+							Logger.log(`[TTS] ${tts()} 🔊 Playing sentence ${i + 1}/${sentences.length}: ${durationMs}ms`)
+
+							// Send WAV + phonemes to the active webview (editor panel or sidebar).
+							// AudioPlayer.tsx will play the audio; useAvatarState will drive lip sync.
+							broadcast({
+								type: "voice_audio_play",
+								voice_audio_play: { wavBase64: wavBuf.toString("base64"), phonemeTimeline },
+							})
+
+							// Wait for audio to finish on the webview side (duration + small buffer)
+							await new Promise<void>((r) => setTimeout(r, durationMs + 200))
+							Logger.log(`[TTS] ${tts()} ✅ Sentence ${i + 1} complete`)
+						}
+
+						Logger.log(`[TTS] ${tts()} 🏁 TTS pipeline complete — total ${Date.now() - ttsStart}ms`)
 					} finally {
 						SpeakerGate.getInstance().deactivate()
-						void this.postMessageToWebview({
+						broadcast({
 							type: "voice_agent_state_changed",
 							voice_agent_state_changed: { state: "IDLE", context: "" },
 						})

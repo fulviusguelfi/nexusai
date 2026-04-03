@@ -9,7 +9,7 @@ import { voiceLogStore } from "@/utils/voiceDebugger"
 import AudioPlayer from "./AudioPlayer"
 
 interface Props {
-	onTranscription?: (text: string, language?: string) => void
+	onTranscription?: (text: string, language?: string, isPartial?: boolean) => void
 	disabled?: boolean
 }
 
@@ -83,7 +83,7 @@ const WAVEFORM_BARS = [
 ]
 
 const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
-	const { voiceSttEnabled, voiceSilenceThresholdMs, voiceGracePeriodMs, voiceMaxRecordingDurationMs } = useExtensionState()
+	const { voiceSttEnabled, voiceMaxRecordingDurationMs } = useExtensionState()
 
 	// UI State
 	const [agentState, setAgentState] = useState<VoiceAgentState>(VOICE_AGENT_STATES.IDLE)
@@ -101,6 +101,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	// Recording timer (elapsed seconds)
 	const [recordingSeconds, setRecordingSeconds] = useState(0)
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+	const pttKeyHeld = useRef(false)
 
 	// Audio level feedback (during RECORDING state)
 	const [audioLevel, setAudioLevel] = useState<{
@@ -109,11 +110,6 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		quality: "excellent" | "good" | "poor" | "silent"
 		clipping: boolean
 	} | null>(null)
-
-	// Don't render if voice input is disabled
-	if (!voiceSttEnabled) {
-		return null
-	}
 
 	// Icon and label for each state
 	const getStateDisplay = (): { icon: string; label: string; isActive: boolean } => {
@@ -153,51 +149,73 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		setRecordingSeconds(0)
 	}, [])
 
-	// Keyboard shortcut: Ctrl+Shift+V
+	// Push-to-talk: start recording
+	const handleStartRecording = useCallback(async () => {
+		if (isUserRecording) return
+		voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
+		setErrorMessage(null)
+		setStateContext("Listening for audio...")
+		setIsUserRecording(true)
+		startTimer()
+		PLATFORM_CONFIG.postMessage({
+			type: "start_voice_recording",
+			start_voice_recording: {
+				timestamp: Date.now(),
+				silenceThresholdMs: 700,
+				gracePeriodMs: 2000,
+				maxDurationMs: voiceMaxRecordingDurationMs || 120000,
+			},
+		})
+	}, [isUserRecording, voiceMaxRecordingDurationMs, startTimer])
+
+	// Push-to-talk: stop recording
+	const handleStopRecording = useCallback(async () => {
+		if (!isUserRecording) return
+		voiceLogStore.info("VoiceRecorder", "User stopped recording (push-to-talk release)")
+		setIsUserRecording(false)
+		stopTimer()
+		setStateContext("Processing...")
+		PLATFORM_CONFIG.postMessage({
+			type: "stop_voice_recording",
+			stop_voice_recording: {
+				timestamp: Date.now(),
+			},
+		})
+	}, [isUserRecording, stopTimer])
+
+	// Refs to always-current callbacks — lets the keyboard effect avoid re-registering on every recording state change
+	const handleStartRecordingRef = useRef(handleStartRecording)
+	const handleStopRecordingRef = useRef(handleStopRecording)
 	useEffect(() => {
+		handleStartRecordingRef.current = handleStartRecording
+	}, [handleStartRecording])
+	useEffect(() => {
+		handleStopRecordingRef.current = handleStopRecording
+	}, [handleStopRecording])
+
+	// Keyboard push-to-talk: hold Ctrl+Shift+V to record, release any part of combo to stop
+	useEffect(() => {
+		if (!voiceSttEnabled) return
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.ctrlKey && e.shiftKey && e.key === "V") {
+			if (e.ctrlKey && e.shiftKey && e.key === "V" && !pttKeyHeld.current) {
 				e.preventDefault()
-				handleToggleRecording()
+				pttKeyHeld.current = true
+				handleStartRecordingRef.current()
+			}
+		}
+		const handleKeyUp = (e: KeyboardEvent) => {
+			if (pttKeyHeld.current && (e.key === "V" || e.key === "Control" || e.key === "Shift")) {
+				pttKeyHeld.current = false
+				handleStopRecordingRef.current()
 			}
 		}
 		window.addEventListener("keydown", handleKeyDown)
-		return () => window.removeEventListener("keydown", handleKeyDown)
-	}, []) // eslint-disable-line -- handleToggleRecording stable via useCallback
-
-	// Handle button click - toggle recording on/off (push-to-talk style)
-	const handleToggleRecording = useCallback(async () => {
-		if (isUserRecording) {
-			// Stop recording
-			voiceLogStore.info("VoiceRecorder", "User stopped recording (push-to-talk release)")
-			setIsUserRecording(false)
-			stopTimer()
-			setStateContext("Processing...")
-			PLATFORM_CONFIG.postMessage({
-				type: "stop_voice_recording",
-				stop_voice_recording: {
-					timestamp: Date.now(),
-				},
-			})
-		} else {
-			// Start recording
-			voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
-			setErrorMessage(null)
-			setStateContext("Listening for audio...")
-			setIsUserRecording(true)
-			startTimer()
-
-			PLATFORM_CONFIG.postMessage({
-				type: "start_voice_recording",
-				start_voice_recording: {
-					timestamp: Date.now(),
-					silenceThresholdMs: voiceSilenceThresholdMs || 700,
-					gracePeriodMs: voiceGracePeriodMs ?? 2000,
-					maxDurationMs: voiceMaxRecordingDurationMs || 120000,
-				},
-			})
+		window.addEventListener("keyup", handleKeyUp)
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown)
+			window.removeEventListener("keyup", handleKeyUp)
 		}
-	}, [isUserRecording, voiceSilenceThresholdMs, voiceGracePeriodMs, voiceMaxRecordingDurationMs, agentState])
+	}, [voiceSttEnabled])
 
 	// Listen for state changes from extension host
 	useEffect(() => {
@@ -208,6 +226,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				const partialText = data.voice_stt_partial.text
 				console.log("[VoiceRecorder] Live partial:", partialText)
 				setLivePreview(partialText)
+				// Also write the partial into the input box so words appear as they are spoken
+				onTranscription?.(partialText, undefined, true)
 			}
 
 			if (data?.type === "voice_stt_progress" && data.voice_stt_progress) {
@@ -321,6 +341,11 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		return () => window.removeEventListener("message", handler)
 	}, [onTranscription, stopTimer])
 
+	// Don't render if voice input is disabled — placed after all hooks to satisfy React rules of hooks
+	if (!voiceSttEnabled) {
+		return null
+	}
+
 	const display = getStateDisplay()
 	const isLoading = display.isActive || isUserRecording
 	const isError = agentState === VOICE_AGENT_STATES.ERROR
@@ -358,8 +383,10 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					.join(" ")}
 				data-active-recording={isActiveRecording}
 				disabled={isDisabledState && !isActiveRecording}
-				onClick={handleToggleRecording}
-				title={isUserRecording ? "Click to stop recording" : "Click to start recording"}
+				onMouseDown={handleStartRecording}
+				onMouseLeave={handleStopRecording}
+				onMouseUp={handleStopRecording}
+				title={isUserRecording ? "Release to stop recording" : "Hold to record (push-to-talk)"}
 			/>
 			{agentState === VOICE_AGENT_STATES.READY_TO_LISTEN && (
 				<span className="relative flex h-3 w-3 ml-1">

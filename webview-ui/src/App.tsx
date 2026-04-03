@@ -47,6 +47,8 @@ const AppContent = () => {
 	} = useExtensionState()
 
 	useClineAuth()
+	// Plays TTS audio in sidebar context (user gesture from mic click → autoplay allowed).
+	// EditorPanel's AudioPlayer also tries but is silently blocked by autoplay policy there.
 	useVoiceAudioPlayer()
 	useExtensionMessages()
 
@@ -159,15 +161,16 @@ const AppContent = () => {
 		</LayoutContainer>
 	) : (
 		<div className="flex h-screen w-full flex-col">
-			{mainContent}
+			{/* Chat and Avatar are disabled in sidebar — editor panel only */}
+			{/* {mainContent} */}
 			{/* Avatar only visible when no overlays are open and voice is enabled */}
-			{showAvatarOverlay && (
+			{/* {showAvatarOverlay && (
 				<AvatarOverlay
 					agentState={avatarState.agentState}
 					currentViseme={avatarState.currentViseme}
 					isVisible={avatarState.isVisible}
 				/>
-			)}
+			)} */}
 		</div>
 	)
 }

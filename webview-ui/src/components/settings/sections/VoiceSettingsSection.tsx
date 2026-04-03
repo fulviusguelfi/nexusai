@@ -25,6 +25,8 @@ const VOICE_OPTIONS = [
 
 const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 	const {
+		voiceSttEnabled,
+		voiceInputDeviceId,
 		voiceTtsEnabled,
 		voiceOutputDeviceId,
 		voicePiperVoice,
@@ -36,29 +38,50 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		avatarPersonalityResponseMode,
 	} = useExtensionState()
 
+	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
 	const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
-	const [error, setError] = useState<string | null>(null)
+	const [_error, setError] = useState<string | null>(null)
 
 	const detectRealDevices = useCallback(async () => {
 		setError(null)
 
 		try {
+			// Input devices: use host-side FFmpeg enumeration (dshow format required for capture)
 			const resp = await trpc.voice.enumerateAudioDevices.query()
-
 			if (resp.error) {
 				setError(resp.error)
-				return
+			} else {
+				setInputDevices(
+					(resp.inputDevices || [])
+						.filter((d) => d.deviceId && d.deviceId !== "")
+						.map((d) => ({
+							deviceId: d.deviceId || "",
+							label: d.label || d.deviceId || "(unknown)",
+						})),
+				)
 			}
-
-			setOutputDevices(
-				(resp.outputDevices || []).map((d) => ({
-					deviceId: d.deviceId || "",
-					label: d.label || d.deviceId || "(unknown)",
-				})),
-			)
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
 			setError(msg)
+		}
+
+		// Output devices: enumerate via browser MediaDevices API so deviceId values are
+		// valid for HTMLAudioElement.setSinkId(). Host-side Windows names are NOT valid sinkIds.
+		// Note: VS Code webview may return deviceId="" for all devices when mic permission is not
+		// granted — filter those out to avoid SelectItem receiving value="" (Radix UI crashes).
+		try {
+			if (navigator.mediaDevices?.enumerateDevices) {
+				const devices = await navigator.mediaDevices.enumerateDevices()
+				const outputs = devices
+					.filter((d) => d.kind === "audiooutput" && d.deviceId !== "")
+					.map((d) => ({
+						deviceId: d.deviceId,
+						label: d.label || d.deviceId,
+					}))
+				setOutputDevices(outputs)
+			}
+		} catch {
+			// MediaDevices not available or permission denied — output list stays empty
 		}
 	}, [])
 
@@ -74,6 +97,14 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		mediaDevices.addEventListener("devicechange", detectRealDevices)
 		return () => mediaDevices.removeEventListener("devicechange", detectRealDevices)
 	}, [detectRealDevices])
+
+	useEffect(() => {
+		if (!voiceInputDeviceId) return
+		const exists = inputDevices.some((d) => d.deviceId === voiceInputDeviceId)
+		if (!exists && inputDevices.length > 0) {
+			updateSetting("voiceInputDeviceId", undefined)
+		}
+	}, [voiceInputDeviceId, inputDevices])
 
 	useEffect(() => {
 		if (!voiceOutputDeviceId) return
@@ -96,19 +127,47 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 			{renderSectionHeader("voice")}
 			<Section>
 				<div className="flex flex-col gap-3">
-					{/* STT — permanent technical impossibility in VS Code webview */}
-					<div className="flex flex-col gap-1 rounded p-2 bg-vscode-inputValidation-warningBackground border border-vscode-inputValidation-warningBorder">
-						<Label className="text-sm font-medium">Speech-to-Text (Streaming)</Label>
-						<p className="text-xs text-vscode-descriptionForeground mt-0.5">
-							Microphone access is not available inside the VS Code webview. The extension iframe runs in a
-							sandboxed context that permanently blocks <code>getUserMedia</code> regardless of OS-level permissions
-							(see{" "}
-							<a href="https://github.com/microsoft/vscode/issues/119127" rel="noreferrer" target="_blank">
-								vscode#119127
-							</a>
-							). TTS still works normally.
-						</p>
+					{/* STT toggle + mic input selector */}
+					<div className="flex items-center justify-between">
+						<div>
+							<Label className="text-sm font-medium">Speech-to-Text (Mic)</Label>
+							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
+								Enable voice input via the mic button in the chat box. Audio is captured by FFmpeg (outside the
+								webview sandbox) and transcribed locally by Whisper.
+							</p>
+						</div>
+						<Switch
+							checked={voiceSttEnabled ?? true}
+							onCheckedChange={(checked) => updateSetting("voiceSttEnabled", checked)}
+						/>
 					</div>
+
+					{(voiceSttEnabled ?? true) && (
+						<div className="pl-2 flex flex-col gap-2">
+							<div>
+								<Label className="text-xs text-vscode-descriptionForeground">Microphone</Label>
+								<Select
+									onValueChange={(v) => updateSetting("voiceInputDeviceId", v === "default" ? undefined : v)}
+									value={
+										voiceInputDeviceId && inputDevices.some((d) => d.deviceId === voiceInputDeviceId)
+											? voiceInputDeviceId
+											: "default"
+									}>
+									<SelectTrigger className="mt-1 w-full">
+										<SelectValue placeholder="Default microphone" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="default">Default microphone</SelectItem>
+										{inputDevices.map((d) => (
+											<SelectItem key={d.deviceId} value={d.deviceId}>
+												{d.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						</div>
+					)}
 
 					{/* Voice metadata toggle */}
 					<div className="flex items-center justify-between pt-2 border-t border-vscode-panel-border">

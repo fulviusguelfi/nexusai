@@ -79,7 +79,7 @@ interface ChatTextAreaProps {
 	setSelectedImages: React.Dispatch<React.SetStateAction<string[]>>
 	setSelectedFiles: React.Dispatch<React.SetStateAction<string[]>>
 	onSend: () => void
-	onTranscription?: (text: string, language?: string) => void
+	onTranscription?: (text: string, language?: string, isPartial?: boolean) => void
 	onSelectFilesAndImages: () => void
 	shouldDisableFilesAndImages: boolean
 	onHeightChange?: (height: number) => void

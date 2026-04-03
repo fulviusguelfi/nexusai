@@ -208,6 +208,7 @@ const extensionConfig = {
 	entryPoints: [
 		{ in: "src/extension.ts", out: "extension" },
 		{ in: "src/services/voice/whisper.worker.ts", out: "whisper.worker" },
+		{ in: "src/services/voice/vosk-worker.js", out: "vosk-worker" },
 	],
 	outdir: destDir,
 	// ssh2 ships optional native .node binaries (sshcrypto.node, cpufeatures.node).
@@ -216,7 +217,7 @@ const extensionConfig = {
 	// and ssh2 uses its pure-JS fallback — no VS Code process crash from ABI mismatches.
 	// rhubarb-lip-sync-wasm is ESM-only and loads .wasm/.data files via import.meta.url —
 	// must stay external so the WASM loader can find its files in node_modules at runtime.
-	external: ["vscode", "@huggingface/transformers", "rhubarb-lip-sync-wasm"],
+	external: ["vscode", "@huggingface/transformers", "rhubarb-lip-sync-wasm", "vosk"],
 }
 
 // Standalone-specific configuration
