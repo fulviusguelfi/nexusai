@@ -839,7 +839,11 @@ export class Task {
 				// await this.postStateToWebview()
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
-				if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+				if (
+					(type === "text" || (type === "completion_result" && this.taskState.isVoiceInput)) &&
+					text &&
+					this.stateManager.getGlobalStateKey("voiceTtsEnabled")
+				) {
 					const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
 					Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
 					if (ttsText) {
@@ -863,7 +867,11 @@ export class Task {
 				modelInfo,
 			})
 			await this.postStateToWebview()
-			if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+			if (
+				(type === "text" || (type === "completion_result" && this.taskState.isVoiceInput)) &&
+				text &&
+				this.stateManager.getGlobalStateKey("voiceTtsEnabled")
+			) {
 				const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
 				Logger.log(
 					`[TTS] 🎙️ Firing requestSpeak: type=${type}, chars=${ttsText.length}, isVoiceInput=${this.taskState.isVoiceInput}`,
@@ -887,7 +895,7 @@ export class Task {
 				}
 			} else {
 				Logger.log(
-					`[TTS] ⏭️ TTS skipped: type=${type}, hasText=${!!text}, voiceTtsEnabled=${this.stateManager.getGlobalStateKey("voiceTtsEnabled")}`,
+					`[TTS] ⏭️ TTS skipped: type=${type}, hasText=${!!text}, isVoiceInput=${this.taskState.isVoiceInput}, voiceTtsEnabled=${this.stateManager.getGlobalStateKey("voiceTtsEnabled")}`,
 				)
 			}
 			return sayTs
@@ -905,7 +913,11 @@ export class Task {
 			modelInfo,
 		})
 		await this.postStateToWebview()
-		if (type === "text" && text && this.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
+		if (
+			(type === "text" || (type === "completion_result" && this.taskState.isVoiceInput)) &&
+			text &&
+			this.stateManager.getGlobalStateKey("voiceTtsEnabled")
+		) {
 			const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
 			Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
 			if (ttsText) {
@@ -2526,7 +2538,7 @@ export class Task {
 		if (this.taskState.isVoiceInput) {
 			userContent.push({
 				type: "text",
-				text: "<voice_input_hint>\nThis message was sent via voice input. When your response is complete, call attempt_completion directly rather than asking follow-up questions or waiting for confirmation.\n</voice_input_hint>",
+				text: "<voice_input_hint>\nThis message was sent via voice input. When your response is complete, call attempt_completion directly rather than asking follow-up questions or waiting for confirmation. Do NOT call speak_text — text-to-speech is handled automatically from your attempt_completion result.\n</voice_input_hint>",
 			})
 		}
 

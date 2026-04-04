@@ -193,6 +193,10 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 						Logger.log("[EditorWebviewPanelProvider] Speaker gate active — ignoring recording request during TTS")
 						return
 					}
+					// Point the global voice messenger at the editor panel for the duration of this
+					// recording so that partials, state changes, and audio-level messages are routed
+					// here (editor panel) rather than to the sidebar.
+					setGlobalVoiceMessenger(postMessageToWebview)
 					const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 					const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
 					const gracePeriodMs = message.start_voice_recording.gracePeriodMs ?? 2000
