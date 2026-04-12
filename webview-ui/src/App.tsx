@@ -75,13 +75,6 @@ const AppContent = () => {
 	const showingOverlay = showSettings || showHistory || showMcp || showWorktrees
 
 	// Use LayoutContainer only for horizontal layout (editor mode)
-	const shouldUseLayout = orientation === "horizontal"
-
-	// In editor mode (horizontal), don't show overlays - they're sidebar-only
-	// In sidebar mode (vertical), hide avatar when overlays are open
-	const showAvatarOverlay = !showingOverlay
-
-	// SIDEBAR MODE (vertical): Show Settings/History/MCP/Worktrees (NO Chat)
 	if (orientation === "vertical") {
 		return (
 			<div className="flex h-screen w-full flex-col relative">

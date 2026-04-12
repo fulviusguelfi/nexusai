@@ -117,7 +117,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 			} catch {
 				// ignore
 			}
-			window.removeEventListener("click", unlock)
 		}
 		window.addEventListener("click", unlock, { once: true })
 		return () => window.removeEventListener("click", unlock)
@@ -148,7 +147,7 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 	}, [])
 
 	// Push-to-talk: start recording
-	const handleStartRecording = useCallback(async () => {
+	const handleStartRecording = useCallback(() => {
 		if (isUserRecording) return
 		voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
 		setIsUserRecording(true)
@@ -165,7 +164,7 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 	}, [isUserRecording, voiceMaxRecordingDurationMs, startTimer])
 
 	// Push-to-talk: stop recording
-	const handleStopRecording = useCallback(async () => {
+	const handleStopRecording = useCallback(() => {
 		voiceLogStore.info("VoiceRecorder", `handleStopRecording called — isUserRecording=${isUserRecording} at T=${Date.now()}`)
 		if (!isUserRecording) {
 			voiceLogStore.warn("VoiceRecorder", "handleStopRecording: guard fired — isUserRecording is false, aborting")
@@ -264,26 +263,14 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 				setAudioLevel(data.voice_audio_level)
 			}
 
-			// Listen for detected language badge
-			if (data?.type === "voice_result" && data.voice_result?.detectedLanguage) {
-				const lang = data.voice_result.detectedLanguage
-				onLanguageDetected?.(lang)
-				// Auto-clear after 10 seconds if no new language detected
-				setTimeout(() => {
-					onLanguageDetected?.(null)
-				}, 10000)
-			}
-
 			if (data?.type === "voice_result") {
 				const voiceResult = data.voice_result || {}
-				const transcriptionText = voiceResult.transcriptionText || voiceResult.text // Try both field names
-				const llmResponseText = voiceResult.llmResponseText || voiceResult.response
+				const transcriptionText = voiceResult.transcriptionText || voiceResult.text
 				const audioWavBase64 = voiceResult.audioWavBase64 || voiceResult.audioBase64
 				const errorMessage = voiceResult.errorMessage || voiceResult.error
 
 				console.log("[VoiceRecorder] Received voice_result:", {
 					transcriptionText,
-					llmResponseText,
 					hasAudio: !!audioWavBase64,
 					error: errorMessage,
 				})
@@ -297,10 +284,15 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 					const detectedLang = voiceResult.detectedLanguage || null
 					console.log("[VoiceRecorder] Transcription received:", transcriptionText, "lang:", detectedLang)
 					onTranscription?.(transcriptionText, detectedLang ?? undefined)
-
+					// Notify language badge (auto-clears after 10s if no new result)
+					if (detectedLang) {
+						onLanguageDetected?.(detectedLang)
+						setTimeout(() => onLanguageDetected?.(null), 10000)
+					}
 					// Play audio response if available
 					if (audioWavBase64) {
 						void (async () => {
+							let url: string | null = null
 							try {
 								console.log("[VoiceRecorder] Playing audio response...")
 								const binaryString = atob(audioWavBase64)
@@ -309,11 +301,13 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 									bytes[i] = binaryString.charCodeAt(i)
 								}
 								const blob = new Blob([bytes], { type: "audio/wav" })
-								const url = URL.createObjectURL(blob)
+								url = URL.createObjectURL(blob)
 								const audio = new Audio(url)
 								await audio.play()
 							} catch (err) {
 								console.error("[VoiceRecorder] Failed to play audio:", err)
+							} finally {
+								if (url) URL.revokeObjectURL(url)
 							}
 						})()
 					}
