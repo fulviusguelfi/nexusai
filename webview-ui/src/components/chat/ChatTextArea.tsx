@@ -15,7 +15,7 @@ import SlashCommandMenu from "@/components/chat/SlashCommandMenu"
 import Thumbnails from "@/components/common/Thumbnails"
 import { getModeSpecificFields, normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import VoiceRecorder, { type VoiceRecorderHandle } from "@/components/voice/VoiceRecorder"
+import VoiceRecorder, { getLanguageName, type VoiceRecorderHandle } from "@/components/voice/VoiceRecorder"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { cn } from "@/lib/utils"
@@ -218,7 +218,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const {
 			mode,
 			apiConfiguration,
-			openRouterModels,
 			platform,
 			localWorkflowToggles,
 			globalWorkflowToggles,
@@ -246,6 +245,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [slashCommandsQuery, setSlashCommandsQuery] = useState("")
 		const slashCommandsMenuContainerRef = useRef<HTMLDivElement>(null)
 		const voiceRecorderRef = useRef<VoiceRecorderHandle>(null)
+		const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null)
 
 		const [thumbnailsHeight, setThumbnailsHeight] = useState(0)
 		const [textAreaBaseHeight, setTextAreaBaseHeight] = useState<number | undefined>(undefined)
@@ -1546,6 +1546,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							{onTranscription && (
 								<VoiceRecorder
 									disabled={sendingDisabled}
+									onLanguageDetected={setDetectedLanguage}
 									onTranscription={onTranscription}
 									ref={voiceRecorderRef}
 								/>
@@ -1570,6 +1571,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				<div className="flex justify-between items-center -mt-[2px] px-3 pb-2">
 					{/* Always render both components, but control visibility with CSS */}
 					<div className="relative flex-1 min-w-0 h-5">
+						{detectedLanguage && (
+							<div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 z-20 pointer-events-none">
+								<span>🌐</span>
+								<span className="font-medium text-blue-400">{getLanguageName(detectedLanguage)}</span>
+							</div>
+						)}
 						{/* ButtonGroup - always in DOM but visibility controlled */}
 						<ButtonGroup className="absolute top-0 left-0 right-0 ease-in-out w-full h-5 z-10 flex items-center">
 							<Tooltip>

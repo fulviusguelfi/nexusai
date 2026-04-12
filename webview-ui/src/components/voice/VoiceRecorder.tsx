@@ -10,6 +10,7 @@ import { voiceLogStore } from "@/utils/voiceDebugger"
 interface Props {
 	onTranscription?: (text: string, language?: string, isPartial?: boolean) => void
 	disabled?: boolean
+	onLanguageDetected?: (lang: string | null) => void
 }
 
 export interface VoiceRecorderHandle {
@@ -37,7 +38,7 @@ function isVoiceAgentState(value: unknown): value is VoiceAgentState {
  * Convert IETF language code to display name
  * E.g., "pt-BR" → "Português (Brasil)", "en-US" → "English (US)"
  */
-function getLanguageName(code: string): string {
+export function getLanguageName(code: string): string {
 	const languageNames: Record<string, string> = {
 		// Portuguese
 		pt: "Português",
@@ -86,21 +87,15 @@ const WAVEFORM_BARS = [
 	{ id: "bar-r2", scale: 0.4 },
 ]
 
-const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecorder({ onTranscription, disabled }, ref) {
+const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecorder(
+	{ onTranscription, disabled, onLanguageDetected },
+	ref,
+) {
 	const { voiceSttEnabled, voiceMaxRecordingDurationMs } = useExtensionState()
 
 	// UI State
 	const [agentState, setAgentState] = useState<VoiceAgentState>(VOICE_AGENT_STATES.IDLE)
-	const [errorMessage, setErrorMessage] = useState<string | null>(null)
-	const [stateContext, setStateContext] = useState<string>("")
 	const [isUserRecording, setIsUserRecording] = useState(false) // Track user intent (push-to-talk)
-	const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null) // Language badge
-
-	// STT progress (during PROCESSING state)
-	const [sttProgress, setSttProgress] = useState<number | null>(null)
-
-	// Live partial transcription (streaming preview during RECORDING)
-	const [livePreview, setLivePreview] = useState<string | null>(null)
 
 	// Recording timer (elapsed seconds)
 	const [recordingSeconds, setRecordingSeconds] = useState(0)
@@ -136,28 +131,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		clipping: boolean
 	} | null>(null)
 
-	// Icon and label for each state
-	const getStateDisplay = (): { icon: string; label: string; isActive: boolean } => {
-		switch (agentState) {
-			case VOICE_AGENT_STATES.IDLE:
-				return { icon: "🎤", label: "Voice", isActive: false }
-			case VOICE_AGENT_STATES.INITIALIZING:
-				return { icon: "⏳", label: "Starting...", isActive: true }
-			case VOICE_AGENT_STATES.READY_TO_LISTEN:
-				return { icon: "🎙️", label: "Pode falar!", isActive: false }
-			case VOICE_AGENT_STATES.RECORDING:
-				return { icon: "🎙️", label: "Listening...", isActive: true }
-			case VOICE_AGENT_STATES.PROCESSING:
-				return { icon: "⚙️", label: "Processing...", isActive: true }
-			case VOICE_AGENT_STATES.PLAYING:
-				return { icon: "🔊", label: "Playing...", isActive: true }
-			case VOICE_AGENT_STATES.ERROR:
-				return { icon: "❌", label: "Error", isActive: false }
-			default:
-				return { icon: "🎤", label: "Voice", isActive: false }
-		}
-	}
-
 	// Start/stop elapsed timer
 	const startTimer = useCallback(() => {
 		setRecordingSeconds(0)
@@ -178,7 +151,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 	const handleStartRecording = useCallback(async () => {
 		if (isUserRecording) return
 		voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
-		setErrorMessage(null)
 		setIsUserRecording(true)
 		startTimer()
 		PLATFORM_CONFIG.postMessage({
@@ -202,7 +174,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		voiceLogStore.info("VoiceRecorder", "User stopped recording (push-to-talk release)")
 		setIsUserRecording(false)
 		stopTimer()
-		setStateContext("")
 		PLATFORM_CONFIG.postMessage({
 			type: "stop_voice_recording",
 			stop_voice_recording: {
@@ -269,17 +240,12 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 			if (data?.type === "voice_stt_partial" && data.voice_stt_partial?.text) {
 				const partialText = data.voice_stt_partial.text
 				console.log("[VoiceRecorder] Live partial:", partialText)
-				setLivePreview(partialText)
 				// Also write the partial into the input box so words appear as they are spoken
 				onTranscription?.(partialText, undefined, true)
 			}
 
-			if (data?.type === "voice_stt_progress" && data.voice_stt_progress) {
-				setSttProgress(data.voice_stt_progress.progress)
-			}
-
 			if (data?.type === "voice_agent_state_changed") {
-				const { state, context } = data.voice_agent_state_changed || {}
+				const { state } = data.voice_agent_state_changed || {}
 				if (isVoiceAgentState(state)) {
 					setAgentState(state)
 					// When backend reaches IDLE, the recording session has truly ended — reset user intent
@@ -288,19 +254,8 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 						stopTimer()
 					}
 					// Handle error states from backend (e.g., preflight check failures)
-					if (state === VOICE_AGENT_STATES.IDLE && context?.startsWith("System not ready:")) {
-						setErrorMessage(context)
-						setStateContext("")
-					} else {
-						// IDLE transitions use internal reason strings (e.g. "Destroyed", "Cancelled") — never show in UI
-						setStateContext(state === VOICE_AGENT_STATES.IDLE ? "" : context || "")
-						if (state !== VOICE_AGENT_STATES.ERROR) setErrorMessage(null)
-					}
 					if (state !== VOICE_AGENT_STATES.RECORDING) {
 						setAudioLevel(null)
-						if (state !== VOICE_AGENT_STATES.PROCESSING) {
-							setSttProgress(null)
-						}
 					}
 				}
 			}
@@ -311,16 +266,16 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 
 			// Listen for detected language badge
 			if (data?.type === "voice_result" && data.voice_result?.detectedLanguage) {
-				setDetectedLanguage(data.voice_result.detectedLanguage)
+				const lang = data.voice_result.detectedLanguage
+				onLanguageDetected?.(lang)
 				// Auto-clear after 10 seconds if no new language detected
 				setTimeout(() => {
-					setDetectedLanguage(null)
+					onLanguageDetected?.(null)
 				}, 10000)
 			}
 
 			if (data?.type === "voice_result") {
 				const voiceResult = data.voice_result || {}
-				setLivePreview(null) // clear streaming preview on final result
 				const transcriptionText = voiceResult.transcriptionText || voiceResult.text // Try both field names
 				const llmResponseText = voiceResult.llmResponseText || voiceResult.response
 				const audioWavBase64 = voiceResult.audioWavBase64 || voiceResult.audioBase64
@@ -335,16 +290,13 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 
 				if (errorMessage) {
 					console.error("[VoiceRecorder] Error from backend:", errorMessage)
-					setErrorMessage(errorMessage)
 					setAgentState(VOICE_AGENT_STATES.ERROR)
 					setIsUserRecording(false)
 					stopTimer()
-					setSttProgress(null)
 				} else if (transcriptionText) {
 					const detectedLang = voiceResult.detectedLanguage || null
 					console.log("[VoiceRecorder] Transcription received:", transcriptionText, "lang:", detectedLang)
 					onTranscription?.(transcriptionText, detectedLang ?? undefined)
-					setSttProgress(null)
 
 					// Play audio response if available
 					if (audioWavBase64) {
@@ -373,8 +325,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 				const voiceError = data.voice_error || {}
 				const errorMsg = voiceError.userMessage || voiceError.message || "Voice error"
 				console.error("[VoiceRecorder] Voice error:", errorMsg)
-				setStateContext("") // Clear stateContext to avoid duplicate message alongside errorMessage
-				setErrorMessage(errorMsg)
 				setAgentState(VOICE_AGENT_STATES.ERROR)
 				setIsUserRecording(false)
 				stopTimer()
@@ -390,7 +340,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		return null
 	}
 
-	const display = getStateDisplay()
 	const isError = agentState === VOICE_AGENT_STATES.ERROR
 	// Disable only while TTS is playing; PROCESSING is ~200ms so not worth blocking
 	const isDisabledState = disabled || agentState === VOICE_AGENT_STATES.PLAYING
@@ -448,25 +397,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 					))}
 				</div>
 			)}
-			{agentState === VOICE_AGENT_STATES.PROCESSING && sttProgress !== null && (
-				<div className="flex items-center gap-1 min-w-[60px]">
-					<div className="flex-1 h-1 bg-vscode-editor-background rounded-full overflow-hidden border border-vscode-focusBorder/30">
-						<div
-							className="h-full bg-blue-400 transition-all duration-200 rounded-full"
-							style={{ width: `${sttProgress}%` }}
-						/>
-					</div>
-					<span className="text-xs tabular-nums text-blue-400 font-mono">{sttProgress}%</span>
-				</div>
-			)}
-			{detectedLanguage && (
-				<div className="flex items-center gap-1 text-xs px-2 py-1 rounded bg-blue-500/10 border border-blue-500/30">
-					<span>🌐</span>
-					<span className="font-medium text-blue-400">{getLanguageName(detectedLanguage)}</span>
-				</div>
-			)}
-
-			{errorMessage && <span className="text-xs text-red-400">{errorMessage}</span>}
 		</div>
 	)
 })
