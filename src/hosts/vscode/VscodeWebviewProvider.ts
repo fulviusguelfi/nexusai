@@ -36,6 +36,25 @@ export function getGlobalVoiceMessenger(): ((message: ExtensionMessage) => Promi
 }
 
 /**
+ * Module-level map for pending TTS sentence-ended resolvers.
+ * Exposed so EditorWebviewPanelProvider can also resolve them when audio
+ * finishes playing in the editor panel webview.
+ */
+const _voicePendingSentenceEnded = new Map<number, () => void>()
+
+export function registerVoiceSentenceEndedResolver(sentenceIndex: number, resolver: () => void): void {
+	_voicePendingSentenceEnded.set(sentenceIndex, resolver)
+}
+
+export function resolveVoiceSentenceEnded(sentenceIndex: number): void {
+	const resolver = _voicePendingSentenceEnded.get(sentenceIndex)
+	if (resolver) {
+		_voicePendingSentenceEnded.delete(sentenceIndex)
+		resolver()
+	}
+}
+
+/**
  * Split a text block into individual sentences for streaming TTS.
  * Splits on sentence-ending punctuation followed by whitespace or end-of-string.
  * Preserves non-empty segments; short fragments are merged with the previous sentence.
@@ -67,6 +86,8 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 	private disposables: vscode.Disposable[] = []
 	/** Direct reference to the currently active VoiceAgent — set/cleared in start_voice_recording handler */
 	private _activeVoiceAgent: import("@services/voice/VoiceAgent").VoiceAgent | null = null
+	// _pendingSentenceEnded is now module-level (_voicePendingSentenceEnded) so
+	// EditorWebviewPanelProvider can also resolve sentences played in the editor panel.
 
 	override getWebviewUrl(path: string) {
 		if (!this.webview) {
@@ -187,16 +208,18 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// Wire VoiceSessionManager speak requests → Edge TTS → webview audio (sentence streaming)
 		void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 			Logger.log("[VscodeWebviewProvider] Registering onSpeakRequest listener")
-			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (text: string) => {
+			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (request) => {
+				const text = typeof request === "string" ? request : request.text
+				const onSentenceSpoken = typeof request === "string" ? undefined : request.onSentenceSpoken
 				const ttsStart = Date.now()
 				const tts = () => `[T+${Date.now() - ttsStart}ms]`
-				Logger.log(
-					`[TTS] 🎙️ ${tts()} onSpeakRequest FIRED — ${text?.length ?? 0} chars: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
-				)
+				Logger.log(`[TTS] 🎙️ ${tts()} onSpeakRequest FIRED — ${text?.length ?? 0} chars`)
+				Logger.log(`[TTS] ─── Raw text:\n${text}`)
 				try {
 					const { RhubarbService } = await import("@services/voice/RhubarbService")
 					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
 					const { synthesizeEdgeTts } = await import("@services/voice/EdgeTtsService")
+					const { EditorWebviewPanelProvider } = await import("./EditorWebviewPanelProvider")
 					const voiceEdgeTtsVoice =
 						(this.controller.stateManager.getGlobalStateKey("voiceEdgeTtsVoice") as string | undefined) ??
 						"pt-BR-FranciscaNeural"
@@ -221,11 +244,12 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 					// ── Broadcast helpers — route to BOTH editor panel and sidebar ────────────
 					const broadcast = (msg: ExtensionMessage) => {
-						const gm = getGlobalVoiceMessenger()
-						if (gm) {
-							void gm(msg)
-						}
+						// Always send to sidebar
 						void this.postMessageToWebview(msg)
+						// Always send to editor panel if open (reliable explicit routing)
+						if (EditorWebviewPanelProvider.INSTANCE) {
+							void EditorWebviewPanelProvider.INSTANCE.postMessageToWebview(msg)
+						}
 					}
 
 					SpeakerGate.getInstance().activate()
@@ -237,6 +261,8 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						// Pre-synthesize the first sentence while broadcasting PLAYING state.
 						Logger.log(`[TTS] ${tts()} 🚀 Pre-synthesizing sentence 1...`)
 						let nextSynth: Promise<{ wavBuf: Buffer; phonemeTimeline: any[] }> = synthesize(sentences[0], 0)
+
+						let spokenSoFar = ""
 
 						for (let i = 0; i < sentences.length; i++) {
 							// Await synthesis of the current sentence
@@ -251,13 +277,33 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 							const durationMs = getWavDurationMs(wavBuf)
 							Logger.log(`[TTS] ${tts()} 🔊 Playing sentence ${i + 1}/${sentences.length}: ${durationMs}ms`)
 
+							// Update cumulative text and notify tool handler so it can update the chat bubble
+							spokenSoFar = sentences.slice(0, i + 1).join(" ")
+							const isFinal = i === sentences.length - 1
+							if (onSentenceSpoken) {
+								try {
+									await onSentenceSpoken(spokenSoFar, isFinal)
+								} catch (cbErr) {
+									Logger.warn(`[TTS] onSentenceSpoken callback error (sentence ${i + 1}):`, cbErr)
+								}
+							}
+
 							broadcast({
 								type: "voice_audio_play",
-								voice_audio_play: { wavBase64: wavBuf.toString("base64"), phonemeTimeline },
+								voice_audio_play: { phonemeTimeline, sentenceIndex: i },
 							})
 
-							// Wait for audio to finish on the webview side (duration + small buffer)
-							await new Promise<void>((r) => setTimeout(r, durationMs + 200))
+							// Play audio on the extension host — webview autoplay policy blocks
+							// HTMLAudioElement.play(), so we play the WAV here instead.
+							try {
+								const { playWavBuffer } = await import("@services/voice/HostAudioPlayer")
+								await playWavBuffer(wavBuf)
+							} catch (audioErr) {
+								// Non-fatal: fall back to durationMs wait so pipeline still advances
+								Logger.warn(`[TTS] Host audio playback failed for sentence ${i + 1}:`, audioErr)
+								await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
+							}
+
 							Logger.log(`[TTS] ${tts()} ✅ Sentence ${i + 1} complete`)
 						}
 
@@ -509,6 +555,13 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 								)
 							}
 						})
+				}
+				break
+			}
+			case "voice_sentence_ended": {
+				const { sentenceIndex } = message.voice_sentence_ended ?? {}
+				if (sentenceIndex !== undefined) {
+					resolveVoiceSentenceEnded(sentenceIndex)
 				}
 				break
 			}

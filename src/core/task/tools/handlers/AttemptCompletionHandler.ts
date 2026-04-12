@@ -6,6 +6,7 @@ import { formatResponse } from "@core/prompts/responses"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
 import { showSystemNotification } from "@integrations/notifications"
 import { telemetryService } from "@services/telemetry"
+import { VoiceSessionManager } from "@services/voice/VoiceSessionManager"
 import { findLastIndex } from "@shared/array"
 import { COMPLETION_RESULT_CHANGES_FLAG } from "@shared/ExtensionMessage"
 import { Logger } from "@shared/services/Logger"
@@ -223,6 +224,12 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 			message: result,
 			waitingForUserInput: false,
 		})
+
+		// Auto-TTS: speak the result aloud if voice TTS is enabled (without requiring LLM to call speak_text)
+		const voiceTtsEnabled = config.services.stateManager.getGlobalStateKey("voiceTtsEnabled")
+		if (voiceTtsEnabled) {
+			VoiceSessionManager.getInstance().requestSpeak(result)
+		}
 
 		const { response, text, images, files: completionFiles } = await config.callbacks.ask("completion_result", "", false)
 		const prefix = "[attempt_completion] Result: Done"

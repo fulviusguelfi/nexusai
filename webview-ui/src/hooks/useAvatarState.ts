@@ -64,7 +64,7 @@ export function useAvatarState(): AvatarState {
 				}
 				lipSyncRef.current = undefined
 
-				if (!phonemeTimeline || phonemeTimeline.length === 0 || !wavBase64) {
+				if (!phonemeTimeline || phonemeTimeline.length === 0) {
 					voiceLogStore.warn("useAvatarState", "Missing phoneme timeline or WAV data")
 					setCurrentViseme("X")
 					return

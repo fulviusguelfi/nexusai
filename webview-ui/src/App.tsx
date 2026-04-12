@@ -14,12 +14,14 @@ import { useExtensionState } from "./context/ExtensionStateContext"
 import { useLayout } from "./context/LayoutContext"
 import { useAvatarState } from "./hooks/useAvatarState"
 import { useExtensionMessages } from "./hooks/useExtensionMessages"
+import { useVoiceAudioPlayer } from "./hooks/useVoiceAudioPlayer"
 import { Providers } from "./Providers"
 import { trpc } from "./services/trpc-client"
 
 const AppContent = () => {
 	const { orientation } = useLayout()
 	const avatarState = useAvatarState()
+	useVoiceAudioPlayer()
 	const {
 		didHydrateState,
 		showWelcome,
@@ -123,6 +125,7 @@ const AppContent = () => {
 	}
 
 	// EDITOR PANEL MODE (horizontal): Show Chat + Avatar ONLY (NO overlays)
+	const shouldUseLayout = orientation === "horizontal"
 	const mainContent = (
 		<div className="flex h-screen w-full flex-col relative">
 			{/* Editor panel never shows overlays - they're sidebar-only */}

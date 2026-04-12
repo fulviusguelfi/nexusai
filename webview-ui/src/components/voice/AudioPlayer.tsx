@@ -14,6 +14,29 @@ function formatSeconds(sec: number): string {
 	return `${m}:${s.toString().padStart(2, "0")}`
 }
 
+/**
+ * Resolves the real WebAudio deviceId for an output device.
+ * See useVoiceAudioPlayer.ts for the full explanation.
+ */
+async function resolveOutputDeviceId(labelOrId: string): Promise<string> {
+	if (!navigator.mediaDevices?.enumerateDevices) return labelOrId
+	try {
+		const devices = await navigator.mediaDevices.enumerateDevices()
+		const outputs = devices.filter((d) => d.kind === "audiooutput")
+		const byId = outputs.find((d) => d.deviceId === labelOrId && d.deviceId !== "")
+		if (byId) return byId.deviceId
+		const byLabel = outputs.find((d) => d.label === labelOrId)
+		if (byLabel) {
+			console.log(`[AudioPlayer] Resolved output device "${labelOrId}" → deviceId="${byLabel.deviceId}"`)
+			return byLabel.deviceId
+		}
+		console.warn(`[AudioPlayer] Output device not found: "${labelOrId}" — falling back to default`)
+	} catch (err) {
+		console.warn("[AudioPlayer] enumerateDevices failed:", err)
+	}
+	return labelOrId
+}
+
 const AudioPlayer: React.FC = () => {
 	const { voiceOutputDeviceId } = useExtensionState()
 
@@ -53,7 +76,7 @@ const AudioPlayer: React.FC = () => {
 					bytes[i] = binaryStr.charCodeAt(i)
 				}
 
-				const blob = new Blob([bytes], { type: "audio/wav" })
+				const blob = new Blob([bytes], { type: "audio/mpeg" })
 				const blobUrl = URL.createObjectURL(blob)
 				blobUrlRef.current = blobUrl
 
@@ -64,7 +87,9 @@ const AudioPlayer: React.FC = () => {
 				const audioWithSink = audio as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> }
 				if (voiceOutputDeviceId && typeof audioWithSink.setSinkId === "function") {
 					try {
-						await audioWithSink.setSinkId(voiceOutputDeviceId)
+						const resolvedId = await resolveOutputDeviceId(voiceOutputDeviceId)
+						console.log(`[AudioPlayer] setSinkId("${resolvedId}")`)
+						await audioWithSink.setSinkId(resolvedId)
 					} catch {
 						// ignore — default output
 					}

@@ -5,14 +5,15 @@
  * as the Edge browser's built-in TTS). No API key required — uses the same
  * public token the Edge browser uses.
  *
- * Output: raw PCM WAV (riff-24khz-16bit-mono-pcm), ready for RhubarbService.
+ * Output: MP3 audio (audio-24khz-48kbitrate-mono-mp3), played directly in the webview.
  *
  * Protocol reference: https://github.com/rany2/edge-tts (MIT)
  */
 
 import { Logger } from "@shared/services/Logger"
-import { randomUUID } from "crypto"
+import { createHash, randomUUID } from "crypto"
 import * as https from "https"
+import * as tls from "tls"
 
 const AUDIO_HEADER_SEPARATOR = Buffer.from("Path:audio\r\n\r\n", "utf8")
 
@@ -20,6 +21,26 @@ const TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
 const VOICES_LIST_URL = `https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=${TRUSTED_CLIENT_TOKEN}`
 const WS_HOST = "speech.platform.bing.com"
 const WS_PATH = `/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`
+const CHROMIUM_VERSION = "143.0.3650.75"
+const SEC_MS_GEC_VERSION = `1-${CHROMIUM_VERSION}`
+
+/**
+ * Generate the Sec-MS-GEC header required by Microsoft Edge TTS (added ~2024).
+ * Algorithm: SHA256( "{winFileTime_rounded_to_5min}|{token}" ) → uppercase hex.
+ * Without this header the server accepts the WS upgrade but then resets the
+ * connection (ECONNRESET) when the synthesis request arrives.
+ */
+function getSecMsGec(): string {
+	// Windows FILETIME = 100-ns intervals since 1601-01-01
+	// Offset from Unix epoch (1970-01-01) to Windows epoch (1601-01-01): 116444736000000000 × 100ns
+	const WIN_EPOCH_OFFSET = 116444736000000000n
+	const winTime = BigInt(Date.now()) * 10000n + WIN_EPOCH_OFFSET
+	// Round down to nearest 5 minutes (5 × 60 × 10^7 = 3 000 000 000 units)
+	const rounded = (winTime / 3000000000n) * 3000000000n
+	// NOTE: no separator between ticks and token (Python reference: f"{ticks:.0f}{token}")
+	const hashInput = `${rounded}${TRUSTED_CLIENT_TOKEN}`
+	return createHash("sha256").update(hashInput, "ascii").digest("hex").toUpperCase()
+}
 
 export interface EdgeVoice {
 	/** e.g. "pt-BR-FranciscaNeural" */
@@ -65,7 +86,7 @@ export async function synthesizeEdgeTts(text: string, voice: string): Promise<Bu
 		const ssml =
 			`<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>` +
 			`<voice name='${voice}'>` +
-			`<prosody rate='0%' pitch='0%'>${escapeXml(text)}</prosody>` +
+			`<prosody rate='+0%' pitch='+0Hz'>${escapeXml(text)}</prosody>` +
 			`</voice></speak>`
 
 		// Speech config message
@@ -77,8 +98,8 @@ export async function synthesizeEdgeTts(text: string, voice: string): Promise<Bu
 				context: {
 					synthesis: {
 						audio: {
-							metadataoptions: { sentenceBoundaryEnabled: false, wordBoundaryEnabled: false },
-							outputFormat: "riff-24khz-16bit-mono-pcm",
+							metadataoptions: { sentenceBoundaryEnabled: "false", wordBoundaryEnabled: "false" },
+							outputFormat: "audio-24khz-48kbitrate-mono-mp3",
 						},
 					},
 				},
@@ -93,138 +114,200 @@ export async function synthesizeEdgeTts(text: string, voice: string): Promise<Bu
 			ssml
 
 		const audioChunks: Buffer[] = []
+		const wsKey = Buffer.from(randomUUID()).toString("base64")
 
-		// Manual WebSocket handshake over HTTPS (avoids 'ws' package dependency)
-		const key = Buffer.from(randomUUID()).toString("base64")
+		// Random MUID cookie required by the API
+		const muid = randomUUID().replace(/-/g, "").toUpperCase()
+		const connectionId = randomUUID().replace(/-/g, "")
+		const chrMajor = CHROMIUM_VERSION.split(".")[0]
 
-		const options: https.RequestOptions = {
-			hostname: WS_HOST,
-			port: 443,
-			path: WS_PATH,
-			method: "GET",
-			headers: {
-				Upgrade: "websocket",
-				Connection: "Upgrade",
-				"Sec-WebSocket-Key": key,
-				"Sec-WebSocket-Version": "13",
-				Origin: "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-			},
+		// Sec-MS-GEC and ConnectionId go in the query string (not headers), per Python reference:
+		// session.ws_connect(f"{WSS_URL}&ConnectionId={id}&Sec-MS-GEC={token}&Sec-MS-GEC-Version={ver}")
+		const wsPath =
+			`${WS_PATH}&ConnectionId=${connectionId}` + `&Sec-MS-GEC=${getSecMsGec()}&Sec-MS-GEC-Version=${SEC_MS_GEC_VERSION}`
+
+		// Build HTTP upgrade request (raw string sent over TLS socket)
+		const upgradeReq = [
+			`GET ${wsPath} HTTP/1.1`,
+			`Host: ${WS_HOST}`,
+			`Upgrade: websocket`,
+			`Connection: Upgrade`,
+			`Sec-WebSocket-Key: ${wsKey}`,
+			`Sec-WebSocket-Version: 13`,
+			`Pragma: no-cache`,
+			`Cache-Control: no-cache`,
+			`Origin: chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold`,
+			`User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chrMajor}.0.0.0 Safari/537.36 Edg/${chrMajor}.0.0.0`,
+			`Accept-Encoding: gzip, deflate, br, zstd`,
+			`Accept-Language: en-US,en;q=0.9`,
+			`Cookie: muid=${muid};`,
+			`\r\n`,
+		].join("\r\n")
+
+		const timeout = setTimeout(() => {
+			Logger.error(`[EdgeTTS] Synthesis timed out after 30s`)
+			socket.destroy()
+			reject(new Error("Edge TTS synthesis timed out"))
+		}, 30000)
+
+		// Use tls.connect() for direct control over the raw TLS socket.
+		// https.request + upgrade event is unreliable in Electron/VS Code environments.
+		const socket = tls.connect({ host: WS_HOST, port: 443, servername: WS_HOST }, () => {
+			Logger.log(`[EdgeTTS] TLS connected, sending WS upgrade...`)
+			socket.write(upgradeReq)
+		})
+
+		let upgraded = false
+		let httpBuf = ""
+		let wsBuf = Buffer.alloc(0)
+
+		/** Send a masked text WebSocket frame (clients must mask per RFC 6455). */
+		const sendFrame = (data: string) => {
+			const payload = Buffer.from(data, "utf8")
+			const len = payload.length
+			const maskKey = Buffer.allocUnsafe(4)
+			maskKey.writeUInt32BE(Math.floor(Math.random() * 0xffffffff) + 1, 0)
+			const masked = Buffer.allocUnsafe(len)
+			for (let i = 0; i < len; i++) masked[i] = payload[i] ^ maskKey[i % 4]
+			if (len < 126) {
+				const frame = Buffer.allocUnsafe(6 + len)
+				frame[0] = 0x81
+				frame[1] = 0x80 | len
+				maskKey.copy(frame, 2)
+				masked.copy(frame, 6)
+				socket.write(frame)
+			} else if (len < 65536) {
+				const frame = Buffer.allocUnsafe(8 + len)
+				frame[0] = 0x81
+				frame[1] = 0x80 | 126
+				frame.writeUInt16BE(len, 2)
+				maskKey.copy(frame, 4)
+				masked.copy(frame, 8)
+				socket.write(frame)
+			} else {
+				const frame = Buffer.allocUnsafe(14 + len)
+				frame[0] = 0x81
+				frame[1] = 0x80 | 127
+				frame.writeBigUInt64BE(BigInt(len), 2)
+				maskKey.copy(frame, 10)
+				masked.copy(frame, 14)
+				socket.write(frame)
+			}
 		}
 
-		const req = https.request(options)
-		req.on("error", reject)
-		req.on("upgrade", (res, socket) => {
-			if (res.statusCode !== 101) {
-				reject(new Error(`Edge TTS WS upgrade failed: ${res.statusCode}`))
+		const parseFrames = () => {
+			while (wsBuf.length >= 2) {
+				const opcode = wsBuf[0] & 0x0f
+				const isMasked = (wsBuf[1] & 0x80) !== 0
+				let payloadLen = wsBuf[1] & 0x7f
+				let offset = 2
+
+				if (payloadLen === 126) {
+					if (wsBuf.length < 4) return
+					payloadLen = wsBuf.readUInt16BE(2)
+					offset = 4
+				} else if (payloadLen === 127) {
+					if (wsBuf.length < 10) return
+					payloadLen = Number(wsBuf.readBigUInt64BE(2))
+					offset = 10
+				}
+
+				if (isMasked) offset += 4
+				if (wsBuf.length < offset + payloadLen) return
+
+				const payload = wsBuf.slice(offset, offset + payloadLen)
+				wsBuf = wsBuf.slice(offset + payloadLen)
+
+				if (opcode === 0x8) {
+					// Close frame — log code+reason for diagnostics
+					const closeCode = payload.length >= 2 ? payload.readUInt16BE(0) : 0
+					const closeReason = payload.length > 2 ? payload.slice(2).toString("utf8") : ""
+					Logger.log(`[EdgeTTS] WS close frame: code=${closeCode} reason="${closeReason}"`)
+					socket.destroy()
+					return
+				}
+
+				if (opcode === 0x1) {
+					const text = payload.toString("utf8")
+					const pathMatch = text.match(/Path:([^\r\n]+)/)
+					const pathVal = pathMatch ? pathMatch[1] : "unknown"
+					if (pathVal === "response" || pathVal === "turn.end") {
+						Logger.log(`[EdgeTTS] Text frame Path:${pathVal} → ${text.replace(/\r\n/g, " | ")}`)
+					} else {
+						Logger.log(`[EdgeTTS] Text frame Path:${pathVal} (${text.length}B)`)
+					}
+					if (text.includes("Path:turn.end")) {
+						clearTimeout(timeout)
+						socket.destroy()
+						if (audioChunks.length === 0) {
+							reject(new Error("Edge TTS returned no audio data"))
+							return
+						}
+						resolve(Buffer.concat(audioChunks))
+						return
+					}
+				} else if (opcode === 0x2) {
+					const sepIdx = payload.indexOf(AUDIO_HEADER_SEPARATOR)
+					const audioStart = sepIdx !== -1 ? sepIdx + AUDIO_HEADER_SEPARATOR.length : 0
+					const audio = payload.slice(audioStart)
+					if (audio.length > 0) {
+						if (audioChunks.length === 0) Logger.log(`[EdgeTTS] ✅ First audio binary frame (${audio.length} bytes)`)
+						audioChunks.push(audio)
+					}
+				}
+			}
+		}
+
+		socket.on("data", (chunk: Buffer) => {
+			if (!upgraded) {
+				// Accumulate HTTP response until we see "\r\n\r\n"
+				httpBuf += chunk.toString("binary")
+				const headerEnd = httpBuf.indexOf("\r\n\r\n")
+				if (headerEnd === -1) return
+
+				const headers = httpBuf.slice(0, headerEnd)
+				Logger.log(`[EdgeTTS] HTTP response: ${headers.split("\r\n")[0]}`)
+				if (!headers.includes("101")) {
+					clearTimeout(timeout)
+					socket.destroy()
+					reject(new Error(`Edge TTS WS upgrade failed: ${headers.split("\r\n")[0]}`))
+					return
+				}
+
+				upgraded = true
+				// Any bytes after the header end are the start of WS data
+				const remainder = httpBuf.slice(headerEnd + 4)
+				if (remainder.length > 0) {
+					wsBuf = Buffer.concat([wsBuf, Buffer.from(remainder, "binary")])
+					parseFrames()
+				}
+
+				// Now send the WS frames
+				Logger.log(`[EdgeTTS] WS upgraded, sending config+SSML...`)
+				sendFrame(configMsg)
+				sendFrame(ssmlMsg)
 				return
 			}
 
-			// WebSocket frame parser state
-			let buf = Buffer.alloc(0)
-
-			/** Send a masked text WebSocket frame (clients must mask per RFC 6455). */
-			const sendFrame = (data: string) => {
-				const payload = Buffer.from(data, "utf8")
-				const len = payload.length
-				// Zero mask is valid per RFC 6455
-				if (len < 126) {
-					const frame = Buffer.allocUnsafe(6 + len)
-					frame[0] = 0x81 // FIN + text opcode
-					frame[1] = 0x80 | len
-					frame.fill(0, 2, 6) // zero mask
-					payload.copy(frame, 6)
-					socket.write(frame)
-				} else if (len < 65536) {
-					const frame = Buffer.allocUnsafe(8 + len)
-					frame[0] = 0x81
-					frame[1] = 0x80 | 126
-					frame.writeUInt16BE(len, 2)
-					frame.fill(0, 4, 8) // zero mask
-					payload.copy(frame, 8)
-					socket.write(frame)
-				} else {
-					const frame = Buffer.allocUnsafe(14 + len)
-					frame[0] = 0x81
-					frame[1] = 0x80 | 127
-					frame.writeBigUInt64BE(BigInt(len), 2)
-					frame.fill(0, 10, 14) // zero mask
-					payload.copy(frame, 14)
-					socket.write(frame)
-				}
-			}
-
-			const parseFrames = () => {
-				while (buf.length >= 2) {
-					const opcode = buf[0] & 0x0f
-					const masked = (buf[1] & 0x80) !== 0
-					let payloadLen = buf[1] & 0x7f
-					let offset = 2
-
-					if (payloadLen === 126) {
-						if (buf.length < 4) return
-						payloadLen = buf.readUInt16BE(2)
-						offset = 4
-					} else if (payloadLen === 127) {
-						if (buf.length < 10) return
-						payloadLen = Number(buf.readBigUInt64BE(2))
-						offset = 10
-					}
-
-					if (masked) offset += 4
-					if (buf.length < offset + payloadLen) return
-
-					const payload = buf.slice(offset, offset + payloadLen)
-					buf = buf.slice(offset + payloadLen)
-
-					if (opcode === 0x8) {
-						// Close frame
-						socket.destroy()
-						return
-					}
-
-					if (opcode === 0x1) {
-						// Text frame — check for turn.end
-						const text = payload.toString("utf8")
-						if (text.includes("Path:turn.end")) {
-							socket.destroy()
-							if (audioChunks.length === 0) {
-								reject(new Error("Edge TTS returned no audio data"))
-								return
-							}
-							resolve(Buffer.concat(audioChunks))
-							return
-						}
-					} else if (opcode === 0x2) {
-						// Binary frame — each frame has its own "Path:audio\r\n\r\n" header
-						const sepIdx = payload.indexOf(AUDIO_HEADER_SEPARATOR)
-						const audioStart = sepIdx !== -1 ? sepIdx + AUDIO_HEADER_SEPARATOR.length : 0
-						const audio = payload.slice(audioStart)
-						if (audio.length > 0) audioChunks.push(audio)
-					}
-				}
-			}
-
-			socket.on("data", (chunk: Buffer) => {
-				buf = Buffer.concat([buf, chunk])
-				parseFrames()
-			})
-
-			socket.on("error", reject)
-			socket.on("close", () => {
-				if (audioChunks.length > 0) {
-					resolve(Buffer.concat(audioChunks))
-				} else {
-					reject(new Error("Edge TTS socket closed without audio"))
-				}
-			})
-
-			// Send speech config then SSML
-			sendFrame(configMsg)
-			sendFrame(ssmlMsg)
+			wsBuf = Buffer.concat([wsBuf, chunk])
+			parseFrames()
 		})
 
-		req.end()
+		socket.on("error", (err) => {
+			clearTimeout(timeout)
+			Logger.error(`[EdgeTTS] socket error: ${err.message}`)
+			reject(err)
+		})
+		socket.on("close", () => {
+			clearTimeout(timeout)
+			if (audioChunks.length > 0) {
+				resolve(Buffer.concat(audioChunks))
+			} else {
+				const err = new Error("Edge TTS socket closed without audio")
+				Logger.error(`[EdgeTTS] ${err.message}`)
+				reject(err)
+			}
+		})
 	})
 }
 

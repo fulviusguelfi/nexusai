@@ -6,7 +6,7 @@ import { HostProvider } from "@/hosts/host-provider"
 import type { ExtensionMessage } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import type { WebviewMessage } from "@/shared/WebviewMessage"
-import { setGlobalVoiceMessenger } from "./VscodeWebviewProvider"
+import { resolveVoiceSentenceEnded, setGlobalVoiceMessenger } from "./VscodeWebviewProvider"
 
 /**
  * EditorWebviewPanelProvider opens NexusAI in a dedicated webview panel in the editor
@@ -183,6 +183,16 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 					type: "setLayoutOrientation",
 					orientation: "horizontal",
 				})
+				return
+			}
+
+			// Forward voice_sentence_ended to the sidebar TTS pipeline resolver so the
+			// sentence-streaming pipeline advances when audio finishes in the editor panel
+			if (message.type === "voice_sentence_ended") {
+				const { sentenceIndex } = (message as any).voice_sentence_ended ?? {}
+				if (sentenceIndex !== undefined) {
+					resolveVoiceSentenceEnded(sentenceIndex)
+				}
 				return
 			}
 

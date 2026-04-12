@@ -73,12 +73,16 @@ describe("SpeakTextToolHandler", () => {
 	})
 
 	describe("execute() — TTS enabled", () => {
-		it("calls say(voice_speak, text) and requestSpeak(text)", async () => {
+		it("calls say(voice_speak, ...) and requestSpeak(text)", async () => {
 			const { config, say } = makeConfig(true)
 			await handler.execute(config, makeBlock({ text: "  hello world  " }))
 
-			say.calledWith("voice_speak", "hello world").should.be.true()
-			requestSpeakStub.calledWith("hello world").should.be.true()
+			// Initial empty partial bubble
+			say.calledWith("voice_speak", "", undefined, undefined, true).should.be.true()
+			// requestSpeak called with text + an onSentenceSpoken callback
+			requestSpeakStub.calledOnce.should.be.true()
+			;(requestSpeakStub.firstCall.args[0] as string).should.equal("hello world")
+			;(typeof requestSpeakStub.firstCall.args[1]).should.equal("function")
 		})
 
 		it("returns a Speaking confirmation result", async () => {

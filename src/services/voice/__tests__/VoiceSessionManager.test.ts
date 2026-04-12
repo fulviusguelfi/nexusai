@@ -114,7 +114,8 @@ describe("VoiceSessionManager", () => {
 
 			manager.requestSpeak("say this")
 
-			listener.calledOnceWith("say this").should.be.true()
+			listener.calledOnce.should.be.true()
+			listener.firstCall.args[0].text.should.equal("say this")
 		})
 
 		it("does not fire statusChange", () => {

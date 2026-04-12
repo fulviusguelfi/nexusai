@@ -36,8 +36,9 @@ export interface ExtensionMessage {
 	trpc_response?: TrpcResponse
 	orientation?: "horizontal" | "vertical"
 	voice_audio_play?: {
-		wavBase64: string
+		wavBase64?: string
 		phonemeTimeline?: Array<{ start: number; end: number; value: string }>
+		sentenceIndex: number
 	}
 	voice_transcription?: { text: string }
 	voice_result?: {

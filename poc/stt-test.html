@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--
+    CSP para uso no webview VS Code.
+    'unsafe-inline' necessário porque o webview não permite external scripts.
+    media-src * permite o SpeechRecognition acessar microfone.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; media-src *; connect-src *;" />
+  <title>STT PoC — Web Speech API</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 24px;
+      margin: 0;
+    }
+    h1 { color: #569cd6; margin-bottom: 4px; font-size: 1.2em; }
+    .subtitle { color: #808080; font-size: 0.85em; margin-bottom: 20px; }
+    button {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-right: 8px;
+    }
+    button:disabled { background: #3c3c3c; color: #808080; cursor: default; }
+    button.stop { background: #c53030; }
+    #status {
+      margin: 16px 0 8px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      background: #252526;
+      color: #9cdcfe;
+    }
+    #status.error { color: #f48771; background: #3c1f1f; }
+    #status.listening { color: #73c991; background: #1e3a1f; }
+    #interim {
+      min-height: 48px;
+      padding: 8px 12px;
+      background: #252526;
+      border-left: 3px solid #569cd6;
+      color: #808080;
+      font-style: italic;
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    #transcript {
+      min-height: 120px;
+      padding: 8px 12px;
+      background: #1e1e1e;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+    .label { color: #608b4e; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; margin-top: 16px; }
+    #diagnostics {
+      margin-top: 20px;
+      padding: 12px;
+      background: #252526;
+      border-radius: 4px;
+      font-size: 0.78em;
+      color: #808080;
+    }
+    #diagnostics b { color: #d4d4d4; }
+  </style>
+</head>
+<body>
+  <h1>STT PoC — Web Speech API</h1>
+  <div class="subtitle">
+    Testa se <code>window.SpeechRecognition</code> funciona neste ambiente.<br>
+    Funciona em Chrome/Edge (browser). Se aberto como webview do VS Code, veremos se é bloqueado.
+  </div>
+
+  <button id="btnStart">▶ Iniciar escuta</button>
+  <button id="btnStop" class="stop" disabled>■ Parar</button>
+
+  <div id="status">Aguardando...</div>
+
+  <div class="label">Interim (ao vivo)</div>
+  <div id="interim">&nbsp;</div>
+
+  <div class="label">Transcrição final acumulada</div>
+  <div id="transcript"></div>
+
+  <div id="diagnostics">
+    <b>Diagnósticos:</b><br>
+    <span id="diag"></span>
+  </div>
+
+  <script>
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const statusEl = document.getElementById('status');
+    const interimEl = document.getElementById('interim');
+    const transcriptEl = document.getElementById('transcript');
+    const diagEl = document.getElementById('diag');
+
+    // --- Diagnóstico inicial ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const diagLines = [];
+    diagLines.push('SpeechRecognition API: ' + (SpeechRecognition ? '✅ disponível' : '❌ NÃO disponível'));
+    diagLines.push('userAgent: ' + navigator.userAgent);
+
+    // Detecta se está rodando dentro do webview do VS Code
+    const isVscode = (typeof acquireVsCodeApi !== 'undefined') || navigator.userAgent.includes('Electron');
+    diagLines.push('Ambiente: ' + (isVscode ? '⚡ VS Code / Electron' : '🌐 Browser comum'));
+
+    diagEl.innerHTML = diagLines.join('<br>');
+
+    if (!SpeechRecognition) {
+      statusEl.textContent = '❌ API SpeechRecognition não disponível neste ambiente.';
+      statusEl.className = 'error';
+      btnStart.disabled = true;
+    }
+
+    // --- Reconhecimento ---
+    let recognition = null;
+    let finalTranscript = '';
+
+    function buildRecognition() {
+      const r = new SpeechRecognition();
+      r.continuous = true;
+      r.interimResults = true;
+      // 'pt-BR' aceita inglês misturado com menos precisão.
+      // Teste adicional: tente falar "hello world" ou "function" enquanto fala em pt-BR.
+      r.lang = 'pt-BR';
+      r.maxAlternatives = 1;
+
+      r.onstart = () => {
+        statusEl.textContent = '🎤 Escutando... (fale agora, misture pt e en)';
+        statusEl.className = 'listening';
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+        diagEl.innerHTML = diagLines.join('<br>') + '<br>onstart: ✅ disparado';
+      };
+
+      r.onresult = (event) => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += t + '\n';
+          } else {
+            interim += t;
+          }
+        }
+        interimEl.textContent = interim || '\u00a0';
+        transcriptEl.textContent = finalTranscript;
+      };
+
+      r.onerror = (event) => {
+        statusEl.textContent = '❌ Erro: ' + event.error;
+        statusEl.className = 'error';
+        diagEl.innerHTML = diagLines.join('<br>') + '<br><b style="color:#f48771">onerror: ' + event.error + '</b>';
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+      };
+
+      r.onend = () => {
+        if (!btnStop.disabled) {
+          // Reinicia automaticamente se não foi parado manualmente
+          recognition.start();
+        } else {
+          statusEl.textContent = 'Parado.';
+          statusEl.className = '';
+        }
+      };
+
+      return r;
+    }
+
+    btnStart.addEventListener('click', () => {
+      finalTranscript = '';
+      transcriptEl.textContent = '';
+      interimEl.textContent = '\u00a0';
+      recognition = buildRecognition();
+      try {
+        recognition.start();
+      } catch (e) {
+        statusEl.textContent = '❌ Exceção ao iniciar: ' + e.message;
+        statusEl.className = 'error';
+      }
+    });
+
+    btnStop.addEventListener('click', () => {
+      btnStop.disabled = true;
+      if (recognition) recognition.stop();
+    });
+  </script>
+</body>
+</html>

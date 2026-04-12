@@ -130,7 +130,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	{
 		id: "about",
 		name: "About",
-		tooltipText: "About Cline",
+		tooltipText: "About NexusAI",
 		headerText: "About",
 		icon: Info,
 	},

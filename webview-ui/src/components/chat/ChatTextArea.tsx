@@ -1561,6 +1561,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								onClick={() => {
 									if (!effectiveSendingDisabled) {
 										setIsTextAreaFocused(false)
+										voiceRecorderRef.current?.stopIfRecording()
 										onSend()
 									}
 								}}

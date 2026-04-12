@@ -55,9 +55,21 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	const voiceSessionActiveRef = useRef(false)
 	const prevPartialRef = useRef<string>("")
 	const lastVoiceLengthRef = useRef<number>(-1) // value length after last voice setInputValue; -1 = no update yet
+	// Block late STT results that arrive after the user has already sent the message
+	const postSendBlockRef = useRef(false)
 
 	const handleTranscription = useCallback(
 		(text: string, language?: string, isPartial?: boolean) => {
+			// If the user already sent, ignore any late STT results from the previous session
+			if (postSendBlockRef.current) {
+				// Only unblock when a truly new session starts (first partial of a new recording)
+				if (isPartial && !voiceSessionActiveRef.current) {
+					postSendBlockRef.current = false
+				} else {
+					return
+				}
+			}
+
 			const currentCursor = textAreaRef.current?.selectionStart ?? -1
 
 			if (!voiceSessionActiveRef.current) {
@@ -101,6 +113,9 @@ export const InputSection: React.FC<InputSectionProps> = ({
 		const meta = pendingVoiceMetadataRef.current
 		pendingVoiceMetadataRef.current = ""
 		const textToSend = meta ? `${meta}${inputValue}` : inputValue
+		// Block any late STT results from the current/previous session that arrive after send
+		postSendBlockRef.current = true
+		voiceSessionActiveRef.current = false
 		messageHandlers.handleSendMessage(textToSend, selectedImages, selectedFiles)
 	}, [inputValue, selectedImages, selectedFiles, messageHandlers])
 

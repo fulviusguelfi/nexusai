@@ -623,6 +623,13 @@ ${ctx.cellJson || "{}"}
 
 	Logger.log(`[Cline] extension activated in ${performance.now() - activationStartTime} ms`)
 
+	// Auto-open the editor panel on load so the chat UI is immediately available
+	setImmediate(() => {
+		EditorWebviewPanelProvider.createOrShow().catch((error) => {
+			Logger.warn("[Extension] Auto-open editor panel on startup failed (non-critical):", error)
+		})
+	})
+
 	return createClineAPI(webview.controller)
 }
 
