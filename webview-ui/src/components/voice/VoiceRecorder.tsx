@@ -391,7 +391,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 	}
 
 	const display = getStateDisplay()
-	const isLoading = display.isActive || isUserRecording
 	const isError = agentState === VOICE_AGENT_STATES.ERROR
 	// Disable only while TTS is playing; PROCESSING is ~200ms so not worth blocking
 	const isDisabledState = disabled || agentState === VOICE_AGENT_STATES.PLAYING
@@ -399,6 +398,9 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		isUserRecording &&
 		(agentState === VOICE_AGENT_STATES.RECORDING || agentState === VOICE_AGENT_STATES.READY_TO_LISTEN) &&
 		recordingSeconds > 0
+	// Spinner only while user is waiting for mic to open (pressed but recording hasn't started yet).
+	// Once user clicks stop, show mic immediately — backend PROCESSING is invisible to the user.
+	const isLoading = isUserRecording && !isActiveRecording
 
 	// Click-toggle: first click starts, second click stops
 	const handleToggle = isUserRecording ? handleStopRecording : handleStartRecording
