@@ -72,10 +72,12 @@ describe("VoiceSettingsSection", () => {
 		mockUpdateSetting.mockReset()
 	})
 
-	it("renders voice settings without crashing when media devices are unavailable", () => {
+	it("renders voice settings without crashing when media devices are unavailable", async () => {
 		expect(() => render(<VoiceSettingsSection renderSectionHeader={() => null} />)).not.toThrow()
-		expect(screen.getByText("Reconhecimento de Voz (Microfone)")).toBeTruthy()
-		expect(screen.getByText("Síntese de Voz")).toBeTruthy()
+		await waitFor(() => {
+			expect(screen.getByText("Reconhecimento de Voz (Microfone)")).toBeTruthy()
+			expect(screen.getByText("Síntese de Voz")).toBeTruthy()
+		})
 	})
 
 	it("renders voice settings when host returns empty device lists", async () => {
