@@ -2,15 +2,19 @@
  * VoiceRecorder - Voice input button with audio level visualization.
  * Receive-only component: Host handles capture & processing.
  */
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { PLATFORM_CONFIG } from "@/config/platform.config"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { voiceLogStore } from "@/utils/voiceDebugger"
-import AudioPlayer from "./AudioPlayer"
 
 interface Props {
 	onTranscription?: (text: string, language?: string, isPartial?: boolean) => void
 	disabled?: boolean
+}
+
+export interface VoiceRecorderHandle {
+	/** Stops recording if currently active — used by send button to stop before sending */
+	stopIfRecording: () => void
 }
 
 const VOICE_AGENT_STATES = {
@@ -82,7 +86,7 @@ const WAVEFORM_BARS = [
 	{ id: "bar-r2", scale: 0.4 },
 ]
 
-const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
+const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecorder({ onTranscription, disabled }, ref) {
 	const { voiceSttEnabled, voiceMaxRecordingDurationMs } = useExtensionState()
 
 	// UI State
@@ -102,6 +106,27 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	const [recordingSeconds, setRecordingSeconds] = useState(0)
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 	const pttKeyHeld = useRef(false)
+
+	// Unlock AudioContext autoplay on mount (must happen inside a user gesture the first time).
+	// Chrome/Electron grant "sticky activation" on first gesture, so TTS audio arriving later succeeds.
+	useEffect(() => {
+		const unlock = () => {
+			try {
+				const ctx = new AudioContext()
+				const buf = ctx.createBuffer(1, 1, 22050)
+				const src = ctx.createBufferSource()
+				src.buffer = buf
+				src.connect(ctx.destination)
+				src.start(0)
+				src.onended = () => void ctx.close()
+			} catch {
+				// ignore
+			}
+			window.removeEventListener("click", unlock)
+		}
+		window.addEventListener("click", unlock, { once: true })
+		return () => window.removeEventListener("click", unlock)
+	}, [])
 
 	// Audio level feedback (during RECORDING state)
 	const [audioLevel, setAudioLevel] = useState<{
@@ -154,7 +179,6 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 		if (isUserRecording) return
 		voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
 		setErrorMessage(null)
-		setStateContext("Listening for audio...")
 		setIsUserRecording(true)
 		startTimer()
 		PLATFORM_CONFIG.postMessage({
@@ -170,18 +194,38 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 
 	// Push-to-talk: stop recording
 	const handleStopRecording = useCallback(async () => {
-		if (!isUserRecording) return
+		voiceLogStore.info("VoiceRecorder", `handleStopRecording called — isUserRecording=${isUserRecording} at T=${Date.now()}`)
+		if (!isUserRecording) {
+			voiceLogStore.warn("VoiceRecorder", "handleStopRecording: guard fired — isUserRecording is false, aborting")
+			return
+		}
 		voiceLogStore.info("VoiceRecorder", "User stopped recording (push-to-talk release)")
 		setIsUserRecording(false)
 		stopTimer()
-		setStateContext("Processing...")
+		setStateContext("")
 		PLATFORM_CONFIG.postMessage({
 			type: "stop_voice_recording",
 			stop_voice_recording: {
 				timestamp: Date.now(),
 			},
 		})
+		voiceLogStore.info("VoiceRecorder", `stop_voice_recording posted to backend at T=${Date.now()}`)
 	}, [isUserRecording, stopTimer])
+
+	// Ref to always-current isUserRecording — ensures stopIfRecording never races against stale closures
+	const isUserRecordingRef = useRef(false)
+	useEffect(() => {
+		isUserRecordingRef.current = isUserRecording
+	}, [isUserRecording])
+
+	// Expose stopIfRecording so parent (ChatTextArea send button) can stop recording before sending
+	useImperativeHandle(ref, () => ({
+		stopIfRecording: () => {
+			if (isUserRecordingRef.current) {
+				handleStopRecordingRef.current()
+			}
+		},
+	}))
 
 	// Refs to always-current callbacks — lets the keyboard effect avoid re-registering on every recording state change
 	const handleStartRecordingRef = useRef(handleStartRecording)
@@ -238,6 +282,11 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				const { state, context } = data.voice_agent_state_changed || {}
 				if (isVoiceAgentState(state)) {
 					setAgentState(state)
+					// When backend reaches IDLE, the recording session has truly ended — reset user intent
+					if (state === VOICE_AGENT_STATES.IDLE) {
+						setIsUserRecording(false)
+						stopTimer()
+					}
 					// Handle error states from backend (e.g., preflight check failures)
 					if (state === VOICE_AGENT_STATES.IDLE && context?.startsWith("System not ready:")) {
 						setErrorMessage(context)
@@ -245,7 +294,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					} else {
 						// IDLE transitions use internal reason strings (e.g. "Destroyed", "Cancelled") — never show in UI
 						setStateContext(state === VOICE_AGENT_STATES.IDLE ? "" : context || "")
-						setErrorMessage(null)
+						if (state !== VOICE_AGENT_STATES.ERROR) setErrorMessage(null)
 					}
 					if (state !== VOICE_AGENT_STATES.RECORDING) {
 						setAudioLevel(null)
@@ -295,6 +344,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					const detectedLang = voiceResult.detectedLanguage || null
 					console.log("[VoiceRecorder] Transcription received:", transcriptionText, "lang:", detectedLang)
 					onTranscription?.(transcriptionText, detectedLang ?? undefined)
+					setSttProgress(null)
 
 					// Play audio response if available
 					if (audioWavBase64) {
@@ -315,15 +365,7 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 							}
 						})()
 					}
-
-					// Return to idle after brief delay
-					setTimeout(() => {
-						setAgentState(VOICE_AGENT_STATES.IDLE)
-						setIsUserRecording(false)
-						setStateContext("")
-						setSttProgress(null)
-						stopTimer()
-					}, 500)
+					// Session cleanup is driven by voice_agent_state_changed IDLE — no force-IDLE here
 				}
 			}
 
@@ -331,9 +373,11 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 				const voiceError = data.voice_error || {}
 				const errorMsg = voiceError.userMessage || voiceError.message || "Voice error"
 				console.error("[VoiceRecorder] Voice error:", errorMsg)
+				setStateContext("") // Clear stateContext to avoid duplicate message alongside errorMessage
 				setErrorMessage(errorMsg)
 				setAgentState(VOICE_AGENT_STATES.ERROR)
 				setIsUserRecording(false)
+				stopTimer()
 			}
 		}
 
@@ -349,10 +393,15 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 	const display = getStateDisplay()
 	const isLoading = display.isActive || isUserRecording
 	const isError = agentState === VOICE_AGENT_STATES.ERROR
-	// Button ALWAYS clickable during RECORDING (user controls stop)
-	// Disable only in PROCESSING/PLAYING/INITIALIZING or when voice disabled
-	const isDisabledState = disabled || (isLoading && agentState !== VOICE_AGENT_STATES.RECORDING)
-	const isActiveRecording = isUserRecording && agentState === VOICE_AGENT_STATES.RECORDING
+	// Disable only while TTS is playing; PROCESSING is ~200ms so not worth blocking
+	const isDisabledState = disabled || agentState === VOICE_AGENT_STATES.PLAYING
+	const isActiveRecording =
+		isUserRecording &&
+		(agentState === VOICE_AGENT_STATES.RECORDING || agentState === VOICE_AGENT_STATES.READY_TO_LISTEN) &&
+		recordingSeconds > 0
+
+	// Click-toggle: first click starts, second click stops
+	const handleToggle = isUserRecording ? handleStopRecording : handleStartRecording
 
 	return (
 		<div className="flex items-center gap-2">
@@ -361,8 +410,8 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					agentState === VOICE_AGENT_STATES.PLAYING
 						? "Aguardando fim da fala da IA"
 						: isUserRecording
-							? "Stop recording (Release)"
-							: "Start recording (Press)"
+							? "Recording in progress — Click to stop"
+							: "Click to record (push-to-talk)"
 				}
 				className={[
 					"codicon p-0 m-0 transition-all text-[14px] w-5 h-5",
@@ -373,31 +422,17 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 							: isLoading
 								? "codicon-loading animate-spin"
 								: "codicon-mic",
-					isDisabledState && !isActiveRecording
-						? "opacity-40 cursor-not-allowed"
-						: isActiveRecording
-							? "cursor-pointer"
-							: "cursor-pointer",
+					isDisabledState ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
 				]
 					.filter(Boolean)
 					.join(" ")}
 				data-active-recording={isActiveRecording}
-				disabled={isDisabledState && !isActiveRecording}
-				onMouseDown={handleStartRecording}
-				onMouseLeave={handleStopRecording}
-				onMouseUp={handleStopRecording}
-				title={isUserRecording ? "Release to stop recording" : "Hold to record (push-to-talk)"}
+				disabled={isDisabledState}
+				onClick={handleToggle}
+				title={isUserRecording ? "Click to stop recording" : "Click to record (push-to-talk)"}
 			/>
-			{agentState === VOICE_AGENT_STATES.READY_TO_LISTEN && (
-				<span className="relative flex h-3 w-3 ml-1">
-					<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-					<span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
-				</span>
-			)}
-			{agentState === VOICE_AGENT_STATES.RECORDING && recordingSeconds > 0 && (
-				<span className="text-xs tabular-nums text-red-400 font-mono">{recordingSeconds}s</span>
-			)}
-			{agentState === VOICE_AGENT_STATES.RECORDING && audioLevel && (
+
+			{isActiveRecording && audioLevel && (
 				<div className="flex items-end gap-[2px] h-4 mx-1">
 					{WAVEFORM_BARS.map(({ id, scale }) => (
 						<div
@@ -428,18 +463,10 @@ const VoiceRecorder: React.FC<Props> = ({ onTranscription, disabled }) => {
 					<span className="font-medium text-blue-400">{getLanguageName(detectedLanguage)}</span>
 				</div>
 			)}
-			{livePreview && agentState === VOICE_AGENT_STATES.RECORDING && (
-				<div
-					className="text-xs italic text-vscode-descriptionForeground opacity-80 max-w-[200px] truncate"
-					title={livePreview}>
-					…{livePreview}
-				</div>
-			)}
-			{stateContext && <span className="text-xs opacity-70">{stateContext}</span>}
+
 			{errorMessage && <span className="text-xs text-red-400">{errorMessage}</span>}
-			{agentState === VOICE_AGENT_STATES.PLAYING && <AudioPlayer />}
 		</div>
 	)
-}
+})
 
 export default VoiceRecorder

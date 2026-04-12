@@ -360,10 +360,6 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 			controller.stateManager.setGlobalState("voiceOutputDeviceId", request.voiceOutputDeviceId || undefined)
 		}
 
-		if (request.voicePiperVoice !== undefined) {
-			controller.stateManager.setGlobalState("voicePiperVoice", request.voicePiperVoice)
-		}
-
 		if (request.voiceSilenceThresholdMs !== undefined) {
 			controller.stateManager.setGlobalState("voiceSilenceThresholdMs", request.voiceSilenceThresholdMs)
 		}

@@ -1010,7 +1010,7 @@ export class Controller {
 			voiceSttEnabled: this.stateManager.getGlobalStateKey("voiceSttEnabled"),
 			voiceInputDeviceId: this.stateManager.getGlobalStateKey("voiceInputDeviceId"),
 			voiceOutputDeviceId: this.stateManager.getGlobalStateKey("voiceOutputDeviceId"),
-			voicePiperVoice: this.stateManager.getGlobalStateKey("voicePiperVoice"),
+			voiceEdgeTtsVoice: this.stateManager.getGlobalStateKey("voiceEdgeTtsVoice"),
 			voiceSilenceThresholdMs: this.stateManager.getGlobalStateKey("voiceSilenceThresholdMs"),
 			voiceGracePeriodMs: this.stateManager.getGlobalStateKey("voiceGracePeriodMs"),
 			voiceMaxRecordingDurationMs: this.stateManager.getGlobalStateKey("voiceMaxRecordingDurationMs"),

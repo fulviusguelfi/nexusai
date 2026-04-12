@@ -30,16 +30,61 @@ export class VoskService {
 	private chunkCount = 0
 	private initResolve: ((ok: boolean) => void) | null = null
 	private finalResolve: ((text: string) => void) | null = null
+	private resetResolve: (() => void) | null = null
 	private initStartTime = 0
 	private firstChunkTime = 0
 	private firstPartialTime = 0
 
 	private readonly modelPath: string
-	private readonly onPartial: (text: string) => void
+	private _onPartial: (text: string) => void
+
+	// ── Singleton (shared across sessions) ───────────────────────────────────
+	private static _shared: VoskService | null = null
+	private _isShared = false
 
 	constructor(globalStoragePath: string, onPartial: (text: string) => void) {
 		this.modelPath = VoskService.getModelPath(globalStoragePath)
-		this.onPartial = onPartial
+		this._onPartial = onPartial
+	}
+
+	/**
+	 * Pre-warm the model at extension startup. Subsequent calls to getShared()
+	 * will return immediately without spawning a new worker.
+	 */
+	static async warmUp(globalStoragePath: string): Promise<void> {
+		if (VoskService._shared) return
+		if (!VoskService.isModelReady(globalStoragePath)) {
+			Logger.log("[VoskService] warmUp: model not present — skipping")
+			return
+		}
+		Logger.log("[VoskService] warmUp: loading model in background...")
+		const instance = new VoskService(globalStoragePath, () => {})
+		instance._isShared = true
+		const ok = await instance.init()
+		if (ok) {
+			VoskService._shared = instance
+			Logger.log("[VoskService] warmUp: singleton ready")
+		} else {
+			Logger.warn("[VoskService] warmUp: init failed — singleton not available")
+		}
+	}
+
+	/**
+	 * Get the shared singleton, updating its onPartial callback for this session.
+	 * Falls back to creating a new instance if singleton not ready.
+	 */
+	static getShared(globalStoragePath: string, onPartial: (text: string) => void): VoskService {
+		if (VoskService._shared) {
+			VoskService._shared.setOnPartial(onPartial)
+			return VoskService._shared
+		}
+		// Fallback: new instance (will init() on first use)
+		return new VoskService(globalStoragePath, onPartial)
+	}
+
+	/** Replace the partial callback (e.g. between sessions). */
+	setOnPartial(fn: (text: string) => void): void {
+		this._onPartial = fn
 	}
 
 	// ── Static helpers ────────────────────────────────────────────────────────
@@ -149,10 +194,17 @@ export class VoskService {
 	private handleWorkerMsg(msg: any): void {
 		if (msg.type === "ready") {
 			const readyMs = Date.now() - this.initStartTime
-			Logger.log(`[VoskService] ✅ Worker ready in ${readyMs}ms (model load time)`)
 			if (this.initResolve) {
+				Logger.log(`[VoskService] ✅ Worker ready in ${readyMs}ms (model load time)`)
 				this.initResolve(true)
 				this.initResolve = null
+			} else if (this.resetResolve) {
+				Logger.log(`[VoskService] ✅ Recognizer reset in ${readyMs}ms`)
+				this.resetResolve()
+				this.resetResolve = null
+			} else {
+				// ready after finalize — no pending resolver, just note it
+				Logger.log("[VoskService] Worker re-ready after finalize")
 			}
 		} else if (msg.type === "error") {
 			Logger.error("[VoskService] Worker error:", msg.message)
@@ -171,13 +223,13 @@ export class VoskService {
 				}
 				this.lastPartial = combined
 				Logger.log(`[VoskService] 🗣️ partial[${this.chunkCount}] → "${combined}"`)
-				this.onPartial(combined)
+				this._onPartial(combined)
 			}
 		} else if (msg.type === "sentence") {
 			if (msg.text) {
 				this.sentenceAccum.push(msg.text)
 				this.lastPartial = ""
-				this.onPartial(this.sentenceAccum.join(" "))
+				this._onPartial(this.sentenceAccum.join(" "))
 				Logger.log(`[VoskService] ✅ sentence[${this.chunkCount}] → "${msg.text}"`)
 			}
 		} else if (msg.type === "final") {
@@ -225,6 +277,7 @@ export class VoskService {
 	/**
 	 * Flush any buffered audio and return the complete transcript.
 	 * Call this after recording has stopped.
+	 * When using the singleton, the worker stays alive and resets for the next session.
 	 */
 	async getFinalTranscript(): Promise<string> {
 		if (!this.worker) {
@@ -253,9 +306,44 @@ export class VoskService {
 	}
 
 	/**
+	 * Reset the recognizer state for a new recording session (singleton use).
+	 * Clears accumulators and creates a new Kaldi recognizer without reloading the model.
+	 */
+	async reset(): Promise<void> {
+		this.sentenceAccum = []
+		this.lastPartial = ""
+		this.chunkCount = 0
+		this.firstChunkTime = 0
+		this.firstPartialTime = 0
+		if (!this.worker) return
+		return new Promise<void>((resolve) => {
+			this.resetResolve = resolve
+			this.initStartTime = Date.now()
+			this.sendToWorker({ type: "reset" })
+			setTimeout(() => {
+				if (this.resetResolve) {
+					Logger.warn("[VoskService] reset timed out — continuing anyway")
+					this.resetResolve()
+					this.resetResolve = null
+				}
+			}, 3000)
+		})
+	}
+
+	/**
 	 * Gracefully stop the worker process.
+	 * When called on the singleton, only resets accumulators (keeps worker alive).
 	 */
 	free(): void {
+		if (this._isShared) {
+			// Singleton: just reset state, keep worker running for next session
+			this.sentenceAccum = []
+			this.lastPartial = ""
+			this.chunkCount = 0
+			this.firstChunkTime = 0
+			this.firstPartialTime = 0
+			return
+		}
 		if (this.worker) {
 			this.sendToWorker({ type: "exit" })
 			setTimeout(() => {

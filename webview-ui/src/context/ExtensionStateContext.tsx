@@ -295,7 +295,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		voiceStreamingSTT: true,
 		voiceInputDeviceId: undefined,
 		voiceOutputDeviceId: undefined,
-		voicePiperVoice: "en_US-lessac-medium",
+		voiceEdgeTtsVoice: "pt-BR-FranciscaNeural",
 		voiceSilenceThresholdMs: 700,
 		voiceGracePeriodMs: 2000,
 		voiceMaxRecordingDurationMs: 120000,

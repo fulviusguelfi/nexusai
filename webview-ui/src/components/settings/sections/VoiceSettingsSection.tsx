@@ -16,31 +16,22 @@ interface AudioDevice {
 	label: string
 }
 
-const VOICE_OPTIONS = [
-	{ value: "en_US-lessac-medium", label: "English (US) - Female (Lessac)" },
-	{ value: "en_US-ryan-medium", label: "English (US) - Male (Ryan)" },
-	{ value: "pt_BR-faber-medium", label: "Portuguese (BR) - Female (Faber)" },
-	{ value: "pt_BR-cadu-medium", label: "Portuguese (BR) - Male (Cadu)" },
-] as const
+interface EdgeVoice {
+	ShortName: string
+	Locale: string
+	Gender: string
+	FriendlyName?: string
+}
 
 const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
-	const {
-		voiceSttEnabled,
-		voiceInputDeviceId,
-		voiceTtsEnabled,
-		voiceOutputDeviceId,
-		voicePiperVoice,
-		voiceMetadataEnabled,
-		avatarEnabled,
-		avatarName,
-		avatarPosition,
-		avatarPersonalityTone,
-		avatarPersonalityResponseMode,
-	} = useExtensionState()
+	const { voiceSttEnabled, voiceInputDeviceId, voiceTtsEnabled, voiceOutputDeviceId, voiceEdgeTtsVoice, voiceMetadataEnabled } =
+		useExtensionState()
 
 	const [inputDevices, setInputDevices] = useState<AudioDevice[]>([])
 	const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
 	const [_error, setError] = useState<string | null>(null)
+	const [edgeVoices, setEdgeVoices] = useState<EdgeVoice[]>([])
+	const [edgeLangFilter, setEdgeLangFilter] = useState<string>("")
 
 	const detectRealDevices = useCallback(async () => {
 		setError(null)
@@ -56,7 +47,18 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 						.filter((d) => d.deviceId && d.deviceId !== "")
 						.map((d) => ({
 							deviceId: d.deviceId || "",
-							label: d.label || d.deviceId || "(unknown)",
+							label: d.label || d.deviceId || "(desconhecido)",
+						})),
+				)
+				// Output devices: use host-side PowerShell enumeration.
+				// Browser enumerateDevices() returns empty deviceIds in VS Code webview without
+				// prior getUserMedia permission, so we use the host-side names instead.
+				setOutputDevices(
+					(resp.outputDevices || [])
+						.filter((d) => d.label && d.label !== "")
+						.map((d) => ({
+							deviceId: d.label || "",
+							label: d.label || "(desconhecido)",
 						})),
 				)
 			}
@@ -64,31 +66,28 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 			const msg = err instanceof Error ? err.message : String(err)
 			setError(msg)
 		}
-
-		// Output devices: enumerate via browser MediaDevices API so deviceId values are
-		// valid for HTMLAudioElement.setSinkId(). Host-side Windows names are NOT valid sinkIds.
-		// Note: VS Code webview may return deviceId="" for all devices when mic permission is not
-		// granted — filter those out to avoid SelectItem receiving value="" (Radix UI crashes).
-		try {
-			if (navigator.mediaDevices?.enumerateDevices) {
-				const devices = await navigator.mediaDevices.enumerateDevices()
-				const outputs = devices
-					.filter((d) => d.kind === "audiooutput" && d.deviceId !== "")
-					.map((d) => ({
-						deviceId: d.deviceId,
-						label: d.label || d.deviceId,
-					}))
-				setOutputDevices(outputs)
-			}
-		} catch {
-			// MediaDevices not available or permission denied — output list stays empty
-		}
 	}, [])
 
 	// Auto-detect on mount
 	useEffect(() => {
 		detectRealDevices()
 	}, [detectRealDevices])
+
+	// Fetch Edge TTS voice list when TTS is enabled
+	useEffect(() => {
+		if (!voiceTtsEnabled || edgeVoices.length > 0) return
+		trpc.voice.getEdgeVoices
+			.query()
+			.then((voices) => {
+				setEdgeVoices(voices)
+				// Initialise language filter to match saved voice locale
+				if (voiceEdgeTtsVoice) {
+					const savedVoice = voices.find((v) => v.ShortName === voiceEdgeTtsVoice)
+					if (savedVoice) setEdgeLangFilter(savedVoice.Locale)
+				}
+			})
+			.catch(() => {})
+	}, [voiceTtsEnabled, edgeVoices.length, voiceEdgeTtsVoice])
 
 	// Re-detect when system audio devices change (e.g., headset plugged/unplugged)
 	useEffect(() => {
@@ -114,14 +113,6 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 		}
 	}, [voiceOutputDeviceId, outputDevices])
 
-	useEffect(() => {
-		if (!voicePiperVoice) return
-		const exists = VOICE_OPTIONS.some((v) => v.value === voicePiperVoice)
-		if (!exists) {
-			updateSetting("voicePiperVoice", "en_US-lessac-medium")
-		}
-	}, [voicePiperVoice])
-
 	return (
 		<div>
 			{renderSectionHeader("voice")}
@@ -130,10 +121,10 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{/* STT toggle + mic input selector */}
 					<div className="flex items-center justify-between">
 						<div>
-							<Label className="text-sm font-medium">Speech-to-Text (Mic)</Label>
+							<Label className="text-sm font-medium">Reconhecimento de Voz (Microfone)</Label>
 							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
-								Enable voice input via the mic button in the chat box. Audio is captured by FFmpeg (outside the
-								webview sandbox) and transcribed locally by Whisper.
+								Habilita entrada de voz pelo botão de microfone no chat. O áudio é capturado pelo FFmpeg (fora do
+								sandbox do webview) e transcrito localmente pelo Whisper.
 							</p>
 						</div>
 						<Switch
@@ -145,7 +136,7 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{(voiceSttEnabled ?? true) && (
 						<div className="pl-2 flex flex-col gap-2">
 							<div>
-								<Label className="text-xs text-vscode-descriptionForeground">Microphone</Label>
+								<Label className="text-xs text-vscode-descriptionForeground">Microfone</Label>
 								<Select
 									onValueChange={(v) => updateSetting("voiceInputDeviceId", v === "default" ? undefined : v)}
 									value={
@@ -154,10 +145,10 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 											: "default"
 									}>
 									<SelectTrigger className="mt-1 w-full">
-										<SelectValue placeholder="Default microphone" />
+										<SelectValue placeholder="Microfone padrão" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="default">Default microphone</SelectItem>
+										<SelectItem value="default">Microfone padrão</SelectItem>
 										{inputDevices.map((d) => (
 											<SelectItem key={d.deviceId} value={d.deviceId}>
 												{d.label}
@@ -172,10 +163,10 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{/* Voice metadata toggle */}
 					<div className="flex items-center justify-between pt-2 border-t border-vscode-panel-border">
 						<div>
-							<Label className="text-sm font-medium">Voice Context Hints</Label>
+							<Label className="text-sm font-medium">Dicas de Contexto de Voz</Label>
 							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
-								Prefix voice messages with metadata (input source and detected language) so the AI can adapt its
-								response style to spoken language.
+								Prefixia mensagens de voz com metadados (origem e idioma detectado) para que a IA adapte seu
+								estilo de resposta à linguagem falada.
 							</p>
 						</div>
 						<Switch
@@ -187,10 +178,10 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 					{/* TTS toggle */}
 					<div className="flex items-center justify-between pt-2 border-t border-vscode-panel-border">
 						<div>
-							<Label className="text-sm font-medium">Text-to-Speech (Piper)</Label>
+							<Label className="text-sm font-medium">Síntese de Voz</Label>
 							<p className="text-xs text-vscode-descriptionForeground mt-0.5">
-								Let the AI speak responses aloud using the local Piper TTS engine (~55 MB voice model, downloaded
-								on first use).
+								Faz a IA falar as respostas em voz alta usando o Edge TTS da Microsoft (online, vozes neurais, sem
+								chave de API).
 							</p>
 						</div>
 						<Switch
@@ -201,8 +192,73 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 
 					{voiceTtsEnabled && (
 						<div className="pl-2 flex flex-col gap-2">
+							{/* Edge TTS: language filter + voice selector */}
+							<>
+								{edgeVoices.length === 0 ? (
+									<p className="text-xs text-vscode-descriptionForeground italic">Carregando vozes…</p>
+								) : (
+									<>
+										<div>
+											<Label className="text-xs text-vscode-descriptionForeground">Idioma</Label>
+											<Select
+												onValueChange={(v) => {
+													setEdgeLangFilter(v)
+													// Auto-select first voice of the chosen language
+													const first = edgeVoices.find((ev) => ev.Locale === v)
+													if (first) updateSetting("voiceEdgeTtsVoice", first.ShortName)
+												}}
+												value={edgeLangFilter || "all"}>
+												<SelectTrigger className="mt-1 w-full">
+													<SelectValue placeholder="Todos os idiomas" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="all">Todos os idiomas</SelectItem>
+													{Array.from(new Set(edgeVoices.map((v) => v.Locale)))
+														.sort()
+														.map((locale) => (
+															<SelectItem key={locale} value={locale}>
+																{locale}
+															</SelectItem>
+														))}
+												</SelectContent>
+											</Select>
+										</div>
+
+										<div>
+											<Label className="text-xs text-vscode-descriptionForeground">Voz</Label>
+											{(() => {
+												const filtered =
+													edgeLangFilter && edgeLangFilter !== "all"
+														? edgeVoices.filter((v) => v.Locale === edgeLangFilter)
+														: edgeVoices
+												const currentVal =
+													voiceEdgeTtsVoice && filtered.some((v) => v.ShortName === voiceEdgeTtsVoice)
+														? voiceEdgeTtsVoice
+														: (filtered[0]?.ShortName ?? "")
+												return (
+													<Select
+														onValueChange={(v) => updateSetting("voiceEdgeTtsVoice", v)}
+														value={currentVal}>
+														<SelectTrigger className="mt-1 w-full">
+															<SelectValue placeholder="Selecionar voz" />
+														</SelectTrigger>
+														<SelectContent>
+															{filtered.map((v) => (
+																<SelectItem key={v.ShortName} value={v.ShortName}>
+																	{v.FriendlyName ?? v.ShortName} ({v.Gender})
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+												)
+											})()}
+										</div>
+									</>
+								)}
+							</>
+
 							<div>
-								<Label className="text-xs text-vscode-descriptionForeground">Audio Output Device</Label>
+								<Label className="text-xs text-vscode-descriptionForeground">Dispositivo de Saída</Label>
 								<Select
 									onValueChange={(v) => updateSetting("voiceOutputDeviceId", v === "default" ? "" : v)}
 									value={
@@ -211,10 +267,10 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 											: "default"
 									}>
 									<SelectTrigger className="mt-1 w-full">
-										<SelectValue placeholder="Default output" />
+										<SelectValue placeholder="Saída padrão" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="default">Default output</SelectItem>
+										<SelectItem value="default">Saída padrão</SelectItem>
 										{outputDevices.map((d) => (
 											<SelectItem key={d.deviceId} value={d.deviceId}>
 												{d.label}
@@ -223,119 +279,8 @@ const VoiceSettingsSection: React.FC<Props> = ({ renderSectionHeader }) => {
 									</SelectContent>
 								</Select>
 							</div>
-
-							<div>
-								<Label className="text-xs text-vscode-descriptionForeground">Voice</Label>
-								<Select
-									onValueChange={(v) => updateSetting("voicePiperVoice", v)}
-									value={
-										voicePiperVoice && VOICE_OPTIONS.some((v) => v.value === voicePiperVoice)
-											? voicePiperVoice
-											: "en_US-lessac-medium"
-									}>
-									<SelectTrigger className="mt-1 w-full">
-										<SelectValue placeholder="en_US-lessac-medium" />
-									</SelectTrigger>
-									<SelectContent>
-										{VOICE_OPTIONS.map((voice) => (
-											<SelectItem key={voice.value} value={voice.value}>
-												{voice.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
 						</div>
 					)}
-
-					{/* Avatar & Personality subsection */}
-					<div className="mt-4 pt-4 border-t border-vscode-panel-border">
-						<p className="text-sm font-semibold mb-3 text-vscode-foreground">Avatar &amp; Personalidade</p>
-
-						<div className="flex items-center justify-between mb-3">
-							<div>
-								<Label className="text-sm">Mostrar avatar</Label>
-								<p className="text-xs mt-0.5 text-vscode-descriptionForeground">
-									Exibe avatar animado durante interações por voz
-								</p>
-							</div>
-							<Switch
-								checked={avatarEnabled ?? true}
-								onCheckedChange={(checked) => updateSetting("avatarEnabled", checked)}
-							/>
-						</div>
-
-						{(avatarEnabled ?? true) && (
-							<>
-								<div className="mb-3">
-									<Label className="text-sm mb-1 block" htmlFor="avatar-name-input">
-										Nome do avatar
-									</Label>
-									<input
-										className="w-full px-2 py-1 text-sm rounded bg-vscode-input-background text-vscode-input-foreground border border-vscode-input-border"
-										defaultValue={avatarName ?? "Nexus"}
-										id="avatar-name-input"
-										onBlur={(e) => updateSetting("avatarName", e.target.value || "Nexus")}
-										placeholder="Nexus"
-										title="Nome do avatar"
-										type="text"
-									/>
-								</div>
-
-								<div className="mb-3">
-									<Label className="text-sm mb-1 block">Tom de voz</Label>
-									<Select
-										onValueChange={(v) => updateSetting("avatarPersonalityTone", v)}
-										value={avatarPersonalityTone ?? "casual"}>
-										<SelectTrigger className="w-full text-sm">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="casual">Casual</SelectItem>
-											<SelectItem value="formal">Formal</SelectItem>
-											<SelectItem value="technical">Técnico</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<div className="mb-3">
-									<Label className="text-sm mb-1 block">Modo de resposta</Label>
-									<Select
-										onValueChange={(v) => updateSetting("avatarPersonalityResponseMode", v)}
-										value={avatarPersonalityResponseMode ?? "concise"}>
-										<SelectTrigger className="w-full text-sm">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="concise">Conciso</SelectItem>
-											<SelectItem value="detailed">Detalhado</SelectItem>
-											<SelectItem value="conversational">Conversacional</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<div className="mb-3">
-									<Label className="text-sm mb-1 block">Posição do avatar</Label>
-									<Select
-										onValueChange={(v) => updateSetting("avatarPosition", v)}
-										value={avatarPosition ?? "bottom-right"}>
-										<SelectTrigger className="w-full text-sm">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="bottom-right">Inferior direito</SelectItem>
-											<SelectItem value="bottom-left">Inferior esquerdo</SelectItem>
-											<SelectItem value="inline">Inline</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								<p className="text-xs text-vscode-descriptionForeground">
-									O idioma do avatar segue automaticamente o idioma detectado na fala.
-								</p>
-							</>
-						)}
-					</div>
 				</div>
 			</Section>
 		</div>

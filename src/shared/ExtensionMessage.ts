@@ -170,7 +170,7 @@ export interface ExtensionState {
 	voiceStreamingSTT: boolean
 	voiceInputDeviceId?: string
 	voiceOutputDeviceId?: string
-	voicePiperVoice: string
+	voiceEdgeTtsVoice: string
 	voiceSilenceThresholdMs: number
 	voiceGracePeriodMs: number
 	voiceMaxRecordingDurationMs: number

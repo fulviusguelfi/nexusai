@@ -8,6 +8,7 @@ import {
 	KeyRound,
 	type LucideIcon,
 	SlidersHorizontal,
+	Smile,
 	SquareMousePointer,
 	SquareTerminal,
 	Volume2,
@@ -26,6 +27,7 @@ import ViewHeader from "../common/ViewHeader"
 import SectionHeader from "./SectionHeader"
 import AboutSection from "./sections/AboutSection"
 import ApiConfigurationSection from "./sections/ApiConfigurationSection"
+import AvatarSettingsSection from "./sections/AvatarSettingsSection"
 import BrowserSettingsSection from "./sections/BrowserSettingsSection"
 import DebugSection from "./sections/DebugSection"
 import FeatureSettingsSection from "./sections/FeatureSettingsSection"
@@ -44,6 +46,7 @@ type SettingsTabID =
 	| "browser"
 	| "terminal"
 	| "voice"
+	| "avatar"
 	| "vault"
 	| "general"
 	| "about"
@@ -93,6 +96,13 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		tooltipText: "Sound Settings",
 		headerText: "Sound Settings",
 		icon: Volume2,
+	},
+	{
+		id: "avatar",
+		name: "Avatar",
+		tooltipText: "Configurações do Avatar",
+		headerText: "Avatar",
+		icon: Smile,
 	},
 	{
 		id: "vault",
@@ -167,6 +177,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 			browser: BrowserSettingsSection,
 			terminal: TerminalSettingsSection,
 			voice: VoiceSettingsSection,
+			avatar: AvatarSettingsSection,
 			vault: VaultSection,
 			"remote-config": RemoteConfigSection,
 			about: AboutSection,

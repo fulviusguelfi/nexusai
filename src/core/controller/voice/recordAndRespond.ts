@@ -70,7 +70,10 @@ async function getVoiceMessenger() {
  */
 export async function recordAndRespond(
 	controller: Controller,
-	request: RecordAndRespondRequest,
+	request: RecordAndRespondRequest & {
+		onAgentCreated?: (agent: VoiceAgent) => void
+		onAgentDestroyed?: () => void
+	},
 ): Promise<RecordAndRespondResponse> {
 	const startTime = Date.now()
 	const totalDurationMs = (): number => Date.now() - startTime
@@ -121,9 +124,9 @@ export async function recordAndRespond(
 		// Step 2: Record audio with VoiceAgent + real-time Vosk STT
 		Logger.log(`${ts()} 🎙️ Step 2: Recording audio with Vosk streaming STT...`)
 
-		// Init Vosk streaming recognizer for real-time partials
+		// Get shared Vosk singleton (already warm from startup) or create new instance
 		const voskInitStart = Date.now()
-		const voskService = new VoskService(controller.context.globalStoragePath, async (partialText: string) => {
+		const voskService = VoskService.getShared(controller.context.globalStoragePath, async (partialText: string) => {
 			// Fired for every new word — send live preview to webview
 			if (partialText) {
 				Logger.log(`[recordAndRespond] Vosk partial: "${partialText}"`)
@@ -137,17 +140,22 @@ export async function recordAndRespond(
 			}
 		})
 
-		const voskReady = await voskService.init()
-		Logger.log(`${ts()} ⏱ Vosk init: ${Date.now() - voskInitStart}ms, ready=${voskReady}`)
+		// If singleton was just created (no worker yet), init it now; otherwise it's already ready
+		let voskReady = !!voskService["worker"]
+		if (!voskReady) {
+			voskReady = await voskService.init()
+		} else {
+			// Reset accumulators for a new session
+			await voskService.reset()
+			voskReady = true
+		}
+		Logger.log(`${ts()} ⏱ Vosk ready=${voskReady} (${Date.now() - voskInitStart}ms)`)
 		if (!voskReady) {
 			Logger.warn("[recordAndRespond] Vosk model not available — STT will return empty transcript")
 		}
 
 		const agent = new VoiceAgent({
 			maxDuration: request.maxDurationMs || 120000,
-			silenceThreshold: request.silenceThreshold || 0.01,
-			silenceDurationMs: request.silenceDurationMs || 700,
-			gracePeriodMs: request.gracePeriodMs ?? 2000,
 			deviceId: request.inputDeviceId || undefined,
 			// Feed each speech chunk directly to Vosk (sub-200ms real-time partials)
 			onSpeechChunk: voskReady ? (chunk: Buffer) => voskService.acceptChunk(chunk) : undefined,
@@ -182,8 +190,10 @@ export async function recordAndRespond(
 			},
 		})
 
-		// Store reference for stop_voice_recording RPC
+		// Store reference for stop_voice_recording RPC (both module-level + Provider instance)
 		setActiveVoiceAgent(agent)
+		request.onAgentCreated?.(agent)
+		Logger.log(`[recordAndRespond] Agent registered at T=${Date.now()}`)
 
 		let recordResult: any
 		try {
@@ -191,7 +201,9 @@ export async function recordAndRespond(
 		} finally {
 			// Clear active agent reference
 			setActiveVoiceAgent(null)
-			agent.destroy()
+			request.onAgentDestroyed?.()
+			Logger.log(`[recordAndRespond] finally: calling agent.stop(from=finally) at T=${Date.now()}`)
+			agent.stop("finally")
 		}
 
 		if (!recordResult || recordResult.error) {

@@ -5,7 +5,8 @@
 // Protocol: newline-delimited JSON over stdin/stdout.
 //   stdin  (parent → worker): { type: 'init', modelPath, sampleRate? }
 //                              { type: 'chunk', data: '<base64 PCM>' }
-//                              { type: 'finalize' }
+//                              { type: 'finalize' }   ← flushes result, keeps model alive, sends 'ready'
+//                              { type: 'reset' }      ← free recognizer, create new one, sends 'ready'
 //                              { type: 'exit' }
 //   stdout (worker → parent): { type: 'ready' }
 //                              { type: 'partial', partial: '...' }
@@ -17,6 +18,7 @@ const vosk = require("vosk")
 
 let model = null
 let recognizer = null
+let currentSampleRate = 16000
 let inputBuf = ""
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -70,14 +72,31 @@ function cleanup() {
 	}
 }
 
+function resetRecognizer() {
+	if (recognizer) {
+		try {
+			recognizer.free()
+		} catch (_) {}
+		recognizer = null
+	}
+	if (model) {
+		try {
+			recognizer = new vosk.Recognizer({ model, sampleRate: currentSampleRate })
+		} catch (e) {
+			send({ type: "error", message: String(e) })
+		}
+	}
+}
+
 // ─── message handler ─────────────────────────────────────────────────────────
 
 function handleMsg(msg) {
 	if (msg.type === "init") {
 		vosk.setLogLevel(-1)
 		try {
+			currentSampleRate = msg.sampleRate || 16000
 			model = new vosk.Model(msg.modelPath)
-			recognizer = new vosk.Recognizer({ model, sampleRate: msg.sampleRate || 16000 })
+			recognizer = new vosk.Recognizer({ model, sampleRate: currentSampleRate })
 			send({ type: "ready" })
 		} catch (e) {
 			send({ type: "error", message: String(e) })
@@ -100,7 +119,13 @@ function handleMsg(msg) {
 		}
 		const text = extractText(recognizer.finalResult())
 		send({ type: "final", text })
-		cleanup()
+		// Keep model alive — reset recognizer for next session
+		resetRecognizer()
+		send({ type: "ready" })
+	} else if (msg.type === "reset") {
+		// Discard current recognizer, create fresh one (no result returned)
+		resetRecognizer()
+		send({ type: "ready" })
 	} else if (msg.type === "exit") {
 		cleanup()
 		process.exit(0)

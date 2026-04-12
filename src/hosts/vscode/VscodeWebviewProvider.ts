@@ -65,6 +65,8 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 	private webview?: vscode.WebviewView
 	private disposables: vscode.Disposable[] = []
+	/** Direct reference to the currently active VoiceAgent — set/cleared in start_voice_recording handler */
+	private _activeVoiceAgent: import("@services/voice/VoiceAgent").VoiceAgent | null = null
 
 	override getWebviewUrl(path: string) {
 		if (!this.webview) {
@@ -112,6 +114,20 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// Sets up an event listener to listen for messages passed from the webview view context
 		// and executes code based on the message that is received
 		this.setWebviewMessageListener(webviewView.webview)
+
+		// Pre-warm Vosk singleton so the model is ready before the first recording click
+		void import("@/services/voice/VoskService").then(({ VoskService }) => {
+			VoskService.warmUp(this.controller.context.globalStoragePath).catch((err) => {
+				Logger.warn("[VscodeWebviewProvider] VoskService warmUp failed:", err)
+			})
+		})
+
+		// Pre-warm FFmpeg/dshow so READY_TO_LISTEN is instantaneous on first mic click
+		void import("@/services/audio/AudioCapturePool").then(({ AudioCapturePool }) => {
+			AudioCapturePool.preWarm().catch((err: unknown) => {
+				Logger.warn("[VscodeWebviewProvider] AudioCapturePool preWarm failed:", err)
+			})
+		})
 
 		// Logs show up in bottom panel > Debug Console
 		//Logger.log("registering listener")
@@ -168,7 +184,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// if the extension is starting a new session, clear previous task state
 		this.controller.clearTask()
 
-		// Wire VoiceSessionManager speak requests → PiperService → webview audio (sentence streaming)
+		// Wire VoiceSessionManager speak requests → Edge TTS → webview audio (sentence streaming)
 		void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 			Logger.log("[VscodeWebviewProvider] Registering onSpeakRequest listener")
 			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (text: string) => {
@@ -178,24 +194,21 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					`[TTS] 🎙️ ${tts()} onSpeakRequest FIRED — ${text?.length ?? 0} chars: "${text?.substring(0, 60)}${(text?.length ?? 0) > 60 ? "..." : ""}"`,
 				)
 				try {
-					const { PiperService } = await import("@services/voice/PiperService")
 					const { RhubarbService } = await import("@services/voice/RhubarbService")
 					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
-					const voicePiperVoice =
-						(this.controller.stateManager.getGlobalStateKey("voicePiperVoice") as string | undefined) ??
-						"en_US-lessac-medium"
+					const { synthesizeEdgeTts } = await import("@services/voice/EdgeTtsService")
+					const voiceEdgeTtsVoice =
+						(this.controller.stateManager.getGlobalStateKey("voiceEdgeTtsVoice") as string | undefined) ??
+						"pt-BR-FranciscaNeural"
 
 					const sentences = splitIntoSentences(text).filter((s) => s.trim())
-					Logger.log(`[TTS] ${tts()} 🎵 ${sentences.length} sentence(s), voice="${voicePiperVoice}"`)
+					Logger.log(`[TTS] ${tts()} 🎵 ${sentences.length} sentence(s), voice="${voiceEdgeTtsVoice}"`)
 
 					// ── Pipeline helper: synthesize one sentence + extract lip sync ────────────
 					const synthesize = async (sentence: string, idx: number) => {
 						const t0 = Date.now()
 						Logger.log(`[TTS] ${tts()} 🔤 Synth[${idx + 1}]: "${sentence.substring(0, 60)}"`)
-						const wavBuf = await PiperService.getInstance(this.controller.context.globalStoragePath).synthesize(
-							sentence,
-							voicePiperVoice,
-						)
+						const wavBuf = await synthesizeEdgeTts(sentence, voiceEdgeTtsVoice)
 						const synthMs = Date.now() - t0
 						Logger.log(`[TTS] ${tts()} ✅ Synth[${idx + 1}] done: ${wavBuf.length}B in ${synthMs}ms`)
 						const lipT = Date.now()
@@ -207,17 +220,11 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					}
 
 					// ── Broadcast helpers — route to BOTH editor panel and sidebar ────────────
-					// EditorPanel: useAvatarState drives lip sync via performance.now() ✅
-					//              audio.play() blocked by autoplay policy there — silent fail ✅
-					// Sidebar:     AudioPlayer (in VoiceRecorder) plays actual audio after user
-					//              gesture — succeeds because user just clicked the mic button ✅
 					const broadcast = (msg: ExtensionMessage) => {
 						const gm = getGlobalVoiceMessenger()
 						if (gm) {
 							void gm(msg)
 						}
-						// Always also send to sidebar: AudioPlayer needs voice_agent_state_changed
-						// to mount (PLAYING state) and voice_audio_play to play the WAV.
 						void this.postMessageToWebview(msg)
 					}
 
@@ -227,12 +234,9 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					try {
 						if (sentences.length === 0) return
 
-						// Give React a moment to mount AudioPlayer before the first voice_audio_play arrives.
-						// Pre-synthesize the first sentence during this window (net zero extra delay).
-						Logger.log(`[TTS] ${tts()} 🚀 Pre-synthesizing sentence 1 (AudioPlayer mounting...)`)
-						const preDelay = new Promise<void>((r) => setTimeout(r, 80)) // ~2 React render cycles
+						// Pre-synthesize the first sentence while broadcasting PLAYING state.
+						Logger.log(`[TTS] ${tts()} 🚀 Pre-synthesizing sentence 1...`)
 						let nextSynth: Promise<{ wavBuf: Buffer; phonemeTimeline: any[] }> = synthesize(sentences[0], 0)
-						await preDelay // wait for AudioPlayer to mount
 
 						for (let i = 0; i < sentences.length; i++) {
 							// Await synthesis of the current sentence
@@ -247,8 +251,6 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 							const durationMs = getWavDurationMs(wavBuf)
 							Logger.log(`[TTS] ${tts()} 🔊 Playing sentence ${i + 1}/${sentences.length}: ${durationMs}ms`)
 
-							// Send WAV + phonemes to the active webview (editor panel or sidebar).
-							// AudioPlayer.tsx will play the audio; useAvatarState will drive lip sync.
 							broadcast({
 								type: "voice_audio_play",
 								voice_audio_play: { wavBase64: wavBuf.toString("base64"), phonemeTimeline },
@@ -419,6 +421,7 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						Logger.log("[VscodeWebviewProvider] Speaker gate active — ignoring recording request during TTS")
 						break
 					}
+					Logger.log(`[VscodeWebviewProvider] start_voice_recording received at T=${Date.now()}`)
 					const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 					const rec = message.start_voice_recording!
 					const voiceInputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceInputDeviceId") as
@@ -428,6 +431,12 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 						voiceInputDeviceId: voiceInputDeviceId || "UNDEFINED - will try first available device",
 					})
 					const response = await recordAndRespond(this.controller, {
+						onAgentCreated: (agent) => {
+							this._activeVoiceAgent = agent
+						},
+						onAgentDestroyed: () => {
+							this._activeVoiceAgent = null
+						},
 						silenceDurationMs: rec.silenceThresholdMs || 700,
 						gracePeriodMs: rec.gracePeriodMs ?? 2000,
 						maxDurationMs: rec.maxDurationMs || 120000,
@@ -462,8 +471,18 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				break
 			}
 			case "stop_voice_recording": {
-				const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
-				getActiveVoiceAgent()?.destroy()
+				const ts = Date.now()
+				const agent = this._activeVoiceAgent
+				Logger.log(`[VscodeWebviewProvider] stop_voice_recording received at T=${ts}, agent=${agent ? "found" : "null"}`)
+				if (agent) {
+					agent.stop("user-button")
+				} else {
+					// Fallback: dynamic import path (module-level singleton)
+					const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
+					const fallbackAgent = getActiveVoiceAgent()
+					Logger.log(`[VscodeWebviewProvider] stop fallback, agent=${fallbackAgent ? "found" : "null"}`)
+					fallbackAgent?.stop("user-button-fallback")
+				}
 				break
 			}
 			case "voice_mic_diagnostic_result": {

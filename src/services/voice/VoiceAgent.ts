@@ -5,8 +5,8 @@
  */
 
 import { Logger } from "@/shared/services/Logger"
+import { AudioCapturePool } from "../audio/AudioCapturePool"
 import { WindowsAudioCapture } from "../audio/WindowsAudioCapture"
-import { SilenceDetector } from "./SilenceDetector"
 import { VoiceDeviceManager } from "./VoiceDeviceManager"
 import { VoiceError, VoiceErrorMapper } from "./VoiceErrorMapper"
 
@@ -21,10 +21,13 @@ export enum VoiceAgentState {
 }
 
 export interface VoiceAgentOptions {
-	maxDuration?: number // Max recording time in milliseconds (default: 30000)
-	silenceThreshold?: number // RMS threshold for silence (default: 0.01)
-	silenceDurationMs?: number // Duration of silence to detect (milliseconds, default: 700)
-	gracePeriodMs?: number // Grace period after READY_TO_LISTEN before silence can auto-stop (default: 2000)
+	maxDuration?: number // Max recording time in milliseconds (default: 120000)
+	/** @deprecated PTT mode — silence detection is no longer used */
+	silenceThreshold?: number
+	/** @deprecated PTT mode — silence detection is no longer used */
+	silenceDurationMs?: number
+	/** @deprecated PTT mode — grace period is no longer used */
+	gracePeriodMs?: number
 	deviceId?: string // Explicit device to use e.g. "audio=Device Name" (default: auto-detect)
 	stateCallback?: (state: VoiceAgentState, context?: string) => void
 	errorCallback?: (error: VoiceError) => void
@@ -47,7 +50,11 @@ export class VoiceAgent {
 	private audioCapture: WindowsAudioCapture | null = null
 	private abortController: AbortController | null = null
 	private activeDevice: { name: string; id: string } | null = null
-	private options: Required<Omit<VoiceAgentOptions, "deviceId" | "onPartialAudio" | "onSpeechChunk">>
+	private options: {
+		maxDuration: number
+		stateCallback: (state: VoiceAgentState, context?: string) => void
+		errorCallback: (error: VoiceError) => void
+	}
 	private readonly deviceId: string | undefined
 	private readonly onPartialAudio: ((buffer: Buffer, durationMs: number) => void) | undefined
 	private readonly onSpeechChunk: ((chunk: Buffer) => void) | undefined
@@ -62,9 +69,6 @@ export class VoiceAgent {
 		this.onSpeechChunk = options.onSpeechChunk
 		this.options = {
 			maxDuration: options.maxDuration || 120000,
-			silenceThreshold: options.silenceThreshold || 0.01,
-			silenceDurationMs: options.silenceDurationMs || 700,
-			gracePeriodMs: options.gracePeriodMs ?? 2000,
 			stateCallback: options.stateCallback || (() => {}),
 			errorCallback: options.errorCallback || (() => {}),
 		}
@@ -72,12 +76,7 @@ export class VoiceAgent {
 		this.stateCallback = this.options.stateCallback
 		this.errorCallback = this.options.errorCallback
 
-		Logger.log("[VoiceAgent] Initialized with config:", {
-			maxDuration: this.options.maxDuration,
-			silenceThreshold: this.options.silenceThreshold,
-			silenceDurationMs: this.options.silenceDurationMs,
-			gracePeriodMs: this.options.gracePeriodMs,
-		})
+		Logger.log("[VoiceAgent] Initialized with config:", { maxDuration: this.options.maxDuration })
 
 		this.setState(VoiceAgentState.IDLE, "Ready")
 	}
@@ -96,15 +95,7 @@ export class VoiceAgent {
 			// Step 2: Record audio
 			const audioBuffer = await this.captureAudio()
 
-			// Step 3: Validate audio quality
-			const quality = SilenceDetector.analyze(audioBuffer, this.options.silenceThreshold)
-			Logger.log(`[VoiceAgent] Audio quality: ${SilenceDetector.getDescription(quality)}`)
-
-			if (quality.isSilence) {
-				throw new Error("SILENCE_DETECTED")
-			}
-
-			// Step 4: Transition to processing
+			// Step 3: Transition to processing
 			this.setState(VoiceAgentState.PROCESSING, "Converting speech to text...")
 
 			// Note: STT/LLM/TTS would be handled by separate services
@@ -155,15 +146,10 @@ export class VoiceAgent {
 	}
 
 	/**
-	 * Capture audio from microphone with real-time silence detection.
+	 * Capture audio from microphone — push-to-talk mode.
 	 *
-	 * Pipeline:
-	 *   1. Warmup: discard first chunk (dshow instability on Windows)
-	 *   2. READY_TO_LISTEN: signal UI when FFmpeg is stable
-	 *   3. Pre-roll ring buffer: keep last N chunks before speech onset
-	 *   4. Speech detection: inject pre-roll + start recording
-	 *   5. Silence detection: stop after silence threshold (with grace period)
-	 *   6. Idle timeout: auto-cancel if no speech within 10s
+	 * Fast path (pool): FFmpeg already running → READY_TO_LISTEN is instantaneous.
+	 * Fallback path: fresh FFmpeg start with 1-chunk warmup (~500ms).
 	 */
 	private async captureAudio(): Promise<Buffer> {
 		if (!this.audioCapture) {
@@ -176,73 +162,68 @@ export class VoiceAgent {
 			const captureStart = Date.now()
 			const tsc = () => `[T+${Date.now() - captureStart}ms]`
 
-			// === Timing & accumulation ===
 			let totalRecordedMs = 0
 			let chunkIndex = 0
 
-			// === Silence detection ===
-			let silenceDurationAccumulated = 0
-			let hasDetectedSpeech = false
-
-			// === Warmup: discard first chunk (dshow init instability) ===
-			let isWarmupComplete = false
-			let warmupChunksDiscarded = 0
-			const WARMUP_CHUNKS = 1
-
-			// === Pre-roll ring buffer (~1.5s before speech onset) ===
-			const PREROLL_MAX_CHUNKS = 3
-			const preRollBuffer: Buffer[] = []
-			let speechStarted = false
-
-			// === Streaming partial transcription accumulation ===
-			// Every ~3 seconds of speech, call onPartialAudio with the full accumulated buffer
-			const PARTIAL_INTERVAL_BYTES = 16000 * 2 * 3 // 3s at 16kHz 16-bit mono = 96000 bytes
-			const streamingAcc: Buffer[] = []
-			let streamingBytesSinceCallback = 0
-
-			// === Grace period + idle timeout ===
-			const GRACE_PERIOD_MS = this.options.gracePeriodMs // after READY_TO_LISTEN before silence can auto-stop
-			const IDLE_TIMEOUT_MS = 10000 // 10s without speech → auto-cancel
-			let gracePeriodActive = true
-			let gracePeriodTimer: NodeJS.Timeout | null = null
-			let idleTimer: NodeJS.Timeout | null = null
-
-			const clearTimers = () => {
-				if (gracePeriodTimer) {
-					clearTimeout(gracePeriodTimer)
-					gracePeriodTimer = null
-				}
-				if (idleTimer) {
-					clearTimeout(idleTimer)
-					idleTimer = null
-				}
-			}
-
 			const timeoutId = setTimeout(() => {
 				Logger.warn(`${tsc()} [VoiceAgent] Max duration reached, stopping capture`)
-				clearTimers()
-				if (this.audioCapture) {
-					this.audioCapture.stopCapture()
-				}
+				this.audioCapture?.stopCapture()
 				this.setState(VoiceAgentState.ERROR, "Recording exceeded max duration")
 				reject(new Error("CAPTURE_TIMEOUT"))
 			}, this.options.maxDuration)
 
-			// Handle abort signal (user-initiated stop)
+			// Handle abort signal (destroy-path — cancel without returning audio)
 			this.abortController?.signal.addEventListener("abort", () => {
 				clearTimeout(timeoutId)
-				clearTimers()
 				this.audioCapture?.stopCapture()
 				reject(new Error("Recording cancelled"))
 			})
 
-			try {
-				if (!this.audioCapture) {
-					clearTimeout(timeoutId)
-					reject(new Error("FFMPEG_SPAWN_ERROR"))
-					return
+			const onComplete = () => {
+				clearTimeout(timeoutId)
+				const buffer = this.audioCapture?.stopCapture() ?? Buffer.alloc(0)
+				if (buffer.length > 0) {
+					Logger.log(
+						`${tsc()} [VoiceAgent] Capture complete — ${buffer.length} bytes, ~${totalRecordedMs.toFixed(0)}ms`,
+					)
+					resolve(buffer)
+				} else {
+					reject(new Error("No audio captured"))
 				}
-				const capture = this.audioCapture
+			}
+
+			const onCaptureError = (error: unknown) => {
+				clearTimeout(timeoutId)
+				reject(error)
+			}
+
+			const deliverChunk = (chunk: Buffer) => {
+				chunkIndex++
+				const realChunkMs = (chunk.length / 2 / 16000) * 1000
+				totalRecordedMs += realChunkMs
+				Logger.log(`${tsc()} [VoiceAgent] Chunk #${chunkIndex} | ${chunk.length}B | ${realChunkMs.toFixed(0)}ms`)
+				if (this.onSpeechChunk) {
+					this.onSpeechChunk(chunk)
+				}
+			}
+
+			// === Fast path: pool capture already warm — READY_TO_LISTEN instantaneous ===
+			const pooled = AudioCapturePool.lease()
+			if (pooled) {
+				this.audioCapture = pooled.capture // update ref so stop() targets the right process
+				pooled.capture.resetBuffer()
+				pooled.capture.setChunkCallback(deliverChunk)
+				pooled.capture.markRecordingStart()
+				this.setState(VoiceAgentState.READY_TO_LISTEN, "Pode falar agora")
+				Logger.log(`${tsc()} 🎙️ POOL — READY_TO_LISTEN instantaneous (zero warmup)`)
+				pooled.promise.then(onComplete).catch(onCaptureError)
+				return
+			}
+
+			// === Fallback path: fresh FFmpeg start with 1-chunk warmup ===
+			try {
+				const capture = this.audioCapture!
+				let isWarmupComplete = false
 				capture
 					.startCapture({
 						duration: this.options.maxDuration / 1000,
@@ -251,142 +232,33 @@ export class VoiceAgent {
 						deviceId: this.activeDevice?.name,
 						onChunk: (chunk: Buffer) => {
 							chunkIndex++
-							// Real chunk duration calculated from actual bytes (not a hardcoded estimate)
 							const realChunkMs = (chunk.length / 2 / 16000) * 1000
 
-							// === WARMUP: discard first chunk(s) — dshow is unstable at startup ===
+							// Discard first chunk — dshow is unstable at startup
 							if (!isWarmupComplete) {
-								warmupChunksDiscarded++
+								isWarmupComplete = true
+								capture.markRecordingStart()
+								this.setState(VoiceAgentState.READY_TO_LISTEN, "Pode falar agora")
 								Logger.log(
-									`${tsc()} [VoiceAgent] Warmup #${warmupChunksDiscarded}: discarded ${chunk.length}B (${realChunkMs.toFixed(0)}ms) — dshow stabilizing`,
+									`${tsc()} 🎙️ FFmpeg READY — dshow estabilizado (warmup: ${chunk.length}B / ${realChunkMs.toFixed(0)}ms)`,
 								)
-								if (warmupChunksDiscarded >= WARMUP_CHUNKS) {
-									isWarmupComplete = true
-									capture.markRecordingStart()
-									this.setState(VoiceAgentState.READY_TO_LISTEN, "Pode falar agora")
-									Logger.log(`${tsc()} 🎙️ FFmpeg READY — dshow estabilizado, aguardando fala`)
-
-									// Grace period: give user 2s to start speaking before silence detection
-									gracePeriodTimer = setTimeout(() => {
-										gracePeriodActive = false
-										Logger.log(`${tsc()} [VoiceAgent] Grace period ended — silence detection active`)
-									}, GRACE_PERIOD_MS)
-
-									// Idle timeout: auto-cancel if no speech within 10s
-									idleTimer = setTimeout(() => {
-										if (!hasDetectedSpeech) {
-											Logger.log(`${tsc()} [VoiceAgent] Idle timeout — no speech in ${IDLE_TIMEOUT_MS}ms`)
-											capture.stopCapture()
-											clearTimeout(timeoutId)
-											reject(new Error("IDLE_TIMEOUT"))
-										}
-									}, IDLE_TIMEOUT_MS)
-								}
-								return // Do not process warmup chunk further
+								return
 							}
 
-							// === Post-warmup: process audio ===
+							// Deliver every post-warmup chunk directly to Vosk
 							totalRecordedMs += realChunkMs
-							const quality = SilenceDetector.analyze(chunk, this.options.silenceThreshold)
-
 							Logger.log(
-								`${tsc()} [VoiceAgent] Chunk #${chunkIndex} | ${chunk.length}B | ${realChunkMs.toFixed(0)}ms | RMS=${quality.rmsLevel.toFixed(4)} | ${quality.quality} | silent=${quality.isSilence}`,
+								`${tsc()} [VoiceAgent] Chunk #${chunkIndex} | ${chunk.length}B | ${realChunkMs.toFixed(0)}ms`,
 							)
-
-							// === PRE-ROLL: ring buffer before speech onset ===
-							if (!speechStarted) {
-								if (!quality.isSilence) {
-									speechStarted = true
-									hasDetectedSpeech = true
-									silenceDurationAccumulated = 0
-									if (idleTimer) {
-										clearTimeout(idleTimer)
-										idleTimer = null
-									}
-
-									if (preRollBuffer.length > 0) {
-										const preRollData = Buffer.concat(preRollBuffer)
-										capture.prependToBuffer(preRollData) // Also feed pre-roll to Vosk so it hears the word onset
-										if (this.onSpeechChunk) {
-											for (const preChunk of preRollBuffer) {
-												this.onSpeechChunk(preChunk)
-											}
-										}
-										Logger.log(
-											`${tsc()} 🗣️ Speech detected — pre-roll injetado: ${preRollBuffer.length} chunks (${preRollData.length}B)`,
-										)
-									} else {
-										Logger.log(
-											`${tsc()} 🗣️ Speech detected — chunk #${chunkIndex}, RMS=${quality.rmsLevel.toFixed(4)}`,
-										)
-									}
-									preRollBuffer.length = 0
-								} else {
-									// Still waiting for speech — maintain ring buffer
-									preRollBuffer.push(chunk)
-									if (preRollBuffer.length > PREROLL_MAX_CHUNKS) {
-										preRollBuffer.shift()
-									}
-								}
-							}
-
-							// === SILENCE DETECTION (only after speech started) ===
-							if (hasDetectedSpeech) {
-								if (!quality.isSilence) {
-									silenceDurationAccumulated = 0
-								} else {
-									silenceDurationAccumulated += realChunkMs
-									Logger.log(
-										`${tsc()} [VoiceAgent] Silence: ${silenceDurationAccumulated.toFixed(0)}ms / ${this.options.silenceDurationMs}ms`,
-									)
-									if (!gracePeriodActive && silenceDurationAccumulated >= this.options.silenceDurationMs) {
-										Logger.log(
-											`${tsc()} 🔇 Silence threshold reached — stopping capture (recorded: ${totalRecordedMs.toFixed(0)}ms)`,
-										)
-										capture.stopCapture()
-									}
-								}
-
-								// === PER-CHUNK CALLBACK: feed each speech chunk to Vosk (or legacy 3s partial) ===
-								if (this.onSpeechChunk) {
-									// Vosk streaming: deliver every chunk immediately
-									Logger.log(`[VoiceAgent] 🔊 onSpeechChunk chunk#${chunkIndex} (${chunk.length}B)`)
-									this.onSpeechChunk(chunk)
-								} else if (this.onPartialAudio) {
-									// Legacy: accumulate and fire every 3s (Whisper batch mode)
-									streamingAcc.push(chunk)
-									streamingBytesSinceCallback += chunk.length
-									if (streamingBytesSinceCallback >= PARTIAL_INTERVAL_BYTES) {
-										streamingBytesSinceCallback = 0
-										const partialBuf = Buffer.concat(streamingAcc)
-										const durationMs = (partialBuf.length / 2 / 16000) * 1000
-										this.onPartialAudio(partialBuf, durationMs)
-									}
-								}
+							if (this.onSpeechChunk) {
+								this.onSpeechChunk(chunk)
 							}
 						},
 					})
-					.then(() => {
-						clearTimeout(timeoutId)
-						clearTimers()
-						const buffer = this.audioCapture?.stopCapture()
-						if (buffer && buffer.length > 0) {
-							Logger.log(
-								`${tsc()} [VoiceAgent] Capture complete — ${buffer.length} bytes, ~${totalRecordedMs.toFixed(0)}ms recorded`,
-							)
-							resolve(buffer)
-						} else {
-							reject(new Error("No audio captured"))
-						}
-					})
-					.catch((error) => {
-						clearTimeout(timeoutId)
-						clearTimers()
-						reject(error)
-					})
+					.then(onComplete)
+					.catch(onCaptureError)
 			} catch (error) {
 				clearTimeout(timeoutId)
-				clearTimers()
 				reject(error)
 			}
 		})
@@ -438,9 +310,12 @@ export class VoiceAgent {
 
 	/**
 	 * Stop recording immediately (user-initiated stop, e.g., push-to-talk release)
+	 * @param source - identifies caller for log tracing (e.g. "user-button", "finally", "stopIfRecording")
 	 */
-	stop(): void {
-		Logger.log("[VoiceAgent] User requested stop, halting capture...")
+	stop(source = "user"): void {
+		Logger.log(
+			`[VoiceAgent] stop() called [source=${source}] at T=${Date.now()}, audioCapture=${this.audioCapture ? "present" : "null"}`,
+		)
 		this.audioCapture?.stopCapture()
 	}
 

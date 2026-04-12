@@ -24,6 +24,7 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 
 	private panel?: vscode.WebviewPanel
 	private disposables: vscode.Disposable[] = []
+	private _activeVoiceAgent: import("@services/voice/VoiceAgent").VoiceAgent | null = null
 
 	override getWebviewUrl(filePath: string) {
 		if (!this.panel) {
@@ -212,7 +213,14 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 						maxDurationMs,
 					})
 
+					Logger.log(`[EditorWebviewPanelProvider] start_voice_recording received at T=${Date.now()}`)
 					const response = await recordAndRespond(this.controller, {
+						onAgentCreated: (agent) => {
+							this._activeVoiceAgent = agent
+						},
+						onAgentDestroyed: () => {
+							this._activeVoiceAgent = null
+						},
 						silenceDurationMs: silenceThresholdMs,
 						gracePeriodMs,
 						maxDurationMs,
@@ -255,6 +263,23 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 							errorMessage: `Voice recording error: ${err instanceof Error ? err.message : String(err)}`,
 						},
 					})
+				}
+				return
+			}
+
+			if (message.type === "stop_voice_recording") {
+				const ts = Date.now()
+				const agent = this._activeVoiceAgent
+				Logger.log(
+					`[EditorWebviewPanelProvider] stop_voice_recording received at T=${ts}, agent=${agent ? "found" : "null"}`,
+				)
+				if (agent) {
+					agent.stop("user-button")
+				} else {
+					const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
+					const fallbackAgent = getActiveVoiceAgent()
+					Logger.log(`[EditorWebviewPanelProvider] stop fallback, agent=${fallbackAgent ? "found" : "null"}`)
+					fallbackAgent?.stop("user-button-fallback")
 				}
 				return
 			}

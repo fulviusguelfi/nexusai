@@ -840,7 +840,8 @@ export class Task {
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
 				if (
-					(type === "text" || (type === "completion_result" && this.taskState.isVoiceInput)) &&
+					(type === "text" || type === "completion_result") &&
+					this.taskState.isVoiceInput &&
 					text &&
 					this.stateManager.getGlobalStateKey("voiceTtsEnabled")
 				) {
@@ -868,7 +869,8 @@ export class Task {
 			})
 			await this.postStateToWebview()
 			if (
-				(type === "text" || (type === "completion_result" && this.taskState.isVoiceInput)) &&
+				(type === "text" || type === "completion_result") &&
+				this.taskState.isVoiceInput &&
 				text &&
 				this.stateManager.getGlobalStateKey("voiceTtsEnabled")
 			) {
@@ -914,7 +916,8 @@ export class Task {
 		})
 		await this.postStateToWebview()
 		if (
-			(type === "text" || (type === "completion_result" && this.taskState.isVoiceInput)) &&
+			(type === "text" || type === "completion_result") &&
+			this.taskState.isVoiceInput &&
 			text &&
 			this.stateManager.getGlobalStateKey("voiceTtsEnabled")
 		) {

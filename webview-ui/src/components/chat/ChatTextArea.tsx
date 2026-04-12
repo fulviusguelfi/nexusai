@@ -15,7 +15,7 @@ import SlashCommandMenu from "@/components/chat/SlashCommandMenu"
 import Thumbnails from "@/components/common/Thumbnails"
 import { getModeSpecificFields, normalizeApiConfiguration } from "@/components/settings/utils/providerUtils"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import VoiceRecorder from "@/components/voice/VoiceRecorder"
+import VoiceRecorder, { type VoiceRecorderHandle } from "@/components/voice/VoiceRecorder"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { cn } from "@/lib/utils"
@@ -245,6 +245,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [selectedSlashCommandsIndex, setSelectedSlashCommandsIndex] = useState(0)
 		const [slashCommandsQuery, setSlashCommandsQuery] = useState("")
 		const slashCommandsMenuContainerRef = useRef<HTMLDivElement>(null)
+		const voiceRecorderRef = useRef<VoiceRecorderHandle>(null)
 
 		const [thumbnailsHeight, setThumbnailsHeight] = useState(0)
 		const [textAreaBaseHeight, setTextAreaBaseHeight] = useState<number | undefined>(undefined)
@@ -463,6 +464,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		)
 		const handleKeyDown = useCallback(
 			(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+				// Stop voice recording on any printable key or Backspace (keyboard PTT release or typing while recording)
+				if ((event.key.length === 1 || event.key === "Backspace") && !event.ctrlKey && !event.metaKey) {
+					voiceRecorderRef.current?.stopIfRecording()
+				}
+
 				const isSelectAllShortcut =
 					(event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "a"
 				if (isSelectAllShortcut) {
@@ -591,6 +597,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 					if (!effectiveSendingDisabled) {
 						setIsTextAreaFocused(false)
+						voiceRecorderRef.current?.stopIfRecording()
 						onSend()
 					}
 				}
@@ -1444,7 +1451,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}}
 						onFocus={() => {
 							setIsTextAreaFocused(true)
-							onFocusChange?.(true) // Call prop on focus
+							onFocusChange?.(true)
 						}}
 						onHeightChange={(height) => {
 							if (textAreaBaseHeight === undefined || height < textAreaBaseHeight) {
@@ -1454,6 +1461,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}}
 						onKeyDown={handleKeyDown}
 						onKeyUp={handleKeyUp}
+						onMouseDown={() => {
+							// Fires on every click (even when already focused) — stops active voice recording
+							voiceRecorderRef.current?.stopIfRecording()
+						}}
 						onMouseUp={updateCursorPosition}
 						onPaste={handlePaste}
 						onScroll={() => updateHighlights()}
@@ -1532,7 +1543,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs"
 						style={{ height: textAreaBaseHeight }}>
 						<div className="flex flex-row items-center gap-1">
-							{onTranscription && <VoiceRecorder disabled={sendingDisabled} onTranscription={onTranscription} />}
+							{onTranscription && (
+								<VoiceRecorder
+									disabled={sendingDisabled}
+									onTranscription={onTranscription}
+									ref={voiceRecorderRef}
+								/>
+							)}
 							<div
 								className={cn(
 									"input-icon-button",

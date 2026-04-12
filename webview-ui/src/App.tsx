@@ -14,7 +14,6 @@ import { useExtensionState } from "./context/ExtensionStateContext"
 import { useLayout } from "./context/LayoutContext"
 import { useAvatarState } from "./hooks/useAvatarState"
 import { useExtensionMessages } from "./hooks/useExtensionMessages"
-import { useVoiceAudioPlayer } from "./hooks/useVoiceAudioPlayer"
 import { Providers } from "./Providers"
 import { trpc } from "./services/trpc-client"
 
@@ -47,9 +46,6 @@ const AppContent = () => {
 	} = useExtensionState()
 
 	useClineAuth()
-	// Plays TTS audio in sidebar context (user gesture from mic click → autoplay allowed).
-	// EditorPanel's AudioPlayer also tries but is silently blocked by autoplay policy there.
-	useVoiceAudioPlayer()
 	useExtensionMessages()
 
 	useEffect(() => {
