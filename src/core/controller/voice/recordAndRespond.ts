@@ -1,9 +1,9 @@
 import type { Controller } from "@core/controller"
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
 import type { RecordAndRespondRequest, RecordAndRespondResponse } from "@shared/proto/cline/voice"
+import { FasterWhisperService } from "@/services/voice/FasterWhisperService"
 import { PreFlightChecks } from "@/services/voice/PreFlightChecks"
 import { VoiceAgent, VoiceAgentState } from "@/services/voice/VoiceAgent"
-import { VoskService } from "@/services/voice/VoskService"
 import { Logger } from "@/shared/services/Logger"
 
 /**
@@ -121,15 +121,15 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Preflight checks passed`)
 
-		// Step 2: Record audio with VoiceAgent + real-time Vosk STT
-		Logger.log(`${ts()} 🎙️ Step 2: Recording audio with Vosk streaming STT...`)
+		// Step 2: Record audio with VoiceAgent + real-time faster-whisper STT
+		Logger.log(`${ts()} 🎙️ Step 2: Recording audio with faster-whisper streaming STT...`)
 
-		// Get shared Vosk singleton (already warm from startup) or create new instance
+		// Get shared faster-whisper singleton (already warm from startup) or create new instance
 		const voskInitStart = Date.now()
-		const voskService = VoskService.getShared(controller.context.globalStoragePath, async (partialText: string) => {
+		const sttService = FasterWhisperService.getShared(controller.context.globalStoragePath, async (partialText: string) => {
 			// Fired for every new word — send live preview to webview
 			if (partialText) {
-				Logger.log(`[recordAndRespond] Vosk partial: "${partialText}"`)
+				Logger.log(`[recordAndRespond] STT partial: "${partialText}"`)
 				const messenger = await getVoiceMessenger()
 				if (messenger) {
 					await messenger({
@@ -141,24 +141,24 @@ export async function recordAndRespond(
 		})
 
 		// If singleton was just created (no worker yet), init it now; otherwise it's already ready
-		let voskReady = !!voskService["worker"]
-		if (!voskReady) {
-			voskReady = await voskService.init()
+		let sttReady = !!sttService["worker"]
+		if (!sttReady) {
+			sttReady = await sttService.init()
 		} else {
 			// Reset accumulators for a new session
-			await voskService.reset()
-			voskReady = true
+			await sttService.reset()
+			sttReady = true
 		}
-		Logger.log(`${ts()} ⏱ Vosk ready=${voskReady} (${Date.now() - voskInitStart}ms)`)
-		if (!voskReady) {
-			Logger.warn("[recordAndRespond] Vosk model not available — STT will return empty transcript")
+		Logger.log(`${ts()} ⏱ STT ready=${sttReady} (${Date.now() - voskInitStart}ms)`)
+		if (!sttReady) {
+			Logger.warn("[recordAndRespond] STT not available — transcript will be empty")
 		}
 
 		const agent = new VoiceAgent({
 			maxDuration: request.maxDurationMs || 120000,
 			deviceId: request.inputDeviceId || undefined,
-			// Feed each speech chunk directly to Vosk (sub-200ms real-time partials)
-			onSpeechChunk: voskReady ? (chunk: Buffer) => voskService.acceptChunk(chunk) : undefined,
+			// Feed each speech chunk directly to faster-whisper (rolling partials)
+			onSpeechChunk: sttReady ? (chunk: Buffer) => sttService.acceptChunk(chunk) : undefined,
 			stateCallback: (state: VoiceAgentState, context?: string) => {
 				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
 				// Send state updates to webview (async, non-blocking)
@@ -207,7 +207,7 @@ export async function recordAndRespond(
 		}
 
 		if (!recordResult || recordResult.error) {
-			voskService.free()
+			sttService.free()
 			const errorMsg = recordResult?.error?.userMessage || "Recording failed"
 			Logger.error(`❌ Recording failed: ${errorMsg}`)
 
@@ -223,17 +223,17 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Audio recorded: ${recordResult.duration}ms`)
 
-		// Step 3: Get final transcript from Vosk (no Whisper needed)
-		Logger.log(`${ts()} 🔄 Step 3: Flushing Vosk final transcript...`)
+		// Step 3: Get final transcript from faster-whisper
+		Logger.log(`${ts()} 🔄 Step 3: Flushing STT final transcript...`)
 		const finalStart = Date.now()
-		const transcriptionText = voskReady ? await voskService.getFinalTranscript() : ""
-		Logger.log(`${ts()} ⏱ Vosk finalize: ${Date.now() - finalStart}ms`)
-		voskService.free()
+		const transcriptionText = sttReady ? await sttService.getFinalTranscript() : ""
+		Logger.log(`${ts()} ⏱ STT finalize: ${Date.now() - finalStart}ms`)
+		sttService.free()
 
-		Logger.log(`${ts()} ✍️ Transcrição Vosk: "${transcriptionText}"`)
+		Logger.log(`${ts()} ✍️ Transcrição: "${transcriptionText}"`)
 
-		if (!transcriptionText && voskReady) {
-			Logger.warn("[recordAndRespond] Vosk returned empty transcript")
+		if (!transcriptionText && sttReady) {
+			Logger.warn("[recordAndRespond] STT returned empty transcript")
 		}
 
 		Logger.log(`${ts()} 🏁 Pipeline total: ${totalDurationMs()}ms`)

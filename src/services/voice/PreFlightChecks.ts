@@ -65,18 +65,17 @@ export async function preloadVoiceModels(globalStoragePath: string): Promise<voi
 		Logger.warn(`[Preload] Piper pre-load failed (non-critical): ${e}`)
 	}
 
-	// Vosk STT — download small Portuguese model in background
+	// faster-whisper STT — model auto-downloads from HuggingFace on first use; just log status
 	try {
-		const { VoskService } = await import("@/services/voice/VoskService")
-		if (!VoskService.isModelReady(globalStoragePath)) {
-			Logger.log("[Preload] Vosk model not found — starting background download...")
-			await VoskService.downloadModel(globalStoragePath)
-			Logger.log("[Preload] Vosk model ready")
+		const { FasterWhisperService } = await import("@/services/voice/FasterWhisperService")
+		if (!FasterWhisperService.isModelReady(globalStoragePath)) {
+			Logger.log("[Preload] faster-whisper model not cached — will download on first use")
+			await FasterWhisperService.downloadModel(globalStoragePath)
 		} else {
-			Logger.log("[Preload] Vosk model already present")
+			Logger.log("[Preload] faster-whisper model ready")
 		}
 	} catch (e) {
-		Logger.warn(`[Preload] Vosk model download failed (non-critical): ${e}`)
+		Logger.warn(`[Preload] faster-whisper pre-check failed (non-critical): ${e}`)
 	}
 }
 

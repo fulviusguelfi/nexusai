@@ -136,10 +136,10 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// and executes code based on the message that is received
 		this.setWebviewMessageListener(webviewView.webview)
 
-		// Pre-warm Vosk singleton so the model is ready before the first recording click
-		void import("@/services/voice/VoskService").then(({ VoskService }) => {
-			VoskService.warmUp(this.controller.context.globalStoragePath).catch((err) => {
-				Logger.warn("[VscodeWebviewProvider] VoskService warmUp failed:", err)
+		// Pre-warm FasterWhisper singleton so the model is ready before the first recording click
+		void import("@/services/voice/FasterWhisperService").then(({ FasterWhisperService }) => {
+			FasterWhisperService.warmUp(this.controller.context.globalStoragePath).catch((err) => {
+				Logger.warn("[VscodeWebviewProvider] FasterWhisperService warmUp failed:", err)
 			})
 		})
 
