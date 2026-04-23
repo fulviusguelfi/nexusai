@@ -25,6 +25,7 @@ export class FasterWhisperService {
 	private lastPartial = ""
 	private chunkCount = 0
 	private initResolve: ((ok: boolean) => void) | null = null
+	private initTimeoutId: ReturnType<typeof setTimeout> | null = null
 	private finalResolve: ((text: string) => void) | null = null
 	private resetResolve: (() => void) | null = null
 	private initStartTime = 0
@@ -139,6 +140,16 @@ export class FasterWhisperService {
 			this.worker.on("exit", (code: number | null) => {
 				Logger.log("[FasterWhisperService] Worker exited, code:", code)
 				this.worker = null
+				// Resolve any pending init (worker crashed before sending "ready")
+				if (this.initResolve) {
+					Logger.warn("[FasterWhisperService] Worker exited during init — resolving false")
+					if (this.initTimeoutId) {
+						clearTimeout(this.initTimeoutId)
+						this.initTimeoutId = null
+					}
+					this.initResolve(false)
+					this.initResolve = null
+				}
 				if (this.finalResolve) {
 					this.finalResolve(this.sentenceAccum.join(" ").trim())
 					this.finalResolve = null
@@ -146,6 +157,18 @@ export class FasterWhisperService {
 			})
 
 			this.sendToWorker({ type: "init", sampleRate: 16000 })
+
+			// Safety timeout: first run downloads ~318 MB of models from HuggingFace
+			this.initTimeoutId = setTimeout(() => {
+				this.initTimeoutId = null
+				if (this.initResolve) {
+					Logger.warn("[FasterWhisperService] init() timed out after 300s — killing worker")
+					this.initResolve(false)
+					this.initResolve = null
+					this.worker?.kill()
+					this.worker = null
+				}
+			}, 300_000) // 5 minutes
 		})
 	}
 
@@ -171,6 +194,10 @@ export class FasterWhisperService {
 			const readyMs = Date.now() - this.initStartTime
 			if (this.initResolve) {
 				Logger.log(`[FasterWhisperService] ✅ Worker ready in ${readyMs}ms (model load time)`)
+				if (this.initTimeoutId) {
+					clearTimeout(this.initTimeoutId)
+					this.initTimeoutId = null
+				}
 				this.initResolve(true)
 				this.initResolve = null
 			} else if (this.resetResolve) {
@@ -183,6 +210,10 @@ export class FasterWhisperService {
 		} else if (msg.type === "error") {
 			Logger.error("[FasterWhisperService] Worker error:", msg.message)
 			if (this.initResolve) {
+				if (this.initTimeoutId) {
+					clearTimeout(this.initTimeoutId)
+					this.initTimeoutId = null
+				}
 				this.initResolve(false)
 				this.initResolve = null
 			}
