@@ -270,17 +270,19 @@ pull requests
 - **Suite completa**: 1244 testes passando, 3 falhas pré-existentes em `BannerService` (timeout)
 - **Commits**: `c59a67d`, `66db2c6`, `e72e22a`, `a8d431b`
 
-### Fase 4 — IoT (MQTT, HTTP, Operação de Dispositivos) ✅ _(concluído em 2026-03-14)_
-- **Handlers implementados**: `discover_devices`, `register_device`, `get_device_info`, `http_request`, `mqtt_connect`, `mqtt_publish`, `mqtt_subscribe`, `mqtt_disconnect`, `operate_device`
-- **Serviços**: `DeviceRegistry`, `MqttConnectionRegistry`, `DeviceCommandAdapter`, `DeviceIdentificationService`
-- **SSRF Guard**: `http_request` bloqueia IPs privados por padrão (`trusted_local` flag para rede local)
-- **DeviceCommandAdapter**: despacha comandos para MQTT, HTTP ou SSH conforme protocolo do dispositivo
-- **IotDevicesPanelProvider**: painel `nexusai.iotPanel` na Activity Bar
-- **MockMqttBroker**: broker em memória para testes E2E (porta 1884)
-- **Testes E2E**: 13 cenários IoT, 37 testes passando, 2 skipped (dependências externas)
-- **Testes unitários**: `DeviceRegistry`, `MqttConnectionRegistry`, `DeviceIdentificationService`
-- **Issues**: [#23](https://github.com/fulviusguelfi/nexusai/issues/23), [#24](https://github.com/fulviusguelfi/nexusai/issues/24), [#25](https://github.com/fulviusguelfi/nexusai/issues/25), [#26](https://github.com/fulviusguelfi/nexusai/issues/26) — todos fechados
-- **Wiki**: `docs/wiki/Fase-4-IoT.md`
+### Fase 4 — SSH e Rede ❌ **CANCELADA PROPOSITALMENTE**
+- Todo código removido do branch principal em `commit fce94f31d`
+- Motivo: Funcionalidades de SSH e IoT serão implementadas como **Agentes MCP independentes** e não mais no core da extensão
+- Arquivo de referência mantido em `docs/archived/Fase-3-SSH.md`
+- Esta decisão permite manter o core pequeno, estável e focado na experiência de voz e loop principal da IA
+
+### Fase 5 — Voz Local (Piper TTS, Whisper STT) ✅ _(concluído em 2026-03-29)_
+✅ Funcionalmente Completo (STT + TTS operacionais em produção)
+- Backend 100% Completo
+- Webview / Host 100% Completo
+- Todos bugs conhecidos resolvidos
+- 1421 testes unitários passando
+- Smoke tests e E2E implementados
 
 ### Fase 5 — Voz Local (Piper TTS, Whisper STT) ✅ _(concluído em 2026-03-29)_
 
@@ -320,11 +322,50 @@ pull requests
 - **Issues relacionados**: [#50](https://github.com/fulviusguelfi/nexusai/issues/50), [#51](https://github.com/fulviusguelfi/nexusai/issues/51) ✅, [#52](https://github.com/fulviusguelfi/nexusai/issues/52) ✅
 - **Wiki**: `docs/wiki/Fase-5-Voice.md`
 
-### Próximas Fases
+### Fase 6X — Retorno ao Pipeline Voz Original 🎯 **EM ANDAMENTO ATUAL**
 
-| # | Descrição | Issues Relacionados |
-|---|---|---|
-| Fase 6 | Agentes Autônomos e multi-IA | — |
+> ✅ Esta é a prioridade máxima ABSOLUTA. Nenhuma outra funcionalidade será desenvolvida até que esta fase esteja 100% concluída e estável.
+
+**Objetivo**: Reverter o pipeline STT para o modelo original provado e funcional:
+```
+APERTA BOTÃO → FALA COMPLETAMENTE → SOLTA BOTÃO → TRANSCRIÇÃO COMPLETA → ENVIA PARA IA
+```
+
+❌ **Cancelado definitivamente**:
+- STT Streaming em tempo real
+- Transcrição parcial
+- Escrita enquanto fala
+- Todas as tentativas de Vosk, FasterWhisper streaming
+
+✅ **Funcionalidades mantidas**:
+- O jeito que funcionava originalmente e era perfeito
+- Apenas o botão Push-To-Talk
+- Nenhuma inteligencia, nenhuma detecção de silencio automatica
+- O usuário tem controle total
+
+**Checklist DOD (Definition Of Done)**:
+- [ ] Remover todo código de streaming STT
+- [ ] Reverter WhisperService para comportamento original: grava arquivo WAV completo, envia uma vez para Whisper, recebe transcrição completa
+- [ ] Remover VoskService, FasterWhisperService e todas as alternativas experimentais
+- [ ] Manter apenas o Whisper original local
+- [ ] Botão mic no chat: clique para começar, clique novamente para parar e transcrever
+- [ ] Spinner apenas enquanto transcreve
+- [ ] Nenhuma barra de volume, nenhuma animação enquanto fala
+- [ ] Todos os testes unitários passando
+- [ ] Snapshots atualizados
+- [ ] 0 erros no console
+- [ ] Funciona perfeitamente no Windows, Linux e MacOS
+
+---
+
+### Próximas Fases (Posteriores ao MVP Estável)
+
+| # | Descrição | Tipo | Status |
+|---|---|---|---|
+| Fase 6X | Pipeline Voz Original | Prioridade Máxima | 🔴 EM ANDAMENTO |
+| Fase 7 | Refatoração da Task.ts | Tech Debt | ⏳ Pendente |
+| Fase 8 | Agentes Autônomos MCP | Feature | ⏳ Pendente |
+| Fase 9 | Multi-IA | Feature | ⏳ Pendente |
 
 ### Backlog — Tech Debt e Bugs Pendentes
 

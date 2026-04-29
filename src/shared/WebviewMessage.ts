@@ -8,6 +8,8 @@ export interface WebviewMessage {
 		| "start_voice_recording"
 		| "stop_voice_recording"
 		| "webview_ready"
+		| "voice_mic_diagnostic_result"
+		| "voice_sentence_ended"
 	grpc_request?: GrpcRequest
 	grpc_request_cancel?: GrpcCancel
 	trpc_request?: TrpcRequest
@@ -32,6 +34,13 @@ export interface WebviewMessage {
 	}
 	webview_ready?: {
 		webviewType: "sidebar" | "editor"
+	}
+	voice_mic_diagnostic_result?: {
+		granted: boolean
+		errorName: string | null
+	}
+	voice_sentence_ended?: {
+		sentenceIndex: number
 	}
 }
 

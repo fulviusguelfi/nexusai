@@ -130,6 +130,8 @@ export interface SystemPromptContext {
 	readonly avatarName?: string
 	readonly avatarPersonalityTone?: "formal" | "casual" | "technical"
 	readonly avatarPersonalityResponseMode?: "concise" | "detailed" | "conversational"
+	// Vault security prompt injection
+	readonly vaultSystemPromptInstructions?: string
 }
 
 /**

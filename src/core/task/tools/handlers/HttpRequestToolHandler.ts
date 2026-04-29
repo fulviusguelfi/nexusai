@@ -2,7 +2,6 @@ import * as http from "node:http"
 import * as https from "node:https"
 import type { ToolUse } from "@core/assistant-message"
 import { formatResponse } from "@core/prompts/responses"
-import { DeviceRegistry } from "@services/iot/DeviceRegistry"
 import { ClineDefaultTool } from "@/shared/tools"
 import type { ToolResponse } from "../../index"
 import type { IFullyManagedTool } from "../ToolExecutorCoordinator"
@@ -51,17 +50,11 @@ export class HttpRequestToolHandler implements IFullyManagedTool {
 			return formatResponse.toolError(`Invalid URL: ${url}`)
 		}
 
-		// SSRF guard: block private/loopback addresses unless device is trusted
+		// SSRF guard: block private/loopback addresses
 		const hostname = parsedUrl.hostname
 		if (isPrivateIp(hostname)) {
-			const trusted = DeviceRegistry.getByIp(hostname)?.trustedLocal === true
-			if (!trusted) {
-				config.taskState.consecutiveMistakeCount++
-				return formatResponse.toolError(
-					`SSRF protection: requests to private IP ${hostname} are not allowed. ` +
-						`Register the device with register_device and set trustedLocal=true to allow it.`,
-				)
-			}
+			config.taskState.consecutiveMistakeCount++
+			return formatResponse.toolError(`SSRF protection: requests to private IP ${hostname} are not allowed.`)
 		}
 
 		let headers: Record<string, string> = {}

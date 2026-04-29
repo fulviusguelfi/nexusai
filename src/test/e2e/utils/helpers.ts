@@ -1,7 +1,7 @@
 import { mkdtempSync, type PathLike, type RmOptions, rmSync } from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
-import { type ElectronApplication, expect, type Frame, type Page, test } from "@playwright/test"
+import { type ElectronApplication, type Frame, type Page, test } from "@playwright/test"
 import { downloadAndUnzipVSCode, SilentReporter } from "@vscode/test-electron"
 import { _electron } from "playwright"
 import { ClineApiServerMock } from "../fixtures/server"
@@ -111,6 +111,37 @@ export class E2ETestHelper {
 		return (await findSidebarFrame()) || page.mainFrame()
 	}
 
+	public async getChatFrame(page: Page): Promise<Frame> {
+		const findChatFrame = async (): Promise<Frame | null> => {
+			for (const frame of page.frames()) {
+				if (frame.isDetached()) {
+					continue
+				}
+				const hasChatInput = await frame
+					.getByTestId("chat-input")
+					.isVisible()
+					.catch(() => false)
+				if (hasChatInput) {
+					return frame
+				}
+			}
+			return null
+		}
+
+		// If editor frame is not open yet, trigger it from sidebar and retry.
+		const initialFrame = await findChatFrame()
+		if (!initialFrame) {
+			const sidebar = await this.getSidebar(page)
+			const newTaskButton = sidebar.getByRole("button", { name: "New Task" }).first()
+			if (await newTaskButton.isVisible().catch(() => false)) {
+				await newTaskButton.click({ delay: 100 })
+			}
+		}
+
+		await E2ETestHelper.waitUntil(async () => (await findChatFrame()) !== null, 45_000)
+		return (await findChatFrame()) || page.mainFrame()
+	}
+
 	public static async rmForRetries(path: PathLike, options?: RmOptions): Promise<void> {
 		const maxAttempts = 3 // Reduced from 5
 
@@ -128,37 +159,34 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Login to Nexus AI" }).click({ delay: 100 })
-
-		const chatInput = webview.getByTestId("chat-input")
-		const closeBtn = webview.getByRole("button", { name: "Close" }).first()
-
-		// Phase 1 — wait for the chat view to load. If the announcement dialog
-		// appears during onboarding (e.g. auth is slow), dismiss it here.
-		await expect(async () => {
-			const chatReady = await chatInput.isVisible()
-			if (!chatReady) {
-				const closeVisible = await closeBtn.isVisible()
-				if (closeVisible) {
-					await closeBtn.click({ delay: 50 })
-				}
-			}
-			await expect(chatInput).toBeVisible()
-		}).toPass({ timeout: 25_000, intervals: [500] })
-
-		// Phase 2 — the "What's New" modal has a 3-second delay after ChatView
-		// mounts. Wait for it to appear (up to 5s to account for system variance
-		// on Windows/CI), then dismiss it so it doesn't block subsequent
-		// button interactions in the test.
-		try {
-			await closeBtn.waitFor({ state: "visible", timeout: 5000 })
-			await closeBtn.click({ delay: 50 })
-		} catch {
-			// Modal did not appear within the window — already dismissed or
-			// the announcement was not scheduled for this session.
+		const newTaskBtn = webview.getByRole("button", { name: "New Task" }).first()
+		if (await newTaskBtn.isVisible().catch(() => false)) {
+			return
 		}
 
-		// Brief wait to ensure any modal animation completes and overlay is gone
+		// Match auth.test.ts flow exactly to avoid fragile state transitions.
+		await webview.getByText("Bring my own API key", { exact: true }).click()
+		await webview.getByRole("button", { name: "Continue" }).click()
+
+		const providerSelectorInput = webview.getByTestId("provider-selector-input")
+		await providerSelectorInput.waitFor({ state: "visible", timeout: 30_000 })
+		await providerSelectorInput.click({ delay: 100 })
+		await webview.getByTestId("provider-option-openrouter").click({ delay: 100 })
+
+		const apiKeyInput = webview.getByRole("textbox", {
+			name: "OpenRouter API Key",
+		})
+		await apiKeyInput.waitFor({ state: "visible", timeout: 30_000 })
+		await apiKeyInput.fill("test-api-key")
+		await webview.getByRole("button", { name: "Continue" }).click()
+
+		// Dismiss optional announcement modal if it appears.
+		const closeBtn = webview.getByRole("button", { name: "Close" }).first()
+		if (await closeBtn.isVisible().catch(() => false)) {
+			await closeBtn.click({ delay: 50 })
+		}
+
+		await newTaskBtn.waitFor({ state: "visible", timeout: 60_000 })
 		await new Promise((resolve) => setTimeout(resolve, 200))
 	}
 

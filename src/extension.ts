@@ -4,7 +4,7 @@
 import assert from "node:assert"
 import { DIFF_VIEW_URI_SCHEME } from "@hosts/vscode/VscodeDiffViewProvider"
 import * as vscode from "vscode"
-import { preloadVoiceModels, validateFFmpegAtStartup } from "@/services/voice/PreFlightChecks"
+import { preloadVoiceModels } from "@/services/voice/PreFlightChecks"
 import { Logger } from "@/shared/services/Logger"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
@@ -38,8 +38,6 @@ import {
 	migrateWelcomeViewCompleted,
 	migrateWorkspaceToGlobalStorage,
 } from "./core/storage/state-migrations"
-import { IotDevicesPanelProvider } from "./core/webview/panels/IotDevicesPanelProvider"
-import { SshSessionsPanelProvider } from "./core/webview/panels/SshSessionsPanelProvider"
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
 import { abortCommitGeneration, generateCommitMsg } from "./hosts/vscode/commit-message-generator"
@@ -56,9 +54,6 @@ import { exportVSCodeStorageToSharedFiles } from "./hosts/vscode/vscode-to-file-
 import { ExtensionRegistryInfo } from "./registry"
 import { AuthService } from "./services/auth/AuthService"
 import { LogoutReason } from "./services/auth/types"
-import { DeviceRegistry } from "./services/iot/DeviceRegistry"
-import { IotDiscoveryService } from "./services/iot/IotDiscoveryService"
-import { SshServerProfileRegistry } from "./services/ssh/SshServerProfileRegistry"
 import { telemetryService } from "./services/telemetry"
 import { SharedUriHandler, TASK_URI_PATH } from "./services/uri/SharedUriHandler"
 import { ShowMessageType } from "./shared/proto/host/window"
@@ -120,17 +115,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Not in a local Electron context (remote SSH, Dev Containers, tests) — skip.
 	}
 
-	// 1.2 Start FFmpeg validation in background (non-blocking)
-	// Don't await this - let it run in background so extension initializes quickly
-	validateFFmpegAtStartup()
-		.catch((error) => {
-			Logger.warn(`[Extension] FFmpeg validation (background) result: ${error}`)
-		})
-		.finally(() => {
-			Logger.log("[Extension] FFmpeg validation completed (background)")
-		})
-
-	// 1.3 Pre-download Piper (TTS) and Whisper (STT) models in background if voice is enabled.
+	// 1.3 Pre-download Piper (TTS) model in background if voice is enabled.
+	// Whisper STT has been removed; FFmpeg validation is no longer needed at startup.
 	// Avoids download latency on the first voice interaction.
 	if (context.globalState.get<boolean>("voiceTtsEnabled") !== false) {
 		preloadVoiceModels(context.globalStorageUri.fsPath).catch((e) => {
@@ -193,19 +179,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(VscodeWebviewProvider.SIDEBAR_ID, webview, {
 			webviewOptions: { retainContextWhenHidden: true },
 		}),
-	)
-
-	DeviceRegistry.initialize(context)
-	SshServerProfileRegistry.initialize(context)
-	// IoT auto-discovery on startup — fire and forget, runs in background without blocking
-	IotDiscoveryService.scan(8000).catch(() => {})
-
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(SshSessionsPanelProvider.viewId, new SshSessionsPanelProvider()),
-	)
-
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(IotDevicesPanelProvider.viewId, new IotDevicesPanelProvider()),
 	)
 
 	// NOTE: Commands must be added to the internal registry before registering them with VSCode
@@ -649,6 +622,13 @@ ${ctx.cellJson || "{}"}
 	}
 
 	Logger.log(`[Cline] extension activated in ${performance.now() - activationStartTime} ms`)
+
+	// Auto-open the editor panel on load so the chat UI is immediately available
+	setImmediate(() => {
+		EditorWebviewPanelProvider.createOrShow().catch((error) => {
+			Logger.warn("[Extension] Auto-open editor panel on startup failed (non-critical):", error)
+		})
+	})
 
 	return createClineAPI(webview.controller)
 }

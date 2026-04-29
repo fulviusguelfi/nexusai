@@ -45,8 +45,10 @@ export async function askResponse(controller: Controller, request: AskResponseRe
 		// Call the task's handler for webview responses
 		await controller.task.handleWebviewAskResponse(responseType, request.text, request.images, request.files)
 
-		// Reset voice flag after the message has been handed off to the task
-		controller.task.taskState.isVoiceInput = false
+		// NOTE: Do NOT reset isVoiceInput here. The task's pWaitFor poll (100ms interval)
+		// resumes in a future tick — resetting synchronously here would clear the flag
+		// before the task loop drives the LLM call and TTS check.
+		// isVoiceInput is consumed naturally inside task/index.ts say().
 
 		return Empty.create()
 	} catch (error) {

@@ -152,4 +152,88 @@ describe("AudioLevelMeter", () => {
 			result.rmsLevel.should.equal(0)
 		})
 	})
+
+	// -----------------------------------------------------------------------
+	// formatLevel() — was previously uncovered
+	// -----------------------------------------------------------------------
+
+	describe("formatLevel()", () => {
+		it("returns a string containing the quality label", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0))
+			AudioLevelMeter.formatLevel(lvl).should.containEql("silent")
+		})
+
+		it("includes the dB value formatted to one decimal", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.5))
+			AudioLevelMeter.formatLevel(lvl).should.match(/-?\d+\.\d dB/)
+		})
+
+		it("does NOT include clipping warning for non-clipping audio", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.5))
+			AudioLevelMeter.formatLevel(lvl).should.not.containEql("Clipping")
+		})
+
+		it("appends clipping warning when peak > 0.95", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.97))
+			AudioLevelMeter.formatLevel(lvl).should.containEql("Clipping")
+		})
+	})
+
+	// -----------------------------------------------------------------------
+	// getVisualizationBar() — was previously uncovered
+	// -----------------------------------------------------------------------
+
+	describe("getVisualizationBar()", () => {
+		it("returns a string bounded by [ and ]", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0))
+			const bar = AudioLevelMeter.getVisualizationBar(lvl)
+			bar.should.startWith("[")
+			bar.should.endWith("]")
+		})
+
+		it("silent audio produces a bar with no fill blocks", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0))
+			AudioLevelMeter.getVisualizationBar(lvl).should.not.containEql("█")
+		})
+
+		it("loud audio fills the bar more than silent audio", () => {
+			const loudLvl = AudioLevelMeter.analyze(constFloat32(160, 0.97))
+			const silentLvl = AudioLevelMeter.analyze(constFloat32(160, 0))
+			const countBlocks = (s: string) => (s.match(/█/g) ?? []).length
+			countBlocks(AudioLevelMeter.getVisualizationBar(loudLvl)).should.be.greaterThan(
+				countBlocks(AudioLevelMeter.getVisualizationBar(silentLvl)),
+			)
+		})
+	})
+
+	// -----------------------------------------------------------------------
+	// getColorForLevel() — was previously uncovered
+	// -----------------------------------------------------------------------
+
+	describe("getColorForLevel()", () => {
+		it("returns red (#ff0000) when clipping (checked before quality)", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.97))
+			AudioLevelMeter.getColorForLevel(lvl).should.equal("#ff0000")
+		})
+
+		it("returns gray (#666666) for silent quality", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0))
+			AudioLevelMeter.getColorForLevel(lvl).should.equal("#666666")
+		})
+
+		it("returns orange (#ff9900) for poor quality", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.03))
+			AudioLevelMeter.getColorForLevel(lvl).should.equal("#ff9900")
+		})
+
+		it("returns yellow (#ffff00) for good quality", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.07))
+			AudioLevelMeter.getColorForLevel(lvl).should.equal("#ffff00")
+		})
+
+		it("returns green (#00ff00) for excellent non-clipping quality", () => {
+			const lvl = AudioLevelMeter.analyze(constFloat32(160, 0.15))
+			AudioLevelMeter.getColorForLevel(lvl).should.equal("#00ff00")
+		})
+	})
 })

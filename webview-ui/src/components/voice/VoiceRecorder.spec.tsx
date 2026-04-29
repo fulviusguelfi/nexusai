@@ -1,12 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import VoiceRecorder from "./VoiceRecorder"
 
 let mockExtensionState: {
 	voiceSttEnabled: boolean
-	voiceInputDeviceId: string
-	voiceSilenceThresholdMs?: number
-	voiceGracePeriodMs?: number
+	voiceMaxRecordingDurationMs?: number
 }
 
 vi.mock("@/context/ExtensionStateContext", () => ({
@@ -24,7 +22,6 @@ describe("VoiceRecorder", () => {
 	beforeEach(() => {
 		mockExtensionState = {
 			voiceSttEnabled: true,
-			voiceInputDeviceId: "",
 		}
 		mockPostMessage.mockClear()
 	})
@@ -36,62 +33,93 @@ describe("VoiceRecorder", () => {
 	it("renders mic button when STT is enabled", () => {
 		render(<VoiceRecorder onTranscription={vi.fn()} />)
 		expect(screen.getByRole("button")).toBeTruthy()
-		expect(screen.getByRole("button").getAttribute("aria-label")).toBe("Start recording (Press)")
+		expect(screen.getByRole("button").getAttribute("aria-label")).toBe("Click to record (push-to-talk)")
 	})
 
 	it("renders nothing when STT is disabled", () => {
-		mockExtensionState = { voiceSttEnabled: false, voiceInputDeviceId: "" }
+		mockExtensionState = { voiceSttEnabled: false }
 		const { container } = render(<VoiceRecorder onTranscription={vi.fn()} />)
 		expect(container.firstChild).toBeNull()
 	})
 
-	it("uses selected input device when available", () => {
-		mockExtensionState = {
-			voiceSttEnabled: true,
-			voiceInputDeviceId: "mic-1",
-		}
-
-		render(<VoiceRecorder onTranscription={vi.fn()} />)
-		fireEvent.click(screen.getByRole("button"))
-
-		expect(mockPostMessage).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "start_voice_recording",
-			}),
-		)
-	})
-
-	it("falls back to default input when selected device is unavailable", () => {
-		mockExtensionState = {
-			voiceSttEnabled: true,
-			voiceInputDeviceId: "missing-mic",
-		}
-
-		render(<VoiceRecorder onTranscription={vi.fn()} />)
-		fireEvent.click(screen.getByRole("button"))
-
-		// Host handles device fallback — webview posts start_voice_recording and host uses saved deviceId
-		expect(mockPostMessage).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "start_voice_recording",
-			}),
-		)
-	})
-
-	it("uses default input when no device is selected", () => {
-		mockExtensionState = {
-			voiceSttEnabled: true,
-			voiceInputDeviceId: "",
-		}
-
+	it("posts start_voice_recording when mic button is clicked", () => {
 		render(<VoiceRecorder onTranscription={vi.fn()} />)
 		fireEvent.click(screen.getByRole("button"))
 
 		expect(mockPostMessage).toHaveBeenCalledTimes(1)
+		expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "start_voice_recording" }))
+	})
+
+	it("uses voiceMaxRecordingDurationMs from settings when set", () => {
+		mockExtensionState = { voiceSttEnabled: true, voiceMaxRecordingDurationMs: 30000 }
+
+		render(<VoiceRecorder onTranscription={vi.fn()} />)
+		fireEvent.click(screen.getByRole("button"))
+
 		expect(mockPostMessage).toHaveBeenCalledWith(
 			expect.objectContaining({
 				type: "start_voice_recording",
+				start_voice_recording: expect.objectContaining({ maxDurationMs: 30000 }),
 			}),
 		)
+	})
+
+	it("falls back to 120 000 ms when voiceMaxRecordingDurationMs is not set", () => {
+		render(<VoiceRecorder onTranscription={vi.fn()} />)
+		fireEvent.click(screen.getByRole("button"))
+
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "start_voice_recording",
+				start_voice_recording: expect.objectContaining({ maxDurationMs: 120000 }),
+			}),
+		)
+	})
+
+	it("posts stop_voice_recording on second click", () => {
+		render(<VoiceRecorder onTranscription={vi.fn()} />)
+
+		// first click → start
+		fireEvent.click(screen.getByRole("button"))
+		expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "start_voice_recording" }))
+
+		// second click → stop
+		fireEvent.click(screen.getByRole("button"))
+		expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "stop_voice_recording" }))
+	})
+
+	it("recovers from PROCESSING when voice_result arrives without IDLE", async () => {
+		render(<VoiceRecorder onTranscription={vi.fn()} />)
+
+		await act(async () => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "voice_agent_state_changed",
+						voice_agent_state_changed: { state: "PROCESSING" },
+					},
+				}),
+			)
+		})
+
+		const button = screen.getByRole("button") as HTMLButtonElement
+		await waitFor(() => expect(button.disabled).toBe(true))
+
+		await act(async () => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "voice_result",
+						voice_result: {
+							success: true,
+							transcriptionText: "teste",
+						},
+					},
+				}),
+			)
+		})
+
+		await waitFor(() => expect(button.disabled).toBe(false))
+		expect(button.getAttribute("aria-label")).toBe("Click to record (push-to-talk)")
 	})
 })

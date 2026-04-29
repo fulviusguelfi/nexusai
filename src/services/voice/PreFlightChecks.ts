@@ -49,8 +49,8 @@ export async function validateFFmpegAtStartup(): Promise<void> {
 }
 
 /**
- * Pre-download Piper (TTS) and Whisper (STT) binaries and models in the background.
- * Called at extension startup so the first voice interaction doesn't pay the download cost.
+ * Pre-download Piper (TTS) binary and voice model in the background.
+ * Called at extension startup so the first TTS interaction doesn't pay the download cost.
  * Idempotent — skips any file that is already cached.
  */
 export async function preloadVoiceModels(globalStoragePath: string): Promise<void> {
@@ -62,17 +62,6 @@ export async function preloadVoiceModels(globalStoragePath: string): Promise<voi
 		Logger.log("[Preload] Piper binary and voice model ready")
 	} catch (e) {
 		Logger.warn(`[Preload] Piper pre-load failed (non-critical): ${e}`)
-	}
-
-	// Whisper STT — download binary + model (Windows only; other platforms use ONNX loaded on demand)
-	try {
-		const { WhisperCliService } = await import("@/services/voice/WhisperCliService")
-		if (WhisperCliService.isPlatformSupported()) {
-			await WhisperCliService.getInstance(globalStoragePath).ensureBinaries()
-			Logger.log("[Preload] Whisper binary and model ready")
-		}
-	} catch (e) {
-		Logger.warn(`[Preload] Whisper pre-load failed (non-critical): ${e}`)
 	}
 }
 
@@ -461,8 +450,6 @@ export class PreFlightChecks {
 		if (cached) return cached
 
 		try {
-			const modelsDir = PreFlightChecks.getModelsDir()
-
 			// Rough estimate: check if drive has > 500MB free
 			const freeSpace = os.freemem() / (1024 * 1024) // MB
 

@@ -3,6 +3,7 @@ import type { ExtensionMessage } from "@shared/ExtensionMessage"
 import type { RecordAndRespondRequest, RecordAndRespondResponse } from "@shared/proto/cline/voice"
 import { PreFlightChecks } from "@/services/voice/PreFlightChecks"
 import { VoiceAgent, VoiceAgentState } from "@/services/voice/VoiceAgent"
+import { VoiceDeviceManager } from "@/services/voice/VoiceDeviceManager"
 import { VoiceResponseHandler } from "@/services/voice/VoiceResponseHandler"
 import { Logger } from "@/shared/services/Logger"
 
@@ -70,11 +71,81 @@ async function getVoiceMessenger() {
  */
 export async function recordAndRespond(
 	controller: Controller,
-	request: RecordAndRespondRequest,
+	request: RecordAndRespondRequest & {
+		onAgentCreated?: (agent: VoiceAgent) => void
+		onAgentDestroyed?: () => void
+	},
 ): Promise<RecordAndRespondResponse> {
 	const startTime = Date.now()
 	const totalDurationMs = (): number => Date.now() - startTime
 	const ts = () => `[T+${totalDurationMs()}ms]`
+
+	const shouldRetryWithoutPreferredDevice = (recordResult: any): boolean => {
+		if (!request.inputDeviceId || !recordResult?.error) {
+			return false
+		}
+
+		const errorCode = String(recordResult.error.code || "").toUpperCase()
+		const errorMessage = String(recordResult.error.userMessage || recordResult.error.message || "").toLowerCase()
+
+		return (
+			errorCode === "DEVICE_NOT_FOUND" ||
+			errorMessage.includes("microphone not found") ||
+			errorMessage.includes("device not found") ||
+			errorMessage.includes("no microphones found")
+		)
+	}
+
+	const runAgentRecording = async (deviceId?: string) => {
+		const agent = new VoiceAgent({
+			maxDuration: request.maxDurationMs || 120000,
+			deviceId: deviceId || undefined,
+			stateCallback: (state: VoiceAgentState, context?: string) => {
+				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
+				// Send state updates to webview (async, non-blocking)
+				;(async () => {
+					try {
+						const messenger = await getVoiceMessenger()
+						Logger.log(`[recordAndRespond] getVoiceMessenger returned: ${messenger ? "found" : "null"}`)
+						if (messenger) {
+							const message: ExtensionMessage = {
+								type: "voice_agent_state_changed" as const,
+								voice_agent_state_changed: {
+									state,
+									context: context || "",
+								},
+							}
+							Logger.log(`[recordAndRespond] Sending voice_agent_state_changed: ${state}`)
+							const result = await messenger(message)
+							Logger.log(`[recordAndRespond] messenger returned: ${result}`)
+						} else {
+							Logger.warn("[recordAndRespond] No voice messenger available")
+						}
+					} catch (err) {
+						Logger.error("[recordAndRespond] Failed to send state to webview:", err)
+					}
+				})()
+			},
+			errorCallback: (error) => {
+				Logger.error(`  Error in VoiceAgent: ${error.userMessage}`)
+			},
+		})
+
+		// Store reference for stop_voice_recording RPC (both module-level + Provider instance)
+		setActiveVoiceAgent(agent)
+		request.onAgentCreated?.(agent)
+		Logger.log(`[recordAndRespond] Agent registered at T=${Date.now()}`)
+
+		try {
+			return await agent.recordAndRespond()
+		} finally {
+			// Clear active agent reference
+			setActiveVoiceAgent(null)
+			request.onAgentDestroyed?.()
+			Logger.log(`[recordAndRespond] finally: calling agent.stop(from=finally) at T=${Date.now()}`)
+			agent.stop("finally")
+		}
+	}
 
 	try {
 		Logger.log(`${ts()} 🎤 start_voice_recording recebido`)
@@ -118,56 +189,17 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Preflight checks passed`)
 
-		// Step 2: Record audio with VoiceAgent
-		Logger.log(`${ts()} 🎙️ Step 2: Recording audio...`)
+		// Step 2: Record audio with VoiceAgent (push-to-talk)
+		Logger.log(`${ts()} 🎙️ Step 2: Recording audio (push-to-talk)...`)
 
-		const agent = new VoiceAgent({
-			maxDuration: request.maxDurationMs || 120000,
-			silenceThreshold: request.silenceThreshold || 0.01,
-			silenceDurationMs: request.silenceDurationMs || 700,
-			gracePeriodMs: request.gracePeriodMs ?? 2000,
-			deviceId: request.inputDeviceId || undefined,
-			stateCallback: (state: VoiceAgentState, context?: string) => {
-				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
-				// Send state updates to webview (async, non-blocking)
-				;(async () => {
-					try {
-						const messenger = await getVoiceMessenger()
-						Logger.log(`[recordAndRespond] getVoiceMessenger returned: ${messenger ? "found" : "null"}`)
-						if (messenger) {
-							const message: ExtensionMessage = {
-								type: "voice_agent_state_changed" as const,
-								voice_agent_state_changed: {
-									state,
-									context: context || "",
-								},
-							}
-							Logger.log(`[recordAndRespond] Sending voice_agent_state_changed: ${state}`)
-							const result = await messenger(message)
-							Logger.log(`[recordAndRespond] messenger returned: ${result}`)
-						} else {
-							Logger.warn("[recordAndRespond] No voice messenger available")
-						}
-					} catch (err) {
-						Logger.error("[recordAndRespond] Failed to send state to webview:", err)
-					}
-				})()
-			},
-			errorCallback: (error) => {
-				Logger.error(`  Error in VoiceAgent: ${error.userMessage}`)
-			},
-		})
+		let recordResult: any = await runAgentRecording(request.inputDeviceId || undefined)
 
-		// Store reference for stop_voice_recording RPC
-		setActiveVoiceAgent(agent)
-
-		let recordResult: any
-		try {
-			recordResult = await agent.recordAndRespond()
-		} finally {
-			// Clear active agent reference
-			setActiveVoiceAgent(null)
-			agent.destroy()
+		if (shouldRetryWithoutPreferredDevice(recordResult)) {
+			Logger.warn(
+				`${ts()} ⚠️ Preferred input device is unavailable. Clearing cache and retrying once with auto-detected microphone.`,
+			)
+			VoiceDeviceManager.clearCache()
+			recordResult = await runAgentRecording(undefined)
 		}
 
 		if (!recordResult || recordResult.error) {
@@ -186,17 +218,13 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Audio recorded: ${recordResult.duration}ms`)
 
-		// Step 3: ONLY Speech-to-Text (transcription only, NO TTS)
-		Logger.log(`${ts()} 🔄 Step 3: Processing with STT only...`)
-		Logger.log(`${ts()} ⚡ Whisper iniciado — ${recordResult.audioData?.length ?? 0} bytes`)
-
+		// Step 3: Single-shot STT (full recording -> single transcription)
+		Logger.log(`${ts()} 🔄 Step 3: Running Whisper transcription...`)
 		const sttResult = await VoiceResponseHandler.processSpeechToText(recordResult.audioData, {
 			globalStoragePath: controller.context.globalStoragePath,
 			sttModel: request.sttModel || "small",
-			userLanguage: "pt", // Hint to Whisper that user likely speaks Portuguese (Brasil)
-			maxDuration: request.maxDurationMs,
+			userLanguage: "pt",
 			onProgress: (progress: number) => {
-				Logger.log(`  STT: ${progress}%`)
 				void getVoiceMessenger().then((messenger) => {
 					messenger?.({
 						type: "voice_stt_progress",
@@ -220,8 +248,8 @@ export async function recordAndRespond(
 			}
 		}
 
-		// Step 4: Return transcribed text ONLY (without audio)
-		Logger.log(`${ts()} ✍️ Transcrição: "${sttResult.transcription.text}" [${sttResult.detectedLanguage}]`)
+		Logger.log(`${ts()} ✍️ Transcrição: "${sttResult.transcription.text}"`)
+
 		Logger.log(`${ts()} 🏁 Pipeline total: ${totalDurationMs()}ms`)
 		Logger.log(`${ts()} ⏭️ Usuário enviará para o LLM — TTS após resposta`)
 
@@ -231,8 +259,8 @@ export async function recordAndRespond(
 		return {
 			success: true,
 			transcriptionText: sttResult.transcription.text,
-			llmResponseText: "", // Empty - LLM hasn't responded yet
-			audioWavBase64: "", // Empty - no TTS yet! TTS happens after LLM response
+			llmResponseText: "",
+			audioWavBase64: "",
 			totalDurationMs: totalDurationMs(),
 			detectedLanguage: sttResult.detectedLanguage,
 		}

@@ -6,7 +6,7 @@ import { HostProvider } from "@/hosts/host-provider"
 import type { ExtensionMessage } from "@/shared/ExtensionMessage"
 import { Logger } from "@/shared/services/Logger"
 import type { WebviewMessage } from "@/shared/WebviewMessage"
-import { setGlobalVoiceMessenger } from "./VscodeWebviewProvider"
+import { resolveVoiceSentenceEnded, setGlobalVoiceMessenger } from "./VscodeWebviewProvider"
 
 /**
  * EditorWebviewPanelProvider opens NexusAI in a dedicated webview panel in the editor
@@ -24,6 +24,7 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 
 	private panel?: vscode.WebviewPanel
 	private disposables: vscode.Disposable[] = []
+	private _activeVoiceAgent: import("@services/voice/VoiceAgent").VoiceAgent | null = null
 
 	override getWebviewUrl(filePath: string) {
 		if (!this.panel) {
@@ -185,6 +186,16 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 				return
 			}
 
+			// Forward voice_sentence_ended to the sidebar TTS pipeline resolver so the
+			// sentence-streaming pipeline advances when audio finishes in the editor panel
+			if (message.type === "voice_sentence_ended") {
+				const { sentenceIndex } = (message as any).voice_sentence_ended ?? {}
+				if (sentenceIndex !== undefined) {
+					resolveVoiceSentenceEnded(sentenceIndex)
+				}
+				return
+			}
+
 			// Handle voice recording (STT pipeline)
 			if (message.type === "start_voice_recording" && message.start_voice_recording) {
 				try {
@@ -193,6 +204,10 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 						Logger.log("[EditorWebviewPanelProvider] Speaker gate active — ignoring recording request during TTS")
 						return
 					}
+					// Point the global voice messenger at the editor panel for the duration of this
+					// recording so that partials, state changes, and audio-level messages are routed
+					// here (editor panel) rather than to the sidebar.
+					setGlobalVoiceMessenger(postMessageToWebview)
 					const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")
 					const silenceThresholdMs = message.start_voice_recording.silenceThresholdMs || 700
 					const gracePeriodMs = message.start_voice_recording.gracePeriodMs ?? 2000
@@ -208,7 +223,14 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 						maxDurationMs,
 					})
 
+					Logger.log(`[EditorWebviewPanelProvider] start_voice_recording received at T=${Date.now()}`)
 					const response = await recordAndRespond(this.controller, {
+						onAgentCreated: (agent) => {
+							this._activeVoiceAgent = agent
+						},
+						onAgentDestroyed: () => {
+							this._activeVoiceAgent = null
+						},
 						silenceDurationMs: silenceThresholdMs,
 						gracePeriodMs,
 						maxDurationMs,
@@ -251,6 +273,23 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 							errorMessage: `Voice recording error: ${err instanceof Error ? err.message : String(err)}`,
 						},
 					})
+				}
+				return
+			}
+
+			if (message.type === "stop_voice_recording") {
+				const ts = Date.now()
+				const agent = this._activeVoiceAgent
+				Logger.log(
+					`[EditorWebviewPanelProvider] stop_voice_recording received at T=${ts}, agent=${agent ? "found" : "null"}`,
+				)
+				if (agent) {
+					agent.stop("user-button")
+				} else {
+					const { getActiveVoiceAgent } = await import("@core/controller/voice/recordAndRespond")
+					const fallbackAgent = getActiveVoiceAgent()
+					Logger.log(`[EditorWebviewPanelProvider] stop fallback, agent=${fallbackAgent ? "found" : "null"}`)
+					fallbackAgent?.stop("user-button-fallback")
 				}
 				return
 			}
@@ -317,6 +356,7 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 	 */
 	public override async dispose() {
 		Logger.log("[EditorWebviewPanelProvider] Disposing editor panel")
+		setGlobalVoiceMessenger(null)
 		this.disposables?.forEach((d) => d.dispose?.())
 		this.disposables = []
 		this.panel?.dispose()

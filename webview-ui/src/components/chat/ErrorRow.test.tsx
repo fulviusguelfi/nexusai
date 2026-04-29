@@ -68,7 +68,7 @@ describe("ErrorRow", () => {
 		const clineignoreMessage = { ...mockMessage, text: "/path/to/file.txt" }
 		render(<ErrorRow errorType="clineignore_error" message={clineignoreMessage} />)
 
-		expect(screen.getByText(/NexusAI tried to access/)).toBeInTheDocument()
+		expect(screen.getByText(/Cline tried to access/)).toBeInTheDocument()
 		expect(screen.getByText("/path/to/file.txt")).toBeInTheDocument()
 	})
 
@@ -129,7 +129,7 @@ describe("ErrorRow", () => {
 			render(<ErrorRow apiRequestFailedMessage="Authentication failed" errorType="error" message={mockMessage} />)
 
 			expect(screen.getByText("Authentication failed")).toBeInTheDocument()
-			expect(screen.getByText("Sign in to NexusAI")).toBeInTheDocument()
+			expect(screen.getByText("Sign in to Cline")).toBeInTheDocument()
 		})
 
 		it("renders PowerShell troubleshooting link when error mentions PowerShell", async () => {

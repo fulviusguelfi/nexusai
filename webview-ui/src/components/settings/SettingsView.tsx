@@ -5,8 +5,10 @@ import {
 	FlaskConical,
 	HardDriveDownload,
 	Info,
+	KeyRound,
 	type LucideIcon,
 	SlidersHorizontal,
+	Smile,
 	SquareMousePointer,
 	SquareTerminal,
 	Volume2,
@@ -25,12 +27,14 @@ import ViewHeader from "../common/ViewHeader"
 import SectionHeader from "./SectionHeader"
 import AboutSection from "./sections/AboutSection"
 import ApiConfigurationSection from "./sections/ApiConfigurationSection"
+import AvatarSettingsSection from "./sections/AvatarSettingsSection"
 import BrowserSettingsSection from "./sections/BrowserSettingsSection"
 import DebugSection from "./sections/DebugSection"
 import FeatureSettingsSection from "./sections/FeatureSettingsSection"
 import GeneralSettingsSection from "./sections/GeneralSettingsSection"
 import { RemoteConfigSection } from "./sections/RemoteConfigSection"
 import TerminalSettingsSection from "./sections/TerminalSettingsSection"
+import VaultSection from "./sections/VaultSection"
 import VoiceSettingsSection from "./sections/VoiceSettingsSection"
 
 const IS_DEV = process.env.IS_DEV
@@ -42,6 +46,8 @@ type SettingsTabID =
 	| "browser"
 	| "terminal"
 	| "voice"
+	| "avatar"
+	| "vault"
 	| "general"
 	| "about"
 	| "debug"
@@ -92,6 +98,20 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		icon: Volume2,
 	},
 	{
+		id: "avatar",
+		name: "Avatar",
+		tooltipText: "Configurações do Avatar",
+		headerText: "Avatar",
+		icon: Smile,
+	},
+	{
+		id: "vault",
+		name: "Vault",
+		tooltipText: "Secure Vault",
+		headerText: "Secure Vault",
+		icon: KeyRound,
+	},
+	{
 		id: "general",
 		name: "General",
 		tooltipText: "General Settings",
@@ -110,7 +130,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
 	{
 		id: "about",
 		name: "About",
-		tooltipText: "About Cline",
+		tooltipText: "About NexusAI",
 		headerText: "About",
 		icon: Info,
 	},
@@ -157,6 +177,8 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 			browser: BrowserSettingsSection,
 			terminal: TerminalSettingsSection,
 			voice: VoiceSettingsSection,
+			avatar: AvatarSettingsSection,
+			vault: VaultSection,
 			"remote-config": RemoteConfigSection,
 			about: AboutSection,
 			debug: DebugSection,

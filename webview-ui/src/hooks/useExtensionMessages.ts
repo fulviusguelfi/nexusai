@@ -25,6 +25,26 @@ export const useExtensionMessages = () => {
 				console.log("[useExtensionMessages] 🎯 Setting orientation to:", message.orientation)
 				setOrientation(message.orientation)
 			}
+
+			// One-time mic diagnostic checkpoint: probe getUserMedia and report result back
+			if (message?.type === "voice_mic_diagnostic") {
+				navigator.mediaDevices
+					?.getUserMedia({ audio: true })
+					.then((stream) => {
+						stream.getTracks().forEach((t) => t.stop())
+						vscode.postMessage({
+							type: "voice_mic_diagnostic_result",
+							voice_mic_diagnostic_result: { granted: true, errorName: null },
+						})
+					})
+					.catch((err: unknown) => {
+						const errorName = err instanceof Error ? err.name : String(err)
+						vscode.postMessage({
+							type: "voice_mic_diagnostic_result",
+							voice_mic_diagnostic_result: { granted: false, errorName },
+						})
+					})
+			}
 		}
 
 		console.log("[useExtensionMessages] ✅ Registering message listener")

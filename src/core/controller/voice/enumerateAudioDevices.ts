@@ -18,6 +18,7 @@ export async function enumerateAudioDevices(
 ): Promise<AudioDevicesResponse> {
 	try {
 		Logger.log("[EnumerateAudioDevices] Enumeration requested")
+		VoiceDeviceManager.clearCache()
 
 		// Use VoiceDeviceManager so result is shared/cached (avoids double FFmpeg spawn)
 		const availableDevices = await VoiceDeviceManager.getAvailableDevices()

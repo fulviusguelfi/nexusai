@@ -114,7 +114,20 @@ describe("VoiceSessionManager", () => {
 
 			manager.requestSpeak("say this")
 
-			listener.calledOnceWith("say this").should.be.true()
+			listener.calledOnce.should.be.true()
+			listener.firstCall.args[0].text.should.equal("say this")
+			listener.firstCall.args[0].requestId.should.match(/^tts-/)
+			listener.firstCall.args[0].createdAt.should.be.a.Number()
+		})
+
+		it("propagates source metadata when provided", () => {
+			const listener = sinon.stub()
+			manager.onSpeakRequest(listener)
+
+			manager.requestSpeak("say this", undefined, "attempt_completion")
+
+			listener.calledOnce.should.be.true()
+			listener.firstCall.args[0].source.should.equal("attempt_completion")
 		})
 
 		it("does not fire statusChange", () => {

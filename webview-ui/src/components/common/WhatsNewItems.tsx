@@ -18,14 +18,6 @@ export const WhatsNewItems: React.FC<WhatsNewItemsProps> = ({ onNavigateToModelP
 	return (
 		<ul className="text-sm pl-3 list-disc" style={{ color: "var(--vscode-descriptionForeground)" }}>
 			<li className="mb-2">
-				<strong>IoT Tools (Fase 4):</strong> discover, register, and operate local network devices via mDNS, SSDP, ARP,
-				MQTT, HTTP and SSH — all from the chat.
-			</li>
-			<li className="mb-2">
-				<strong>SSH Tools (Fase 3):</strong> connect to remote hosts, execute commands, upload/download files and manage
-				sessions directly in the agent loop.
-			</li>
-			<li className="mb-2">
 				<strong>PostHog removed:</strong> no usage data is sent to third-party analytics services. Your prompts and tasks
 				stay private.
 			</li>

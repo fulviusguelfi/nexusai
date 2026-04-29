@@ -87,20 +87,20 @@ const GLOBAL_STATE_FIELDS = {
 	remoteWorkflowToggles: { default: {} as ClineRulesToggles },
 	// Path to worktree that should auto-open Cline sidebar when launched
 	worktreeAutoOpenPath: { default: undefined as string | undefined },
-	// IoT Device Registry — persisted across sessions
-	iotDevices: { default: [] as import("@shared/iot/DeviceProfile").DeviceProfile[] },
-	// SSH Server Registry — persisted across sessions (credentials stored separately in SecretStorage)
-	sshServerProfiles: { default: [] as import("@shared/ssh/SshServerProfile").SshServerProfile[] },
 	// Voice settings
 	voiceTtsEnabled: { default: true as boolean },
 	voiceSttEnabled: { default: true as boolean },
+	voiceStreamingSTT: { default: true as boolean },
 	voiceInputDeviceId: { default: undefined as string | undefined },
 	voiceOutputDeviceId: { default: undefined as string | undefined },
-	voicePiperVoice: { default: "en_US-lessac-medium" as string },
+	voiceTtsProvider: { default: "edge" as "edge" },
+	voiceEdgeTtsVoice: { default: "pt-BR-FranciscaNeural" as string },
 	voiceSilenceThresholdMs: { default: 700 as number },
 	voiceGracePeriodMs: { default: 2000 as number },
 	voiceMaxRecordingDurationMs: { default: 120000 as number },
 	voiceMetadataEnabled: { default: true as boolean },
+	/** One-time diagnostic flag: true once we have attempted mic permission check */
+	voice_mic_diagnostic_v1: { default: false as boolean },
 	// Avatar settings
 	avatarEnabled: { default: true as boolean },
 	avatarName: { default: "Nexus" as string },
@@ -109,6 +109,20 @@ const GLOBAL_STATE_FIELDS = {
 	avatarPersonalityTone: { default: "casual" as "formal" | "casual" | "technical" },
 	avatarPersonalityResponseMode: { default: "concise" as "concise" | "detailed" | "conversational" },
 	avatarPersonalityLanguage: { default: "auto" as string },
+	// Secure Vault — metadata only (values stored in SecretStorage)
+	vaultEntries: { default: [] as import("@shared/vault").UserVaultEntry[] },
+	vaultSystemPrompt: {
+		default: `SECURE VAULT — DATA PRIVACY RULES
+
+The user has a local secure vault for sensitive data (passwords, tokens, card numbers, documents).
+Vault entries are referenced as [VAULT:uuid] placeholders in the conversation.
+
+Rules you MUST follow:
+1. When handling a [VAULT:uuid] token in tool parameters, pass it through unchanged — the extension host will resolve it before execution. Never try to expand or guess the value yourself.
+2. If the user shares sensitive information (passwords, card numbers, personal documents, private keys) directly in the chat instead of using the vault, proactively suggest they store it via Settings → Vault and use a [VAULT:uuid] reference instead.
+3. Never repeat, log, or include vault values in text responses — only in tool call parameters where strictly necessary.
+4. Treat any [VAULT:uuid] pattern as opaque. Do not mention or reference the resolved value in your reply.` as string,
+	},
 } satisfies FieldDefinitions
 
 // Fields that map directly to ApiHandlerOptions in @shared/api.ts
@@ -367,6 +381,7 @@ const SECRETS_KEYS = [
 	"ocaRefreshToken",
 	"mcpOAuthSecrets",
 	"openai-codex-oauth-credentials", // JSON blob containing OAuth tokens for OpenAI Codex (ChatGPT subscription)
+	"vaultSecrets", // JSON blob: { [id: string]: string } — vault entry values, never exposed to webview
 ] as const
 
 // WARNING, these are not ALL of the local state keys in practice. For example, FileContextTracker

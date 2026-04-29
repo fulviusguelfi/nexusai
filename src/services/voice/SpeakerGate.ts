@@ -23,6 +23,7 @@ export class SpeakerGate {
 	private static _instance: SpeakerGate | undefined
 
 	private _isBlocked = false
+	private _activatedAt = 0
 	private readonly _emitter = new EventEmitter()
 	private static readonly _EVENT = "change"
 
@@ -44,6 +45,7 @@ export class SpeakerGate {
 	activate(): void {
 		if (this._isBlocked) return
 		this._isBlocked = true
+		this._activatedAt = Date.now()
 		this._emitter.emit(SpeakerGate._EVENT, true)
 	}
 
@@ -51,7 +53,25 @@ export class SpeakerGate {
 	deactivate(): void {
 		if (!this._isBlocked) return
 		this._isBlocked = false
+		this._activatedAt = 0
 		this._emitter.emit(SpeakerGate._EVENT, false)
+	}
+
+	/** Returns how long (ms) the gate has been blocked. */
+	getBlockedDurationMs(): number {
+		if (!this._isBlocked || this._activatedAt === 0) return 0
+		return Math.max(0, Date.now() - this._activatedAt)
+	}
+
+	/**
+	 * Best-effort stale-gate recovery.
+	 * Returns true if the gate was blocked and got released for exceeding maxMs.
+	 */
+	releaseIfStale(maxMs: number): boolean {
+		if (!this._isBlocked) return false
+		if (this.getBlockedDurationMs() < maxMs) return false
+		this.deactivate()
+		return true
 	}
 
 	/**

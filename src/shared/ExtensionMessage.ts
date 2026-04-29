@@ -1,14 +1,5 @@
 // type that represents json data that is sent from extension to webview, called ExtensionMessage and has 'type' enum which can be 'plusButtonClicked' or 'settingsButtonClicked' or 'hello'
 
-/** Shared type — also imported by SshSessionRegistry.ts to avoid circular deps */
-export interface SshSessionInfo {
-	taskId: string
-	host: string
-	port: number
-	user: string
-	connectedAt: number // unix ms
-}
-
 import { WorkspaceRoot } from "@shared/multi-root/types"
 import { RemoteConfigFields } from "@shared/storage/state-keys"
 import type { Environment } from "../config"
@@ -39,12 +30,14 @@ export interface ExtensionMessage {
 		| "voice_error"
 		| "voice_language_detected"
 		| "voice_stt_progress"
+		| "voice_mic_diagnostic"
 	grpc_response?: GrpcResponse
 	trpc_response?: TrpcResponse
 	orientation?: "horizontal" | "vertical"
 	voice_audio_play?: {
-		wavBase64: string
+		wavBase64?: string
 		phonemeTimeline?: Array<{ start: number; end: number; value: string }>
+		sentenceIndex: number
 	}
 	voice_transcription?: { text: string }
 	voice_result?: {
@@ -168,13 +161,13 @@ export interface ExtensionState {
 	optOutOfRemoteConfig?: boolean
 	doubleCheckCompletionEnabled?: boolean
 	openAiCodexIsAuthenticated?: boolean
-	activeSshSessions: SshSessionInfo[]
 	// Voice settings
 	voiceTtsEnabled: boolean
 	voiceSttEnabled: boolean
+	voiceStreamingSTT: boolean
 	voiceInputDeviceId?: string
 	voiceOutputDeviceId?: string
-	voicePiperVoice: string
+	voiceEdgeTtsVoice: string
 	voiceSilenceThresholdMs: number
 	voiceGracePeriodMs: number
 	voiceMaxRecordingDurationMs: number
@@ -186,6 +179,9 @@ export interface ExtensionState {
 	avatarPersonalityTone: "formal" | "casual" | "technical"
 	avatarPersonalityResponseMode: "concise" | "detailed" | "conversational"
 	avatarPersonalityLanguage: string
+	// Secure Vault — metadata only, values live in SecretStorage
+	vaultEntries: import("@shared/vault").UserVaultEntry[]
+	vaultSystemPrompt: string
 }
 
 export interface ClineMessage {
@@ -284,11 +280,6 @@ export interface ClineSayTool {
 		| "summarizeTask"
 		| "useSkill"
 		| "list_processes"
-		| "ssh_connect"
-		| "ssh_execute"
-		| "ssh_disconnect"
-		| "ssh_upload"
-		| "ssh_download"
 		| "discover_network_hosts"
 	path?: string
 	diff?: string

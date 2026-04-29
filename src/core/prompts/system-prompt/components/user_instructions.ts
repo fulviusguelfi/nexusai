@@ -18,6 +18,7 @@ export async function getUserInstructions(variant: PromptVariant, context: Syste
 		context.localAgentsRulesFileInstructions,
 		context.clineIgnoreInstructions,
 		context.preferredLanguageInstructions,
+		context.vaultSystemPromptInstructions,
 	)
 
 	if (!customInstructions) {
@@ -41,6 +42,7 @@ function buildUserInstructions(
 	localAgentsRulesFileInstructions?: string,
 	clineIgnoreInstructions?: string,
 	preferredLanguageInstructions?: string,
+	vaultSystemPromptInstructions?: string,
 ): string | undefined {
 	const customInstructions = []
 	if (preferredLanguageInstructions) {
@@ -66,6 +68,9 @@ function buildUserInstructions(
 	}
 	if (clineIgnoreInstructions) {
 		customInstructions.push(clineIgnoreInstructions)
+	}
+	if (vaultSystemPromptInstructions) {
+		customInstructions.push(vaultSystemPromptInstructions)
 	}
 	if (customInstructions.length === 0) {
 		return undefined

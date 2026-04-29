@@ -149,6 +149,7 @@ export class WindowsAudioCapture {
 	private isRecording = false
 	private recordingStartChunkIndex = 0 // Chunks before this index are warmup (excluded from output)
 	private preRollData: Buffer[] = [] // Pre-roll chunks prepended when speech is detected
+	private _onChunk: ((chunk: Buffer) => void) | undefined // Dynamic chunk callback (updatable after startCapture)
 
 	/**
 	 * Start capturing audio from microphone using FFmpeg
@@ -219,10 +220,12 @@ export class WindowsAudioCapture {
 				this.isRecording = true
 				this.audioBuffer = []
 
+				this._onChunk = options.onChunk
+
 				// Handle audio data
 				this.ffmpegProcess.stdout?.on("data", (chunk: Buffer) => {
 					this.audioBuffer.push(chunk)
-					options.onChunk?.(chunk)
+					this._onChunk?.(chunk)
 				})
 
 				// Capture FFmpeg stderr for debugging
@@ -269,6 +272,25 @@ export class WindowsAudioCapture {
 	}
 
 	/**
+	 * Update the chunk callback dynamically (used by AudioCapturePool).
+	 * Subsequent audio chunks will be delivered to the new function.
+	 */
+	setChunkCallback(fn: (chunk: Buffer) => void): void {
+		this._onChunk = fn
+	}
+
+	/**
+	 * Reset the audio buffer and recording start index (used by AudioCapturePool).
+	 * Discards all accumulated audio so the next stopCapture() returns only fresh audio.
+	 */
+	resetBuffer(): void {
+		this.audioBuffer = []
+		this.preRollData = []
+		this.recordingStartChunkIndex = 0
+		Logger.log("[WindowsAudioCapture] Buffer reset")
+	}
+
+	/**
 	 * Mark where real recording starts (after warmup chunks are discarded).
 	 * Chunks before this index will be excluded from stopCapture() output.
 	 */
@@ -292,6 +314,7 @@ export class WindowsAudioCapture {
 	 * (warmup chunks before recordingStartChunkIndex are excluded)
 	 */
 	stopCapture(): Buffer {
+		const wasRunning = this.ffmpegProcess !== null
 		if (this.ffmpegProcess) {
 			this.ffmpegProcess.kill()
 			this.ffmpegProcess = null
@@ -301,9 +324,11 @@ export class WindowsAudioCapture {
 		const recordingChunks = this.audioBuffer.slice(this.recordingStartChunkIndex)
 		const allChunks = [...this.preRollData, ...recordingChunks]
 		const totalBytes = allChunks.reduce((sum, b) => sum + b.length, 0)
-		Logger.log(
-			`[WindowsAudioCapture] stopCapture: preroll=${this.preRollData.length} chunks, recording=${recordingChunks.length} chunks, total=${totalBytes} bytes`,
-		)
+		if (wasRunning) {
+			Logger.log(
+				`[WindowsAudioCapture] stopCapture: preroll=${this.preRollData.length} chunks, recording=${recordingChunks.length} chunks, total=${totalBytes} bytes`,
+			)
+		}
 		return Buffer.concat(allChunks)
 	}
 

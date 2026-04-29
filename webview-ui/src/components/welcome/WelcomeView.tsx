@@ -122,7 +122,7 @@ const WelcomeView = memo(() => {
 						to use Cline's free tier and frontier models
 					</p>
 					<VSCodeButton appearance="secondary" className="w-full" disabled={isClineLoading} onClick={handleClineLogin}>
-						{isClineLoading ? "Opening browser…" : "Sign in to NexusAI"}
+						{isClineLoading ? "Opening browser…" : "Open Cline account"}
 						{isClineLoading && <span className="ml-1 animate-spin codicon codicon-refresh" />}
 					</VSCodeButton>
 				</div>

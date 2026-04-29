@@ -42,7 +42,6 @@ describe("SpeakTextToolHandler", () => {
 	let requestSpeakStub: sinon.SinonStub
 
 	beforeEach(() => {
-		// Reset singleton and stub requestSpeak to avoid real audio
 		VoiceSessionManager.getInstance().dispose()
 		requestSpeakStub = sinon.stub(VoiceSessionManager.getInstance(), "requestSpeak")
 		handler = new SpeakTextToolHandler({} as unknown as ToolValidator)
@@ -73,12 +72,34 @@ describe("SpeakTextToolHandler", () => {
 	})
 
 	describe("execute() — TTS enabled", () => {
-		it("calls say(voice_speak, text) and requestSpeak(text)", async () => {
+		it("calls say(voice_speak, ...) and requestSpeak(text)", async () => {
 			const { config, say } = makeConfig(true)
 			await handler.execute(config, makeBlock({ text: "  hello world  " }))
 
-			say.calledWith("voice_speak", "hello world").should.be.true()
-			requestSpeakStub.calledWith("hello world").should.be.true()
+			say.calledWith("voice_speak", "", undefined, undefined, true).should.be.true()
+			requestSpeakStub.calledOnce.should.be.true()
+			;(requestSpeakStub.firstCall.args[0] as string).should.equal("hello world")
+			;(typeof requestSpeakStub.firstCall.args[1]).should.equal("function")
+			requestSpeakStub.firstCall.args[2].should.equal("speak_text_tool")
+		})
+
+		it("updates the voice bubble only when the final spoken chunk completes", async () => {
+			const { config, say } = makeConfig(true)
+			await handler.execute(config, makeBlock({ text: "primeira. segunda." }))
+
+			const onSentenceSpoken = requestSpeakStub.firstCall.args[1] as (
+				spokenSoFar: string,
+				isFinal: boolean,
+			) => Promise<void>
+
+			await onSentenceSpoken("primeira.", false)
+			say.calledOnce.should.be.true()
+
+			await onSentenceSpoken("primeira. segunda.", true)
+			say.calledTwice.should.be.true()
+			say.secondCall.args[0].should.equal("voice_speak")
+			say.secondCall.args[1].should.equal("primeira. segunda.")
+			say.secondCall.args[4].should.equal(false)
 		})
 
 		it("returns a Speaking confirmation result", async () => {

@@ -1,0 +1,22 @@
+
+ Exception during run: C:\Users\Usuario\Desktop\nexusai\src\core\task\tools\handlers\__tests__\SpeakTextToolHandler.test.ts:122
+    })
+})import { afterEach, beforeEach, describe, it } from "mocha"
+  ^^^^^^
+import "should"
+
+SyntaxError: Expected ';', '}' or <eof>
+    at parseTypeScript (node:internal/modules/typescript:72:36)
+    at processTypeScriptCode (node:internal/modules/typescript:146:42)
+    at stripTypeScriptModuleTypes (node:internal/modules/typescript:209:22)
+    at Object.getFileProtocolModuleFormat [as file:] (node:internal/modules/esm/get_format:148:26)
+    at defaultGetFormat (node:internal/modules/esm/get_format:211:36)
+    at defaultLoadSync (node:internal/modules/esm/load:158:16)
+    at ModuleLoader.load (node:internal/modules/esm/loader:821:12)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:591:31)
+    at ModuleLoader.#createModuleJob (node:internal/modules/esm/loader:623:36)
+    at ModuleLoader.#getJobFromResolveResult (node:internal/modules/esm/loader:329:34)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:294:41)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:25) {
+  code: 'ERR_INVALID_TYPESCRIPT_SYNTAX'
+}

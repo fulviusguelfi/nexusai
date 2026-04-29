@@ -22,8 +22,6 @@ const ClineRulesToggleModal: React.FC = () => {
 		localAgentsRulesToggles = {},
 		localWorkflowToggles = {},
 		globalWorkflowToggles = {},
-		globalSkillsToggles = {},
-		localSkillsToggles = {},
 		remoteRulesToggles = {},
 		remoteWorkflowToggles = {},
 		remoteConfigSettings = {},
@@ -809,7 +807,7 @@ const ClineRulesToggleModal: React.FC = () => {
 	)
 }
 
-const StyledTabButton = styled.button<{ isActive: boolean }>`
+const StyledTabButton = styled.button.withConfig({ shouldForwardProp: (p) => p !== "isActive" })<{ isActive: boolean }>`
 	background: none;
 	border: none;
 	border-bottom: 2px solid ${(props) => (props.isActive ? "var(--vscode-foreground)" : "transparent")};

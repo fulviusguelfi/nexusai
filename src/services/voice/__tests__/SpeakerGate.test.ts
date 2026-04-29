@@ -63,6 +63,28 @@ describe("SpeakerGate", () => {
 			gate.deactivate()
 			gate.isBlocked().should.be.false()
 		})
+
+		it("resets blocked duration to 0 after deactivate()", () => {
+			const clock = sinon.useFakeTimers({ now: 1000 })
+			gate.activate()
+			clock.tick(2500)
+			gate.getBlockedDurationMs().should.equal(2500)
+			gate.deactivate()
+			gate.getBlockedDurationMs().should.equal(0)
+		})
+
+		it("releaseIfStale() deactivates gate only when threshold is exceeded", () => {
+			const clock = sinon.useFakeTimers({ now: 2000 })
+			gate.activate()
+			clock.tick(3000)
+
+			gate.releaseIfStale(5000).should.be.false()
+			gate.isBlocked().should.be.true()
+
+			clock.tick(2500)
+			gate.releaseIfStale(5000).should.be.true()
+			gate.isBlocked().should.be.false()
+		})
 	})
 
 	describe("onDidChange()", () => {

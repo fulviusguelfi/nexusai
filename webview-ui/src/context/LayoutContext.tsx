@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
-import { getStoragePrefix } from "../utils/detectWebviewType"
+import { getStoragePrefix, getWebviewType } from "../utils/detectWebviewType"
 
 type LayoutOrientation = "horizontal" | "vertical"
 
@@ -12,8 +12,8 @@ const LayoutContext = createContext<LayoutContextType | undefined>(undefined)
 
 // Use per-context storage key to prevent sidebar and editor from sharing state
 const LAYOUT_STORAGE_KEY = `${getStoragePrefix()}orientation`
-// Default to vertical (sidebar layout) - horizontal is enabled via command when panel opens
-const DEFAULT_ORIENTATION: LayoutOrientation = "vertical"
+// Editor panel defaults to horizontal (ChatView); sidebar defaults to vertical (grid menu)
+const DEFAULT_ORIENTATION: LayoutOrientation = getWebviewType() === "editor" ? "horizontal" : "vertical"
 
 export const LayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [orientation, setOrientationState] = useState<LayoutOrientation>(DEFAULT_ORIENTATION)

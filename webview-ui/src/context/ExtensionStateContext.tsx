@@ -290,16 +290,18 @@ export const ExtensionStateContextProvider: React.FC<{
 		hooksEnabled: false,
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
-		activeSshSessions: [],
 		voiceTtsEnabled: true,
 		voiceSttEnabled: true,
+		voiceStreamingSTT: true,
 		voiceInputDeviceId: undefined,
 		voiceOutputDeviceId: undefined,
-		voicePiperVoice: "en_US-lessac-medium",
+		voiceEdgeTtsVoice: "pt-BR-FranciscaNeural",
 		voiceSilenceThresholdMs: 700,
 		voiceGracePeriodMs: 2000,
 		voiceMaxRecordingDurationMs: 120000,
 		voiceMetadataEnabled: true,
+		vaultEntries: [],
+		vaultSystemPrompt: "",
 	})
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true)
 	const [didHydrateState, setDidHydrateState] = useState(false)

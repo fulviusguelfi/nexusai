@@ -64,7 +64,7 @@ export class AskFollowupQuestionToolHandler implements IToolHandler, IPartialBlo
 
 		// Speak the question via TTS if voice is enabled
 		if (config.services.stateManager.getGlobalStateKey("voiceTtsEnabled")) {
-			VoiceSessionManager.getInstance().requestSpeak(question)
+			VoiceSessionManager.getInstance().requestSpeak(question, undefined, "ask_followup_question_tool")
 		}
 
 		const sharedMessage = {

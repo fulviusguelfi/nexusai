@@ -353,15 +353,13 @@ export async function updateSettings(controller: Controller, request: UpdateSett
 		}
 
 		if (request.voiceInputDeviceId !== undefined) {
+			Logger.log(`[VoiceSettings] voiceInputDeviceId → "${request.voiceInputDeviceId || "(default)"}"`)
 			controller.stateManager.setGlobalState("voiceInputDeviceId", request.voiceInputDeviceId || undefined)
 		}
 
 		if (request.voiceOutputDeviceId !== undefined) {
+			Logger.log(`[VoiceSettings] voiceOutputDeviceId → "${request.voiceOutputDeviceId || "(default)"}"`)
 			controller.stateManager.setGlobalState("voiceOutputDeviceId", request.voiceOutputDeviceId || undefined)
-		}
-
-		if (request.voicePiperVoice !== undefined) {
-			controller.stateManager.setGlobalState("voicePiperVoice", request.voicePiperVoice)
 		}
 
 		if (request.voiceSilenceThresholdMs !== undefined) {
