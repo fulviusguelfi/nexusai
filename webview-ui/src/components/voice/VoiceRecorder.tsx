@@ -11,6 +11,7 @@ interface Props {
 	onTranscription?: (text: string, language?: string, isPartial?: boolean) => void
 	disabled?: boolean
 	onLanguageDetected?: (lang: string | null) => void
+	onRecordingStarted?: () => void
 }
 
 export interface VoiceRecorderHandle {
@@ -79,16 +80,8 @@ export function getLanguageName(code: string): string {
 	return languageNames[code] || code
 }
 
-const WAVEFORM_BARS = [
-	{ id: "bar-l2", scale: 0.4 },
-	{ id: "bar-l1", scale: 0.7 },
-	{ id: "bar-c", scale: 1.0 },
-	{ id: "bar-r1", scale: 0.7 },
-	{ id: "bar-r2", scale: 0.4 },
-]
-
 const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecorder(
-	{ onTranscription, disabled, onLanguageDetected },
+	{ onTranscription, disabled, onLanguageDetected, onRecordingStarted },
 	ref,
 ) {
 	const { voiceSttEnabled, voiceMaxRecordingDurationMs } = useExtensionState()
@@ -122,14 +115,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		return () => window.removeEventListener("click", unlock)
 	}, [])
 
-	// Audio level feedback (during RECORDING state)
-	const [audioLevel, setAudioLevel] = useState<{
-		rmsLevel: number // 0-1 normalized
-		dbLevel: number // -40 to 0 dB
-		quality: "excellent" | "good" | "poor" | "silent"
-		clipping: boolean
-	} | null>(null)
-
 	// Start/stop elapsed timer
 	const startTimer = useCallback(() => {
 		setRecordingSeconds(0)
@@ -150,6 +135,7 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 	const handleStartRecording = useCallback(() => {
 		if (isUserRecording) return
 		voiceLogStore.info("VoiceRecorder", "User started recording (push-to-talk press)")
+		onRecordingStarted?.()
 		setIsUserRecording(true)
 		startTimer()
 		PLATFORM_CONFIG.postMessage({
@@ -161,7 +147,7 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 				maxDurationMs: voiceMaxRecordingDurationMs || 120000,
 			},
 		})
-	}, [isUserRecording, voiceMaxRecordingDurationMs, startTimer])
+	}, [isUserRecording, onRecordingStarted, voiceMaxRecordingDurationMs, startTimer])
 
 	// Push-to-talk: stop recording
 	const handleStopRecording = useCallback(() => {
@@ -236,13 +222,6 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		const handler = (event: MessageEvent) => {
 			const data = event.data
 
-			if (data?.type === "voice_stt_partial" && data.voice_stt_partial?.text) {
-				const partialText = data.voice_stt_partial.text
-				console.log("[VoiceRecorder] Live partial:", partialText)
-				// Also write the partial into the input box so words appear as they are spoken
-				onTranscription?.(partialText, undefined, true)
-			}
-
 			if (data?.type === "voice_agent_state_changed") {
 				const { state } = data.voice_agent_state_changed || {}
 				if (isVoiceAgentState(state)) {
@@ -253,14 +232,7 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 						stopTimer()
 					}
 					// Handle error states from backend (e.g., preflight check failures)
-					if (state !== VOICE_AGENT_STATES.RECORDING) {
-						setAudioLevel(null)
-					}
 				}
-			}
-
-			if (data?.type === "voice_audio_level" && data.voice_audio_level) {
-				setAudioLevel(data.voice_audio_level)
 			}
 
 			if (data?.type === "voice_result") {
@@ -268,6 +240,10 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 				const transcriptionText = voiceResult.transcriptionText || voiceResult.text
 				const audioWavBase64 = voiceResult.audioWavBase64 || voiceResult.audioBase64
 				const errorMessage = voiceResult.errorMessage || voiceResult.error
+
+				// If an IDLE state message is dropped, voice_result is the terminal signal
+				// for this recording cycle and must release the mic button UI.
+				setAgentState(VOICE_AGENT_STATES.IDLE)
 
 				console.log("[VoiceRecorder] Received voice_result:", {
 					transcriptionText,
@@ -335,15 +311,13 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 	}
 
 	const isError = agentState === VOICE_AGENT_STATES.ERROR
-	// Disable only while TTS is playing; PROCESSING is ~200ms so not worth blocking
-	const isDisabledState = disabled || agentState === VOICE_AGENT_STATES.PLAYING
+	const isTranscribing = !isUserRecording && agentState === VOICE_AGENT_STATES.PROCESSING
+	const isDisabledState = disabled || agentState === VOICE_AGENT_STATES.PLAYING || isTranscribing
 	const isActiveRecording =
 		isUserRecording &&
 		(agentState === VOICE_AGENT_STATES.RECORDING || agentState === VOICE_AGENT_STATES.READY_TO_LISTEN) &&
 		recordingSeconds > 0
-	// Spinner only while user is waiting for mic to open (pressed but recording hasn't started yet).
-	// Once user clicks stop, show mic immediately — backend PROCESSING is invisible to the user.
-	const isLoading = isUserRecording && !isActiveRecording
+	const isLoading = isTranscribing
 
 	// Click-toggle: first click starts, second click stops
 	const handleToggle = isUserRecording ? handleStopRecording : handleStartRecording
@@ -352,18 +326,20 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 		<div className="flex items-center gap-2">
 			<button
 				aria-label={
-					agentState === VOICE_AGENT_STATES.PLAYING
-						? "Aguardando fim da fala da IA"
-						: isUserRecording
-							? "Recording in progress — Click to stop"
-							: "Click to record (push-to-talk)"
+					isTranscribing
+						? "Transcribing audio..."
+						: agentState === VOICE_AGENT_STATES.PLAYING
+							? "Aguardando fim da fala da IA"
+							: isUserRecording
+								? "Recording in progress — Click to stop"
+								: "Click to record (push-to-talk)"
 				}
 				className={[
 					"codicon p-0 m-0 transition-all text-[14px] w-5 h-5",
 					isError
 						? "codicon-warning text-error"
 						: isActiveRecording
-							? "codicon-stop-circle text-red-500 animate-pulse"
+							? "codicon-stop-circle text-red-500"
 							: isLoading
 								? "codicon-loading animate-spin"
 								: "codicon-mic",
@@ -374,23 +350,14 @@ const VoiceRecorder = forwardRef<VoiceRecorderHandle, Props>(function VoiceRecor
 				data-active-recording={isActiveRecording}
 				disabled={isDisabledState}
 				onClick={handleToggle}
-				title={isUserRecording ? "Click to stop recording" : "Click to record (push-to-talk)"}
+				title={
+					isTranscribing
+						? "Transcribing audio..."
+						: isUserRecording
+							? "Click to stop recording"
+							: "Click to record (push-to-talk)"
+				}
 			/>
-
-			{isActiveRecording && audioLevel && (
-				<div className="flex items-end gap-[2px] h-4 mx-1">
-					{WAVEFORM_BARS.map(({ id, scale }) => (
-						<div
-							className="w-[3px] rounded-full bg-red-400 transition-all duration-75"
-							key={id}
-							style={{
-								height: `${Math.max(15, audioLevel.rmsLevel * 100 * scale)}%`,
-								opacity: audioLevel.quality === "silent" ? 0.25 : 0.9,
-							}}
-						/>
-					))}
-				</div>
-			)}
 		</div>
 	)
 })

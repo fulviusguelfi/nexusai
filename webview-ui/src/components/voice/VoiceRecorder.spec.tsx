@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import VoiceRecorder from "./VoiceRecorder"
 
@@ -86,5 +86,40 @@ describe("VoiceRecorder", () => {
 		// second click → stop
 		fireEvent.click(screen.getByRole("button"))
 		expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "stop_voice_recording" }))
+	})
+
+	it("recovers from PROCESSING when voice_result arrives without IDLE", async () => {
+		render(<VoiceRecorder onTranscription={vi.fn()} />)
+
+		await act(async () => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "voice_agent_state_changed",
+						voice_agent_state_changed: { state: "PROCESSING" },
+					},
+				}),
+			)
+		})
+
+		const button = screen.getByRole("button") as HTMLButtonElement
+		await waitFor(() => expect(button.disabled).toBe(true))
+
+		await act(async () => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "voice_result",
+						voice_result: {
+							success: true,
+							transcriptionText: "teste",
+						},
+					},
+				}),
+			)
+		})
+
+		await waitFor(() => expect(button.disabled).toBe(false))
+		expect(button.getAttribute("aria-label")).toBe("Click to record (push-to-talk)")
 	})
 })

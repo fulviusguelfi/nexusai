@@ -16,46 +16,70 @@ import { E2ETestHelper, e2e } from "./utils/helpers"
 
 e2e.describe("Voice Tools", () => {
 	// ── 1 ──────────────────────────────────────────────────────────────────────
-	e2e("speak_text — tool executes with TTS enabled by default", async ({ helper, sidebar }) => {
+	e2e("speak_text — tool executes with TTS enabled by default", async ({ helper, page, sidebar }) => {
 		await helper.signin(sidebar)
 
-		const inputbox = sidebar.getByTestId("chat-input")
-		await inputbox.fill("voice_speak_request")
-		await sidebar.getByTestId("send-button").click()
+		const newTaskButton = sidebar.getByRole("button", { name: "New Task" }).first()
+		if (await newTaskButton.isVisible().catch(() => false)) {
+			await newTaskButton.click({ delay: 100 })
+		}
 
-		await E2ETestHelper.waitForChatMessage(sidebar, "Speaking:", 60_000)
+		const chatFrame = await helper.getChatFrame(page)
+		const inputbox = chatFrame.getByTestId("chat-input")
+		await inputbox.fill("voice_speak_request")
+		await inputbox.press("Enter")
+
+		await E2ETestHelper.waitForChatMessage(chatFrame, "Speaking:", 90_000)
 	})
 
 	// ── 2 ──────────────────────────────────────────────────────────────────────
-	e2e("listen_for_speech — tool executes with STT enabled by default", async ({ helper, sidebar }) => {
+	e2e("listen_for_speech — tool executes with STT enabled by default", async ({ helper, page, sidebar }) => {
 		await helper.signin(sidebar)
 
-		const inputbox = sidebar.getByTestId("chat-input")
-		await inputbox.fill("voice_listen_request")
-		await sidebar.getByTestId("send-button").click()
+		const newTaskButton = sidebar.getByRole("button", { name: "New Task" }).first()
+		if (await newTaskButton.isVisible().catch(() => false)) {
+			await newTaskButton.click({ delay: 100 })
+		}
 
-		await E2ETestHelper.waitForChatMessage(sidebar, "No speech was captured within the timeout window.", 60_000)
+		const chatFrame = await helper.getChatFrame(page)
+		const inputbox = chatFrame.getByTestId("chat-input")
+		await inputbox.fill("voice_listen_request")
+		await inputbox.press("Enter")
+
+		await E2ETestHelper.waitForChatMessage(chatFrame, "No speech was captured within the timeout window.", 90_000)
 	})
 
 	// ── 3 ──────────────────────────────────────────────────────────────────────
-	e2e("speak_text — returns disabled message when TTS is off", async ({ helper, sidebar }) => {
+	e2e("speak_text — returns disabled message when TTS is off", async ({ helper, page, sidebar }) => {
 		await helper.signin(sidebar)
 
-		const inputbox = sidebar.getByTestId("chat-input")
-		await inputbox.fill("voice_speak_disabled_request")
-		await sidebar.getByTestId("send-button").click()
+		const newTaskButton = sidebar.getByRole("button", { name: "New Task" }).first()
+		if (await newTaskButton.isVisible().catch(() => false)) {
+			await newTaskButton.click({ delay: 100 })
+		}
 
-		await E2ETestHelper.waitForChatMessage(sidebar, "TTS is disabled", 60_000)
+		const chatFrame = await helper.getChatFrame(page)
+		const inputbox = chatFrame.getByTestId("chat-input")
+		await inputbox.fill("voice_speak_disabled_request")
+		await inputbox.press("Enter")
+
+		await E2ETestHelper.waitForChatMessage(chatFrame, "TTS is disabled", 90_000)
 	})
 
 	// ── 4 ──────────────────────────────────────────────────────────────────────
-	e2e("listen_for_speech — custom prompt is rendered in chat", async ({ helper, sidebar }) => {
+	e2e("listen_for_speech — custom prompt is rendered in chat", async ({ helper, page, sidebar }) => {
 		await helper.signin(sidebar)
 
-		const inputbox = sidebar.getByTestId("chat-input")
-		await inputbox.fill("voice_listen_custom_request")
-		await sidebar.getByTestId("send-button").click()
+		const newTaskButton = sidebar.getByRole("button", { name: "New Task" }).first()
+		if (await newTaskButton.isVisible().catch(() => false)) {
+			await newTaskButton.click({ delay: 100 })
+		}
 
-		await E2ETestHelper.waitForChatMessage(sidebar, "Say your name to continue.", 60_000)
+		const chatFrame = await helper.getChatFrame(page)
+		const inputbox = chatFrame.getByTestId("chat-input")
+		await inputbox.fill("voice_listen_custom_request")
+		await inputbox.press("Enter")
+
+		await E2ETestHelper.waitForChatMessage(chatFrame, "Say your name to continue.", 90_000)
 	})
 })

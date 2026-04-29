@@ -135,6 +135,7 @@ export class VoiceAgent {
 
 			this.audioCapture = new WindowsAudioCapture()
 			this.abortController = new AbortController()
+			void AudioCapturePool.preWarm(this.activeDevice?.name)
 
 			this.setState(VoiceAgentState.INITIALIZING, `Ready on: ${this.activeDevice!.name}`)
 		} catch (error) {
@@ -208,7 +209,7 @@ export class VoiceAgent {
 			}
 
 			// === Fast path: pool capture already warm — READY_TO_LISTEN instantaneous ===
-			const pooled = AudioCapturePool.lease()
+			const pooled = AudioCapturePool.lease(this.activeDevice?.name)
 			if (pooled) {
 				this.audioCapture = pooled.capture // update ref so stop() targets the right process
 				pooled.capture.resetBuffer()

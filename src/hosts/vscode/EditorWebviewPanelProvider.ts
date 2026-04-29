@@ -356,6 +356,7 @@ export class EditorWebviewPanelProvider extends WebviewProvider implements vscod
 	 */
 	public override async dispose() {
 		Logger.log("[EditorWebviewPanelProvider] Disposing editor panel")
+		setGlobalVoiceMessenger(null)
 		this.disposables?.forEach((d) => d.dispose?.())
 		this.disposables = []
 		this.panel?.dispose()

@@ -1,5 +1,6 @@
 import { sendShowWebviewEvent } from "@core/controller/ui/subscribeToShowWebview"
 import { WebviewProvider } from "@core/webview"
+import { splitIntoSpeechChunks } from "@services/voice/TtsChunking"
 import * as vscode from "vscode"
 import { handleGrpcRequest, handleGrpcRequestCancel } from "@/core/controller/grpc-handler"
 import { HostProvider } from "@/hosts/host-provider"
@@ -52,29 +53,6 @@ export function resolveVoiceSentenceEnded(sentenceIndex: number): void {
 		_voicePendingSentenceEnded.delete(sentenceIndex)
 		resolver()
 	}
-}
-
-/**
- * Split a text block into individual sentences for streaming TTS.
- * Splits on sentence-ending punctuation followed by whitespace or end-of-string.
- * Preserves non-empty segments; short fragments are merged with the previous sentence.
- */
-function splitIntoSentences(text: string): string[] {
-	// Split on . ! ? followed by space/newline/end, keeping the delimiter on the left side
-	const raw = text.split(/(?<=[.!?。！？])\s+/)
-	const result: string[] = []
-	for (const part of raw) {
-		const trimmed = part.trim()
-		if (!trimmed) continue
-		// Merge very short tails (e.g. single character) onto the previous sentence
-		if (trimmed.length < 4 && result.length > 0) {
-			result[result.length - 1] += " " + trimmed
-		} else {
-			result.push(trimmed)
-		}
-	}
-	// If no splits happened, return the whole text as one sentence
-	return result.length > 0 ? result : [text.trim()].filter(Boolean)
 }
 
 export class VscodeWebviewProvider extends WebviewProvider implements vscode.WebviewViewProvider {
@@ -135,13 +113,6 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		// Sets up an event listener to listen for messages passed from the webview view context
 		// and executes code based on the message that is received
 		this.setWebviewMessageListener(webviewView.webview)
-
-		// Pre-warm FasterWhisper singleton so the model is ready before the first recording click
-		void import("@/services/voice/FasterWhisperService").then(({ FasterWhisperService }) => {
-			FasterWhisperService.warmUp(this.controller.context.globalStoragePath).catch((err) => {
-				Logger.warn("[VscodeWebviewProvider] FasterWhisperService warmUp failed:", err)
-			})
-		})
 
 		// Pre-warm FFmpeg/dshow so READY_TO_LISTEN is instantaneous on first mic click
 		void import("@/services/audio/AudioCapturePool").then(({ AudioCapturePool }) => {
@@ -209,35 +180,42 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 		void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
 			Logger.log("[VscodeWebviewProvider] Registering onSpeakRequest listener")
 			const dispose = VoiceSessionManager.getInstance().onSpeakRequest(async (request) => {
+				const requestId = request.requestId ?? `tts-unknown-${Date.now()}`
+				const queueDelayMs = request.createdAt ? Date.now() - request.createdAt : -1
 				const text = typeof request === "string" ? request : request.text
 				const onSentenceSpoken = typeof request === "string" ? undefined : request.onSentenceSpoken
 				const ttsStart = Date.now()
 				const tts = () => `[T+${Date.now() - ttsStart}ms]`
-				Logger.log(`[TTS] 🎙️ ${tts()} onSpeakRequest FIRED — ${text?.length ?? 0} chars`)
+				Logger.log(
+					`[TTS][${requestId}] 🎙️ ${tts()} onSpeakRequest FIRED — ${text?.length ?? 0} chars | source=${request.source ?? "unknown"} | queueDelay=${queueDelayMs}ms`,
+				)
 				Logger.log(`[TTS] ─── Raw text:\n${text}`)
 				try {
 					const { RhubarbService } = await import("@services/voice/RhubarbService")
 					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
 					const { synthesizeEdgeTts } = await import("@services/voice/EdgeTtsService")
 					const { EditorWebviewPanelProvider } = await import("./EditorWebviewPanelProvider")
+					const voiceOutputDeviceId = this.controller.stateManager.getGlobalStateKey("voiceOutputDeviceId") as
+						| string
+						| undefined
 					const voiceEdgeTtsVoice =
 						(this.controller.stateManager.getGlobalStateKey("voiceEdgeTtsVoice") as string | undefined) ??
 						"pt-BR-FranciscaNeural"
 
-					const sentences = splitIntoSentences(text).filter((s) => s.trim())
-					Logger.log(`[TTS] ${tts()} 🎵 ${sentences.length} sentence(s), voice="${voiceEdgeTtsVoice}"`)
+					const sentences = splitIntoSpeechChunks(text).filter((s) => s.trim())
+					Logger.log(`[TTS][${requestId}] ${tts()} 🎵 ${sentences.length} sentence(s), voice="${voiceEdgeTtsVoice}"`)
 
 					// ── Pipeline helper: synthesize one sentence + extract lip sync ────────────
 					const synthesize = async (sentence: string, idx: number) => {
 						const t0 = Date.now()
-						Logger.log(`[TTS] ${tts()} 🔤 Synth[${idx + 1}]: "${sentence.substring(0, 60)}"`)
+						Logger.log(`[TTS][${requestId}] ${tts()} 🔤 Synth[${idx + 1}]: "${sentence.substring(0, 60)}"`)
 						const wavBuf = await synthesizeEdgeTts(sentence, voiceEdgeTtsVoice)
 						const synthMs = Date.now() - t0
-						Logger.log(`[TTS] ${tts()} ✅ Synth[${idx + 1}] done: ${wavBuf.length}B in ${synthMs}ms`)
+						Logger.log(`[TTS][${requestId}] ${tts()} ✅ Synth[${idx + 1}] done: ${wavBuf.length}B in ${synthMs}ms`)
 						const lipT = Date.now()
 						const phonemeTimeline = await new RhubarbService().extractTimeline(wavBuf)
 						Logger.log(
-							`[TTS] ${tts()} 👄 LipSync[${idx + 1}]: ${phonemeTimeline.length} phonemes in ${Date.now() - lipT}ms`,
+							`[TTS][${requestId}] ${tts()} 👄 LipSync[${idx + 1}]: ${phonemeTimeline.length} phonemes in ${Date.now() - lipT}ms`,
 						)
 						return { wavBuf, phonemeTimeline }
 					}
@@ -253,13 +231,14 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 					}
 
 					SpeakerGate.getInstance().activate()
+					VoiceSessionManager.getInstance().setSpeaking(true)
 					broadcast({ type: "voice_agent_state_changed", voice_agent_state_changed: { state: "PLAYING", context: "" } })
 
 					try {
 						if (sentences.length === 0) return
 
 						// Pre-synthesize the first sentence while broadcasting PLAYING state.
-						Logger.log(`[TTS] ${tts()} 🚀 Pre-synthesizing sentence 1...`)
+						Logger.log(`[TTS][${requestId}] ${tts()} 🚀 Pre-synthesizing sentence 1...`)
 						let nextSynth: Promise<{ wavBuf: Buffer; phonemeTimeline: any[] }> = synthesize(sentences[0], 0)
 
 						let spokenSoFar = ""
@@ -270,23 +249,14 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 
 							// Kick off synthesis of NEXT sentence NOW (parallel with playback below)
 							if (i + 1 < sentences.length) {
-								Logger.log(`[TTS] ${tts()} ⏩ Pipeline: pre-synthesizing sentence ${i + 2}`)
+								Logger.log(`[TTS][${requestId}] ${tts()} ⏩ Pipeline: pre-synthesizing sentence ${i + 2}`)
 								nextSynth = synthesize(sentences[i + 1], i + 1)
 							}
 
 							const durationMs = getWavDurationMs(wavBuf)
-							Logger.log(`[TTS] ${tts()} 🔊 Playing sentence ${i + 1}/${sentences.length}: ${durationMs}ms`)
-
-							// Update cumulative text and notify tool handler so it can update the chat bubble
-							spokenSoFar = sentences.slice(0, i + 1).join(" ")
-							const isFinal = i === sentences.length - 1
-							if (onSentenceSpoken) {
-								try {
-									await onSentenceSpoken(spokenSoFar, isFinal)
-								} catch (cbErr) {
-									Logger.warn(`[TTS] onSentenceSpoken callback error (sentence ${i + 1}):`, cbErr)
-								}
-							}
+							Logger.log(
+								`[TTS][${requestId}] ${tts()} 🔊 Playing sentence ${i + 1}/${sentences.length}: ${durationMs}ms`,
+							)
 
 							broadcast({
 								type: "voice_audio_play",
@@ -297,26 +267,39 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 							// HTMLAudioElement.play(), so we play the WAV here instead.
 							try {
 								const { playWavBuffer } = await import("@services/voice/HostAudioPlayer")
-								await playWavBuffer(wavBuf)
+								await playWavBuffer(wavBuf, voiceOutputDeviceId)
 							} catch (audioErr) {
 								// Non-fatal: fall back to durationMs wait so pipeline still advances
-								Logger.warn(`[TTS] Host audio playback failed for sentence ${i + 1}:`, audioErr)
+								Logger.warn(`[TTS][${requestId}] Host audio playback failed for sentence ${i + 1}:`, audioErr)
 								await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
 							}
 
-							Logger.log(`[TTS] ${tts()} ✅ Sentence ${i + 1} complete`)
+							// Update cumulative text only after the corresponding audio is done.
+							spokenSoFar = sentences.slice(0, i + 1).join(" ")
+							const isFinal = i === sentences.length - 1
+							if (onSentenceSpoken) {
+								try {
+									await onSentenceSpoken(spokenSoFar, isFinal)
+								} catch (cbErr) {
+									Logger.warn(`[TTS][${requestId}] onSentenceSpoken callback error (sentence ${i + 1}):`, cbErr)
+								}
+							}
+
+							Logger.log(`[TTS][${requestId}] ${tts()} ✅ Sentence ${i + 1} complete`)
 						}
 
-						Logger.log(`[TTS] ${tts()} 🏁 TTS pipeline complete — total ${Date.now() - ttsStart}ms`)
+						Logger.log(`[TTS][${requestId}] ${tts()} 🏁 TTS pipeline complete — total ${Date.now() - ttsStart}ms`)
 					} finally {
 						SpeakerGate.getInstance().deactivate()
+						VoiceSessionManager.getInstance().setSpeaking(false)
 						broadcast({
 							type: "voice_agent_state_changed",
 							voice_agent_state_changed: { state: "IDLE", context: "" },
 						})
 					}
 				} catch (err) {
-					Logger.error("[TTS] ❌ TTS speak error:", err)
+					VoiceSessionManager.getInstance().setSpeaking(false)
+					Logger.error(`[TTS][${requestId}] ❌ TTS speak error:`, err)
 				}
 			})
 			this.disposables.push({ dispose })
@@ -463,9 +446,28 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 			case "start_voice_recording": {
 				try {
 					const { SpeakerGate } = await import("@services/voice/SpeakerGate")
-					if (SpeakerGate.getInstance().isBlocked()) {
-						Logger.log("[VscodeWebviewProvider] Speaker gate active — ignoring recording request during TTS")
-						break
+					const gate = SpeakerGate.getInstance()
+					if (gate.isBlocked()) {
+						const released = gate.releaseIfStale(15000)
+						if (!released) {
+							const blockedMs = gate.getBlockedDurationMs()
+							Logger.log(
+								`[VscodeWebviewProvider] Speaker gate active (${blockedMs}ms) — rejecting recording request during TTS`,
+							)
+							postMessageToWebview({
+								type: "voice_result",
+								voice_result: {
+									transcriptionText: "",
+									llmResponseText: "",
+									audioWavBase64: "",
+									totalDurationMs: 0,
+									success: false,
+									errorMessage: "Aguarde o fim da resposta de voz atual e tente novamente.",
+								},
+							})
+							break
+						}
+						Logger.warn("[VscodeWebviewProvider] Speaker gate was stale and got auto-released before recording")
 					}
 					Logger.log(`[VscodeWebviewProvider] start_voice_recording received at T=${Date.now()}`)
 					const { recordAndRespond } = await import("@core/controller/voice/recordAndRespond")

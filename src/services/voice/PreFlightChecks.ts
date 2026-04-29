@@ -50,7 +50,6 @@ export async function validateFFmpegAtStartup(): Promise<void> {
 
 /**
  * Pre-download Piper (TTS) binary and voice model in the background.
- * Whisper STT has been removed — streaming STT (Web Speech API) requires no binary.
  * Called at extension startup so the first TTS interaction doesn't pay the download cost.
  * Idempotent — skips any file that is already cached.
  */
@@ -63,19 +62,6 @@ export async function preloadVoiceModels(globalStoragePath: string): Promise<voi
 		Logger.log("[Preload] Piper binary and voice model ready")
 	} catch (e) {
 		Logger.warn(`[Preload] Piper pre-load failed (non-critical): ${e}`)
-	}
-
-	// faster-whisper STT — model auto-downloads from HuggingFace on first use; just log status
-	try {
-		const { FasterWhisperService } = await import("@/services/voice/FasterWhisperService")
-		if (!FasterWhisperService.isModelReady(globalStoragePath)) {
-			Logger.log("[Preload] faster-whisper model not cached — will download on first use")
-			await FasterWhisperService.downloadModel(globalStoragePath)
-		} else {
-			Logger.log("[Preload] faster-whisper model ready")
-		}
-	} catch (e) {
-		Logger.warn(`[Preload] faster-whisper pre-check failed (non-critical): ${e}`)
 	}
 }
 

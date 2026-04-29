@@ -1,9 +1,10 @@
 import type { Controller } from "@core/controller"
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
 import type { RecordAndRespondRequest, RecordAndRespondResponse } from "@shared/proto/cline/voice"
-import { FasterWhisperService } from "@/services/voice/FasterWhisperService"
 import { PreFlightChecks } from "@/services/voice/PreFlightChecks"
 import { VoiceAgent, VoiceAgentState } from "@/services/voice/VoiceAgent"
+import { VoiceDeviceManager } from "@/services/voice/VoiceDeviceManager"
+import { VoiceResponseHandler } from "@/services/voice/VoiceResponseHandler"
 import { Logger } from "@/shared/services/Logger"
 
 /**
@@ -79,6 +80,73 @@ export async function recordAndRespond(
 	const totalDurationMs = (): number => Date.now() - startTime
 	const ts = () => `[T+${totalDurationMs()}ms]`
 
+	const shouldRetryWithoutPreferredDevice = (recordResult: any): boolean => {
+		if (!request.inputDeviceId || !recordResult?.error) {
+			return false
+		}
+
+		const errorCode = String(recordResult.error.code || "").toUpperCase()
+		const errorMessage = String(recordResult.error.userMessage || recordResult.error.message || "").toLowerCase()
+
+		return (
+			errorCode === "DEVICE_NOT_FOUND" ||
+			errorMessage.includes("microphone not found") ||
+			errorMessage.includes("device not found") ||
+			errorMessage.includes("no microphones found")
+		)
+	}
+
+	const runAgentRecording = async (deviceId?: string) => {
+		const agent = new VoiceAgent({
+			maxDuration: request.maxDurationMs || 120000,
+			deviceId: deviceId || undefined,
+			stateCallback: (state: VoiceAgentState, context?: string) => {
+				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
+				// Send state updates to webview (async, non-blocking)
+				;(async () => {
+					try {
+						const messenger = await getVoiceMessenger()
+						Logger.log(`[recordAndRespond] getVoiceMessenger returned: ${messenger ? "found" : "null"}`)
+						if (messenger) {
+							const message: ExtensionMessage = {
+								type: "voice_agent_state_changed" as const,
+								voice_agent_state_changed: {
+									state,
+									context: context || "",
+								},
+							}
+							Logger.log(`[recordAndRespond] Sending voice_agent_state_changed: ${state}`)
+							const result = await messenger(message)
+							Logger.log(`[recordAndRespond] messenger returned: ${result}`)
+						} else {
+							Logger.warn("[recordAndRespond] No voice messenger available")
+						}
+					} catch (err) {
+						Logger.error("[recordAndRespond] Failed to send state to webview:", err)
+					}
+				})()
+			},
+			errorCallback: (error) => {
+				Logger.error(`  Error in VoiceAgent: ${error.userMessage}`)
+			},
+		})
+
+		// Store reference for stop_voice_recording RPC (both module-level + Provider instance)
+		setActiveVoiceAgent(agent)
+		request.onAgentCreated?.(agent)
+		Logger.log(`[recordAndRespond] Agent registered at T=${Date.now()}`)
+
+		try {
+			return await agent.recordAndRespond()
+		} finally {
+			// Clear active agent reference
+			setActiveVoiceAgent(null)
+			request.onAgentDestroyed?.()
+			Logger.log(`[recordAndRespond] finally: calling agent.stop(from=finally) at T=${Date.now()}`)
+			agent.stop("finally")
+		}
+	}
+
 	try {
 		Logger.log(`${ts()} 🎤 start_voice_recording recebido`)
 
@@ -121,93 +189,20 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Preflight checks passed`)
 
-		// Step 2: Record audio with VoiceAgent + real-time faster-whisper STT
-		Logger.log(`${ts()} 🎙️ Step 2: Recording audio with faster-whisper streaming STT...`)
+		// Step 2: Record audio with VoiceAgent (push-to-talk)
+		Logger.log(`${ts()} 🎙️ Step 2: Recording audio (push-to-talk)...`)
 
-		// Get shared faster-whisper singleton (already warm from startup) or create new instance
-		const voskInitStart = Date.now()
-		const sttService = FasterWhisperService.getShared(controller.context.globalStoragePath, async (partialText: string) => {
-			// Fired for every new word — send live preview to webview
-			if (partialText) {
-				Logger.log(`[recordAndRespond] STT partial: "${partialText}"`)
-				const messenger = await getVoiceMessenger()
-				if (messenger) {
-					await messenger({
-						type: "voice_stt_partial",
-						voice_stt_partial: { text: partialText },
-					})
-				}
-			}
-		})
+		let recordResult: any = await runAgentRecording(request.inputDeviceId || undefined)
 
-		// If singleton was just created (no worker yet), init it now; otherwise it's already ready
-		let sttReady = !!sttService["worker"]
-		if (!sttReady) {
-			sttReady = await sttService.init()
-		} else {
-			// Reset accumulators for a new session
-			await sttService.reset()
-			sttReady = true
-		}
-		Logger.log(`${ts()} ⏱ STT ready=${sttReady} (${Date.now() - voskInitStart}ms)`)
-		if (!sttReady) {
-			Logger.warn("[recordAndRespond] STT not available — transcript will be empty")
-		}
-
-		const agent = new VoiceAgent({
-			maxDuration: request.maxDurationMs || 120000,
-			deviceId: request.inputDeviceId || undefined,
-			// Feed each speech chunk directly to faster-whisper (rolling partials)
-			onSpeechChunk: sttReady ? (chunk: Buffer) => sttService.acceptChunk(chunk) : undefined,
-			stateCallback: (state: VoiceAgentState, context?: string) => {
-				Logger.log(`  State: ${state}${context ? ` - ${context}` : ""}`)
-				// Send state updates to webview (async, non-blocking)
-				;(async () => {
-					try {
-						const messenger = await getVoiceMessenger()
-						Logger.log(`[recordAndRespond] getVoiceMessenger returned: ${messenger ? "found" : "null"}`)
-						if (messenger) {
-							const message: ExtensionMessage = {
-								type: "voice_agent_state_changed" as const,
-								voice_agent_state_changed: {
-									state,
-									context: context || "",
-								},
-							}
-							Logger.log(`[recordAndRespond] Sending voice_agent_state_changed: ${state}`)
-							const result = await messenger(message)
-							Logger.log(`[recordAndRespond] messenger returned: ${result}`)
-						} else {
-							Logger.warn("[recordAndRespond] No voice messenger available")
-						}
-					} catch (err) {
-						Logger.error("[recordAndRespond] Failed to send state to webview:", err)
-					}
-				})()
-			},
-			errorCallback: (error) => {
-				Logger.error(`  Error in VoiceAgent: ${error.userMessage}`)
-			},
-		})
-
-		// Store reference for stop_voice_recording RPC (both module-level + Provider instance)
-		setActiveVoiceAgent(agent)
-		request.onAgentCreated?.(agent)
-		Logger.log(`[recordAndRespond] Agent registered at T=${Date.now()}`)
-
-		let recordResult: any
-		try {
-			recordResult = await agent.recordAndRespond()
-		} finally {
-			// Clear active agent reference
-			setActiveVoiceAgent(null)
-			request.onAgentDestroyed?.()
-			Logger.log(`[recordAndRespond] finally: calling agent.stop(from=finally) at T=${Date.now()}`)
-			agent.stop("finally")
+		if (shouldRetryWithoutPreferredDevice(recordResult)) {
+			Logger.warn(
+				`${ts()} ⚠️ Preferred input device is unavailable. Clearing cache and retrying once with auto-detected microphone.`,
+			)
+			VoiceDeviceManager.clearCache()
+			recordResult = await runAgentRecording(undefined)
 		}
 
 		if (!recordResult || recordResult.error) {
-			sttService.free()
 			const errorMsg = recordResult?.error?.userMessage || "Recording failed"
 			Logger.error(`❌ Recording failed: ${errorMsg}`)
 
@@ -223,18 +218,37 @@ export async function recordAndRespond(
 
 		Logger.log(`${ts()} ✅ Audio recorded: ${recordResult.duration}ms`)
 
-		// Step 3: Get final transcript from faster-whisper
-		Logger.log(`${ts()} 🔄 Step 3: Flushing STT final transcript...`)
-		const finalStart = Date.now()
-		const transcriptionText = sttReady ? await sttService.getFinalTranscript() : ""
-		Logger.log(`${ts()} ⏱ STT finalize: ${Date.now() - finalStart}ms`)
-		sttService.free()
+		// Step 3: Single-shot STT (full recording -> single transcription)
+		Logger.log(`${ts()} 🔄 Step 3: Running Whisper transcription...`)
+		const sttResult = await VoiceResponseHandler.processSpeechToText(recordResult.audioData, {
+			globalStoragePath: controller.context.globalStoragePath,
+			sttModel: request.sttModel || "small",
+			userLanguage: "pt",
+			onProgress: (progress: number) => {
+				void getVoiceMessenger().then((messenger) => {
+					messenger?.({
+						type: "voice_stt_progress",
+						voice_stt_progress: { progress, stage: "transcribing" },
+					})
+				})
+			},
+		})
 
-		Logger.log(`${ts()} ✍️ Transcrição: "${transcriptionText}"`)
+		if (sttResult.error) {
+			Logger.error(`❌ STT failed: ${sttResult.error.message}`)
 
-		if (!transcriptionText && sttReady) {
-			Logger.warn("[recordAndRespond] STT returned empty transcript")
+			return {
+				success: false,
+				transcriptionText: sttResult.transcription.text,
+				llmResponseText: "",
+				audioWavBase64: "",
+				totalDurationMs: totalDurationMs(),
+				errorMessage: sttResult.error.message,
+				detectedLanguage: sttResult.detectedLanguage,
+			}
 		}
+
+		Logger.log(`${ts()} ✍️ Transcrição: "${sttResult.transcription.text}"`)
 
 		Logger.log(`${ts()} 🏁 Pipeline total: ${totalDurationMs()}ms`)
 		Logger.log(`${ts()} ⏭️ Usuário enviará para o LLM — TTS após resposta`)
@@ -244,11 +258,11 @@ export async function recordAndRespond(
 
 		return {
 			success: true,
-			transcriptionText,
+			transcriptionText: sttResult.transcription.text,
 			llmResponseText: "",
 			audioWavBase64: "",
 			totalDurationMs: totalDurationMs(),
-			detectedLanguage: "pt",
+			detectedLanguage: sttResult.detectedLanguage,
 		}
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error)

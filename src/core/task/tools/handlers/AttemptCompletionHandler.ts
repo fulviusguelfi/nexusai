@@ -36,6 +36,10 @@ function getInitialTaskPreview(config: TaskConfig): string | undefined {
 	return `${firstTaskMessage.slice(0, TASK_PREVIEW_MAX_CHARS)}\n...[truncated]`
 }
 
+function getVoiceCompletionText(result: string): string {
+	return result.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+}
+
 export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHandler {
 	readonly name = ClineDefaultTool.ATTEMPT
 
@@ -57,6 +61,28 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		const result: string | undefined = block.params.result
 		const command: string | undefined = block.params.command
+		let didTriggerVoiceTts = false
+
+		const maybeSpeakCompletionResult = () => {
+			if (didTriggerVoiceTts || !result) {
+				return
+			}
+
+			const voiceTtsEnabled = config.services.stateManager.getGlobalStateKey("voiceTtsEnabled")
+			if (!config.taskState.isVoiceInput || !voiceTtsEnabled) {
+				return
+			}
+
+			const ttsText = getVoiceCompletionText(result)
+			if (!ttsText) {
+				Logger.log("[TTS] Completion-result TTS skipped: empty text after filtering thinking blocks")
+				return
+			}
+
+			Logger.log(`[TTS] Completion-result requestSpeak fired (chars=${ttsText.length})`)
+			VoiceSessionManager.getInstance().requestSpeak(ttsText, undefined, "attempt_completion")
+			didTriggerVoiceTts = true
+		}
 
 		// Validate required parameters
 		if (!result) {
@@ -153,6 +179,7 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 			if (lastMessage && lastMessage.ask !== "command") {
 				// haven't sent a command message yet so first send completion_result then command
 				const completionMessageTs = await config.callbacks.say("completion_result", result, undefined, undefined, false)
+				maybeSpeakCompletionResult()
 				await config.callbacks.saveCheckpoint(true, completionMessageTs)
 				await addNewChangesFlagToLastCompletionResultMessage()
 				telemetryService.captureTaskCompleted(config.ulid, getTaskCompletionTelemetry(config))
@@ -200,6 +227,7 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 		} else {
 			// Send the complete completion_result message (partial was already removed above)
 			const completionMessageTs = await config.callbacks.say("completion_result", result, undefined, undefined, false)
+			maybeSpeakCompletionResult()
 			await config.callbacks.saveCheckpoint(true, completionMessageTs)
 			await addNewChangesFlagToLastCompletionResultMessage()
 			telemetryService.captureTaskCompleted(config.ulid, getTaskCompletionTelemetry(config))
@@ -224,12 +252,6 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 			message: result,
 			waitingForUserInput: false,
 		})
-
-		// Auto-TTS: speak the result aloud if voice TTS is enabled (without requiring LLM to call speak_text)
-		const voiceTtsEnabled = config.services.stateManager.getGlobalStateKey("voiceTtsEnabled")
-		if (voiceTtsEnabled) {
-			VoiceSessionManager.getInstance().requestSpeak(result)
-		}
 
 		const { response, text, images, files: completionFiles } = await config.callbacks.ask("completion_result", "", false)
 		const prefix = "[attempt_completion] Result: Done"

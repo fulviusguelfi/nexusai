@@ -79,6 +79,7 @@ interface ChatTextAreaProps {
 	setSelectedImages: React.Dispatch<React.SetStateAction<string[]>>
 	setSelectedFiles: React.Dispatch<React.SetStateAction<string[]>>
 	onSend: () => void
+	onVoiceRecordingStarted?: () => void
 	onTranscription?: (text: string, language?: string, isPartial?: boolean) => void
 	onSelectFilesAndImages: () => void
 	shouldDisableFilesAndImages: boolean
@@ -207,6 +208,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			setSelectedImages,
 			setSelectedFiles,
 			onSend,
+			onVoiceRecordingStarted,
 			onTranscription,
 			onSelectFilesAndImages,
 			shouldDisableFilesAndImages,
@@ -1547,6 +1549,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								<VoiceRecorder
 									disabled={sendingDisabled}
 									onLanguageDetected={setDetectedLanguage}
+									onRecordingStarted={onVoiceRecordingStarted}
 									onTranscription={onTranscription}
 									ref={voiceRecorderRef}
 								/>

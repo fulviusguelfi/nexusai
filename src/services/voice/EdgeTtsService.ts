@@ -5,14 +5,18 @@
  * as the Edge browser's built-in TTS). No API key required — uses the same
  * public token the Edge browser uses.
  *
- * Output: MP3 audio (audio-24khz-48kbitrate-mono-mp3), played directly in the webview.
+ * Transport: MP3 frames from Edge, normalized to WAV PCM before returning.
  *
  * Protocol reference: https://github.com/rany2/edge-tts (MIT)
  */
 
 import { Logger } from "@shared/services/Logger"
+import { execFile } from "child_process"
 import { createHash, randomUUID } from "crypto"
+import * as fs from "fs"
 import * as https from "https"
+import * as os from "os"
+import * as path from "path"
 import * as tls from "tls"
 
 const AUDIO_HEADER_SEPARATOR = Buffer.from("Path:audio\r\n\r\n", "utf8")
@@ -23,6 +27,81 @@ const WS_HOST = "speech.platform.bing.com"
 const WS_PATH = `/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`
 const CHROMIUM_VERSION = "143.0.3650.75"
 const SEC_MS_GEC_VERSION = `1-${CHROMIUM_VERSION}`
+export const EDGE_TTS_OUTPUT_FORMAT = "audio-24khz-96kbitrate-mono-mp3"
+
+function isWavBuffer(buf: Buffer): boolean {
+	return buf.length >= 12 && buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WAVE"
+}
+
+function getFfmpegPath(): string {
+	try {
+		const ffmpegModule = require("@ffmpeg-installer/ffmpeg")
+		if (ffmpegModule?.path) return ffmpegModule.path as string
+	} catch {
+		// fallback below
+	}
+	return process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg"
+}
+
+async function convertMp3ToWav(mp3Buf: Buffer): Promise<Buffer> {
+	const ts = Date.now()
+	const inputPath = path.join(os.tmpdir(), `nexusai-edge-tts-${ts}.mp3`)
+	const outputPath = path.join(os.tmpdir(), `nexusai-edge-tts-${ts}.wav`)
+
+	await fs.promises.writeFile(inputPath, mp3Buf)
+
+	try {
+		await new Promise<void>((resolve, reject) => {
+			execFile(
+				getFfmpegPath(),
+				[
+					"-y",
+					"-hide_banner",
+					"-loglevel",
+					"error",
+					"-i",
+					inputPath,
+					"-f",
+					"wav",
+					"-acodec",
+					"pcm_s16le",
+					"-ar",
+					"24000",
+					"-ac",
+					"1",
+					outputPath,
+				],
+				{ timeout: 15000 },
+				(err) => (err ? reject(err) : resolve()),
+			)
+		})
+
+		return await fs.promises.readFile(outputPath)
+	} finally {
+		await Promise.allSettled([fs.promises.unlink(inputPath), fs.promises.unlink(outputPath)])
+	}
+}
+
+export function extractEdgeAudioChunk(payload: Buffer): Buffer {
+	// Newer Edge binary frames include an internal text header before audio bytes.
+	// Example from logs: payload starts with 0x00 0x00 then "X-RequestId...".
+	const pathIdx = payload.indexOf(Buffer.from("Path:audio", "utf8"))
+	if (pathIdx !== -1) {
+		const headerEnd = payload.indexOf(Buffer.from("\r\n\r\n", "utf8"), pathIdx)
+		if (headerEnd !== -1 && headerEnd + 4 <= payload.length) {
+			return payload.slice(headerEnd + 4)
+		}
+	}
+
+	// Legacy fallback expected Path:audio\r\n\r\n immediately before bytes.
+	const sepIdx = payload.indexOf(AUDIO_HEADER_SEPARATOR)
+	if (sepIdx !== -1) {
+		return payload.slice(sepIdx + AUDIO_HEADER_SEPARATOR.length)
+	}
+
+	// If no known internal header is present, assume the payload is pure audio.
+	return payload
+}
 
 /**
  * Generate the Sec-MS-GEC header required by Microsoft Edge TTS (added ~2024).
@@ -70,6 +149,24 @@ export async function getEdgeVoiceList(): Promise<EdgeVoice[]> {
 	return cachedVoices
 }
 
+export function buildEdgeTtsSpeechConfigMessage(timestamp: string): string {
+	return (
+		`X-Timestamp:${timestamp}\r\n` +
+		`Content-Type:application/json; charset=utf-8\r\n` +
+		`Path:speech.config\r\n\r\n` +
+		JSON.stringify({
+			context: {
+				synthesis: {
+					audio: {
+						metadataoptions: { sentenceBoundaryEnabled: "false", wordBoundaryEnabled: "false" },
+						outputFormat: EDGE_TTS_OUTPUT_FORMAT,
+					},
+				},
+			},
+		})
+	)
+}
+
 /**
  * Synthesize text to a WAV buffer using the Edge TTS service.
  *
@@ -90,20 +187,7 @@ export async function synthesizeEdgeTts(text: string, voice: string): Promise<Bu
 			`</voice></speak>`
 
 		// Speech config message
-		const configMsg =
-			`X-Timestamp:${timestamp}\r\n` +
-			`Content-Type:application/json; charset=utf-8\r\n` +
-			`Path:speech.config\r\n\r\n` +
-			JSON.stringify({
-				context: {
-					synthesis: {
-						audio: {
-							metadataoptions: { sentenceBoundaryEnabled: "false", wordBoundaryEnabled: "false" },
-							outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-						},
-					},
-				},
-			})
+		const configMsg = buildEdgeTtsSpeechConfigMessage(timestamp)
 
 		// SSML synthesis request message
 		const ssmlMsg =
@@ -243,13 +327,22 @@ export async function synthesizeEdgeTts(text: string, voice: string): Promise<Bu
 							reject(new Error("Edge TTS returned no audio data"))
 							return
 						}
-						resolve(Buffer.concat(audioChunks))
+						const rawAudio = Buffer.concat(audioChunks)
+						if (isWavBuffer(rawAudio)) {
+							resolve(rawAudio)
+							return
+						}
+
+						void convertMp3ToWav(rawAudio)
+							.then((wav) => resolve(wav))
+							.catch((convErr) => {
+								Logger.error("[EdgeTTS] MP3->WAV conversion failed:", convErr)
+								reject(new Error("Edge TTS audio conversion failed"))
+							})
 						return
 					}
 				} else if (opcode === 0x2) {
-					const sepIdx = payload.indexOf(AUDIO_HEADER_SEPARATOR)
-					const audioStart = sepIdx !== -1 ? sepIdx + AUDIO_HEADER_SEPARATOR.length : 0
-					const audio = payload.slice(audioStart)
+					const audio = extractEdgeAudioChunk(payload)
 					if (audio.length > 0) {
 						if (audioChunks.length === 0) Logger.log(`[EdgeTTS] ✅ First audio binary frame (${audio.length} bytes)`)
 						audioChunks.push(audio)
@@ -301,7 +394,17 @@ export async function synthesizeEdgeTts(text: string, voice: string): Promise<Bu
 		socket.on("close", () => {
 			clearTimeout(timeout)
 			if (audioChunks.length > 0) {
-				resolve(Buffer.concat(audioChunks))
+				const rawAudio = Buffer.concat(audioChunks)
+				if (isWavBuffer(rawAudio)) {
+					resolve(rawAudio)
+					return
+				}
+				void convertMp3ToWav(rawAudio)
+					.then((wav) => resolve(wav))
+					.catch((convErr) => {
+						Logger.error("[EdgeTTS] MP3->WAV conversion failed on socket close:", convErr)
+						reject(new Error("Edge TTS audio conversion failed"))
+					})
 			} else {
 				const err = new Error("Edge TTS socket closed without audio")
 				Logger.error(`[EdgeTTS] ${err.message}`)

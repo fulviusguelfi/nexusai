@@ -43,15 +43,22 @@ export class SpeakTextToolHandler implements IFullyManagedTool {
 		await config.callbacks.say("voice_speak", "", undefined, undefined, true)
 
 		// Request audio synthesis via VoiceSessionManager → VscodeWebviewProvider → EdgeTtsService
-		// The onSentenceSpoken callback updates the chat bubble as each sentence is spoken
+		// The onSentenceSpoken callback updates the chat bubble only once at the end
 		const say = config.callbacks.say
-		VoiceSessionManager.getInstance().requestSpeak(text, async (spokenSoFar: string, isFinal: boolean) => {
-			try {
-				await say("voice_speak", spokenSoFar, undefined, undefined, !isFinal)
-			} catch (err) {
-				Logger.warn("[SpeakText] onSentenceSpoken say error:", err)
-			}
-		})
+		VoiceSessionManager.getInstance().requestSpeak(
+			text,
+			async (spokenSoFar: string, isFinal: boolean) => {
+				if (!isFinal) {
+					return
+				}
+				try {
+					await say("voice_speak", spokenSoFar, undefined, undefined, !isFinal)
+				} catch (err) {
+					Logger.warn("[SpeakText] onSentenceSpoken say error:", err)
+				}
+			},
+			"speak_text_tool",
+		)
 
 		Logger.log("[SpeakText] requestSpeak dispatched")
 		return formatResponse.toolResult(`Speaking: "${text}"`)

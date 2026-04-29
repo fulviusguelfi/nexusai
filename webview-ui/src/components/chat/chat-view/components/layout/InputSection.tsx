@@ -62,12 +62,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 		(text: string, language?: string, isPartial?: boolean) => {
 			// If the user already sent, ignore any late STT results from the previous session
 			if (postSendBlockRef.current) {
-				// Only unblock when a truly new session starts (first partial of a new recording)
-				if (isPartial && !voiceSessionActiveRef.current) {
-					postSendBlockRef.current = false
-				} else {
-					return
-				}
+				return
 			}
 
 			const currentCursor = textAreaRef.current?.selectionStart ?? -1
@@ -109,6 +104,14 @@ export const InputSection: React.FC<InputSectionProps> = ({
 		[setInputValue, voiceMetadataEnabled],
 	)
 
+	const handleVoiceRecordingStarted = useCallback(() => {
+		// A fresh recording session explicitly unblocks STT updates after a previous send.
+		postSendBlockRef.current = false
+		voiceSessionActiveRef.current = false
+		prevPartialRef.current = ""
+		lastVoiceLengthRef.current = -1
+	}, [])
+
 	const handleSendWithVoiceMetadata = useCallback(() => {
 		const meta = pendingVoiceMetadataRef.current
 		pendingVoiceMetadataRef.current = ""
@@ -143,6 +146,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 				onSelectFilesAndImages={selectFilesAndImages}
 				onSend={handleSendWithVoiceMetadata}
 				onTranscription={voiceSttEnabled ? handleTranscription : undefined}
+				onVoiceRecordingStarted={handleVoiceRecordingStarted}
 				placeholderText={placeholderText}
 				ref={textAreaRef}
 				selectedFiles={selectedFiles}

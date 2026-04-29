@@ -70,7 +70,8 @@ const AppContent = () => {
 		return null
 	}
 
-	if (showWelcome) {
+	// Editor panel (horizontal) skips onboarding — it shows ChatView with its own welcome content
+	if (showWelcome && orientation !== "horizontal") {
 		return onboardingModels ? <OnboardingView onboardingModels={onboardingModels} /> : <WelcomeView />
 	}
 

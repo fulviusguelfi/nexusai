@@ -1,0 +1,459 @@
+(node:30040) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Usuario/Desktop/nexusai/src/test/requires.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\Usuario\Desktop\nexusai\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+  HostAudioPlayer
+    buildWin32MciScript
+      Ô£ö builds Windows playback script without setaudio when output device is not selected
+      Ô£ö builds Windows playback script with setaudio when output device is selected
+      Ô£ö escapes single quotes in device name
+      Ô£ö escapes single quotes in file path
+    playWavBuffer
+[2026-04-27T13:37:50.202Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:59:24)
+    at processImmediate (node:internal/timers:504:21)
+      1) resolves when MCI playback succeeds with device selection
+[2026-04-27T13:37:50.206Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:75:24)
+    at processImmediate (node:internal/timers:504:21)
+      2) resolves when MCI playback succeeds without device selection
+[2026-04-27T13:37:50.208Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:92:25)
+    at processImmediate (node:internal/timers:504:21)
+      3) falls back to SoundPlayer when MCI fails and no output device was selected
+      Ô£ö rejects without falling back when selected output device playback fails
+[2026-04-27T13:37:50.213Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:134:25)
+    at processImmediate (node:internal/timers:504:21)
+      4) rejects when both MCI and SoundPlayer fail
+[2026-04-27T13:37:50.215Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:154:24)
+    at processImmediate (node:internal/timers:504:21)
+      5) cleans up temp file on success
+[2026-04-27T13:37:50.217Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:172:25)
+    at processImmediate (node:internal/timers:504:21)
+      6) cleans up temp file even on failure
+
+  SpeakTextToolHandler
+    execute() ÔÇö missing param
+      Ô£ö returns missing-param error and increments consecutiveMistakeCount when text is absent
+    execute() ÔÇö TTS disabled
+      Ô£ö returns disabled message without calling say or requestSpeak
+    execute() ÔÇö TTS enabled
+      Ô£ö calls say(voice_speak, ...) and requestSpeak(text)
+      Ô£ö updates the voice bubble only when the final spoken chunk completes
+      Ô£ö returns a Speaking confirmation result
+      Ô£ö resets consecutiveMistakeCount to 0 on success
+    getDescription()
+      Ô£ö returns [speak_text]
+
+  splitIntoSpeechChunks
+    Ô£ö returns a single chunk for a single sentence
+    Ô£ö merges short consecutive sentences into a larger chunk
+    Ô£ö keeps larger blocks separated when the combined chunk would grow too much
+
+  enumerateAudioDevices
+    Ô£ö returns host-side input and output device lists without Web API
+
+  ClineEndpoint configuration
+    valid config parsing
+      Ô£ö should parse valid endpoints.json with all required fields
+      Ô£ö should work without endpoints.json (standard mode)
+      Ô£ö should accept URLs with ports
+      Ô£ö should accept URLs with paths
+    invalid JSON handling
+      Ô£ö should throw ClineConfigurationError for invalid JSON syntax
+      Ô£ö should throw ClineConfigurationError for truncated JSON
+      Ô£ö should throw ClineConfigurationError for empty file
+      Ô£ö should throw ClineConfigurationError for non-object JSON
+      Ô£ö should throw ClineConfigurationError for array JSON
+      Ô£ö should throw ClineConfigurationError for null JSON
+    missing required fields
+      Ô£ö should throw ClineConfigurationError when appBaseUrl is missing
+      Ô£ö should throw ClineConfigurationError when apiBaseUrl is missing
+      Ô£ö should throw ClineConfigurationError when mcpBaseUrl is missing
+      Ô£ö should throw ClineConfigurationError when all fields are missing
+      Ô£ö should throw ClineConfigurationError when field is null
+      Ô£ö should throw ClineConfigurationError when field is empty string
+      Ô£ö should throw ClineConfigurationError when field is whitespace only
+      Ô£ö should throw ClineConfigurationError when field is non-string
+    invalid URL detection
+      Ô£ö should throw ClineConfigurationError for invalid URL format
+      Ô£ö should throw ClineConfigurationError for URL without protocol
+      Ô£ö should throw ClineConfigurationError for malformed URL
+      Ô£ö should include the invalid URL value in error message
+    environment switching blocked in self-hosted mode
+      Ô£ö should throw error when trying to change environment in self-hosted mode
+      Ô£ö should throw error for all environment values in self-hosted mode
+      Ô£ö should allow environment switching in standard mode
+    self-hosted mode behavior
+      Ô£ö should report selfHosted environment in self-hosted mode
+      Ô£ö should use custom endpoints from file
+    initialization behavior
+      Ô£ö should only initialize once
+      Ô£ö should throw error when accessing config before initialization
+    isSelfHosted() method
+      Ô£ö should return true when not initialized (safety fallback)
+      Ô£ö should return true when in self-hosted mode
+      Ô£ö should return false when in normal mode (no endpoints.json)
+    bundled endpoints.json behavior
+      Ô£ö should use bundled endpoints.json when available
+      Ô£ö should prefer bundled endpoints.json over user file
+      Ô£ö should fall back to user endpoints.json when bundled is not present
+      Ô£ö should use standard mode when neither bundled nor user file exists
+      Ô£ö should throw ClineConfigurationError for invalid bundled file
+      Ô£ö should throw ClineConfigurationError for invalid JSON in bundled file
+      Ô£ö should indicate bundled source in error messages
+
+  transformToolCallMessages
+    apply_patch conversion
+      Ô£ö should convert apply_patch Add operation to write_to_file
+      Ô£ö should convert apply_patch Update operation to replace_in_file
+      Ô£ö should handle multiple tool_use blocks in same message
+      Ô£ö should preserve non-apply_patch tool calls
+      Ô£ö should handle apply_patch with @@ context markers
+      Ô£ö should handle Delete operation as replace_in_file
+      Ô£ö should handle malformed apply_patch by fallback to write_to_file
+      Ô£ö should match tool_result blocks with converted tool_use
+      Ô£ö should handle multiple apply_patch operations in one message
+      Ô£ö should handle context after @@ markers as first line of search block
+      Ô£ö should preserve tool_result blocks when tool_use is converted
+      Ô£ö should reconstruct tool_result content with final_file_content for write_to_file
+      Ô£ö should reconstruct tool_result content with final_file_content for replace_in_file
+      Ô£ö should handle tool_result without final_file_content gracefully
+      Ô£ö should generate valid SEARCH/REPLACE diff format
+    write_to_file/replace_in_file to apply_patch conversion
+      Ô£ö should convert write_to_file to apply_patch Add operation
+      Ô£ö should convert replace_in_file to apply_patch Update operation
+      Ô£ö should handle multiple write_to_file and replace_in_file in same message
+      Ô£ö should preserve non-write_to_file/replace_in_file tool calls
+      Ô£ö should convert replace_in_file with context lines to apply_patch
+      Ô£ö should use final_file_content to generate apply_patch for write_to_file
+      Ô£ö should use final_file_content to generate apply_patch with context for replace_in_file
+      Ô£ö should handle tool_result without final_file_content gracefully
+
+  AnthropicHandler
+    getModel
+      Ô£ö should return the fast mode model when configured
+      Ô£ö should return the 1m fast mode model when configured
+    createMessage
+      Ô£ö should route fast mode requests through the beta messages API
+      Ô£ö should include the 1m beta when routing 1m fast mode requests through the beta messages API
+
+  AwsBedrockHandler
+    withTempEnv
+      Ô£ö should restore original environment variables after operation
+      Ô£ö should handle undefined environment variables
+      Ô£ö should handle errors and still restore environment
+      Ô£ö should handle multiple environment variable changes
+      Ô£ö should work with AWS_PROFILE
+      Ô£ö should work with AWS_BEARER_TOKEN_BEDROCK
+    executeConverseStream
+      thinking response handling (new API structure)
+        Ô£ö should handle thinking response in additionalModelResponseFields
+        Ô£ö should not parse thinking tags in text content
+        Ô£ö should handle thinking response with empty reasoning array
+        Ô£ö should handle thinking response interleaved with text chunks
+      multiple content blocks
+        Ô£ö should handle multiple content blocks (reasoning + text)
+        Ô£ö should handle real-world Japanese content
+        Ô£ö should handle interleaved content blocks
+      error handling
+        Ô£ö should handle internalServerException
+        Ô£ö should handle throttlingException
+      usage tracking
+        Ô£ö should track usage with cache tokens
+      tool use handling
+        Ô£ö should handle tool use content blocks
+        Ô£ö should handle multiple tool calls
+        Ô£ö should handle text and tool use interleaving
+    tool config mapping
+      Ô£ö should map Anthropic tools to Bedrock toolConfig
+      Ô£ö should return undefined when tools is undefined or empty
+      Ô£ö should silently drop tools without input_schema
+    formatMessagesForConverseAPI
+      Ô£ö should format tool_use and tool_result blocks
+      Ô£ö should format tool_result with array content
+      Ô£ö should map is_error to error status on tool_result
+    getModelId
+      Ô£ö should return raw model ID for custom models
+      Ô£ö should not encode custom model IDs with slashes
+      Ô£ö should apply cross-region prefix for non-custom models when enabled
+      Ô£ö should apply EU cross-region prefix
+      Ô£ö should apply JP cross-region prefix for sonnet 4.5
+      Ô£ö should apply JP cross-region prefix for sonnet 4.6
+      Ô£ö should apply global cross-region prefix for supported models
+      Ô£ö should NOT apply global cross-region prefix for unsupported models
+      Ô£ö should apply APAC cross-region prefix
+      Ô£ö should not apply cross-region prefix for custom models even when enabled
+      Ô£ö should handle UltraThink model ARN correctly
+    native tool calling integration
+      Ô£ö should be recognized as a next-gen provider eligible for native tool calling
+      Ô£ö should not use native tool calling for pre-4.0 Claude models
+      Ô£ö should not use native tool calling when the setting is disabled
+      Ô£ö should pass toolConfig to ConverseStreamCommand when tools are provided
+      Ô£ö should format a complete tool call round-trip correctly
+      Ô£ö should silently skip thinking blocks without warnings
+      Ô£ö should silently skip redacted_thinking blocks without warnings
+      Ô£ö should handle messages with only thinking blocks by producing empty content
+
+  ClaudeCodeHandler
+    token counting
+      Ô£ö should correctly handle token usage from assistant messages
+      Ô£ö should handle missing usage fields with nullish coalescing
+      Ô£ö should handle completely missing usage object
+    getModel
+      Ô£ö should return the correct model when specified
+      Ô£ö should support Opus 4.6 1m model id
+      Ô£ö should support Opus 1m alias model id
+      Ô£ö should support Sonnet 1m alias model id
+      Ô£ö should support Sonnet 4.5 1m model id
+      Ô£ö should support Sonnet 4.6 1m model id
+      Ô£ö should return default model when not specified
+
+  ClineHandler
+    Ô£ö should handle usage-only chunks when delta is missing
+
+  FireworksHandler
+    Ô£ö should handle usage-only chunks when delta is missing
+
+  GeminiHandler
+    Ô£ö caps maxOutputTokens to 8192 for Flash models
+    Ô£ö does not set maxOutputTokens for non-Flash models
+
+  LiteLlmHandler
+    prompt cache
+      when the model doesn't support prompt caching
+        Ô£ö sends the system prompt and messages with the openai format
+      when the model supports prompt caching
+        Ô£ö inserts the cache control in the system prompt and the last two user messages
+
+  OllamaHandler
+Ollama server not available, skipping tests
+    createMessage
+      - should handle successful responses
+      - should handle timeout errors
+      - should retry on errors when using the withRetry decorator
+      - should handle stream processing errors
+
+  OpenRouterHandler
+    Ô£ö should handle usage-only chunks when delta is missing
+
+  SapAiCoreHandler
+    image processing
+      Ô£ö should handle image processing for Claude 4 models
+      Ô£ö should create proper user readable request with images
+      Ô£ö should support different Claude model variants
+    getModel
+      Ô£ö should return default model when no apiModelId is provided
+      Ô£ö should return specified model when apiModelId is provided
+    createUserReadableRequest
+      Ô£ö should create a readable request format
+
+  VercelAIGatewayHandler
+    getModel
+      Ô£ö should return configured model and info when both are provided
+      Ô£ö should preserve configured model ID when model info is missing
+      Ô£ö should fall back to default model when model ID is missing
+    createMessage
+      Ô£ö should handle usage-only chunks when delta is missing
+
+  createOpenRouterStream
+    Ô£ö caps Gemini Flash OpenRouter requests to 8192 max_tokens
+    Ô£ö keeps lower Gemini Flash max_tokens values when already below 8192
+    Ô£ö does not send max_tokens for non-Gemini models
+    Ô£ö does not send max_tokens for non-Flash Gemini models
+
+  Thinking Trace Preservation
+    convertToOpenAiMessages
+      Ô£ö should preserve reasoning_details on text blocks
+      Ô£ö should preserve thinking blocks with signatures
+      Ô£ö should consolidate multiple reasoning_details entries
+      Ô£ö should filter out corrupted encrypted reasoning blocks
+    sanitizeGeminiMessages
+      Ô£ö should drop tool_calls without reasoning_details for Gemini models
+      Ô£ö should preserve tool_calls with reasoning_details for Gemini models
+      Ô£ö should not modify messages for non-Gemini models
+    sanitizeAnthropicMessages
+      Ô£ö should preserve thinking blocks
+      Ô£ö should not add cache_control to thinking blocks
+
+  Tool Call Parsing
+    convertToOpenAiMessages - Tool Calls
+      Ô£ö should convert Anthropic tool_use to OpenAI tool_calls format
+      Ô£ö should truncate long tool IDs to 40 characters
+      Ô£ö should transform OpenAI Responses API tool IDs (fc_ prefix)
+      Ô£ö should match tool_call_id with tool_calls id for tool results
+      Ô£ö should handle multiple tool calls in a single message
+      Ô£ö should handle tool results with array content
+      Ô£ö should set content to null when only tool_calls present
+    convertToAnthropicMessage - OpenAI Response to Anthropic
+      Ô£ö should convert OpenAI completion to Anthropic message format
+      Ô£ö should convert OpenAI tool_calls to Anthropic tool_use blocks
+      Ô£ö should handle malformed tool arguments gracefully
+      Ô£ö should map finish_reason correctly
+
+  checkContextWindowExceededError
+    Ô£ö detects OpenRouter context errors using structured status
+    Ô£ö detects OpenRouter JSON-encoded status + context length errors
+    Ô£ö does not classify unrelated 400 errors as context window failures
+
+  ContextManager
+    getNextTruncationRange
+      Ô£ö first truncation with half keep
+      Ô£ö first truncation with quarter keep
+      Ô£ö sequential truncation with half keep
+      Ô£ö sequential truncation with quarter keep
+      Ô£ö ensures the last message in range is a user message
+      Ô£ö handles small message arrays
+      Ô£ö preserves the message structure when truncating
+    applyContextOptimizations
+      Ô£ö detects duplicate file reads across write_to_file, replace_in_file, and file mentions (normal tool calling)
+      Ô£ö returns false when no duplicate file reads exist
+      Ô£ö returns false for empty messages beyond startFromIndex
+      Ô£ö detects duplicate file reads with native tool calling format (tool_result blocks)
+    getTruncatedMessages
+      Ô£ö returns original messages when no range is provided
+      Ô£ö correctly removes messages in the specified range
+      Ô£ö works with a range that starts at the first message after task
+      Ô£ö correctly handles removing a range while preserving alternation pattern
+      Ô£ö removes orphaned tool_results after truncation
+    shouldCompactContextWindow
+      Ô£ö does not compact at 33K tokens with default 0.75 threshold on 200K context
+      Ô£ö compacts when tokens exceed 0.75 threshold on 200K context
+      Ô£ö compacts at only 10K tokens when threshold is accidentally set to 0.05
+      Ô£ö falls back to maxAllowedSize when threshold is undefined
+      Ô£ö falls back to maxAllowedSize when threshold is 0
+      Ô£ö includes cacheWrites and cacheReads in total token count
+      Ô£ö returns false when previousApiReqIndex is negative
+      Ô£ö threshold is capped at maxAllowedSize even when percentage is very high
+
+  parseYamlFrontmatter
+    Ô£ö returns original content when no frontmatter
+    Ô£ö parses valid YAML frontmatter
+    Ô£ö fails open on malformed YAML
+    Ô£ö rejects YAML custom tags (security: prevents unsafe deserialization)
+    Ô£ö rejects !!python/object YAML tag
+    Ô£ö parses JSON-compatible YAML values correctly
+
+  rule-conditionals
+    evaluateRuleConditionals(paths)
+      Ô£ö treats missing paths as universal
+      Ô£ö treats empty paths list in frontmatter as match-nothing (fail-closed)
+      Ô£ö does not activate path-scoped rules with empty context
+      Ô£ö matches when any candidate path matches any glob
+      Ô£ö ignores invalid paths type (fail-open)
+    extractPathLikeStrings
+      Ô£ö extracts basic relative paths
+      Ô£ö extracts simple filenames with extensions (no slashes)
+      Ô£ö does not extract bare words without an extension
+      Ô£ö ignores URLs
+      Ô£ö ignores fenced code blocks
+      Ô£ö does not extract URLs inside code fences
+      Ô£ö extracts paths from stack traces (outside code fences)
+
+  rule loading with paths frontmatter
+    Ô£ö filters rules by evaluationContext.paths
+    Ô£ö treats invalid YAML frontmatter as fail-open and preserves the raw frontmatter for the LLM
+    Ô£ö treats paths: [] as match-nothing (fail-closed)
+    Ô£ö keeps activatedConditionalRules order stable (matches input file order)
+
+  RuleContextBuilder
+    getRulePathContext from ask='tool' messages
+      Ô£ö extracts path from ask='tool' message with write_to_file
+      Ô£ö extracts paths from multiple sequential tool requests
+      Ô£ö handles malformed JSON gracefully
+      Ô£ö extracts paths from apply_patch tool request
+      Ô£ö deduplicates paths from multiple sources
+      Ô£ö normalizes Windows-style paths to POSIX
+      Ô£ö respects MAX_RULE_PATH_CANDIDATES limit
+    extractPathsFromApplyPatch
+      Ô£ö extracts paths from Add File headers
+      Ô£ö extracts paths from Update File headers
+      Ô£ö extracts paths from Delete File headers
+
+  Skills Utility Functions
+    discoverSkills
+      Ô£ö should discover skills from global directory
+      Ô£ö should discover skills from project .clinerules/skills directory
+      Ô£ö should discover skills from project .cline/skills directory
+      Ô£ö should discover skills from project .claude/skills directory
+      Ô£ö should discover skills from project .agents/skills directory
+      Ô£ö should handle empty skills directories gracefully
+      Ô£ö should skip non-directory entries in skills folder
+      Ô£ö should skip skill directories without SKILL.md
+    getAvailableSkills - Override Resolution
+      Ô£ö should override project skill with global skill of same name
+      Ô£ö should keep both skills when names are different
+    Metadata Validation
+      Ô£ö should reject skill with missing name field
+      Ô£ö should reject skill with missing description field
+      Ô£ö should reject skill when name doesn't match directory name
+      Ô£ö should handle malformed YAML frontmatter gracefully
+      Ô£ö should handle file without frontmatter
+    getSkillContent
+      Ô£ö should load full skill content with instructions
+      Ô£ö should return null for non-existent skill
+      Ô£ö should trim whitespace from instructions
+
+  ifFileExistsRelativePath
+    Ô£ö should return BooleanResponse with boolean value
+    Ô£ö should return false when no workspace path is available
+    Ô£ö should return false when path is invalid
+    Ô£ö should handle valid relative paths correctly
+
+  openFileRelativePath
+    Ô£ö should return Empty response on successful execution
+    Ô£ö should call openFileIntegration with absolute path when relative path is provided
+    Ô£ö should not call openFileIntegration when path is invalid
+    Ô£ö should return Empty and log error when no workspace path is available
+    Ô£ö should handle nested directory paths
+
+  GrpcRecorderBuilder
+    when not enabling
+      Ô£ö should return GrpcRecorderNoops when enableIf is false
+      Ô£ö should return GrpcRecorderNoops when enableIf is false even with log file handler
+    GrpcRecorderNoops functionality
+      Ô£ö should have no-op methods that don't throw errors
+
+  grpc-recorder
+    GrpcRecorder
+      Ô£ö matches multiple request, response and stats
+      Ô£ö using default filtering should filter out unwanted requests
+      Ô£ö cleanupSyntheticEntries removes synthetic entries from session log
+      Ô£ö recordResponse executes post-record hooks
+
+  log-file-handler
+    LogFileHandler
+      Ô£ö returns file name with timestamp when env var not set
+
+  test-hooks
+    Ô£ö should return an array of post-record hooks
+    Ô£ö should execute hook and call recorder methods (65ms)
+
+  refreshClineRecommendedModels
+    Ô£ö returns hardcoded models and skips upstream fetch when rollout flag is off
+    Ô£ö fetches from upstream when rollout flag is on
+    Ô£ö uses hardcoded models when rollout flag is turned off after upstream cache is populated
+
+  recordAndRespond helpers
+    getActiveVoiceAgent() / setActiveVoiceAgent()
+      Ô£ö returns null by default
+      Ô£ö returns the agent set via setActiveVoiceAgent
+      Ô£ö can be cleared by passing null
+
+  recordAndRespond()
+    Ô£ö returns early with error when preflight fails (75ms)
+    Ô£ö runs one-shot STT and returns transcription on success
+    Ô£ö returns STT error when one-shot transcription fails
+    Ô£ö returns recording failure without invoking STT
+
+  Hook System
+    NoOpRunner
+      Ô£ö should return success without executing anything when no hooks found
+    StdioHookRunner
+      Ô£ö should execute workspace hook from its respective workspace root directory (895ms)
+      Ô£ö should execute hook script and parse output (990ms)

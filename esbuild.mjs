@@ -202,31 +202,12 @@ const baseConfig = {
 	},
 }
 
-// Plugin: copy Python worker files to dist/ after each build
-const copyPythonWorkersPlugin = {
-	name: "copy-python-workers",
-	setup(build) {
-		build.onEnd(() => {
-			const files = ["src/services/voice/whisper-worker.py"]
-			for (const src of files) {
-				const dest = path.join(build.initialOptions.outdir || destDir, path.basename(src))
-				try {
-					fs.copyFileSync(src, dest)
-				} catch (e) {
-					console.error(`[copy-python-workers] Failed to copy ${src} → ${dest}:`, e.message)
-				}
-			}
-		})
-	},
-}
-
 // Extension-specific configuration
 const extensionConfig = {
 	...baseConfig,
 	entryPoints: [
 		{ in: "src/extension.ts", out: "extension" },
 		{ in: "src/services/voice/whisper.worker.ts", out: "whisper.worker" },
-		{ in: "src/services/voice/vosk-worker.js", out: "vosk-worker" },
 	],
 	outdir: destDir,
 	// ssh2 ships optional native .node binaries (sshcrypto.node, cpufeatures.node).
@@ -236,7 +217,6 @@ const extensionConfig = {
 	// rhubarb-lip-sync-wasm is ESM-only and loads .wasm/.data files via import.meta.url —
 	// must stay external so the WASM loader can find its files in node_modules at runtime.
 	external: ["vscode", "@huggingface/transformers", "rhubarb-lip-sync-wasm", "vosk"],
-	plugins: [...(baseConfig.plugins ?? []), copyPythonWorkersPlugin],
 }
 
 // Standalone-specific configuration

@@ -1,0 +1,2058 @@
+
+
+  EdgeTtsService
+    Ô£ö uses an Edge-supported output format in the speech config
+    Ô£ö extracts audio bytes from binary frames containing internal Edge headers
+
+  SpeakerGate
+    singleton
+      Ô£ö returns the same instance on repeated calls
+      Ô£ö creates a fresh instance after dispose
+    initial state
+      Ô£ö isBlocked() returns false on fresh instance
+    activate()
+      Ô£ö isBlocked() returns true after activate()
+      Ô£ö multiple activate() calls do not stack ÔÇö single deactivate() clears
+    deactivate()
+      Ô£ö isBlocked() returns false after activate() then deactivate()
+      Ô£ö deactivate() on already-inactive gate keeps isBlocked() false
+      Ô£ö resets blocked duration to 0 after deactivate()
+      Ô£ö releaseIfStale() deactivates gate only when threshold is exceeded
+    onDidChange()
+      Ô£ö fires with true when activate() is called
+      Ô£ö fires with false when deactivate() is called
+      Ô£ö does not fire if state does not change (activate when already active)
+      Ô£ö stops delivering events after returned disposer is called
+    dispose()
+      Ô£ö resets isBlocked() to false
+      Ô£ö removes all listeners ÔÇö no events fired after dispose
+
+  HostAudioPlayer
+    Ô£ö builds Windows playback script without setaudio when output device is not selected
+    Ô£ö builds Windows playback script with setaudio when output device is selected
+
+  AudioCapturePool
+    Ô£ö does not lease a pre-warmed capture for a different microphone
+
+  recordAndRespond helpers
+    getActiveVoiceAgent() / setActiveVoiceAgent()
+      Ô£ö returns null by default
+      Ô£ö returns the agent set via setActiveVoiceAgent
+      Ô£ö can be cleared by passing null
+
+  recordAndRespond()
+    Ô£ö returns early with error when preflight fails (170ms)
+    Ô£ö runs one-shot STT and returns transcription on success
+    Ô£ö returns STT error when one-shot transcription fails
+    Ô£ö returns recording failure without invoking STT
+
+  ClineEndpoint configuration
+    valid config parsing
+      Ô£ö should parse valid endpoints.json with all required fields
+      Ô£ö should work without endpoints.json (standard mode)
+      Ô£ö should accept URLs with ports
+      Ô£ö should accept URLs with paths
+    invalid JSON handling
+      Ô£ö should throw ClineConfigurationError for invalid JSON syntax
+      Ô£ö should throw ClineConfigurationError for truncated JSON
+      Ô£ö should throw ClineConfigurationError for empty file
+      Ô£ö should throw ClineConfigurationError for non-object JSON
+      Ô£ö should throw ClineConfigurationError for array JSON
+      Ô£ö should throw ClineConfigurationError for null JSON
+    missing required fields
+      Ô£ö should throw ClineConfigurationError when appBaseUrl is missing
+      Ô£ö should throw ClineConfigurationError when apiBaseUrl is missing
+      Ô£ö should throw ClineConfigurationError when mcpBaseUrl is missing
+      Ô£ö should throw ClineConfigurationError when all fields are missing
+      Ô£ö should throw ClineConfigurationError when field is null
+      Ô£ö should throw ClineConfigurationError when field is empty string
+      Ô£ö should throw ClineConfigurationError when field is whitespace only
+      Ô£ö should throw ClineConfigurationError when field is non-string
+    invalid URL detection
+      Ô£ö should throw ClineConfigurationError for invalid URL format
+      Ô£ö should throw ClineConfigurationError for URL without protocol
+      Ô£ö should throw ClineConfigurationError for malformed URL
+      Ô£ö should include the invalid URL value in error message
+    environment switching blocked in self-hosted mode
+      Ô£ö should throw error when trying to change environment in self-hosted mode
+      Ô£ö should throw error for all environment values in self-hosted mode
+      Ô£ö should allow environment switching in standard mode
+    self-hosted mode behavior
+      Ô£ö should report selfHosted environment in self-hosted mode
+      Ô£ö should use custom endpoints from file
+    initialization behavior
+      Ô£ö should only initialize once
+      Ô£ö should throw error when accessing config before initialization
+    isSelfHosted() method
+      Ô£ö should return true when not initialized (safety fallback)
+      Ô£ö should return true when in self-hosted mode
+      Ô£ö should return false when in normal mode (no endpoints.json)
+    bundled endpoints.json behavior
+      Ô£ö should use bundled endpoints.json when available
+      Ô£ö should prefer bundled endpoints.json over user file
+      Ô£ö should fall back to user endpoints.json when bundled is not present
+      Ô£ö should use standard mode when neither bundled nor user file exists
+      Ô£ö should throw ClineConfigurationError for invalid bundled file
+      Ô£ö should throw ClineConfigurationError for invalid JSON in bundled file
+      Ô£ö should indicate bundled source in error messages
+
+  transformToolCallMessages
+    apply_patch conversion
+      Ô£ö should convert apply_patch Add operation to write_to_file
+      Ô£ö should convert apply_patch Update operation to replace_in_file
+      Ô£ö should handle multiple tool_use blocks in same message
+      Ô£ö should preserve non-apply_patch tool calls
+      Ô£ö should handle apply_patch with @@ context markers
+      Ô£ö should handle Delete operation as replace_in_file
+      Ô£ö should handle malformed apply_patch by fallback to write_to_file
+      Ô£ö should match tool_result blocks with converted tool_use
+      Ô£ö should handle multiple apply_patch operations in one message
+      Ô£ö should handle context after @@ markers as first line of search block
+      Ô£ö should preserve tool_result blocks when tool_use is converted
+      Ô£ö should reconstruct tool_result content with final_file_content for write_to_file
+      Ô£ö should reconstruct tool_result content with final_file_content for replace_in_file
+      Ô£ö should handle tool_result without final_file_content gracefully
+      Ô£ö should generate valid SEARCH/REPLACE diff format
+    write_to_file/replace_in_file to apply_patch conversion
+      Ô£ö should convert write_to_file to apply_patch Add operation
+      Ô£ö should convert replace_in_file to apply_patch Update operation
+      Ô£ö should handle multiple write_to_file and replace_in_file in same message
+      Ô£ö should preserve non-write_to_file/replace_in_file tool calls
+      Ô£ö should convert replace_in_file with context lines to apply_patch
+      Ô£ö should use final_file_content to generate apply_patch for write_to_file
+      Ô£ö should use final_file_content to generate apply_patch with context for replace_in_file
+      Ô£ö should handle tool_result without final_file_content gracefully
+
+  AnthropicHandler
+    getModel
+      Ô£ö should return the fast mode model when configured
+      Ô£ö should return the 1m fast mode model when configured
+    createMessage
+      Ô£ö should route fast mode requests through the beta messages API
+      Ô£ö should include the 1m beta when routing 1m fast mode requests through the beta messages API
+
+  AwsBedrockHandler
+    withTempEnv
+      Ô£ö should restore original environment variables after operation
+      Ô£ö should handle undefined environment variables
+      Ô£ö should handle errors and still restore environment
+      Ô£ö should handle multiple environment variable changes
+      Ô£ö should work with AWS_PROFILE
+      Ô£ö should work with AWS_BEARER_TOKEN_BEDROCK
+    executeConverseStream
+      thinking response handling (new API structure)
+        Ô£ö should handle thinking response in additionalModelResponseFields
+        Ô£ö should not parse thinking tags in text content
+        Ô£ö should handle thinking response with empty reasoning array
+        Ô£ö should handle thinking response interleaved with text chunks
+      multiple content blocks
+        Ô£ö should handle multiple content blocks (reasoning + text)
+        Ô£ö should handle real-world Japanese content
+        Ô£ö should handle interleaved content blocks
+      error handling
+        Ô£ö should handle internalServerException
+        Ô£ö should handle throttlingException
+      usage tracking
+        Ô£ö should track usage with cache tokens
+      tool use handling
+        Ô£ö should handle tool use content blocks
+        Ô£ö should handle multiple tool calls
+        Ô£ö should handle text and tool use interleaving
+    tool config mapping
+      Ô£ö should map Anthropic tools to Bedrock toolConfig
+      Ô£ö should return undefined when tools is undefined or empty
+      Ô£ö should silently drop tools without input_schema
+    formatMessagesForConverseAPI
+      Ô£ö should format tool_use and tool_result blocks
+      Ô£ö should format tool_result with array content
+      Ô£ö should map is_error to error status on tool_result
+    getModelId
+      Ô£ö should return raw model ID for custom models
+      Ô£ö should not encode custom model IDs with slashes
+      Ô£ö should apply cross-region prefix for non-custom models when enabled
+      Ô£ö should apply EU cross-region prefix
+      Ô£ö should apply JP cross-region prefix for sonnet 4.5
+      Ô£ö should apply JP cross-region prefix for sonnet 4.6
+      Ô£ö should apply global cross-region prefix for supported models
+      Ô£ö should NOT apply global cross-region prefix for unsupported models
+      Ô£ö should apply APAC cross-region prefix
+      Ô£ö should not apply cross-region prefix for custom models even when enabled
+      Ô£ö should handle UltraThink model ARN correctly
+    native tool calling integration
+      Ô£ö should be recognized as a next-gen provider eligible for native tool calling
+      Ô£ö should not use native tool calling for pre-4.0 Claude models
+      Ô£ö should not use native tool calling when the setting is disabled
+      Ô£ö should pass toolConfig to ConverseStreamCommand when tools are provided
+      Ô£ö should format a complete tool call round-trip correctly
+      Ô£ö should silently skip thinking blocks without warnings
+      Ô£ö should silently skip redacted_thinking blocks without warnings
+      Ô£ö should handle messages with only thinking blocks by producing empty content
+
+  ClaudeCodeHandler
+    token counting
+      Ô£ö should correctly handle token usage from assistant messages
+      Ô£ö should handle missing usage fields with nullish coalescing
+      Ô£ö should handle completely missing usage object
+    getModel
+      Ô£ö should return the correct model when specified
+      Ô£ö should support Opus 4.6 1m model id
+      Ô£ö should support Opus 1m alias model id
+      Ô£ö should support Sonnet 1m alias model id
+      Ô£ö should support Sonnet 4.5 1m model id
+      Ô£ö should support Sonnet 4.6 1m model id
+      Ô£ö should return default model when not specified
+
+  ClineHandler
+    Ô£ö should handle usage-only chunks when delta is missing
+
+  FireworksHandler
+    Ô£ö should handle usage-only chunks when delta is missing
+
+  GeminiHandler
+    Ô£ö caps maxOutputTokens to 8192 for Flash models
+    Ô£ö does not set maxOutputTokens for non-Flash models
+
+  LiteLlmHandler
+    prompt cache
+      when the model doesn't support prompt caching
+        Ô£ö sends the system prompt and messages with the openai format
+      when the model supports prompt caching
+        Ô£ö inserts the cache control in the system prompt and the last two user messages
+
+  OllamaHandler
+Ollama server not available, skipping tests
+    createMessage
+      - should handle successful responses
+      - should handle timeout errors
+      - should retry on errors when using the withRetry decorator
+      - should handle stream processing errors
+
+  OpenRouterHandler
+    Ô£ö should handle usage-only chunks when delta is missing
+
+  SapAiCoreHandler
+    image processing
+      Ô£ö should handle image processing for Claude 4 models
+      Ô£ö should create proper user readable request with images
+      Ô£ö should support different Claude model variants
+    getModel
+      Ô£ö should return default model when no apiModelId is provided
+      Ô£ö should return specified model when apiModelId is provided
+    createUserReadableRequest
+      Ô£ö should create a readable request format
+
+  VercelAIGatewayHandler
+    getModel
+      Ô£ö should return configured model and info when both are provided
+      Ô£ö should preserve configured model ID when model info is missing
+      Ô£ö should fall back to default model when model ID is missing
+    createMessage
+      Ô£ö should handle usage-only chunks when delta is missing
+
+  createOpenRouterStream
+    Ô£ö caps Gemini Flash OpenRouter requests to 8192 max_tokens
+    Ô£ö keeps lower Gemini Flash max_tokens values when already below 8192
+    Ô£ö does not send max_tokens for non-Gemini models
+    Ô£ö does not send max_tokens for non-Flash Gemini models
+
+  Thinking Trace Preservation
+    convertToOpenAiMessages
+      Ô£ö should preserve reasoning_details on text blocks
+      Ô£ö should preserve thinking blocks with signatures
+      Ô£ö should consolidate multiple reasoning_details entries
+      Ô£ö should filter out corrupted encrypted reasoning blocks
+    sanitizeGeminiMessages
+      Ô£ö should drop tool_calls without reasoning_details for Gemini models
+      Ô£ö should preserve tool_calls with reasoning_details for Gemini models
+      Ô£ö should not modify messages for non-Gemini models
+    sanitizeAnthropicMessages
+      Ô£ö should preserve thinking blocks
+      Ô£ö should not add cache_control to thinking blocks
+
+  Tool Call Parsing
+    convertToOpenAiMessages - Tool Calls
+      Ô£ö should convert Anthropic tool_use to OpenAI tool_calls format
+      Ô£ö should truncate long tool IDs to 40 characters
+      Ô£ö should transform OpenAI Responses API tool IDs (fc_ prefix)
+      Ô£ö should match tool_call_id with tool_calls id for tool results
+      Ô£ö should handle multiple tool calls in a single message
+      Ô£ö should handle tool results with array content
+      Ô£ö should set content to null when only tool_calls present
+    convertToAnthropicMessage - OpenAI Response to Anthropic
+      Ô£ö should convert OpenAI completion to Anthropic message format
+      Ô£ö should convert OpenAI tool_calls to Anthropic tool_use blocks
+      Ô£ö should handle malformed tool arguments gracefully
+      Ô£ö should map finish_reason correctly
+
+  checkContextWindowExceededError
+    Ô£ö detects OpenRouter context errors using structured status
+    Ô£ö detects OpenRouter JSON-encoded status + context length errors
+    Ô£ö does not classify unrelated 400 errors as context window failures
+
+  ContextManager
+    getNextTruncationRange
+      Ô£ö first truncation with half keep
+      Ô£ö first truncation with quarter keep
+      Ô£ö sequential truncation with half keep
+      Ô£ö sequential truncation with quarter keep
+      Ô£ö ensures the last message in range is a user message
+      Ô£ö handles small message arrays
+      Ô£ö preserves the message structure when truncating
+    applyContextOptimizations
+      Ô£ö detects duplicate file reads across write_to_file, replace_in_file, and file mentions (normal tool calling)
+      Ô£ö returns false when no duplicate file reads exist
+      Ô£ö returns false for empty messages beyond startFromIndex
+      Ô£ö detects duplicate file reads with native tool calling format (tool_result blocks)
+    getTruncatedMessages
+      Ô£ö returns original messages when no range is provided
+      Ô£ö correctly removes messages in the specified range
+      Ô£ö works with a range that starts at the first message after task
+      Ô£ö correctly handles removing a range while preserving alternation pattern
+      Ô£ö removes orphaned tool_results after truncation
+    shouldCompactContextWindow
+      Ô£ö does not compact at 33K tokens with default 0.75 threshold on 200K context
+      Ô£ö compacts when tokens exceed 0.75 threshold on 200K context
+      Ô£ö compacts at only 10K tokens when threshold is accidentally set to 0.05
+      Ô£ö falls back to maxAllowedSize when threshold is undefined
+      Ô£ö falls back to maxAllowedSize when threshold is 0
+      Ô£ö includes cacheWrites and cacheReads in total token count
+      Ô£ö returns false when previousApiReqIndex is negative
+      Ô£ö threshold is capped at maxAllowedSize even when percentage is very high
+
+  parseYamlFrontmatter
+    Ô£ö returns original content when no frontmatter
+    Ô£ö parses valid YAML frontmatter
+    Ô£ö fails open on malformed YAML
+    Ô£ö rejects YAML custom tags (security: prevents unsafe deserialization)
+    Ô£ö rejects !!python/object YAML tag
+    Ô£ö parses JSON-compatible YAML values correctly
+
+  rule-conditionals
+    evaluateRuleConditionals(paths)
+      Ô£ö treats missing paths as universal
+      Ô£ö treats empty paths list in frontmatter as match-nothing (fail-closed)
+      Ô£ö does not activate path-scoped rules with empty context
+      Ô£ö matches when any candidate path matches any glob
+      Ô£ö ignores invalid paths type (fail-open)
+    extractPathLikeStrings
+      Ô£ö extracts basic relative paths
+      Ô£ö extracts simple filenames with extensions (no slashes)
+      Ô£ö does not extract bare words without an extension
+      Ô£ö ignores URLs
+      Ô£ö ignores fenced code blocks
+      Ô£ö does not extract URLs inside code fences
+      Ô£ö extracts paths from stack traces (outside code fences)
+
+  rule loading with paths frontmatter
+    Ô£ö filters rules by evaluationContext.paths
+    Ô£ö treats invalid YAML frontmatter as fail-open and preserves the raw frontmatter for the LLM
+    Ô£ö treats paths: [] as match-nothing (fail-closed)
+    Ô£ö keeps activatedConditionalRules order stable (matches input file order)
+
+  RuleContextBuilder
+    getRulePathContext from ask='tool' messages
+      Ô£ö extracts path from ask='tool' message with write_to_file
+      Ô£ö extracts paths from multiple sequential tool requests
+      Ô£ö handles malformed JSON gracefully
+      Ô£ö extracts paths from apply_patch tool request
+      Ô£ö deduplicates paths from multiple sources
+      Ô£ö normalizes Windows-style paths to POSIX
+      Ô£ö respects MAX_RULE_PATH_CANDIDATES limit
+    extractPathsFromApplyPatch
+      Ô£ö extracts paths from Add File headers
+      Ô£ö extracts paths from Update File headers
+      Ô£ö extracts paths from Delete File headers
+
+  Skills Utility Functions
+    discoverSkills
+      Ô£ö should discover skills from global directory
+      Ô£ö should discover skills from project .clinerules/skills directory
+      Ô£ö should discover skills from project .cline/skills directory
+      Ô£ö should discover skills from project .claude/skills directory
+      Ô£ö should discover skills from project .agents/skills directory
+      Ô£ö should handle empty skills directories gracefully
+      Ô£ö should skip non-directory entries in skills folder
+      Ô£ö should skip skill directories without SKILL.md
+    getAvailableSkills - Override Resolution
+      Ô£ö should override project skill with global skill of same name
+      Ô£ö should keep both skills when names are different
+    Metadata Validation
+      Ô£ö should reject skill with missing name field
+      Ô£ö should reject skill with missing description field
+      Ô£ö should reject skill when name doesn't match directory name
+      Ô£ö should handle malformed YAML frontmatter gracefully
+      Ô£ö should handle file without frontmatter
+    getSkillContent
+      Ô£ö should load full skill content with instructions
+      Ô£ö should return null for non-existent skill
+      Ô£ö should trim whitespace from instructions
+
+  ifFileExistsRelativePath
+    Ô£ö should return BooleanResponse with boolean value
+    Ô£ö should return false when no workspace path is available
+    Ô£ö should return false when path is invalid
+    Ô£ö should handle valid relative paths correctly
+
+  openFileRelativePath
+    Ô£ö should return Empty response on successful execution
+    Ô£ö should call openFileIntegration with absolute path when relative path is provided
+    Ô£ö should not call openFileIntegration when path is invalid
+    Ô£ö should return Empty and log error when no workspace path is available
+    Ô£ö should handle nested directory paths
+
+  GrpcRecorderBuilder
+    when not enabling
+      Ô£ö should return GrpcRecorderNoops when enableIf is false
+      Ô£ö should return GrpcRecorderNoops when enableIf is false even with log file handler
+    GrpcRecorderNoops functionality
+      Ô£ö should have no-op methods that don't throw errors
+
+  grpc-recorder
+    GrpcRecorder
+      Ô£ö matches multiple request, response and stats
+      Ô£ö using default filtering should filter out unwanted requests
+      Ô£ö cleanupSyntheticEntries removes synthetic entries from session log
+      Ô£ö recordResponse executes post-record hooks
+
+  log-file-handler
+    LogFileHandler
+      Ô£ö returns file name with timestamp when env var not set
+
+  test-hooks
+    Ô£ö should return an array of post-record hooks
+    Ô£ö should execute hook and call recorder methods (77ms)
+
+  refreshClineRecommendedModels
+    Ô£ö returns hardcoded models and skips upstream fetch when rollout flag is off
+    Ô£ö fetches from upstream when rollout flag is on
+    Ô£ö uses hardcoded models when rollout flag is turned off after upstream cache is populated
+
+  enumerateAudioDevices
+    Ô£ö returns host-side input and output device lists without Web API
+
+  Hook System
+    NoOpRunner
+      Ô£ö should return success without executing anything when no hooks found
+    StdioHookRunner
+      Ô£ö should execute workspace hook from its respective workspace root directory (1274ms)
+      Ô£ö should execute hook script and parse output (725ms)
+      Ô£ö should handle script that blocks execution (786ms)
+      Ô£ö should truncate large context modifications (701ms)
+      Ô£ö should handle script errors (673ms)
+      Ô£ö should handle malformed JSON output (667ms)
+      Ô£ö should pass hook input via stdin (682ms)
+    PostToolUse Hook
+      Ô£ö should receive execution results (723ms)
+    Hook Discovery
+      Ô£ö should generate Windows PowerShell bridge files with real newlines
+      Ô£ö should resolve .ps1 hook on windows
+      Ô£ö should ignore extensionless hook on windows and use .ps1 only
+      Ô£ö should ignore .ps1 hook on unix-like platforms
+      Ô£ö should find executable hook
+      Ô£ö should not find non-executable file
+      Ô£ö should handle missing hooks gracefully
+    Error Handling
+      Ô£ö should handle expected ENOENT errors silently
+      Ô£ö should handle hook input with all parameters (1118ms)
+    Global Hooks
+      Ô£ö should execute both global and workspace hooks (877ms)
+      Ô£ö should block execution if global hook blocks (981ms)
+      Ô£ö should work with only global hooks (no workspace hooks) (764ms)
+      Ô£ö should block if workspace hook blocks even when global allows (882ms)
+      Ô£ö should combine error messages from global and workspace hooks (877ms)
+      Ô£ö should execute global hook from primary workspace root directory (715ms)
+      Ô£ö should work with global PostToolUse hooks (704ms)
+
+  getHookModelContext
+    Ô£ö should return concrete provider and model slug for plan mode
+    Ô£ö should return concrete provider and model slug for act mode
+    Ô£ö should fall back to unknown values when provider/slug are unavailable
+
+  HookProcess
+    Ô£ö uses resolved PowerShell executable and expected Windows launch args
+    Ô£ö keeps Unix launch behavior unchanged
+    Ô£ö surfaces resolver failures
+    Ô£ö uses PowerShell on Windows
+    Ô£ö coalesces concurrent Windows launcher resolution into a single in-flight resolver call
+    Ô£ö clears failed launcher cache so later calls can recover
+    Ô£ö refreshes cached Windows launcher resolution after cache TTL expires
+
+  hooks-utils
+    getHooksEnabledSafe
+      Ô£ö returns false when user setting is false
+      Ô£ö returns true when user setting is true
+      Ô£ö is stable across repeated calls
+      Ô£ö returns true for undefined
+      Ô£ö does not depend on process.platform in current implementation
+
+  Shell Path Escaping
+    Unix/Linux/macOS path escaping
+      Ô£ö should handle paths without special characters
+      Ô£ö should handle paths with spaces
+      Ô£ö should handle paths with multiple spaces
+      Ô£ö should handle paths with single quotes
+      Ô£ö should handle paths with multiple single quotes
+      Ô£ö should handle paths with double quotes
+      Ô£ö should handle paths with special shell characters
+      Ô£ö should handle paths with backticks
+      Ô£ö should handle paths with parentheses
+      Ô£ö should handle paths with ampersands
+      Ô£ö should handle paths with semicolons
+      Ô£ö should handle paths with pipes
+      Ô£ö should handle global hooks directory with spaces
+      Ô£ö should handle workspace hooks with spaces in root
+      Ô£ö should handle paths with newlines (edge case)
+      Ô£ö should handle paths with tabs
+    Windows path escaping
+      Ô£ö should handle paths without special characters
+      Ô£ö should handle paths with spaces
+      Ô£ö should handle paths with multiple spaces
+      Ô£ö should handle paths with double quotes
+      Ô£ö should handle paths with backslashes before quotes
+      Ô£ö should handle paths with single quotes
+      Ô£ö should handle paths with special characters
+      Ô£ö should handle paths with parentheses
+      Ô£ö should handle paths with ampersands
+      Ô£ö should handle global hooks directory with spaces
+      Ô£ö should handle workspace hooks with spaces in root
+      Ô£ö should handle UNC paths with spaces
+    Real-world scenarios
+      Ô£ö should handle typical macOS global hooks path with space in username
+      Ô£ö should handle typical Windows global hooks path with space in username
+      Ô£ö should handle workspace with company name and spaces
+      Ô£ö should handle workspace with version numbers and spaces
+      Ô£ö should handle workspace with mixed special characters
+    Multi-root workspace scenarios
+      Ô£ö should handle multiple roots with spaces (macOS)
+      Ô£ö should handle multiple roots with spaces (Windows)
+
+  TaskCancel Hook
+    Hook Input Format
+      Ô£ö should receive task metadata with completionStatus (701ms)
+      Ô£ö should handle 'abandoned' completion status (707ms)
+      Ô£ö should receive all common hook input fields (824ms)
+    Fire-and-Forget Behavior
+      Ô£ö should ignore contextModification regardless of content (1617ms)
+      Ô£ö should succeed regardless of hook return value (730ms)
+      Ô£ö should return error message when hook returns cancel: true (1309ms)
+      Ô£ö should execute without errors for cleanup purposes (913ms)
+    Error Handling
+      Ô£ö should surface hook errors to the user (862ms)
+      Ô£ö should handle malformed JSON output from hook (1362ms)
+    Global and Workspace Hooks
+      Ô£ö should execute both global and workspace TaskCancel hooks (1356ms)
+      Ô£ö should execute both hooks with different completion statuses (922ms)
+    No Hook Behavior
+      Ô£ö should succeed when no hook exists
+    Fixture-Based Tests
+      Ô£ö should handle cancel: true with no error message (1090ms)
+      Ô£ö should handle cancel: true with error message (1164ms)
+      Ô£ö should handle cancel: false with no error message (1661ms)
+      Ô£ö should handle cancel: false with error message (1223ms)
+      Ô£ö should handle hook that exits with non-zero status code (698ms)
+
+  TaskComplete Hook
+    Hook Input Format
+      Ô£ö should receive task metadata with result and command (1181ms)
+      Ô£ö should handle completion without command (1105ms)
+      Ô£ö should receive all common hook input fields (1253ms)
+      Ô£ö should receive result text for logging (1233ms)
+    Hook Behavior
+      Ô£ö should execute successfully and capture context modification (996ms)
+      Ô£ö should capture contextModification for logging even though task is complete (1131ms)
+      Ô£ö should not block task completion when hook returns cancel: true (582ms)
+    Error Handling
+      Ô£ö should handle hook script errors (603ms)
+      Ô£ö should handle malformed JSON output from hook (597ms)
+    Global and Workspace Hooks
+      Ô£ö should execute both global and workspace TaskComplete hooks (743ms)
+      Ô£ö should handle when global hook has error but workspace succeeds (808ms)
+    No Hook Behavior
+      Ô£ö should succeed when no hook exists
+    Fixture-Based Tests
+      Ô£ö should work with success fixture (690ms)
+      Ô£ö should work with error fixture (596ms)
+      Ô£ö should work with context-injection fixture (567ms)
+
+  TaskResume Hook
+    Hook Input Format
+      Ô£ö should receive all required taskResume fields (585ms)
+      Ô£ö should receive all common hook input fields (575ms)
+    Time-Based Calculations
+      Ô£ö should correctly calculate minutes ago for recent resumes (1822ms)
+      Ô£ö should handle very old timestamps (days ago) (633ms)
+      Ô£ö should handle edge case: future timestamp (659ms)
+    Message Count Analysis
+      Ô£ö should analyze message count thresholds (1714ms)
+      Ô£ö should handle zero message count (733ms)
+    State Combination Analysis
+      Ô£ö should analyze combination of long pause and many messages (712ms)
+      Ô£ö should combine context deletion with other state (684ms)
+    Error Handling
+      Ô£ö should handle malformed JSON output (645ms)
+      Ô£ö should handle invalid timestamp gracefully (701ms)
+    Global and Workspace Hooks
+      Ô£ö should execute both global and workspace TaskResume hooks (858ms)
+      Ô£ö should combine context modifications from both hooks with time analysis (903ms)
+    No Hook Behavior
+      Ô£ö should allow resume when no hook exists
+    Fixture-Based Tests
+      Ô£ö should work with success fixture (733ms)
+      Ô£ö should work with recent-resume fixture (745ms)
+      Ô£ö should work with long-pause fixture (699ms)
+      Ô£ö should work with context-deleted fixture (614ms)
+      Ô£ö should work with message-count fixture (590ms)
+      Ô£ö should work with context-injection fixture (697ms)
+      Ô£ö should work with error fixture (611ms)
+
+  TaskStart Hook
+    Hook Input Format
+      Ô£ö should receive task metadata from startTask (560ms)
+      Ô£ö should receive all common hook input fields (552ms)
+      Ô£ö should handle empty initialTask (505ms)
+    Hook Behavior
+      Ô£ö should allow task to start when hook returns cancel: false (494ms)
+      Ô£ö should block task when hook returns cancel: true (462ms)
+      Ô£ö should provide context modification even when not added to conversation (475ms)
+    Error Handling
+      Ô£ö should handle hook script errors (453ms)
+      Ô£ö should handle malformed JSON output from hook (586ms)
+    Global and Workspace Hooks
+      Ô£ö should execute both global and workspace TaskStart hooks (673ms)
+      Ô£ö should block if global hook blocks (690ms)
+      Ô£ö should block if workspace hook blocks even when global allows (713ms)
+    No Hook Behavior
+      Ô£ö should allow task when no hook exists
+    Fixture-Based Tests
+      Ô£ö should work with success fixture (574ms)
+      Ô£ö should work with blocking fixture (601ms)
+      Ô£ö should work with error fixture (585ms)
+
+  UserPromptSubmit Hook
+    Hook Input Format
+      Ô£ö should receive prompt text from user content (1100ms)
+      Ô£ö should handle multiline prompts (1094ms)
+      Ô£ö should handle large prompts (1095ms)
+      Ô£ö should receive all common hook input fields (1095ms)
+    Prompt Content Serialization
+      Ô£ö should handle empty prompt (1098ms)
+      Ô£ö should preserve special characters in prompt (1078ms)
+    Error Handling
+      Ô£ö should handle malformed JSON output from hook (577ms)
+      Ô£ö should handle hook script errors (1180ms)
+    Global and Workspace Hooks
+      Ô£ö should execute both global and workspace UserPromptSubmit hooks (782ms)
+      Ô£ö should block if workspace hook blocks even when global allows (1057ms)
+    No Hook Behavior
+      Ô£ö should allow prompt when no hook exists
+    Fixture-Based Tests
+      Ô£ö should work with success fixture (1095ms)
+      Ô£ö should work with blocking fixture (1084ms)
+      Ô£ö should work with context-injection fixture (650ms)
+      Ô£ö should work with error fixture (1081ms)
+      Ô£ö should work with malformed-json fixture (575ms)
+      Ô£ö should work with multiline fixture (578ms)
+      - should work with large-prompt fixture
+      Ô£ö should work with special-chars fixture (572ms)
+      Ô£ö should work with empty-prompt fixture (575ms)
+
+  formatResponse.writeToFileMissingContentError
+    first failure (tier 1)
+      Ô£ö should include the file path in the error message
+      Ô£ö should include the base error explanation
+      Ô£ö should include helpful suggestions
+      Ô£ö should include the tool use instructions reminder
+      Ô£ö should mention breaking down the task into smaller steps
+      Ô£ö should suggest using replace_in_file for existing files
+      Ô£ö should not include CRITICAL language on first failure
+      Ô£ö should work with different file paths
+    second failure (tier 2)
+      Ô£ö should indicate this is the 2nd failed attempt
+      Ô£ö should strongly suggest alternative approaches
+      Ô£ö should tell model not to retry full write again
+      Ô£ö should not include CRITICAL language on second failure
+    third+ failure (tier 3)
+      Ô£ö should include CRITICAL language on third failure
+      Ô£ö should tell model to NOT retry write_to_file
+      Ô£ö should include required action strategies
+      Ô£ö should show correct count for higher failure counts
+    context window awareness
+      Ô£ö should include context warning when usage exceeds 50%
+      Ô£ö should not include context warning when usage is 50% or below
+      Ô£ö should not include context warning when percent is undefined
+      Ô£ö should show high context window usage correctly
+      Ô£ö should include context warning in tier 3 messages
+
+  Prompt System Integration Tests
+Ô£à SNAPSHOT TEST MODE
+    Snapshot Testing
+      generic Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: openai_gpt_3-basic.snap
+        Ô£ö should generate consistent prompt for openai/gpt-3 with basic context
+Ô£ô Snapshot matches: openai_gpt_3-no-browser.snap
+        Ô£ö should generate consistent prompt for openai/gpt-3 with no-browser context
+Ô£ô Snapshot matches: openai_gpt_3-no-mcp.snap
+        Ô£ö should generate consistent prompt for openai/gpt-3 with no-mcp context
+Ô£ô Snapshot matches: openai_gpt_3-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for openai/gpt-3 with no-focus-chain context
+      glm Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: zai_glm_4_6-basic.snap
+        Ô£ö should generate consistent prompt for zai/glm-4.6 with basic context
+Ô£ô Snapshot matches: zai_glm_4_6-no-browser.snap
+        Ô£ö should generate consistent prompt for zai/glm-4.6 with no-browser context
+Ô£ô Snapshot matches: zai_glm_4_6-no-mcp.snap
+        Ô£ö should generate consistent prompt for zai/glm-4.6 with no-mcp context
+Ô£ô Snapshot matches: zai_glm_4_6-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for zai/glm-4.6 with no-focus-chain context
+      hermes Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: test_hermes_4-basic.snap
+        Ô£ö should generate consistent prompt for test/hermes-4 with basic context
+Ô£ô Snapshot matches: test_hermes_4-no-browser.snap
+        Ô£ö should generate consistent prompt for test/hermes-4 with no-browser context
+Ô£ô Snapshot matches: test_hermes_4-no-mcp.snap
+        Ô£ö should generate consistent prompt for test/hermes-4 with no-mcp context
+Ô£ô Snapshot matches: test_hermes_4-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for test/hermes-4 with no-focus-chain context
+      devstral Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: cline_devstral-basic.snap
+        Ô£ö should generate consistent prompt for cline/devstral with basic context
+Ô£ô Snapshot matches: cline_devstral-no-browser.snap
+        Ô£ö should generate consistent prompt for cline/devstral with no-browser context
+Ô£ô Snapshot matches: cline_devstral-no-mcp.snap
+        Ô£ö should generate consistent prompt for cline/devstral with no-mcp context
+Ô£ô Snapshot matches: cline_devstral-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for cline/devstral with no-focus-chain context
+      next-gen Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: anthropic_claude_sonnet_4-basic.snap
+        Ô£ö should generate consistent prompt for anthropic/claude-sonnet-4 with basic context
+Ô£ô Snapshot matches: anthropic_claude_sonnet_4-no-browser.snap
+        Ô£ö should generate consistent prompt for anthropic/claude-sonnet-4 with no-browser context
+Ô£ô Snapshot matches: anthropic_claude_sonnet_4-no-mcp.snap
+        Ô£ö should generate consistent prompt for anthropic/claude-sonnet-4 with no-mcp context
+Ô£ô Snapshot matches: anthropic_claude_sonnet_4-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for anthropic/claude-sonnet-4 with no-focus-chain context
+      xs Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: lmstudio_qwen3_coder-basic.snap
+        Ô£ö should generate consistent prompt for lmstudio/qwen3_coder with basic context
+Ô£ô Snapshot matches: lmstudio_qwen3_coder-no-browser.snap
+        Ô£ö should generate consistent prompt for lmstudio/qwen3_coder with no-browser context
+Ô£ô Snapshot matches: lmstudio_qwen3_coder-no-mcp.snap
+        Ô£ö should generate consistent prompt for lmstudio/qwen3_coder with no-mcp context
+Ô£ô Snapshot matches: lmstudio_qwen3_coder-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for lmstudio/qwen3_coder with no-focus-chain context
+      native-next-gen Model Group
+Ô£ô Snapshot matches: cline_native_next_gen.tools.snap
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: cline_claude_4_5_sonnet-basic.snap
+        Ô£ö should generate consistent prompt for cline/claude-4-5-sonnet with basic context
+Ô£ô Snapshot matches: cline_claude_4_5_sonnet-no-browser.snap
+        Ô£ö should generate consistent prompt for cline/claude-4-5-sonnet with no-browser context
+Ô£ô Snapshot matches: cline_claude_4_5_sonnet-no-mcp.snap
+        Ô£ö should generate consistent prompt for cline/claude-4-5-sonnet with no-mcp context
+Ô£ô Snapshot matches: cline_claude_4_5_sonnet-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for cline/claude-4-5-sonnet with no-focus-chain context
+      gpt-5 Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: openai_gpt_5-basic.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5 with basic context
+Ô£ô Snapshot matches: openai_gpt_5-no-browser.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5 with no-browser context
+Ô£ô Snapshot matches: openai_gpt_5-no-mcp.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5 with no-mcp context
+Ô£ô Snapshot matches: openai_gpt_5-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5 with no-focus-chain context
+      gpt-5-native Model Group
+Ô£ô Snapshot matches: openai_gpt_5_native.tools.snap
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: openai_gpt_5_codex-basic.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-codex with basic context
+Ô£ô Snapshot matches: openai_gpt_5_codex-no-browser.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-codex with no-browser context
+Ô£ô Snapshot matches: openai_gpt_5_codex-no-mcp.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-codex with no-mcp context
+Ô£ô Snapshot matches: openai_gpt_5_codex-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-codex with no-focus-chain context
+      gpt-5-1-native Model Group
+Ô£ô Snapshot matches: openai_gpt_5_1_native.tools.snap
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: openai_gpt_5_1-basic.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-1 with basic context
+Ô£ô Snapshot matches: openai_gpt_5_1-no-browser.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-1 with no-browser context
+Ô£ô Snapshot matches: openai_gpt_5_1-no-mcp.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-1 with no-mcp context
+Ô£ô Snapshot matches: openai_gpt_5_1-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for openai/gpt-5-1 with no-focus-chain context
+      gemini3 Model Group
+Ô£ô Snapshot matches: vertex_gemini3.tools.snap
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: vertex_gemini_3-basic.snap
+        Ô£ö should generate consistent prompt for vertex/gemini-3 with basic context
+Ô£ô Snapshot matches: vertex_gemini_3-no-browser.snap
+        Ô£ö should generate consistent prompt for vertex/gemini-3 with no-browser context
+Ô£ô Snapshot matches: vertex_gemini_3-no-mcp.snap
+        Ô£ö should generate consistent prompt for vertex/gemini-3 with no-mcp context
+Ô£ô Snapshot matches: vertex_gemini_3-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for vertex/gemini-3 with no-focus-chain context
+      trinity Model Group
+        Ô£ö should generate consistent native tools object when enabled
+Ô£ô Snapshot matches: openrouter_arcee_ai_trinity_large_preview-basic.snap
+        Ô£ö should generate consistent prompt for openrouter/arcee-ai/trinity-large-preview with basic context
+Ô£ô Snapshot matches: openrouter_arcee_ai_trinity_large_preview-no-browser.snap
+        Ô£ö should generate consistent prompt for openrouter/arcee-ai/trinity-large-preview with no-browser context
+Ô£ô Snapshot matches: openrouter_arcee_ai_trinity_large_preview-no-mcp.snap
+        Ô£ö should generate consistent prompt for openrouter/arcee-ai/trinity-large-preview with no-mcp context
+Ô£ô Snapshot matches: openrouter_arcee_ai_trinity_large_preview-no-focus-chain.snap
+        Ô£ö should generate consistent prompt for openrouter/arcee-ai/trinity-large-preview with no-focus-chain context
+    Context-Specific Features
+      Ô£ö should include browser-specific content when browser is enabled
+      Ô£ö should include MCP content when MCP servers are present
+      Ô£ö should include TODO content when focus chain is enabled
+      Ô£ö should include user instructions when provided
+    Error Handling
+      Ô£ö should handle completely invalid context gracefully (157ms)
+      Ô£ö should handle undefined context properties (138ms)
+
+  OpenAI-compatible gpt-oss native tools smoke test
+    Ô£ö uses the NATIVE_GPT_5 prompt family for gpt-oss when native tools are enabled
+    Ô£ö exposes apply_patch for gpt-oss-120b so file editing remains native
+    Ô£ö control: gpt-5-codex still receives apply_patch
+
+  PromptBuilder
+    build
+      Ô£ö should build a complete prompt
+      Ô£ö should handle missing components gracefully
+      Ô£ö should apply component overrides
+      Ô£ö should resolve runtime placeholders
+      Ô£ö should handle component errors gracefully
+    getBuildMetadata
+      Ô£ö should return build metadata
+    postProcess
+      Ô£ö should clean up multiple empty lines
+      Ô£ö should ensure proper section separation
+    VariantBuilder auto-generation
+      Ô£ö should auto-generate baseTemplate from componentOrder when not provided
+      Ô£ö should use explicit baseTemplate when provided
+      Ô£ö should throw error when componentOrder is empty
+
+  PromptRegistry
+    getInstance
+      Ô£ö should return singleton instance
+    getModelFamily
+      Ô£ö should extract correct model families
+    get method
+      Ô£ö should handle fallback to generic variant
+    native tools
+      Ô£ö should not include focus_chain in native tools output
+    getAvailableModels
+      Ô£ö should return list of available model IDs
+    registerComponent
+      Ô£ö should register custom components
+    basic functionality
+      Ô£ö should be able to create registry instance
+      Ô£ö should have required methods
+
+  toolSpecFunctionDeclarations (Gemini)
+    Ô£ö includes parameter descriptions from instruction field
+    Ô£ö includes descriptions for all parameters
+    Ô£ö handles function-type instructions
+    Ô£ö omits description when instruction is empty
+
+  Gemini and Anthropic parameter descriptions match
+    Ô£ö both converters produce the same description text
+
+  TemplateEngine
+    resolve
+      Ô£ö should resolve simple placeholders
+      Ô£ö should resolve multiple placeholders
+      Ô£ö should handle nested object placeholders
+      Ô£ö should preserve unmatched placeholders
+      Ô£ö should handle object and array values
+      Ô£ö should handle whitespace around placeholder names
+    extractPlaceholders
+      Ô£ö should extract all unique placeholders
+      Ô£ö should handle nested placeholders
+      Ô£ö should handle whitespace in placeholders
+      Ô£ö should return empty array for template without placeholders
+    validate
+      Ô£ö should return missing placeholders
+      Ô£ö should return empty array when all required placeholders are present
+    escape and unescape
+      Ô£ö should escape placeholder markers
+      Ô£ö should unescape placeholder markers
+      Ô£ö should handle round-trip escaping/unescaping
+
+  getVoiceBehaviorSection()
+    Ô£ö formal tone ÔåÆ prompt contains formal language instruction
+    Ô£ö casual tone ÔåÆ prompt contains conversational instruction
+    Ô£ö technical tone ÔåÆ prompt contains technical vocabulary instruction
+    Ô£ö concise mode ÔåÆ prompt contains 2 sentences constraint
+    Ô£ö detailed mode ÔåÆ prompt contains thorough instruction
+    Ô£ö avatarName 'Nexus' ÔåÆ prompt refers to avatar as Nexus
+    Ô£ö anti-confusion rule is present regardless of tone
+    Ô£ö defaults to NexusAI name when avatarName is not provided
+
+  slash-commands
+    formatMcpPromptResponse
+      Ô£ö should format text message
+      Ô£ö should format assistant message
+      Ô£ö should include description when provided
+      Ô£ö should format multiple messages
+      Ô£ö should format image content
+      Ô£ö should format audio content
+      Ô£ö should format resource with text
+      Ô£ö should format resource without text
+    parseSlashCommands MCP handling
+      Ô£ö should process MCP prompt command in task tag
+      Ô£ö should process MCP prompt with additional text
+      Ô£ö should handle MCP prompt with colons in prompt name
+
+  disk - hooks functionality
+    getWorkspaceHooksDirs
+      Ô£ö should return empty array when no workspace roots exist
+      Ô£ö should return empty array when workspace roots is empty array
+      Ô£ö should return empty array when no hooks directories exist
+      Ô£ö should return hooks directory when it exists
+      Ô£ö should not return hooks directory if it's a file instead of directory
+      Ô£ö should return multiple hooks directories for multi-root workspace
+      Ô£ö should return only existing hooks directories in multi-root workspace
+      Ô£ö should propagate errors when checking directory fails
+      Ô£ö should use correct path joining for hooks directory
+      Ô£ö should handle workspace roots with trailing slashes
+    getAllHooksDirs
+      Ô£ö should include the runtime hooks directory when it exists (283ms)
+      Ô£ö should not include the runtime hooks directory when it does not exist (258ms)
+
+  disk - atomic writes
+    writeTaskHistoryToState and readTaskHistoryFromState
+      Ô£ö should write and read task history correctly
+      Ô£ö should write valid JSON that can be parsed
+      Ô£ö should not leave temp files after successful write
+      Ô£ö should handle empty array writes
+      Ô£ö should handle large task history arrays (434ms)
+      Ô£ö should handle concurrent writes without corruption (144ms)
+      Ô£ö should preserve data integrity with special characters
+      Ô£ö should overwrite existing task history
+      Ô£ö should handle rapid successive writes (129ms)
+      Ô£ö should preserve all HistoryItem fields
+    atomic write failure scenarios
+      Ô£ö should leave original file intact if temp file write fails
+      Ô£ö should leave original file intact if rename fails
+      Ô£ö should ignore temp files during read operations
+      Ô£ö should handle concurrent read during write without corruption (61ms)
+      Ô£ö should handle partial temp file from interrupted process
+
+  syncRemoteMcpServersToSettings
+    adding remote servers
+      Ô£ö should add a new remote server with remoteConfigured marker
+      Ô£ö should preserve user settings and tag existing server with remoteConfigured marker
+      Ô£ö should add multiple remote servers
+      Ô£ö should not affect existing non-remote servers
+    removing remote servers
+      Ô£ö should remove a server marked remoteConfigured when no longer in remote config
+      Ô£ö should NOT remove a server without remoteConfigured marker
+      Ô£ö should only remove the server that was removed from remote config
+      Ô£ö should handle removing all remote servers at once
+    upgrade from old format (no remoteConfigured marker)
+      Ô£ö should add remoteConfigured marker to existing server matching remote config
+    edge cases
+      Ô£ö should handle empty settings file with no mcpServers key
+      Ô£ö should handle server with same name but different URL
+      Ô£ö should set McpHub isUpdatingFromRemoteConfig flag during write
+
+  Issue #18: retry exhausted + checkpoint init
+    ensureCheckpointInitialized non-blocking behavior
+      Ô£ö should resolve without error when checkpoint initializes successfully
+      Ô£ö should throw TimeoutError when initialization exceeds timeout (60ms)
+      Ô£ö should resolve immediately when checkpointManager is undefined
+      Ô£ö should use MultiRootCheckpointManager initialize path
+    auto-retry exponential backoff calculation
+      Ô£ö should calculate correct delays: 2s, 4s, 8s
+    error_retry message format
+      Ô£ö should produce correct JSON for in-progress retry
+      Ô£ö should produce correct JSON for failed retry with actionable message
+
+  ToolExecutor canonicalization
+    Ô£ö canonicalizes attempt_completion response into result
+    Ô£ö does not canonicalize when attempt_completion already has result
+    Ô£ö does not canonicalize non-attempt tools
+
+  ToolExecutor Hook Integration
+    addHookContextToConversation
+      Ô£ö should handle undefined context
+      Ô£ö should handle empty context
+      Ô£ö should handle whitespace-only context
+      Ô£ö should add context without type prefix
+      Ô£ö should extract type from WORKSPACE_RULES prefix
+      Ô£ö should extract type from FILE_OPERATIONS prefix
+      Ô£ö should handle multi-line context with type
+      Ô£ö should handle multi-line context with type but no content on first line
+      Ô£ö should preserve source parameter correctly
+      Ô£ö should handle type with underscores
+      Ô£ö should not match lowercase type prefix
+      Ô£ö should filter out empty lines when extracting multi-line content
+    Hook Context XML Format
+      Ô£ö should generate properly formatted XML
+      Ô£ö should handle special characters in content
+
+  AttemptCompletionHandler double-check completion
+    when disabled (default)
+      Ô£ö should not reject any completion attempts
+    when enabled
+      Ô£ö should reject the first completion attempt
+      Ô£ö should accept the second completion attempt and reset pending
+      Ô£ö should reject again after the pending flag is reset (third call)
+      Ô£ö should double-check every completion attempt across a full task lifecycle
+    consecutiveMistakeCount interaction
+      Ô£ö should not increment consecutiveMistakeCount on rejection
+    initialization and lifecycle
+      Ô£ö should start as false
+      Ô£ö should reset with new TaskState (new task)
+
+  AttemptCompletionHandler voice TTS
+    Ô£ö does not request speech twice for one completion_result
+
+  ExecuteCommandToolHandler timeout policy
+    Ô£ö returns undefined when managed timeout is disabled
+    Ô£ö uses explicit timeout when provided
+    Ô£ö falls back to default timeout for short commands
+    Ô£ö uses extended timeout for known long-running commands
+    Ô£ö detects common long-running command families
+
+  KillProcessToolHandler
+    execute() ÔÇö parameter validation
+      Ô£ö increments consecutiveMistakeCount when PID is missing
+      Ô£ö returns result of sayAndCreateMissingParamError when PID missing
+      Ô£ö returns toolError when PID is not a valid integer
+      Ô£ö returns toolError when PID is zero
+      Ô£ö returns toolError when PID is negative
+    execute() ÔÇö user approval
+      Ô£ö returns "User declined" text when user responds noButtonClicked
+      Ô£ö prompts user with tool/pid/signal details before killing
+      Ô£ö defaults signal to SIGTERM when not provided
+    execute() ÔÇö successful kill
+      Ô£ö returns success message with PID after approved kill
+      Ô£ö returns toolError when the OS kill command throws
+    execute() ÔÇö custom signal
+      Ô£ö uses provided signal in ask payload
+    getDescription()
+      Ô£ö includes PID in description string
+      Ô£ö handles undefined pid gracefully
+    name
+      Ô£ö is kill_process
+    execute() ÔÇö process tree kill (Bug #15)
+      Ô£ö calls taskkill with /T flag on Windows to kill process tree
+      Ô£ö calls pkill -P on Linux before killing parent process
+
+  ListenForSpeechToolHandler
+    execute() ÔÇö STT disabled
+      Ô£ö returns disabled message without calling say or waitForTranscription
+    execute() ÔÇö STT enabled, transcription received
+      Ô£ö calls say(voice_listen, prompt) with default prompt when none given
+      Ô£ö calls say(voice_listen, prompt) with provided custom prompt
+      Ô£ö returns the transcribed text in the result
+      Ô£ö resets consecutiveMistakeCount to 0
+    execute() ÔÇö STT enabled, timeout (no speech)
+      Ô£ö returns no-speech message when waitForTranscription resolves empty
+    getDescription()
+      Ô£ö returns [listen_for_speech]
+
+  ListProcessesToolHandler
+    execute()
+      Ô£ö returns process list when no filter is given
+      Ô£ö filters results when filter param is provided
+      Ô£ö filter is case-insensitive
+      Ô£ö returns "No processes found." when filter matches nothing
+      Ô£ö caps output at 100 lines
+      Ô£ö returns toolError string when execSync throws
+      Ô£ö calls say(tool) on success
+    getDescription()
+      Ô£ö returns [list_processes]
+    name
+      Ô£ö is list_processes
+
+  SpeakTextToolHandler
+    execute() ÔÇö missing param
+      Ô£ö returns missing-param error and increments consecutiveMistakeCount when text is absent
+    execute() ÔÇö TTS disabled
+      Ô£ö returns disabled message without calling say or requestSpeak
+    execute() ÔÇö TTS enabled
+      Ô£ö calls say(voice_speak, ...) and requestSpeak(text)
+      Ô£ö returns a Speaking confirmation result
+      Ô£ö resets consecutiveMistakeCount to 0 on success
+    getDescription()
+      Ô£ö returns [speak_text]
+
+  SubagentToolHandler
+    Ô£ö returns missing parameter error when no prompts are provided
+    Ô£ö returns an error when subagents are disabled
+    Ô£ö streams partial use_subagents approval as ask when not auto-approved
+    Ô£ö streams partial use_subagents approval as say when auto-approved
+    Ô£ö uses one approval for the full batch and stops on denial
+    Ô£ö uses read-file auto-approve level (safe only) for approval bypass
+    Ô£ö fans out prompts in parallel and emits aggregated status
+    Ô£ö continues after per-subagent failures and reports both outcomes
+    Ô£ö runs configured subagent tools using the prompt parameter
+    Ô£ö requires prompt for configured subagent tools
+
+  WriteToFileToolHandler consecutiveMistakeCount
+    counter initialization
+      Ô£ö should start at 0
+    counter NOT reset at operation start
+      Ô£ö should preserve existing count when starting a new operation
+      Ô£ö should allow tooManyMistakes check to see accumulated failures
+    counter reset after successful operation
+      Ô£ö should reset to 0 only after successful saveChanges()
+      Ô£ö should NOT reset if operation fails before saveChanges()
+    counter increment on diff errors
+      Ô£ö should increment on diff construction error
+      Ô£ö should accumulate consecutive diff errors
+      Ô£ö should trigger mistake limit after max consecutive diff errors
+    counter increment on missing parameter errors
+      Ô£ö should increment when path parameter is missing
+      Ô£ö should increment when diff parameter is missing for replace_in_file
+      Ô£ö should increment when content parameter is missing for write_to_file
+    realistic retry scenarios
+      Ô£ö should accumulate failures across multiple retry attempts (bug fix verification)
+      Ô£ö should NOT accumulate if buggy reset-at-start behavior existed
+      Ô£ö should reset counter and allow new operations after successful operation
+      Ô£ö should handle mixed success and failure scenarios
+    interaction with other tool handlers
+      Ô£ö should accumulate across different tool error types
+      Ô£ö should reset from any successful tool operation
+    edge cases
+      Ô£ö should handle counter at max value
+      Ô£ö should handle counter well above max (late detection)
+      Ô£ö should handle max value of 1 (strict mode)
+      Ô£ö should handle max value of 0 (always trigger)
+    YOLO mode behavior
+      Ô£ö should trigger failure in YOLO mode after max mistakes
+    background edits mode
+      Ô£ö should increment on errors with background edits enabled
+      Ô£ö should increment on errors with background edits disabled
+      Ô£ö should reset on success regardless of background edits setting
+    partial block streaming behavior
+      Ô£ö should NOT increment counter when error occurs during partial block (streaming)
+      Ô£ö should increment counter when error occurs on final block (not streaming)
+      Ô£ö should not accumulate errors during streaming even with multiple partial block failures
+      Ô£ö should increment exactly once when streaming ends with error on final block
+      Ô£ö should allow successful streaming to complete without incrementing counter
+      Ô£ö should preserve existing counter value when partial block errors occur
+      Ô£ö should correctly accumulate final block errors across multiple operations
+    auto-approval mode
+      Ô£ö should increment on errors with auto-approval enabled
+      Ô£ö should increment on errors with auto-approval disabled
+      Ô£ö should accumulate failures regardless of approval path taken
+
+  AgentConfigLoader
+    Ô£ö parses an Agents.yaml frontmatter config and system prompt body
+    Ô£ö supports raw Cline tool ids in tools
+    Ô£ö throws for unknown tools
+    Ô£ö returns an empty config map when the agents directory does not exist
+    Ô£ö loads all yaml/yml files from homeDir/.cline/data/agents
+    Ô£ö creates dynamic subagent tool mappings after loading configs
+
+  SubagentBuilder
+    Ô£ö uses cached config by subagent name and applies act-mode provider model override
+    Ô£ö uses defaults when no cached config is provided
+    Ô£ö applies plan-mode openrouter model override fields
+    Ô£ö builds native tools by filtering allowed ids and context requirements then converting
+
+  SubagentRunner
+    Ô£ö emits native tool_use blocks with matching tool_result tool_use_id across turns
+    Ô£ö passes prior request token totals into the next-turn compaction check
+    Ô£ö falls back to non-native result blocks if structured tool calls appear while native mode is disabled
+    Ô£ö retries empty assistant turns with a no-tools-used nudge before failing
+    Ô£ö retries initial stream failures before failing
+    Ô£ö fails context window errors
+    Ô£ö uses the configured task api handler for subagent requests
+    Ô£ö filters available skills to configured skills when subagent skills are configured
+    Ô£ö uses all available skills when subagent skills are not configured
+    Ô£ö logs a warning when a configured skill is not available
+    Ô£ö includes workspace metadata only in the initial user message
+
+  computeLineDiffStats
+    Ô£ö returns zeros for identical content
+    Ô£ö counts all lines as added for new file
+    Ô£ö counts all lines as deleted for removed file
+    Ô£ö handles insertion in the middle without false changes
+    Ô£ö handles deletion in the middle without false changes
+    Ô£ö counts single line replacement as changed
+    Ô£ö handles replace with more lines (changed + added)
+    Ô£ö handles replace with fewer lines (changed + deleted)
+    Ô£ö handles empty before and empty after
+    Ô£ö handles append at end of file
+    Ô£ö handles multiple disjoint edits
+
+  ModelContentProcessor
+    applyModelContentFixes
+      Model ID detection
+        Ô£ö should skip all fixes for Claude models
+        Ô£ö should apply fixes for non-Claude models
+      File type detection
+        Ô£ö should detect .xml files (case-insensitive)
+        Ô£ö should not match .xml substring in middle of filename
+        Ô£ö should handle .xml file with nested paths
+        Ô£ö should handle edge case: just .xml filename
+      Orchestration logic
+        Ô£ö should apply escaped character fix to non-XML files
+        Ô£ö should skip escaped character fix for XML files
+        Ô£ö should always apply invalid character removal regardless of file type
+        Ô£ö should apply both fixes in correct order for non-XML files
+        Ô£ö should preserve escaped chars but remove invalid chars in XML
+      Optional filePath parameter
+        Ô£ö should apply escaped character fix when filePath not provided
+        Ô£ö should apply invalid character fix when filePath not provided
+        Ô£ö should handle undefined filePath explicitly
+        Ô£ö should apply fixes when modelId is not provided
+      Integration with real-world use cases
+        Ô£ö should handle Gemini commands with shell operators
+        Ô£ö should handle DeepSeek diffs with comparison operators
+        Ô£ö should preserve XML config files from non-Claude models
+
+  PatchParser
+    Parsing Logic
+      Ô£ö simple update with exact match
+      Ô£ö update with escaped backticks in patch, unescaped in file
+      Ô£ö update with escaped single quotes in patch, unescaped in file
+      Ô£ö update with escaped double quotes in patch, unescaped in file
+      Ô£ö update with @@ context marker
+      Ô£ö update with trailing whitespace differences
+      Ô£ö add new file
+      Ô£ö delete file
+      Ô£ö update with multiple chunks
+      Ô£ö update with EOF marker
+      Ô£ö error: update missing file
+      Ô£ö error: delete missing file
+      Ô£ö error: add existing file
+      Ô£ö graceful handling: invalid context with warning
+      Ô£ö error: duplicate update
+      Ô£ö error: unknown patch marker
+      Ô£ö error: duplicate delete
+      Ô£ö error: duplicate add
+      Ô£ö error: add file line missing '+'
+      Ô£ö update with move
+      Ô£ö mixed add, update, and delete
+      Ô£ö context lines without leading space
+      Ô£ö update with 3 lines of context above (V4A format)
+      Ô£ö update with 3 lines of context above and below (V4A format)
+      Ô£ö multiple changes with 3 lines context each (V4A format)
+      Ô£ö update with @@ class marker and 3 lines context (V4A format)
+      Ô£ö update with multiple @@ markers and 3 lines context (V4A format)
+      Ô£ö multiple changes within 3 lines without duplicate context (V4A format)
+      Ô£ö update with large context block (V4A format)
+    Edge Cases
+      Ô£ö should handle empty patch
+      Ô£ö should handle patch without Begin marker
+      Ô£ö should handle large files with many chunks
+      Ô£ö should handle unicode characters in content
+      Ô£ö should handle empty lines in context
+      Ô£ö should handle updating an empty file
+      Ô£ö should not include warnings property when there are no warnings
+      Ô£ö should handle add file with empty content (no lines)
+      Ô£ö should handle move without content changes
+      Ô£ö should handle unicode punctuation normalization (curly quotes match straight quotes)
+      Ô£ö should handle unicode dash normalization (em-dash matches hyphen)
+      Ô£ö should handle @@ context string not found in file (silently continues from current position)
+      Ô£ö should handle patch with only insertions (no deletions)
+      Ô£ö should handle patch with only deletions (no insertions)
+    Fuzz Scoring
+      Ô£ö should return fuzz=0 for exact matches
+      Ô£ö should return fuzz=1 for trailing whitespace differences
+      Ô£ö should return high fuzz for whitespace-only differences
+    Partial Matching and Warnings
+      Ô£ö should skip invalid chunks and add warnings
+      Ô£ö should handle mixed valid and invalid chunks
+
+  ToolHookUtils
+    runPreToolUseIfEnabled
+      Ô£ö returns early without running hooks when hooks are disabled
+      Ô£ö treats undefined hooksEnabled as enabled and runs hook flow
+
+  parseWorkspaceInlinePath
+    basic parsing
+      Ô£ö should parse path with workspace hint
+      Ô£ö should parse path without workspace hint
+      Ô£ö should handle workspace names with hyphens
+      Ô£ö should handle workspace names with underscores
+      Ô£ö should handle paths with multiple colons
+      Ô£ö should treat bare workspace hint as root path
+      Ô£ö should trim whitespace
+    edge cases
+      Ô£ö should handle empty string
+      Ô£ö should handle null/undefined
+      Ô£ö should handle @ without colon
+      Ô£ö should handle colon without @
+      Ô£ö should handle @ at the end
+    hasWorkspaceHint
+      Ô£ö should return true for paths with hints
+      Ô£ö should return false for paths without hints
+    addWorkspaceHint
+      Ô£ö should add hint to path without hint
+      Ô£ö should replace existing hint
+    removeWorkspaceHint
+      Ô£ö should remove hint from path with hint
+      Ô£ö should return original path if no hint
+    parseMultipleWorkspacePaths
+      Ô£ö should parse multiple paths
+
+  setupWorkspaceManager
+    Ô£ö initializes multi-root manager when multi-root is enabled and persists roots + primary index
+    Ô£ö uses single-root cwd when history restore is disabled (historyItem present)
+    Ô£ö falls back to fromLegacyCwd in single-root mode when no saved state
+    Ô£ö gracefully handles errors and falls back to fromLegacyCwd while warning user
+
+  WorkspacePathAdapter
+    Single-Root Mode
+      Ô£ö should resolve relative paths
+      Ô£ö should handle absolute paths
+      Ô£ö should get workspace for path within cwd
+      Ô£ö should return undefined for path outside cwd
+      Ô£ö should get relative path from cwd
+      Ô£ö should return single workspace root
+      Ô£ö should report multi-root as disabled
+    Multi-Root Mode
+      Ô£ö should resolve path with workspace hint by name
+      Ô£ö should resolve path with workspace hint by path
+      Ô£ö should default to primary workspace without hint
+      Ô£ö should handle absolute paths belonging to a workspace
+      Ô£ö should warn for absolute paths outside workspaces
+      Ô£ö should get all possible paths across workspaces
+      Ô£ö should identify workspace for path
+      Ô£ö should get relative path from appropriate workspace
+      Ô£ö should return all workspace roots
+      Ô£ö should get primary workspace
+      Ô£ö should warn for invalid workspace hint
+    Edge Cases
+      Ô£ö should handle empty workspace manager gracefully
+      Ô£ö should handle paths with special characters
+    Factory Function
+      Ô£ö should create adapter using factory function
+
+  WorkspaceResolver
+    resolveWorkspacePath - Single Root Mode
+      Ô£ö should resolve path without context
+      Ô£ö should resolve path with context and track usage
+      Ô£ö should track multiple calls to same context
+      Ô£ö should not log when tracing is disabled
+      Ô£ö should handle absolute paths correctly
+      Ô£ö should handle empty relative path
+      Ô£ö should handle relative paths with .. navigation
+    resolveWorkspacePath - Multi Root Mode
+      Ô£ö should handle absolute paths in multi-root mode
+      Ô£ö should fallback to primary root for unmatched absolute paths
+      Ô£ö should resolve relative paths against primary root
+      Ô£ö should handle empty workspace roots array
+    getBasename
+      Ô£ö should return basename without context
+      Ô£ö should return basename with context and track usage
+    Usage Statistics Management
+      Ô£ö should track usage statistics correctly
+    Edge Cases
+      Ô£ö should handle null/undefined inputs gracefully
+      Ô£ö should handle special characters in paths
+      Ô£ö should handle very long paths
+
+  commit-message-generator
+    getGitDiffStagedFirst
+      Ô£ö should return staged changes when they exist
+      Ô£ö should fall back to all changes when no staged changes exist
+      Ô£ö should propagate error when both staged and all changes fail
+
+  vscode-to-file-migration
+    sentinel behavior
+      Ô£ö should migrate on first run (no sentinel)
+      Ô£ö should skip everything when both sentinels are current version
+      Ô£ö should skip everything when both sentinels are higher version
+      Ô£ö should re-run migration if sentinels are lower version
+      Ô£ö should migrate workspace state when globals already migrated (new workspace)
+      Ô£ö should migrate globals when workspace already migrated
+    global state migration
+      Ô£ö should migrate global state keys
+      Ô£ö should NOT overwrite existing file store values
+      Ô£ö should skip undefined values
+      Ô£ö should skip taskHistory (it has its own file)
+    secrets migration
+      Ô£ö should migrate secret keys
+      Ô£ö should NOT overwrite existing secrets in file store
+      Ô£ö should skip empty string secrets
+      Ô£ö should continue even if a single secret read fails
+    workspace state migration
+      Ô£ö should migrate workspace state keys
+      Ô£ö should NOT overwrite existing workspace state
+    error handling
+      Ô£ö should NOT write sentinel if migration throws
+    idempotency
+      Ô£ö should produce same result when run twice
+
+  createStorageContext
+    Ô£ö should create all three stores
+    Ô£ö should create directories
+    Ô£ö should produce deterministic workspace hashes
+    Ô£ö should produce different hashes for different workspaces
+    Ô£ö should use explicit workspaceStorageDir when provided
+    Ô£ö should store and retrieve values correctly
+
+  shouldUseMultiRoot
+    Ô£ö returns true when feature flag is on, checkpoints enabled, and more than one root exists
+    Ô£ö returns false when feature flag is off
+    Ô£ö returns false when checkpoints are disabled
+    Ô£ö returns false when workspaceManager is undefined
+    Ô£ö returns false when only a single root exists
+    Ô£ö returns false when there are no roots
+
+  MultiRootCheckpointManager
+    saveCheckpoint
+      Ô£ö lazily initializes and triggers a commit on first call
+      Ô£ö reuses the already-initialized provider on subsequent calls
+      Ô£ö does nothing when checkpoints are disabled
+    restoreCheckpoint
+      Ô£ö initializes lazily and returns a result without throwing
+    listCheckpoints
+      Ô£ö returns ordered list of checkpoint SHAs from the primary root
+      Ô£ö returns empty array when there is no primary root configured
+    dispose
+      Ô£ö calls dispose() on every tracker and resets internal state
+      Ô£ö is safe to call dispose() multiple times without throwing
+    multi-root support
+      Ô£ö creates independent trackers for every workspace root
+
+  Diagnostics Tests
+    getNewDiagnostics
+      Ô£ö should return empty array when both old and new diagnostics are empty
+      Ô£ö should return all diagnostics when old diagnostics is empty
+      Ô£ö should return empty array when new diagnostics is empty
+      Ô£ö should return only new diagnostics not present in old diagnostics
+      Ô£ö should handle multiple files correctly
+      Ô£ö should handle diagnostics with source and code properties
+    diagnosticsToProblemsString
+      Ô£ö should return empty string when diagnostics array is empty
+      Ô£ö should return empty string when no diagnostics match the severity filter
+      Ô£ö should format error diagnostics correctly with line numbers
+      Ô£ö should handle diagnostics without range information
+      Ô£ö should handle diagnostics with missing start property in range
+      Ô£ö should include source information when available
+      Ô£ö should handle multiple severities
+      Ô£ö should handle multiple files
+      Ô£ö should handle absolute paths outside workspace
+      Ô£ö should handle all diagnostic severity types
+      Ô£ö should handle edge case with line number 0
+      Ô£ö should include all diagnostics when severities is undefined
+
+  DiffViewProvider Boundary Validation
+    Ô£ö should replace entire document on final update to prevent concatenation
+    Ô£ö safelyTruncateDocument should no-op when lineNumber >= lineCount
+    Ô£ö final update replaces entire document so truncation is no-op
+    Ô£ö update() with shorter content replaces entire document
+
+  DiffViewProvider content finalization with isFinal=true
+    Ô£ö should handle large file with deleted lines (1000 -> 997 lines)
+    Ô£ö should handle simple content reduction (4 -> 2 lines)
+    Ô£ö should preserve trailing newline when reducing content
+
+  DiffViewProvider Update Throttling
+    Ô£ö should skip empty content during streaming
+    Ô£ö should skip unchanged content length during streaming
+    Ô£ö should throttle rapid updates during streaming
+    Ô£ö should allow update after throttle period (121ms)
+    Ô£ö should always process final updates regardless of throttling
+    Ô£ö should process final update even with empty content
+    Ô£ö should process final update even with same content length
+    Ô£ö should reset throttle state on reset()
+    Ô£ö should allow first update to go through immediately
+    Ô£ö should handle streaming simulation with many rapid updates (125ms)
+    Ô£ö should throttle by time regardless of content length changes (124ms)
+
+  DiffViewProvider Newline Preservation
+    Ô£ö preserves trailing newline when content ends with newline
+    Ô£ö does not add trailing newline when content does not end with newline
+    Ô£ö adds trailing newline when content ends with newline but original did not
+    Ô£ö preserves no trailing newline when neither original nor new content has one
+    Ô£ö handles shortening file while preserving trailing newline
+    Ô£ö handles lengthening file while preserving trailing newline
+    Ô£ö handles single line content with trailing newline
+    Ô£ö handles single line content without trailing newline
+
+  Service Factories always return no-op providers
+    FeatureFlagsProviderFactory
+      Ô£ö should always return no-op config
+      Ô£ö should create an enabled NoOp provider
+    ErrorProviderFactory
+      Ô£ö should always return no-op config
+      Ô£ö should create an enabled NoOp provider
+    Integration - all factories return no-op
+      Ô£ö should return no-op for all factories regardless of environment
+
+  AuthService.restoreRefreshTokenAndRetrieveAuthInfo
+    Ô£ö captures error_recovery logout and clears local auth when restore returns null
+    Ô£ö handles retrieveAuthInfo errors by resetting auth state and logging restore failure
+
+  GitHubAuthService
+    getState()
+      Ô£ö returns isSignedIn: false when no session
+      Ô£ö returns isSignedIn: true with displayName when session exists
+    signIn()
+      Ô£ö returns signed-in state on successful session
+      Ô£ö returns isSignedIn: false when user cancels
+      Ô£ö returns isSignedIn: false when getSession resolves undefined
+    signOut()
+      Ô£ö clears session and getState returns isSignedIn: false
+      Ô£ö broadcasts isSignedIn: false to subscribers
+    subscribe()
+      Ô£ö sends current state immediately on subscribe
+      Ô£ö sends isSignedIn: false immediately when no session
+    refreshSilently()
+      Ô£ö updates session when silent getSession returns a session
+      Ô£ö clears session when silent getSession returns nothing
+    getInstance()
+      Ô£ö returns the same instance on repeated calls
+      Ô£ö creates a new instance after dispose
+
+  NexusAuthProvider.retrieveClineAuthInfo
+    Ô£ö returns null when refresh fails with network error and stored token is already expired
+
+  listFiles
+    Ô£ö returns empty result when cwd points to a file
+    Ô£ö still lists files when cwd points to a directory
+
+  McpOAuthRedirectResolver
+    extractLoopbackPort
+      Ô£ö should extract port from http://127.0.0.1:48801/path
+      Ô£ö should extract port from http://127.0.0.1:48811 (no path)
+      Ô£ö should return undefined for vscode:// URLs
+      Ô£ö should return undefined for https:// URLs
+      Ô£ö should return undefined for malformed URLs
+      Ô£ö should return undefined for empty string
+      Ô£ö should return undefined for http://localhost (not 127.0.0.1)
+      Ô£ö should return undefined for http://127.0.0.1 without a port
+    isLoopbackUrl
+      Ô£ö should return true for http://127.0.0.1:48801/...
+      Ô£ö should return true for http://127.0.0.1 without port
+      Ô£ö should return false for vscode:// URLs
+      Ô£ö should return false for https:// URLs
+      Ô£ö should return false for http://localhost (not 127.0.0.1)
+      Ô£ö should return false for malformed URLs
+    isRedirectCompatible
+      Ô£ö should return true when URLs are identical
+      Ô£ö should return true for identical vscode:// URLs
+      Ô£ö should return true for identical https:// URLs
+      Ô£ö should return false when saved URL is undefined (legacy state)
+      Ô£ö should return false when ports differ
+      Ô£ö should return false when schemes differ (VSCode ÔåÆ JetBrains migration)
+      Ô£ö should return false when schemes differ (JetBrains ÔåÆ VSCode migration)
+      Ô£ö should return false when paths differ (different server hash)
+      Ô£ö should return false when codespace domains differ
+    resolve
+      Ô£ö should get fresh URL and mark registration invalid when no saved URL
+      Ô£ö should reuse port when saved loopback URL port is available
+      Ô£ö should fall back to new port and mark registration invalid when preferred port is unavailable
+      Ô£ö should pass preferred port to getCallbackUrl for loopback URLs
+      Ô£ö should NOT pass preferred port for non-loopback saved URLs (vscode://)
+      Ô£ö should mark registration valid when VSCode URLs match
+      Ô£ö should mark registration invalid for VSCode ÔåÆ JetBrains cross-platform migration
+      Ô£ö should mark registration invalid for JetBrains ÔåÆ VSCode cross-platform migration
+      Ô£ö should handle VSCode Web URLs (https://)
+      Ô£ö should detect codespace change as registration invalid
+
+  StreamableHttpReconnectHandler
+    Ô£ö should export sensible defaults
+    Ô£ö should do nothing when findConnection returns undefined
+    Ô£ö should skip reconnect when server is disabled
+    Ô£ö should skip reconnect when server is already connecting
+    Ô£ö should reconnect on first error and reset attempt counter
+    Ô£ö should use the configured delay for each attempt
+    Ô£ö should mark server as disconnected after maxAttempts exhausted
+    Ô£ö should mark disconnected even when no connection exists after exhaustion
+    Ô£ö should exhaust retries when called with attempts already at max
+    Ô£ö should retry connectToServer on failure without relying on onerror
+    Ô£ö should abort reconnect if connection was replaced during delay
+    Ô£ö should abort reconnect if connection disappeared during delay
+    Ô£ö should allow manual reset of attempt counter
+    Ô£ö should use string coercion for non-Error objects on exhaustion
+
+  TelemetryService metrics
+    Ô£ö captureTokenUsage emits token counters and histograms
+    Ô£ö captureTokenUsage emits cache and cost metrics when options provided
+    Ô£ö captureTokenUsage skips cache/cost metrics when options fields are undefined
+    Ô£ö captureTokenUsage includes options in event properties
+    Ô£ö captureConversationTurnEvent emits counters with cache and cost
+    Ô£ö captureWorkspaceInitialized emits gauge and retires previous series
+    Ô£ö captureProviderApiError increments error counter
+    Ô£ö captureTaskCompleted records completion payload with TTFT and duration histograms
+    Ô£ö captureGrpcResponseSize records histogram with correct name, value, and attributes
+    Ô£ö captureGrpcResponseSize includes request_id when provided
+    Ô£ö captureGrpcResponseSize includes standard metadata attributes
+
+  OpenTelemetryTelemetryProvider.identifyUser
+    Ô£ö should emit user_identified log and update distinct ID when ID changes
+    Ô£ö should refresh userAttributes even when distinct ID already matches (no new identify log)
+    Ô£ö should refresh org attributes when active org changes (same user ID)
+    Ô£ö should handle user with no active organization
+    Ô£ö should clear stale org attributes when switching from org to no-org
+    Ô£ö should include additional properties passed to identifyUser
+
+  parseSourceCodeForDefinitionsTopLevel
+    Ô£ö returns file-specific error when path points to a file
+    Ô£ö returns directory-not-found error for non-existent path
+
+  AudioLevelMeter
+    calculateRMS()
+      Ô£ö returns 0 for a silent buffer
+      Ô£ö returns the amplitude for a constant signal
+    calculatePeak()
+      Ô£ö returns 0 for a silent buffer
+      Ô£ö returns the max absolute value in the buffer
+    rmsToDb()
+      Ô£ö returns -Infinity for zero RMS (before clamp path)
+      Ô£ö returns 0 dB for RMS of 1.0 (full scale)
+      Ô£ö returns approximately -6dB for RMS of 0.5
+      Ô£ö clamps to -40 dB floor for very small RMS
+    analyze() with Float32Array
+      Ô£ö classifies silent audio correctly
+      Ô£ö classifies speech audio with RMS > 0.02 as isSpeech=true
+      Ô£ö classifies RMS > 0.1 as 'excellent' quality
+      Ô£ö classifies RMS between 0.05 and 0.1 as 'good' quality
+      Ô£ö classifies RMS between 0.02 and 0.05 as 'poor' quality
+      Ô£ö detects clipping when peak > 0.95
+      Ô£ö does not flag clipping for normal peak values
+      Ô£ö includes dbLevel in the result
+    analyze() with PCM Buffer
+      Ô£ö accepts Buffer input and converts to float32 internally
+      Ô£ö silent PCM buffer returns isSpeech=false
+    formatLevel()
+      Ô£ö returns a string containing the quality label
+      Ô£ö includes the dB value formatted to one decimal
+      Ô£ö does NOT include clipping warning for non-clipping audio
+      Ô£ö appends clipping warning when peak > 0.95
+    getVisualizationBar()
+      Ô£ö returns a string bounded by [ and ]
+      Ô£ö silent audio produces a bar with no fill blocks
+      Ô£ö loud audio fills the bar more than silent audio
+    getColorForLevel()
+      Ô£ö returns red (#ff0000) when clipping (checked before quality)
+      Ô£ö returns gray (#666666) for silent quality
+      Ô£ö returns orange (#ff9900) for poor quality
+      Ô£ö returns yellow (#ffff00) for good quality
+      Ô£ö returns green (#00ff00) for excellent non-clipping quality
+
+  PiperService
+    singleton
+      Ô£ö returns the same instance on repeated calls
+      Ô£ö creates a fresh instance after dispose
+    isBinaryInstalled()
+      Ô£ö returns false when binary does not exist
+      Ô£ö returns true when binary file exists at binaryPath
+    binaryPath
+      Ô£ö returns a non-empty string
+      Ô£ö includes the storage dir in the binary path
+      Ô£ö returns the alt path when binary exists in piper/ subdirectory
+    synthesize() ÔÇö model not found error
+      Ô£ö rejects with model-not-found when model files are absent
+    _pcm16ToWav() header validation
+      Ô£ö generates a 44-byte WAV header followed by PCM data
+      Ô£ö starts with RIFF and WAVE markers
+      Ô£ö writes data chunk size equal to PCM buffer length
+      Ô£ö writes correct sample rate (22050 Hz)
+      Ô£ö writes correct sample rate (16000 Hz)
+      Ô£ö writes mono channel (1) at offset 22
+      Ô£ö writes 16 bits per sample at offset 34
+      Ô£ö writes PCM format tag (1) at offset 20
+
+  RhubarbService
+    extractTimeline()
+      Ô£ö returns an array for a valid WAV buffer (353ms)
+      Ô£ö all returned viseme values are valid VisemeLabel members (85ms)
+      Ô£ö timeline entries are sorted by start time (55ms)
+      Ô£ö returns at least one entry with value X for silent WAV (43ms)
+      Ô£ö handles WASM load failure gracefully ÔÇö returns fallback without throwing
+    getVisemeAtTime()
+      Ô£ö returns correct viseme for given time
+      Ô£ö returns X for time beyond the last entry
+      Ô£ö returns X for empty timeline
+      Ô£ö returns X exactly at entry.end (boundary not inclusive)
+      Ô£ö returns X when time falls in a gap between entries
+
+  RhubarbService ÔÇö wavToPcm16k boundary branches
+    Ô£ö returns fallback for WAV shorter than 44 bytes (branch: length < 44)
+    Ô£ö returns fallback for non-RIFF magic bytes (branch: chunkId !== RIFF)
+    Ô£ö returns fallback for non-PCM (float32) WAV (branch: audioFormat !== 1)
+    Ô£ö returns fallback for WAV with no data chunk (branch: dataSize === 0)
+    Ô£ö processes WAV with extra chunk before data (branch: loop skips non-data)
+    Ô£ö exercises upsampling boundary via 8kHz WAV (branch: s1 ?? s0)
+
+  SilenceDetector
+    analyze() with Float32Array input
+      Ô£ö classifies completely silent audio as 'silent'
+      Ô£ö classifies very low amplitude audio as 'poor'
+      Ô£ö classifies moderate amplitude audio as 'good'
+      Ô£ö classifies strong audio as 'excellent'
+      Ô£ö detects clipping but still returns 'excellent' quality with reduced confidence
+      Ô£ö respects custom silenceThresholdRms parameter
+    analyze() with PCM Buffer input
+      Ô£ö converts PCM 16-bit buffer and classifies correctly
+      Ô£ö silent PCM buffer returns isSilence=true
+    calculateMinSpeechSamples()
+      Ô£ö calculates 16000 samples for 1000ms at 16000Hz
+      Ô£ö calculates 8000 samples for 500ms at 16000Hz
+      Ô£ö uses 16000 as default sample rate
+      Ô£ö floors fractional samples
+
+  VoiceErrorMapper
+    map() - error code classification
+      Ô£ö maps 'no devices' message to NO_DEVICES
+      Ô£ö maps 'enumeratedevices' message to NO_DEVICES
+      Ô£ö maps 'device not found' to DEVICE_NOT_FOUND
+      Ô£ö maps 'jabra' branded device to DEVICE_NOT_FOUND
+      Ô£ö maps 'silence' message to SILENCE_DETECTED
+      Ô£ö maps 'no speech' message to SILENCE_DETECTED
+      Ô£ö maps 'audio level too low' to SILENCE_DETECTED
+      Ô£ö maps 'ffmpeg not found' to FFMPEG_NOT_FOUND
+      Ô£ö maps 'enoent' to FFMPEG_NOT_FOUND
+      Ô£ö maps 'ffmpeg ... failed' to FFMPEG_SPAWN_ERROR
+      Ô£ö maps 'idle_timeout' to IDLE_TIMEOUT
+      Ô£ö maps 'timeout' to CAPTURE_TIMEOUT
+      Ô£ö maps 'exceeded duration' to CAPTURE_TIMEOUT
+      Ô£ö maps 'whisper' to WHISPER_FAILED
+      Ô£ö maps 'llm failed' to LLM_FAILED
+      Ô£ö maps 'api error' to LLM_FAILED
+      Ô£ö maps 'piper' to PIPER_FAILED
+      Ô£ö maps 'quality' to AUDIO_QUALITY_LOW
+      Ô£ö falls back to UNKNOWN_ERROR for unrecognized messages
+      Ô£ö handles non-Error values (plain string) gracefully
+      Ô£ö preserves original error reference
+    logError()
+      Ô£ö calls Logger.error with the error code and message
+      Ô£ö includes context prefix when context is provided
+      Ô£ö uses [VoiceAgent] prefix when no context given
+
+  VoiceResponseHandler
+    processSpeechToText()
+      Ô£ö returns transcription and detectedLanguage on success
+      Ô£ö detects language from transcription result
+      Ô£ö returns empty transcription and error on failure
+      Ô£ö requires globalStoragePath and returns error when missing
+      Ô£ö calls onProgress callback with 0 and 100
+      Ô£ö sets confidence to 0.98 (Whisper default)
+    processTextToSpeech()
+      Ô£ö returns an empty-buffer VoiceAudio (placeholder implementation) (416ms)
+    process() [deprecated]
+      Ô£ö resolves and returns transcription text (backward compat) (405ms)
+      Ô£ö returns error result on STT failure without throwing
+
+  VoiceSessionManager
+    singleton
+      Ô£ö returns the same instance on repeated calls
+      Ô£ö creates a fresh instance after dispose
+    initial status
+      Ô£ö starts with all fields falsy/empty
+    setRecording()
+      Ô£ö updates isRecording and fires statusChange
+      Ô£ö does not fire statusChange when value is unchanged
+    setSpeaking()
+      Ô£ö updates isSpeaking and fires statusChange
+      Ô£ö does not fire when value is unchanged
+    setLastTranscription()
+      Ô£ö updates lastTranscription and fires statusChange
+    onDidChangeStatus() disposer
+      Ô£ö stops delivering events after dispose is called
+    requestSpeak()
+      Ô£ö fires the speak event to onSpeakRequest subscribers
+      Ô£ö does not fire statusChange
+    waitForTranscription()
+      Ô£ö resolves with the transcribed text when setLastTranscription is called
+      Ô£ö resolves with empty string on timeout (50ms)
+    status getter
+      Ô£ö returns a snapshot of all fields
+
+  WhisperCliService
+    isPlatformSupported()
+      Ô£ö returns a boolean
+      Ô£ö returns true on win32-x64, false elsewhere
+    singleton
+      Ô£ö getInstance() returns the same instance on repeated calls
+      Ô£ö clearInstance() forces a new instance to be created
+    isModelDownloaded()
+      Ô£ö returns false when model file is absent
+      Ô£ö returns true when model file exists
+    dispose()
+      Ô£ö clears the singleton without throwing
+      Ô£ö allows a fresh getInstance() after dispose
+    transcribeWithLanguageDetection()
+      Ô£ö returns trimmed text and detected language from JSON output
+      Ô£ö concatenates multiple transcription segments
+      Ô£ö returns empty text for silence ([BLANK_AUDIO])
+      Ô£ö throws when subprocess exits with non-zero code
+      Ô£ö cleans up temp WAV and JSON files after transcription
+
+  WhisperService
+    getInstance()
+      Ô£ö returns the same instance on repeated calls
+    isModelDownloaded()
+      Ô£ö returns false when cache directory does not exist
+    dispose()
+      Ô£ö clears the singleton and sets worker to null
+    transcribeWithLanguageDetection()
+      Ô£ö resolves with text and language on successful transcription
+      Ô£ö passes languageHint in the postMessage payload
+      Ô£ö rejects when worker sends error type
+      Ô£ö transcribe() convenience method returns text string
+
+  combineErrorRetryMessages
+    Ô£ö keeps only the latest error_retry in an ongoing retry sequence
+    Ô£ö removes error_retry entirely when followed by a successful api_req_started
+    Ô£ö retains a failed:true error_retry even when followed by api_req_started
+    Ô£ö preserves actionableMessage field in a failed:true error_retry
+    Ô£ö returns an empty array for an empty input
+    Ô£ö passes through unrelated messages unchanged
+
+  Mention Regex
+    Windows Path Support
+      Ô£ö matches simple Windows paths
+    Edge Cases
+      Ô£ö handles edge cases correctly
+      Ô£ö handles unquoted paths with spaces correctly
+    Existing Functionality
+      Ô£ö matches Unix paths
+      Ô£ö matches URLs
+      Ô£ö matches git hashes
+      Ô£ö matches special keywords
+    Invalid Patterns
+      Ô£ö rejects invalid patterns
+      Ô£ö matches only until invalid characters
+    In Context
+      Ô£ö matches mentions within text
+    Multiple Mentions
+      Ô£ö finds all mentions in a string using global regex
+    Special Characters in Paths
+      Ô£ö handles special characters in file paths
+    Mixed Path Types in Single String
+      Ô£ö correctly identifies the first path in a string with multiple path types
+    Non-Latin Character Support
+      Ô£ö handles international characters in paths
+    Git Hash Edge Cases
+      Ô£ö matches git hashes of various valid lengths
+    Punctuation at Boundaries
+      Ô£ö excludes all types of trailing punctuation
+      Ô£ö handles multiple punctuation marks
+      Ô£ö doesn't match trailing punctuation in context
+    URL Protocol Variations
+      Ô£ö matches various URL protocols
+      Ô£ö matches URLs with complex structures
+    End of String Handling
+      Ô£ö matches mentions at end of string
+    Complex Real-World Scenarios
+      Ô£ö handles mentions in markdown-like text
+      Ô£ö handles mentions in code comments
+    Quoted file paths
+      Ô£ö handles quoted paths correctly
+      Ô£ö handles quotes inside file paths correctly
+    Path Edge Cases
+      Ô£ö matches various path structures
+    Whitespace Handling
+      Ô£ö stops at various whitespace characters
+    Keyword Boundaries
+      Ô£ö only matches exact keywords
+      Ô£ö matches keywords with trailing punctuation
+
+  getApiMetrics
+    Ô£ö includes subagent_usage in aggregate totals
+    Ô£ö ignores malformed usage payloads
+
+  getLastApiReqTotalTokens
+    Ô£ö uses only the latest api_req_started payload
+
+  Remote Config Schema
+    EnterpriseTelemetry
+      Ô£ö accepts an empty object
+      Ô£ö accepts an empty prompt uploading object
+    S3AccessKeySettingsSchema
+      Ô£ö should accept valid S3 access key settings with required fields
+      Ô£ö should accept S3 settings with all optional fields
+      Ô£ö should accept S3 settings with queue configuration fields
+      Ô£ö should reject S3 settings with invalid intervalMs type
+      Ô£ö should reject S3 settings with invalid maxRetries type
+      Ô£ö should reject S3 settings with invalid backfillEnabled type
+      Ô£ö should reject S3 settings with missing bucket
+      Ô£ö should reject S3 settings with missing accessKeyId
+      Ô£ö should reject S3 settings with missing secretAccessKey
+    PromptUploadingSchema
+      Ô£ö should accept an empty object
+      Ô£ö should accept enabled field only
+      Ô£ö should accept enabled as false
+      Ô£ö should accept type field with s3_access_keys
+      Ô£ö should reject invalid type values
+      Ô£ö should accept complete prompt uploading configuration
+      Ô£ö should accept s3AccessSettings without optional fields
+      Ô£ö should reject s3AccessSettings with missing required fields
+      Ô£ö should reject invalid enabled type
+    OpenAiCompatibleSchema
+      Ô£ö should accept valid OpenAI compatible settings
+      Ô£ö should have undefined for models and openAiHeaders by default
+      Ô£ö should reject invalid field types
+      Ô£ö should reject models with missing id field
+      Ô£ö should accept models with only id field
+      Ô£ö should accept headers as record of strings
+    ClineSettingsSchema
+      Ô£ö should accept valid Cline provider settings
+      Ô£ö should accept empty settings object
+      Ô£ö should accept models with only id field
+      Ô£ö should reject models with missing id field
+    AwsBedrockSettingsSchema
+      Ô£ö should accept valid AWS Bedrock settings
+      Ô£ö should accept empty settings object
+      Ô£ö should accept models with only id field
+      Ô£ö should accept models with thinkingBudgetTokens
+      Ô£ö should accept custom models array
+      Ô£ö should reject invalid field types
+      Ô£ö should reject models with missing id field
+      Ô£ö should reject custom models with missing fields
+    MCPSettingsSchema
+      Ô£ö should reject servers with a missing id
+      Ô£ö should accept valid MCP settings
+    RemoteMCPServersSchema
+      Ô£ö should accept remoteMCPServers with alwaysEnabled true
+      Ô£ö should accept remoteMCPServers with alwaysEnabled false
+      Ô£ö should accept remoteMCPServers without alwaysEnabled (defaults to undefined)
+      Ô£ö should accept multiple remoteMCPServers with mixed alwaysEnabled values
+      Ô£ö should reject remoteMCPServers with missing name
+      Ô£ö should reject remoteMCPServers with missing url
+      Ô£ö should reject remoteMCPServers with invalid alwaysEnabled type
+      Ô£ö should accept headers
+    RemoteConfigSchema
+      Ô£ö should accept valid complete remote config
+      Ô£ö should require version field
+      Ô£ö should accept minimal valid config
+      Ô£ö should accept config with general settings only
+      Ô£ö should accept config with OpenAI compatible provider only
+      Ô£ö should accept config with AWS Bedrock provider only
+      Ô£ö should reject invalid version type
+      Ô£ö should reject invalid telemetry setting type
+      Ô£ö should allow undefined optional provider settings
+      Ô£ö should handle complete config with all fields
+    Type Inference
+      Ô£ö should properly infer RemoteConfig type
+      Ô£ö should allow optional fields to be undefined
+
+  Provider key mapping
+    Ô£ö returns Moonshot default model ID
+    Ô£ö uses generic model key for Moonshot
+    Ô£ö keeps provider-specific model key behavior for OpenRouter
+    Ô£ö uses provider-specific model key behavior for Cline
+
+  State Keys Type Safety
+    Type-Value Consistency
+      Ô£ö should have GlobalState defaults with correct runtime types
+      Ô£ö should have Settings defaults with correct runtime types
+      Ô£ö should not have undefined defaults masquerading as non-optional types
+      Ô£ö should have array defaults that are actually arrays
+      Ô£ö should have object defaults that are plain objects
+    Key Array Synchronization
+      Ô£ö should have SettingsKeys match SETTINGS_DEFAULTS keys
+      Ô£ö should have GlobalStateAndSettingKeys be a superset of SettingsKeys
+      Ô£ö should have no duplicate keys in exported arrays
+      Ô£ö should have SecretKeys as strings
+    Type Guard Functions
+      Ô£ö should correctly identify GlobalState keys
+      Ô£ö should correctly identify Settings keys
+      Ô£ö should correctly identify Secret keys
+      Ô£ö should correctly identify LocalState keys
+      Ô£ö should have mutually exclusive key categories where expected
+    Default Value Retrieval
+      Ô£ö should return correct default values for known keys
+      Ô£ö should enable voice features by default
+      Ô£ö should return undefined for keys without defaults
+    Transform Functions
+      Ô£ö should have transforms return the same type as input
+      Ô£ö should correctly identify keys without transforms
+      Ô£ö should apply transforms without throwing
+      Ô£ö should pass through values for keys without transforms
+      Ô£ö should merge defaults in browserSettings transform
+    Metadata Properties
+      Ô£ö should correctly identify async properties
+      Ô£ö should correctly identify computed properties
+    Type Exports
+      Ô£ö should export usable GlobalState type
+      Ô£ö should export usable Settings type
+      Ô£ö should export usable key types
+      Ô£ö should have GlobalStateAndSettings include both GlobalState and Settings
+      Ô£ö should have LocalState keys map to ClineRulesToggles
+    Edge Cases
+      Ô£ö should handle empty string keys gracefully
+      Ô£ö should handle keys with special characters
+      Ô£ö should not have keys that could cause prototype pollution
+
+  expandEnvironmentVariables
+    string expansion
+      Ô£ö should expand a single environment variable
+      Ô£ö should expand multiple environment variables in one string
+      Ô£ö should expand environment variables with surrounding text
+      Ô£ö should leave unexpanded when variable is missing
+      Ô£ö should handle empty string values
+      Ô£ö should trim whitespace from variable names
+      Ô£ö should handle variable names with hyphens
+      Ô£ö should handle variable names with underscores
+      Ô£ö should not expand malformed syntax
+      Ô£ö should return string unchanged when no variables present
+    object expansion
+      Ô£ö should expand variables in object values
+      Ô£ö should expand variables in nested objects
+      Ô£ö should preserve non-string values in objects
+    array expansion
+      Ô£ö should expand variables in array elements
+      Ô£ö should expand variables in arrays within objects
+      Ô£ö should preserve non-string values in arrays
+    complex nested structures
+      Ô£ö should expand variables in deeply nested structures
+    MCP config realistic scenarios
+      Ô£ö should expand env variables in stdio server config
+      Ô£ö should expand env variables in HTTP server headers
+      Ô£ö should expand env variables in URLs
+    primitive values
+      Ô£ö should return numbers unchanged
+      Ô£ö should return booleans unchanged
+      Ô£ö should return null unchanged
+      Ô£ö should return undefined unchanged
+
+  shouldSkipReasoningForModel
+    Ô£ö should return true for grok-4 models
+    Ô£ö should return false for non-grok-4 models
+    Ô£ö should return false for undefined or empty model IDs
+    Ô£ö should be case sensitive
+
+  isClaude4PlusModelFamily
+    Ô£ö should return true for Claude 4+ model IDs with version numbers
+    Ô£ö should return true for Claude Code short aliases (sonnet, opus)
+    Ô£ö should return false for Claude 3.x models
+    Ô£ö should return false for non-Claude models
+
+  isGPT5ModelFamily
+    Ô£ö should return true for GPT-5 model IDs with hyphen
+    Ô£ö should return true for GPT-5 model IDs without hyphen (OCA format)
+    Ô£ö should be case insensitive
+    Ô£ö should return false for non-GPT-5 models
+
+  isGptOssModelFamily
+    Ô£ö should return true for gpt-oss model IDs
+    Ô£ö should be case insensitive
+    Ô£ö should return false for non-gpt-oss models
+
+  isGeminiFlashModel
+    Ô£ö should return true for Gemini Flash model IDs
+    Ô£ö should return false for non-Flash Gemini model IDs
+    Ô£ö should return true for direct Gemini provider IDs
+    Ô£ö should return false for non-matching IDs
+    Ô£ö should be case insensitive
+
+  GEMINI_FLASH_MAX_OUTPUT_TOKENS
+    Ô£ö should be set to 8192
+
+
+  1414 passing (2m)
+  5 pending
+

@@ -39,8 +39,9 @@ export class OpenRouterHandler implements ApiHandler {
 				throw new Error("OpenRouter API key is required")
 			}
 			try {
+				const baseURL = process.env.E2E_TEST === "true" ? "http://localhost:7777/api/v1" : "https://openrouter.ai/api/v1"
 				this.client = createOpenAIClient({
-					baseURL: "https://openrouter.ai/api/v1",
+					baseURL,
 					apiKey: this.options.openRouterApiKey,
 					defaultHeaders: {
 						"HTTP-Referer": "https://nexusai.dev", // Optional, for including your app on openrouter.ai rankings.

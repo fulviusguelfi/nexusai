@@ -1,0 +1,611 @@
+(node:18652) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Usuario/Desktop/nexusai/src/test/requires.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\Usuario\Desktop\nexusai\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+    HostAudioPlayer buildWin32MciScript builds Windows playback script without setaudio when output device is not selected: 
+  Ô£ö HostAudioPlayer buildWin32MciScript builds Windows playback script without setaudio when output device is not selected: 1ms
+    HostAudioPlayer buildWin32MciScript builds Windows playback script with setaudio when output device is selected: 
+  Ô£ö HostAudioPlayer buildWin32MciScript builds Windows playback script with setaudio when output device is selected: 1ms
+    HostAudioPlayer buildWin32MciScript escapes single quotes in device name: 
+  Ô£ö HostAudioPlayer buildWin32MciScript escapes single quotes in device name: 0ms
+    HostAudioPlayer buildWin32MciScript escapes single quotes in file path: 
+  Ô£ö HostAudioPlayer buildWin32MciScript escapes single quotes in file path: 0ms
+    HostAudioPlayer playWavBuffer resolves when MCI playback succeeds with device selection: [2026-04-27T13:35:37.952Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:59:24)
+    at processImmediate (node:internal/timers:504:21)
+
+  1) HostAudioPlayer playWavBuffer resolves when MCI playback succeeds with device selection
+    HostAudioPlayer playWavBuffer resolves when MCI playback succeeds without device selection: [2026-04-27T13:35:37.955Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:75:24)
+    at processImmediate (node:internal/timers:504:21)
+
+  2) HostAudioPlayer playWavBuffer resolves when MCI playback succeeds without device selection
+    HostAudioPlayer playWavBuffer falls back to SoundPlayer when MCI fails and no output device was selected: [2026-04-27T13:35:37.959Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:92:25)
+    at processImmediate (node:internal/timers:504:21)
+
+  3) HostAudioPlayer playWavBuffer falls back to SoundPlayer when MCI fails and no output device was selected
+    HostAudioPlayer playWavBuffer rejects without falling back when selected output device playback fails: 
+  Ô£ö HostAudioPlayer playWavBuffer rejects without falling back when selected output device playback fails: 1ms
+    HostAudioPlayer playWavBuffer rejects when both MCI and SoundPlayer fail: [2026-04-27T13:35:37.964Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:134:25)
+    at processImmediate (node:internal/timers:504:21)
+
+  4) HostAudioPlayer playWavBuffer rejects when both MCI and SoundPlayer fail
+    HostAudioPlayer playWavBuffer cleans up temp file on success: [2026-04-27T13:35:37.966Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:154:24)
+    at processImmediate (node:internal/timers:504:21)
+
+  5) HostAudioPlayer playWavBuffer cleans up temp file on success
+    HostAudioPlayer playWavBuffer cleans up temp file even on failure: [2026-04-27T13:35:37.968Z] [31mERROR[39m    TypeError: callback is not a function
+    at Immediate.<anonymous> (C:\Users\Usuario\Desktop\nexusai\src\services\voice\__tests__\HostAudioPlayer.test.ts:172:25)
+    at processImmediate (node:internal/timers:504:21)
+
+  6) HostAudioPlayer playWavBuffer cleans up temp file even on failure
+    SpeakTextToolHandler execute() ÔÇö missing param returns missing-param error and increments consecutiveMistakeCount when text is absent: 
+  Ô£ö SpeakTextToolHandler execute() ÔÇö missing param returns missing-param error and increments consecutiveMistakeCount when text is absent: 1ms
+    SpeakTextToolHandler execute() ÔÇö TTS disabled returns disabled message without calling say or requestSpeak: 
+  Ô£ö SpeakTextToolHandler execute() ÔÇö TTS disabled returns disabled message without calling say or requestSpeak: 1ms
+    SpeakTextToolHandler execute() ÔÇö TTS enabled calls say(voice_speak, ...) and requestSpeak(text): 
+  Ô£ö SpeakTextToolHandler execute() ÔÇö TTS enabled calls say(voice_speak, ...) and requestSpeak(text): 0ms
+    SpeakTextToolHandler execute() ÔÇö TTS enabled updates the voice bubble only when the final spoken chunk completes: 
+  Ô£ö SpeakTextToolHandler execute() ÔÇö TTS enabled updates the voice bubble only when the final spoken chunk completes: 1ms
+    SpeakTextToolHandler execute() ÔÇö TTS enabled returns a Speaking confirmation result: 
+  Ô£ö SpeakTextToolHandler execute() ÔÇö TTS enabled returns a Speaking confirmation result: 1ms
+    SpeakTextToolHandler execute() ÔÇö TTS enabled resets consecutiveMistakeCount to 0 on success: 
+  Ô£ö SpeakTextToolHandler execute() ÔÇö TTS enabled resets consecutiveMistakeCount to 0 on success: 1ms
+    SpeakTextToolHandler getDescription() returns [speak_text]: 
+  Ô£ö SpeakTextToolHandler getDescription() returns [speak_text]: 1ms
+    splitIntoSpeechChunks returns a single chunk for a single sentence: 
+  Ô£ö splitIntoSpeechChunks returns a single chunk for a single sentence: 0ms
+    splitIntoSpeechChunks merges short consecutive sentences into a larger chunk: 
+  Ô£ö splitIntoSpeechChunks merges short consecutive sentences into a larger chunk: 0ms
+    splitIntoSpeechChunks keeps larger blocks separated when the combined chunk would grow too much: 
+  Ô£ö splitIntoSpeechChunks keeps larger blocks separated when the combined chunk would grow too much: 0ms
+    enumerateAudioDevices returns host-side input and output device lists without Web API: 
+  Ô£ö enumerateAudioDevices returns host-side input and output device lists without Web API: 1ms
+    ClineEndpoint configuration valid config parsing should parse valid endpoints.json with all required fields: 
+  Ô£ö ClineEndpoint configuration valid config parsing should parse valid endpoints.json with all required fields: 4ms
+    ClineEndpoint configuration valid config parsing should work without endpoints.json (standard mode): 
+  Ô£ö ClineEndpoint configuration valid config parsing should work without endpoints.json (standard mode): 1ms
+    ClineEndpoint configuration valid config parsing should accept URLs with ports: 
+  Ô£ö ClineEndpoint configuration valid config parsing should accept URLs with ports: 2ms
+    ClineEndpoint configuration valid config parsing should accept URLs with paths: 
+  Ô£ö ClineEndpoint configuration valid config parsing should accept URLs with paths: 2ms
+    ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for invalid JSON syntax: 
+  Ô£ö ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for invalid JSON syntax: 3ms
+    ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for truncated JSON: 
+  Ô£ö ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for truncated JSON: 2ms
+    ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for empty file: 
+  Ô£ö ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for empty file: 1ms
+    ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for non-object JSON: 
+  Ô£ö ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for non-object JSON: 1ms
+    ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for array JSON: 
+  Ô£ö ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for array JSON: 2ms
+    ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for null JSON: 
+  Ô£ö ClineEndpoint configuration invalid JSON handling should throw ClineConfigurationError for null JSON: 2ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when appBaseUrl is missing: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when appBaseUrl is missing: 2ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when apiBaseUrl is missing: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when apiBaseUrl is missing: 3ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when mcpBaseUrl is missing: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when mcpBaseUrl is missing: 3ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when all fields are missing: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when all fields are missing: 2ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is null: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is null: 1ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is empty string: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is empty string: 1ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is whitespace only: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is whitespace only: 2ms
+    ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is non-string: 
+  Ô£ö ClineEndpoint configuration missing required fields should throw ClineConfigurationError when field is non-string: 2ms
+    ClineEndpoint configuration invalid URL detection should throw ClineConfigurationError for invalid URL format: 
+  Ô£ö ClineEndpoint configuration invalid URL detection should throw ClineConfigurationError for invalid URL format: 3ms
+    ClineEndpoint configuration invalid URL detection should throw ClineConfigurationError for URL without protocol: 
+  Ô£ö ClineEndpoint configuration invalid URL detection should throw ClineConfigurationError for URL without protocol: 3ms
+    ClineEndpoint configuration invalid URL detection should throw ClineConfigurationError for malformed URL: 
+  Ô£ö ClineEndpoint configuration invalid URL detection should throw ClineConfigurationError for malformed URL: 3ms
+    ClineEndpoint configuration invalid URL detection should include the invalid URL value in error message: 
+  Ô£ö ClineEndpoint configuration invalid URL detection should include the invalid URL value in error message: 1ms
+    ClineEndpoint configuration environment switching blocked in self-hosted mode should throw error when trying to change environment in self-hosted mode: 
+  Ô£ö ClineEndpoint configuration environment switching blocked in self-hosted mode should throw error when trying to change environment in self-hosted mode: 2ms
+    ClineEndpoint configuration environment switching blocked in self-hosted mode should throw error for all environment values in self-hosted mode: 
+  Ô£ö ClineEndpoint configuration environment switching blocked in self-hosted mode should throw error for all environment values in self-hosted mode: 3ms
+    ClineEndpoint configuration environment switching blocked in self-hosted mode should allow environment switching in standard mode: 
+  Ô£ö ClineEndpoint configuration environment switching blocked in self-hosted mode should allow environment switching in standard mode: 0ms
+    ClineEndpoint configuration self-hosted mode behavior should report selfHosted environment in self-hosted mode: 
+  Ô£ö ClineEndpoint configuration self-hosted mode behavior should report selfHosted environment in self-hosted mode: 3ms
+    ClineEndpoint configuration self-hosted mode behavior should use custom endpoints from file: 
+  Ô£ö ClineEndpoint configuration self-hosted mode behavior should use custom endpoints from file: 2ms
+    ClineEndpoint configuration initialization behavior should only initialize once: 
+  Ô£ö ClineEndpoint configuration initialization behavior should only initialize once: 1ms
+    ClineEndpoint configuration initialization behavior should throw error when accessing config before initialization: 
+  Ô£ö ClineEndpoint configuration initialization behavior should throw error when accessing config before initialization: 0ms
+    ClineEndpoint configuration isSelfHosted() method should return true when not initialized (safety fallback): 
+  Ô£ö ClineEndpoint configuration isSelfHosted() method should return true when not initialized (safety fallback): 1ms
+    ClineEndpoint configuration isSelfHosted() method should return true when in self-hosted mode: 
+  Ô£ö ClineEndpoint configuration isSelfHosted() method should return true when in self-hosted mode: 3ms
+    ClineEndpoint configuration isSelfHosted() method should return false when in normal mode (no endpoints.json): 
+  Ô£ö ClineEndpoint configuration isSelfHosted() method should return false when in normal mode (no endpoints.json): 1ms
+    ClineEndpoint configuration bundled endpoints.json behavior should use bundled endpoints.json when available: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should use bundled endpoints.json when available: 2ms
+    ClineEndpoint configuration bundled endpoints.json behavior should prefer bundled endpoints.json over user file: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should prefer bundled endpoints.json over user file: 2ms
+    ClineEndpoint configuration bundled endpoints.json behavior should fall back to user endpoints.json when bundled is not present: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should fall back to user endpoints.json when bundled is not present: 2ms
+    ClineEndpoint configuration bundled endpoints.json behavior should use standard mode when neither bundled nor user file exists: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should use standard mode when neither bundled nor user file exists: 0ms
+    ClineEndpoint configuration bundled endpoints.json behavior should throw ClineConfigurationError for invalid bundled file: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should throw ClineConfigurationError for invalid bundled file: 2ms
+    ClineEndpoint configuration bundled endpoints.json behavior should throw ClineConfigurationError for invalid JSON in bundled file: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should throw ClineConfigurationError for invalid JSON in bundled file: 1ms
+    ClineEndpoint configuration bundled endpoints.json behavior should indicate bundled source in error messages: 
+  Ô£ö ClineEndpoint configuration bundled endpoints.json behavior should indicate bundled source in error messages: 2ms
+    transformToolCallMessages apply_patch conversion should convert apply_patch Add operation to write_to_file: 
+  Ô£ö transformToolCallMessages apply_patch conversion should convert apply_patch Add operation to write_to_file: 2ms
+    transformToolCallMessages apply_patch conversion should convert apply_patch Update operation to replace_in_file: 
+  Ô£ö transformToolCallMessages apply_patch conversion should convert apply_patch Update operation to replace_in_file: 0ms
+    transformToolCallMessages apply_patch conversion should handle multiple tool_use blocks in same message: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle multiple tool_use blocks in same message: 0ms
+    transformToolCallMessages apply_patch conversion should preserve non-apply_patch tool calls: 
+  Ô£ö transformToolCallMessages apply_patch conversion should preserve non-apply_patch tool calls: 0ms
+    transformToolCallMessages apply_patch conversion should handle apply_patch with @@ context markers: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle apply_patch with @@ context markers: 0ms
+    transformToolCallMessages apply_patch conversion should handle Delete operation as replace_in_file: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle Delete operation as replace_in_file: 0ms
+    transformToolCallMessages apply_patch conversion should handle malformed apply_patch by fallback to write_to_file: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle malformed apply_patch by fallback to write_to_file: 0ms
+    transformToolCallMessages apply_patch conversion should match tool_result blocks with converted tool_use: 
+  Ô£ö transformToolCallMessages apply_patch conversion should match tool_result blocks with converted tool_use: 1ms
+    transformToolCallMessages apply_patch conversion should handle multiple apply_patch operations in one message: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle multiple apply_patch operations in one message: 1ms
+    transformToolCallMessages apply_patch conversion should handle context after @@ markers as first line of search block: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle context after @@ markers as first line of search block: 0ms
+    transformToolCallMessages apply_patch conversion should preserve tool_result blocks when tool_use is converted: 
+  Ô£ö transformToolCallMessages apply_patch conversion should preserve tool_result blocks when tool_use is converted: 1ms
+    transformToolCallMessages apply_patch conversion should reconstruct tool_result content with final_file_content for write_to_file: 
+  Ô£ö transformToolCallMessages apply_patch conversion should reconstruct tool_result content with final_file_content for write_to_file: 0ms
+    transformToolCallMessages apply_patch conversion should reconstruct tool_result content with final_file_content for replace_in_file: 
+  Ô£ö transformToolCallMessages apply_patch conversion should reconstruct tool_result content with final_file_content for replace_in_file: 0ms
+    transformToolCallMessages apply_patch conversion should handle tool_result without final_file_content gracefully: 
+  Ô£ö transformToolCallMessages apply_patch conversion should handle tool_result without final_file_content gracefully: 0ms
+    transformToolCallMessages apply_patch conversion should generate valid SEARCH/REPLACE diff format: 
+  Ô£ö transformToolCallMessages apply_patch conversion should generate valid SEARCH/REPLACE diff format: 0ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should convert write_to_file to apply_patch Add operation: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should convert write_to_file to apply_patch Add operation: 1ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should convert replace_in_file to apply_patch Update operation: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should convert replace_in_file to apply_patch Update operation: 1ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should handle multiple write_to_file and replace_in_file in same message: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should handle multiple write_to_file and replace_in_file in same message: 0ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should preserve non-write_to_file/replace_in_file tool calls: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should preserve non-write_to_file/replace_in_file tool calls: 0ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should convert replace_in_file with context lines to apply_patch: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should convert replace_in_file with context lines to apply_patch: 0ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should use final_file_content to generate apply_patch for write_to_file: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should use final_file_content to generate apply_patch for write_to_file: 0ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should use final_file_content to generate apply_patch with context for replace_in_file: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should use final_file_content to generate apply_patch with context for replace_in_file: 1ms
+    transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should handle tool_result without final_file_content gracefully: 
+  Ô£ö transformToolCallMessages write_to_file/replace_in_file to apply_patch conversion should handle tool_result without final_file_content gracefully: 0ms
+    AnthropicHandler getModel should return the fast mode model when configured: 
+  Ô£ö AnthropicHandler getModel should return the fast mode model when configured: 1ms
+    AnthropicHandler getModel should return the 1m fast mode model when configured: 
+  Ô£ö AnthropicHandler getModel should return the 1m fast mode model when configured: 1ms
+    AnthropicHandler createMessage should route fast mode requests through the beta messages API: 
+  Ô£ö AnthropicHandler createMessage should route fast mode requests through the beta messages API: 2ms
+    AnthropicHandler createMessage should include the 1m beta when routing 1m fast mode requests through the beta messages API: 
+  Ô£ö AnthropicHandler createMessage should include the 1m beta when routing 1m fast mode requests through the beta messages API: 1ms
+    AwsBedrockHandler withTempEnv should restore original environment variables after operation: 
+  Ô£ö AwsBedrockHandler withTempEnv should restore original environment variables after operation: 2ms
+    AwsBedrockHandler withTempEnv should handle undefined environment variables: 
+  Ô£ö AwsBedrockHandler withTempEnv should handle undefined environment variables: 1ms
+    AwsBedrockHandler withTempEnv should handle errors and still restore environment: 
+  Ô£ö AwsBedrockHandler withTempEnv should handle errors and still restore environment: 2ms
+    AwsBedrockHandler withTempEnv should handle multiple environment variable changes: 
+  Ô£ö AwsBedrockHandler withTempEnv should handle multiple environment variable changes: 1ms
+    AwsBedrockHandler withTempEnv should work with AWS_PROFILE: 
+  Ô£ö AwsBedrockHandler withTempEnv should work with AWS_PROFILE: 2ms
+    AwsBedrockHandler withTempEnv should work with AWS_BEARER_TOKEN_BEDROCK: 
+  Ô£ö AwsBedrockHandler withTempEnv should work with AWS_BEARER_TOKEN_BEDROCK: 2ms
+    AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should handle thinking response in additionalModelResponseFields: 
+  Ô£ö AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should handle thinking response in additionalModelResponseFields: 3ms
+    AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should not parse thinking tags in text content: 
+  Ô£ö AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should not parse thinking tags in text content: 1ms
+    AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should handle thinking response with empty reasoning array: 
+  Ô£ö AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should handle thinking response with empty reasoning array: 1ms
+    AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should handle thinking response interleaved with text chunks: 
+  Ô£ö AwsBedrockHandler executeConverseStream thinking response handling (new API structure) should handle thinking response interleaved with text chunks: 1ms
+    AwsBedrockHandler executeConverseStream multiple content blocks should handle multiple content blocks (reasoning + text): 
+  Ô£ö AwsBedrockHandler executeConverseStream multiple content blocks should handle multiple content blocks (reasoning + text): 0ms
+    AwsBedrockHandler executeConverseStream multiple content blocks should handle real-world Japanese content: 
+  Ô£ö AwsBedrockHandler executeConverseStream multiple content blocks should handle real-world Japanese content: 1ms
+    AwsBedrockHandler executeConverseStream multiple content blocks should handle interleaved content blocks: 
+  Ô£ö AwsBedrockHandler executeConverseStream multiple content blocks should handle interleaved content blocks: 1ms
+    AwsBedrockHandler executeConverseStream error handling should handle internalServerException: 
+  Ô£ö AwsBedrockHandler executeConverseStream error handling should handle internalServerException: 1ms
+    AwsBedrockHandler executeConverseStream error handling should handle throttlingException: 
+  Ô£ö AwsBedrockHandler executeConverseStream error handling should handle throttlingException: 1ms
+    AwsBedrockHandler executeConverseStream usage tracking should track usage with cache tokens: 
+  Ô£ö AwsBedrockHandler executeConverseStream usage tracking should track usage with cache tokens: 0ms
+    AwsBedrockHandler executeConverseStream tool use handling should handle tool use content blocks: 
+  Ô£ö AwsBedrockHandler executeConverseStream tool use handling should handle tool use content blocks: 1ms
+    AwsBedrockHandler executeConverseStream tool use handling should handle multiple tool calls: 
+  Ô£ö AwsBedrockHandler executeConverseStream tool use handling should handle multiple tool calls: 1ms
+    AwsBedrockHandler executeConverseStream tool use handling should handle text and tool use interleaving: 
+  Ô£ö AwsBedrockHandler executeConverseStream tool use handling should handle text and tool use interleaving: 1ms
+    AwsBedrockHandler tool config mapping should map Anthropic tools to Bedrock toolConfig: 
+  Ô£ö AwsBedrockHandler tool config mapping should map Anthropic tools to Bedrock toolConfig: 0ms
+    AwsBedrockHandler tool config mapping should return undefined when tools is undefined or empty: 
+  Ô£ö AwsBedrockHandler tool config mapping should return undefined when tools is undefined or empty: 0ms
+    AwsBedrockHandler tool config mapping should silently drop tools without input_schema: 
+  Ô£ö AwsBedrockHandler tool config mapping should silently drop tools without input_schema: 0ms
+    AwsBedrockHandler formatMessagesForConverseAPI should format tool_use and tool_result blocks: 
+  Ô£ö AwsBedrockHandler formatMessagesForConverseAPI should format tool_use and tool_result blocks: 1ms
+    AwsBedrockHandler formatMessagesForConverseAPI should format tool_result with array content: 
+  Ô£ö AwsBedrockHandler formatMessagesForConverseAPI should format tool_result with array content: 0ms
+    AwsBedrockHandler formatMessagesForConverseAPI should map is_error to error status on tool_result: 
+  Ô£ö AwsBedrockHandler formatMessagesForConverseAPI should map is_error to error status on tool_result: 0ms
+    AwsBedrockHandler getModelId should return raw model ID for custom models: 
+  Ô£ö AwsBedrockHandler getModelId should return raw model ID for custom models: 0ms
+    AwsBedrockHandler getModelId should not encode custom model IDs with slashes: 
+  Ô£ö AwsBedrockHandler getModelId should not encode custom model IDs with slashes: 0ms
+    AwsBedrockHandler getModelId should apply cross-region prefix for non-custom models when enabled: 
+  Ô£ö AwsBedrockHandler getModelId should apply cross-region prefix for non-custom models when enabled: 0ms
+    AwsBedrockHandler getModelId should apply EU cross-region prefix: 
+  Ô£ö AwsBedrockHandler getModelId should apply EU cross-region prefix: 0ms
+    AwsBedrockHandler getModelId should apply JP cross-region prefix for sonnet 4.5: 
+  Ô£ö AwsBedrockHandler getModelId should apply JP cross-region prefix for sonnet 4.5: 0ms
+    AwsBedrockHandler getModelId should apply JP cross-region prefix for sonnet 4.6: 
+  Ô£ö AwsBedrockHandler getModelId should apply JP cross-region prefix for sonnet 4.6: 0ms
+    AwsBedrockHandler getModelId should apply global cross-region prefix for supported models: 
+  Ô£ö AwsBedrockHandler getModelId should apply global cross-region prefix for supported models: 1ms
+    AwsBedrockHandler getModelId should NOT apply global cross-region prefix for unsupported models: 
+  Ô£ö AwsBedrockHandler getModelId should NOT apply global cross-region prefix for unsupported models: 0ms
+    AwsBedrockHandler getModelId should apply APAC cross-region prefix: 
+  Ô£ö AwsBedrockHandler getModelId should apply APAC cross-region prefix: 0ms
+    AwsBedrockHandler getModelId should not apply cross-region prefix for custom models even when enabled: 
+  Ô£ö AwsBedrockHandler getModelId should not apply cross-region prefix for custom models even when enabled: 0ms
+    AwsBedrockHandler getModelId should handle UltraThink model ARN correctly: 
+  Ô£ö AwsBedrockHandler getModelId should handle UltraThink model ARN correctly: 0ms
+    AwsBedrockHandler native tool calling integration should be recognized as a next-gen provider eligible for native tool calling: 
+  Ô£ö AwsBedrockHandler native tool calling integration should be recognized as a next-gen provider eligible for native tool calling: 1ms
+    AwsBedrockHandler native tool calling integration should not use native tool calling for pre-4.0 Claude models: 
+  Ô£ö AwsBedrockHandler native tool calling integration should not use native tool calling for pre-4.0 Claude models: 2ms
+    AwsBedrockHandler native tool calling integration should not use native tool calling when the setting is disabled: 
+  Ô£ö AwsBedrockHandler native tool calling integration should not use native tool calling when the setting is disabled: 1ms
+    AwsBedrockHandler native tool calling integration should pass toolConfig to ConverseStreamCommand when tools are provided: 
+  Ô£ö AwsBedrockHandler native tool calling integration should pass toolConfig to ConverseStreamCommand when tools are provided: 1ms
+    AwsBedrockHandler native tool calling integration should format a complete tool call round-trip correctly: 
+  Ô£ö AwsBedrockHandler native tool calling integration should format a complete tool call round-trip correctly: 0ms
+    AwsBedrockHandler native tool calling integration should silently skip thinking blocks without warnings: 
+  Ô£ö AwsBedrockHandler native tool calling integration should silently skip thinking blocks without warnings: 1ms
+    AwsBedrockHandler native tool calling integration should silently skip redacted_thinking blocks without warnings: 
+  Ô£ö AwsBedrockHandler native tool calling integration should silently skip redacted_thinking blocks without warnings: 0ms
+    AwsBedrockHandler native tool calling integration should handle messages with only thinking blocks by producing empty content: 
+  Ô£ö AwsBedrockHandler native tool calling integration should handle messages with only thinking blocks by producing empty content: 0ms
+    ClaudeCodeHandler token counting should correctly handle token usage from assistant messages: 
+  Ô£ö ClaudeCodeHandler token counting should correctly handle token usage from assistant messages: 2ms
+    ClaudeCodeHandler token counting should handle missing usage fields with nullish coalescing: 
+  Ô£ö ClaudeCodeHandler token counting should handle missing usage fields with nullish coalescing: 1ms
+    ClaudeCodeHandler token counting should handle completely missing usage object: 
+  Ô£ö ClaudeCodeHandler token counting should handle completely missing usage object: 1ms
+    ClaudeCodeHandler getModel should return the correct model when specified: 
+  Ô£ö ClaudeCodeHandler getModel should return the correct model when specified: 0ms
+    ClaudeCodeHandler getModel should support Opus 4.6 1m model id: 
+  Ô£ö ClaudeCodeHandler getModel should support Opus 4.6 1m model id: 1ms
+    ClaudeCodeHandler getModel should support Opus 1m alias model id: 
+  Ô£ö ClaudeCodeHandler getModel should support Opus 1m alias model id: 0ms
+    ClaudeCodeHandler getModel should support Sonnet 1m alias model id: 
+  Ô£ö ClaudeCodeHandler getModel should support Sonnet 1m alias model id: 0ms
+    ClaudeCodeHandler getModel should support Sonnet 4.5 1m model id: 
+  Ô£ö ClaudeCodeHandler getModel should support Sonnet 4.5 1m model id: 0ms
+    ClaudeCodeHandler getModel should support Sonnet 4.6 1m model id: 
+  Ô£ö ClaudeCodeHandler getModel should support Sonnet 4.6 1m model id: 0ms
+    ClaudeCodeHandler getModel should return default model when not specified: 
+  Ô£ö ClaudeCodeHandler getModel should return default model when not specified: 0ms
+    ClineHandler should handle usage-only chunks when delta is missing: 
+  Ô£ö ClineHandler should handle usage-only chunks when delta is missing: 3ms
+    FireworksHandler should handle usage-only chunks when delta is missing: 
+  Ô£ö FireworksHandler should handle usage-only chunks when delta is missing: 2ms
+    GeminiHandler caps maxOutputTokens to 8192 for Flash models: 
+  Ô£ö GeminiHandler caps maxOutputTokens to 8192 for Flash models: 1ms
+    GeminiHandler does not set maxOutputTokens for non-Flash models: 
+  Ô£ö GeminiHandler does not set maxOutputTokens for non-Flash models: 0ms
+    LiteLlmHandler prompt cache when the model doesn't support prompt caching sends the system prompt and messages with the openai format: 
+  Ô£ö LiteLlmHandler prompt cache when the model doesn't support prompt caching sends the system prompt and messages with the openai format: 2ms
+    LiteLlmHandler prompt cache when the model supports prompt caching inserts the cache control in the system prompt and the last two user messages: 
+  Ô£ö LiteLlmHandler prompt cache when the model supports prompt caching inserts the cache control in the system prompt and the last two user messages: 2ms
+Ollama server not available, skipping tests
+    OllamaHandler createMessage should handle successful responses:   - OllamaHandler createMessage should handle successful responses
+    OllamaHandler createMessage should handle timeout errors:   - OllamaHandler createMessage should handle timeout errors
+    OllamaHandler createMessage should retry on errors when using the withRetry decorator:   - OllamaHandler createMessage should retry on errors when using the withRetry decorator
+    OllamaHandler createMessage should handle stream processing errors:   - OllamaHandler createMessage should handle stream processing errors
+    OpenRouterHandler should handle usage-only chunks when delta is missing: 
+  Ô£ö OpenRouterHandler should handle usage-only chunks when delta is missing: 2ms
+    SapAiCoreHandler image processing should handle image processing for Claude 4 models: 
+  Ô£ö SapAiCoreHandler image processing should handle image processing for Claude 4 models: 0ms
+    SapAiCoreHandler image processing should create proper user readable request with images: 
+  Ô£ö SapAiCoreHandler image processing should create proper user readable request with images: 1ms
+    SapAiCoreHandler image processing should support different Claude model variants: 
+  Ô£ö SapAiCoreHandler image processing should support different Claude model variants: 0ms
+    SapAiCoreHandler getModel should return default model when no apiModelId is provided: 
+  Ô£ö SapAiCoreHandler getModel should return default model when no apiModelId is provided: 0ms
+    SapAiCoreHandler getModel should return specified model when apiModelId is provided: 
+  Ô£ö SapAiCoreHandler getModel should return specified model when apiModelId is provided: 0ms
+    SapAiCoreHandler createUserReadableRequest should create a readable request format: 
+  Ô£ö SapAiCoreHandler createUserReadableRequest should create a readable request format: 0ms
+    VercelAIGatewayHandler getModel should return configured model and info when both are provided: 
+  Ô£ö VercelAIGatewayHandler getModel should return configured model and info when both are provided: 0ms
+    VercelAIGatewayHandler getModel should preserve configured model ID when model info is missing: 
+  Ô£ö VercelAIGatewayHandler getModel should preserve configured model ID when model info is missing: 0ms
+    VercelAIGatewayHandler getModel should fall back to default model when model ID is missing: 
+  Ô£ö VercelAIGatewayHandler getModel should fall back to default model when model ID is missing: 0ms
+    VercelAIGatewayHandler createMessage should handle usage-only chunks when delta is missing: 
+  Ô£ö VercelAIGatewayHandler createMessage should handle usage-only chunks when delta is missing: 1ms
+    createOpenRouterStream caps Gemini Flash OpenRouter requests to 8192 max_tokens: 
+  Ô£ö createOpenRouterStream caps Gemini Flash OpenRouter requests to 8192 max_tokens: 1ms
+    createOpenRouterStream keeps lower Gemini Flash max_tokens values when already below 8192: 
+  Ô£ö createOpenRouterStream keeps lower Gemini Flash max_tokens values when already below 8192: 1ms
+    createOpenRouterStream does not send max_tokens for non-Gemini models: 
+  Ô£ö createOpenRouterStream does not send max_tokens for non-Gemini models: 1ms
+    createOpenRouterStream does not send max_tokens for non-Flash Gemini models: 
+  Ô£ö createOpenRouterStream does not send max_tokens for non-Flash Gemini models: 1ms
+    Thinking Trace Preservation convertToOpenAiMessages should preserve reasoning_details on text blocks: 
+  Ô£ö Thinking Trace Preservation convertToOpenAiMessages should preserve reasoning_details on text blocks: 0ms
+    Thinking Trace Preservation convertToOpenAiMessages should preserve thinking blocks with signatures: 
+  Ô£ö Thinking Trace Preservation convertToOpenAiMessages should preserve thinking blocks with signatures: 0ms
+    Thinking Trace Preservation convertToOpenAiMessages should consolidate multiple reasoning_details entries: 
+  Ô£ö Thinking Trace Preservation convertToOpenAiMessages should consolidate multiple reasoning_details entries: 0ms
+    Thinking Trace Preservation convertToOpenAiMessages should filter out corrupted encrypted reasoning blocks: 
+  Ô£ö Thinking Trace Preservation convertToOpenAiMessages should filter out corrupted encrypted reasoning blocks: 0ms
+    Thinking Trace Preservation sanitizeGeminiMessages should drop tool_calls without reasoning_details for Gemini models: 
+  Ô£ö Thinking Trace Preservation sanitizeGeminiMessages should drop tool_calls without reasoning_details for Gemini models: 1ms
+    Thinking Trace Preservation sanitizeGeminiMessages should preserve tool_calls with reasoning_details for Gemini models: 
+  Ô£ö Thinking Trace Preservation sanitizeGeminiMessages should preserve tool_calls with reasoning_details for Gemini models: 0ms
+    Thinking Trace Preservation sanitizeGeminiMessages should not modify messages for non-Gemini models: 
+  Ô£ö Thinking Trace Preservation sanitizeGeminiMessages should not modify messages for non-Gemini models: 0ms
+    Thinking Trace Preservation sanitizeAnthropicMessages should preserve thinking blocks: 
+  Ô£ö Thinking Trace Preservation sanitizeAnthropicMessages should preserve thinking blocks: 1ms
+    Thinking Trace Preservation sanitizeAnthropicMessages should not add cache_control to thinking blocks: 
+  Ô£ö Thinking Trace Preservation sanitizeAnthropicMessages should not add cache_control to thinking blocks: 0ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should convert Anthropic tool_use to OpenAI tool_calls format: 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should convert Anthropic tool_use to OpenAI tool_calls format: 1ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should truncate long tool IDs to 40 characters: 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should truncate long tool IDs to 40 characters: 1ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should transform OpenAI Responses API tool IDs (fc_ prefix): 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should transform OpenAI Responses API tool IDs (fc_ prefix): 0ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should match tool_call_id with tool_calls id for tool results: 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should match tool_call_id with tool_calls id for tool results: 1ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should handle multiple tool calls in a single message: 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should handle multiple tool calls in a single message: 0ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should handle tool results with array content: 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should handle tool results with array content: 0ms
+    Tool Call Parsing convertToOpenAiMessages - Tool Calls should set content to null when only tool_calls present: 
+  Ô£ö Tool Call Parsing convertToOpenAiMessages - Tool Calls should set content to null when only tool_calls present: 0ms
+    Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should convert OpenAI completion to Anthropic message format: 
+  Ô£ö Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should convert OpenAI completion to Anthropic message format: 0ms
+    Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should convert OpenAI tool_calls to Anthropic tool_use blocks: 
+  Ô£ö Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should convert OpenAI tool_calls to Anthropic tool_use blocks: 0ms
+    Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should handle malformed tool arguments gracefully: 
+  Ô£ö Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should handle malformed tool arguments gracefully: 1ms
+    Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should map finish_reason correctly: 
+  Ô£ö Tool Call Parsing convertToAnthropicMessage - OpenAI Response to Anthropic should map finish_reason correctly: 0ms
+    checkContextWindowExceededError detects OpenRouter context errors using structured status: 
+  Ô£ö checkContextWindowExceededError detects OpenRouter context errors using structured status: 1ms
+    checkContextWindowExceededError detects OpenRouter JSON-encoded status + context length errors: 
+  Ô£ö checkContextWindowExceededError detects OpenRouter JSON-encoded status + context length errors: 1ms
+    checkContextWindowExceededError does not classify unrelated 400 errors as context window failures: 
+  Ô£ö checkContextWindowExceededError does not classify unrelated 400 errors as context window failures: 1ms
+    ContextManager getNextTruncationRange first truncation with half keep: 
+  Ô£ö ContextManager getNextTruncationRange first truncation with half keep: 0ms
+    ContextManager getNextTruncationRange first truncation with quarter keep: 
+  Ô£ö ContextManager getNextTruncationRange first truncation with quarter keep: 0ms
+    ContextManager getNextTruncationRange sequential truncation with half keep: 
+  Ô£ö ContextManager getNextTruncationRange sequential truncation with half keep: 0ms
+    ContextManager getNextTruncationRange sequential truncation with quarter keep: 
+  Ô£ö ContextManager getNextTruncationRange sequential truncation with quarter keep: 0ms
+    ContextManager getNextTruncationRange ensures the last message in range is a user message: 
+  Ô£ö ContextManager getNextTruncationRange ensures the last message in range is a user message: 0ms
+    ContextManager getNextTruncationRange handles small message arrays: 
+  Ô£ö ContextManager getNextTruncationRange handles small message arrays: 1ms
+    ContextManager getNextTruncationRange preserves the message structure when truncating: 
+  Ô£ö ContextManager getNextTruncationRange preserves the message structure when truncating: 0ms
+    ContextManager applyContextOptimizations detects duplicate file reads across write_to_file, replace_in_file, and file mentions (normal tool calling): 
+  Ô£ö ContextManager applyContextOptimizations detects duplicate file reads across write_to_file, replace_in_file, and file mentions (normal tool calling): 1ms
+    ContextManager applyContextOptimizations returns false when no duplicate file reads exist: 
+  Ô£ö ContextManager applyContextOptimizations returns false when no duplicate file reads exist: 1ms
+    ContextManager applyContextOptimizations returns false for empty messages beyond startFromIndex: 
+  Ô£ö ContextManager applyContextOptimizations returns false for empty messages beyond startFromIndex: 0ms
+    ContextManager applyContextOptimizations detects duplicate file reads with native tool calling format (tool_result blocks): 
+  Ô£ö ContextManager applyContextOptimizations detects duplicate file reads with native tool calling format (tool_result blocks): 0ms
+    ContextManager getTruncatedMessages returns original messages when no range is provided: 
+  Ô£ö ContextManager getTruncatedMessages returns original messages when no range is provided: 1ms
+    ContextManager getTruncatedMessages correctly removes messages in the specified range: 
+  Ô£ö ContextManager getTruncatedMessages correctly removes messages in the specified range: 0ms
+    ContextManager getTruncatedMessages works with a range that starts at the first message after task: 
+  Ô£ö ContextManager getTruncatedMessages works with a range that starts at the first message after task: 0ms
+    ContextManager getTruncatedMessages correctly handles removing a range while preserving alternation pattern: 
+  Ô£ö ContextManager getTruncatedMessages correctly handles removing a range while preserving alternation pattern: 0ms
+    ContextManager getTruncatedMessages removes orphaned tool_results after truncation: 
+  Ô£ö ContextManager getTruncatedMessages removes orphaned tool_results after truncation: 1ms
+    ContextManager shouldCompactContextWindow does not compact at 33K tokens with default 0.75 threshold on 200K context: 
+  Ô£ö ContextManager shouldCompactContextWindow does not compact at 33K tokens with default 0.75 threshold on 200K context: 1ms
+    ContextManager shouldCompactContextWindow compacts when tokens exceed 0.75 threshold on 200K context: 
+  Ô£ö ContextManager shouldCompactContextWindow compacts when tokens exceed 0.75 threshold on 200K context: 0ms
+    ContextManager shouldCompactContextWindow compacts at only 10K tokens when threshold is accidentally set to 0.05: 
+  Ô£ö ContextManager shouldCompactContextWindow compacts at only 10K tokens when threshold is accidentally set to 0.05: 0ms
+    ContextManager shouldCompactContextWindow falls back to maxAllowedSize when threshold is undefined: 
+  Ô£ö ContextManager shouldCompactContextWindow falls back to maxAllowedSize when threshold is undefined: 0ms
+    ContextManager shouldCompactContextWindow falls back to maxAllowedSize when threshold is 0: 
+  Ô£ö ContextManager shouldCompactContextWindow falls back to maxAllowedSize when threshold is 0: 0ms
+    ContextManager shouldCompactContextWindow includes cacheWrites and cacheReads in total token count: 
+  Ô£ö ContextManager shouldCompactContextWindow includes cacheWrites and cacheReads in total token count: 0ms
+    ContextManager shouldCompactContextWindow returns false when previousApiReqIndex is negative: 
+  Ô£ö ContextManager shouldCompactContextWindow returns false when previousApiReqIndex is negative: 0ms
+    ContextManager shouldCompactContextWindow threshold is capped at maxAllowedSize even when percentage is very high: 
+  Ô£ö ContextManager shouldCompactContextWindow threshold is capped at maxAllowedSize even when percentage is very high: 0ms
+    parseYamlFrontmatter returns original content when no frontmatter: 
+  Ô£ö parseYamlFrontmatter returns original content when no frontmatter: 0ms
+    parseYamlFrontmatter parses valid YAML frontmatter: 
+  Ô£ö parseYamlFrontmatter parses valid YAML frontmatter: 2ms
+    parseYamlFrontmatter fails open on malformed YAML: 
+  Ô£ö parseYamlFrontmatter fails open on malformed YAML: 2ms
+    parseYamlFrontmatter rejects YAML custom tags (security: prevents unsafe deserialization): 
+  Ô£ö parseYamlFrontmatter rejects YAML custom tags (security: prevents unsafe deserialization): 1ms
+    parseYamlFrontmatter rejects !!python/object YAML tag: 
+  Ô£ö parseYamlFrontmatter rejects !!python/object YAML tag: 0ms
+    parseYamlFrontmatter parses JSON-compatible YAML values correctly: 
+  Ô£ö parseYamlFrontmatter parses JSON-compatible YAML values correctly: 1ms
+    rule-conditionals evaluateRuleConditionals(paths) treats missing paths as universal: 
+  Ô£ö rule-conditionals evaluateRuleConditionals(paths) treats missing paths as universal: 0ms
+    rule-conditionals evaluateRuleConditionals(paths) treats empty paths list in frontmatter as match-nothing (fail-closed): 
+  Ô£ö rule-conditionals evaluateRuleConditionals(paths) treats empty paths list in frontmatter as match-nothing (fail-closed): 1ms
+    rule-conditionals evaluateRuleConditionals(paths) does not activate path-scoped rules with empty context: 
+  Ô£ö rule-conditionals evaluateRuleConditionals(paths) does not activate path-scoped rules with empty context: 0ms
+    rule-conditionals evaluateRuleConditionals(paths) matches when any candidate path matches any glob: 
+  Ô£ö rule-conditionals evaluateRuleConditionals(paths) matches when any candidate path matches any glob: 2ms
+    rule-conditionals evaluateRuleConditionals(paths) ignores invalid paths type (fail-open): 
+  Ô£ö rule-conditionals evaluateRuleConditionals(paths) ignores invalid paths type (fail-open): 0ms
+    rule-conditionals extractPathLikeStrings extracts basic relative paths: 
+  Ô£ö rule-conditionals extractPathLikeStrings extracts basic relative paths: 0ms
+    rule-conditionals extractPathLikeStrings extracts simple filenames with extensions (no slashes): 
+  Ô£ö rule-conditionals extractPathLikeStrings extracts simple filenames with extensions (no slashes): 0ms
+    rule-conditionals extractPathLikeStrings does not extract bare words without an extension: 
+  Ô£ö rule-conditionals extractPathLikeStrings does not extract bare words without an extension: 0ms
+    rule-conditionals extractPathLikeStrings ignores URLs: 
+  Ô£ö rule-conditionals extractPathLikeStrings ignores URLs: 0ms
+    rule-conditionals extractPathLikeStrings ignores fenced code blocks: 
+  Ô£ö rule-conditionals extractPathLikeStrings ignores fenced code blocks: 0ms
+    rule-conditionals extractPathLikeStrings does not extract URLs inside code fences: 
+  Ô£ö rule-conditionals extractPathLikeStrings does not extract URLs inside code fences: 0ms
+    rule-conditionals extractPathLikeStrings extracts paths from stack traces (outside code fences): 
+  Ô£ö rule-conditionals extractPathLikeStrings extracts paths from stack traces (outside code fences): 0ms
+    rule loading with paths frontmatter filters rules by evaluationContext.paths: 
+  Ô£ö rule loading with paths frontmatter filters rules by evaluationContext.paths: 10ms
+    rule loading with paths frontmatter treats invalid YAML frontmatter as fail-open and preserves the raw frontmatter for the LLM: 
+  Ô£ö rule loading with paths frontmatter treats invalid YAML frontmatter as fail-open and preserves the raw frontmatter for the LLM: 6ms
+    rule loading with paths frontmatter treats paths: [] as match-nothing (fail-closed): 
+  Ô£ö rule loading with paths frontmatter treats paths: [] as match-nothing (fail-closed): 5ms
+    rule loading with paths frontmatter keeps activatedConditionalRules order stable (matches input file order): 
+  Ô£ö rule loading with paths frontmatter keeps activatedConditionalRules order stable (matches input file order): 7ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages extracts path from ask='tool' message with write_to_file: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages extracts path from ask='tool' message with write_to_file: 0ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages extracts paths from multiple sequential tool requests: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages extracts paths from multiple sequential tool requests: 1ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages handles malformed JSON gracefully: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages handles malformed JSON gracefully: 0ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages extracts paths from apply_patch tool request: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages extracts paths from apply_patch tool request: 1ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages deduplicates paths from multiple sources: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages deduplicates paths from multiple sources: 1ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages normalizes Windows-style paths to POSIX: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages normalizes Windows-style paths to POSIX: 1ms
+    RuleContextBuilder getRulePathContext from ask='tool' messages respects MAX_RULE_PATH_CANDIDATES limit: 
+  Ô£ö RuleContextBuilder getRulePathContext from ask='tool' messages respects MAX_RULE_PATH_CANDIDATES limit: 1ms
+    RuleContextBuilder extractPathsFromApplyPatch extracts paths from Add File headers: 
+  Ô£ö RuleContextBuilder extractPathsFromApplyPatch extracts paths from Add File headers: 1ms
+    RuleContextBuilder extractPathsFromApplyPatch extracts paths from Update File headers: 
+  Ô£ö RuleContextBuilder extractPathsFromApplyPatch extracts paths from Update File headers: 1ms
+    RuleContextBuilder extractPathsFromApplyPatch extracts paths from Delete File headers: 
+  Ô£ö RuleContextBuilder extractPathsFromApplyPatch extracts paths from Delete File headers: 0ms
+    Skills Utility Functions discoverSkills should discover skills from global directory: 
+  Ô£ö Skills Utility Functions discoverSkills should discover skills from global directory: 4ms
+    Skills Utility Functions discoverSkills should discover skills from project .clinerules/skills directory: 
+  Ô£ö Skills Utility Functions discoverSkills should discover skills from project .clinerules/skills directory: 1ms
+    Skills Utility Functions discoverSkills should discover skills from project .cline/skills directory: 
+  Ô£ö Skills Utility Functions discoverSkills should discover skills from project .cline/skills directory: 1ms
+    Skills Utility Functions discoverSkills should discover skills from project .claude/skills directory: 
+  Ô£ö Skills Utility Functions discoverSkills should discover skills from project .claude/skills directory: 2ms
+    Skills Utility Functions discoverSkills should discover skills from project .agents/skills directory: 
+  Ô£ö Skills Utility Functions discoverSkills should discover skills from project .agents/skills directory: 2ms
+    Skills Utility Functions discoverSkills should handle empty skills directories gracefully: 
+  Ô£ö Skills Utility Functions discoverSkills should handle empty skills directories gracefully: 1ms
+    Skills Utility Functions discoverSkills should skip non-directory entries in skills folder: 
+  Ô£ö Skills Utility Functions discoverSkills should skip non-directory entries in skills folder: 2ms
+    Skills Utility Functions discoverSkills should skip skill directories without SKILL.md: 
+  Ô£ö Skills Utility Functions discoverSkills should skip skill directories without SKILL.md: 1ms
+    Skills Utility Functions getAvailableSkills - Override Resolution should override project skill with global skill of same name: 
+  Ô£ö Skills Utility Functions getAvailableSkills - Override Resolution should override project skill with global skill of same name: 3ms
+    Skills Utility Functions getAvailableSkills - Override Resolution should keep both skills when names are different: 
+  Ô£ö Skills Utility Functions getAvailableSkills - Override Resolution should keep both skills when names are different: 3ms
+    Skills Utility Functions Metadata Validation should reject skill with missing name field: 
+  Ô£ö Skills Utility Functions Metadata Validation should reject skill with missing name field: 1ms
+    Skills Utility Functions Metadata Validation should reject skill with missing description field: 
+  Ô£ö Skills Utility Functions Metadata Validation should reject skill with missing description field: 2ms
+    Skills Utility Functions Metadata Validation should reject skill when name doesn't match directory name: 
+  Ô£ö Skills Utility Functions Metadata Validation should reject skill when name doesn't match directory name: 2ms
+    Skills Utility Functions Metadata Validation should handle malformed YAML frontmatter gracefully: 
+  Ô£ö Skills Utility Functions Metadata Validation should handle malformed YAML frontmatter gracefully: 2ms
+    Skills Utility Functions Metadata Validation should handle file without frontmatter: 
+  Ô£ö Skills Utility Functions Metadata Validation should handle file without frontmatter: 2ms
+    Skills Utility Functions getSkillContent should load full skill content with instructions: 
+  Ô£ö Skills Utility Functions getSkillContent should load full skill content with instructions: 2ms
+    Skills Utility Functions getSkillContent should return null for non-existent skill: 
+  Ô£ö Skills Utility Functions getSkillContent should return null for non-existent skill: 0ms
+    Skills Utility Functions getSkillContent should trim whitespace from instructions: 
+  Ô£ö Skills Utility Functions getSkillContent should trim whitespace from instructions: 2ms
+    ifFileExistsRelativePath should return BooleanResponse with boolean value: 
+  Ô£ö ifFileExistsRelativePath should return BooleanResponse with boolean value: 1ms
+    ifFileExistsRelativePath should return false when no workspace path is available: 
+  Ô£ö ifFileExistsRelativePath should return false when no workspace path is available: 0ms
+    ifFileExistsRelativePath should return false when path is invalid: 
+  Ô£ö ifFileExistsRelativePath should return false when path is invalid: 1ms
+    ifFileExistsRelativePath should handle valid relative paths correctly: 
+  Ô£ö ifFileExistsRelativePath should handle valid relative paths correctly: 1ms
+    openFileRelativePath should return Empty response on successful execution: 
+  Ô£ö openFileRelativePath should return Empty response on successful execution: 1ms
+    openFileRelativePath should call openFileIntegration with absolute path when relative path is provided: 
+  Ô£ö openFileRelativePath should call openFileIntegration with absolute path when relative path is provided: 0ms
+    openFileRelativePath should not call openFileIntegration when path is invalid: 
+  Ô£ö openFileRelativePath should not call openFileIntegration when path is invalid: 1ms
+    openFileRelativePath should return Empty and log error when no workspace path is available: 
+  Ô£ö openFileRelativePath should return Empty and log error when no workspace path is available: 1ms
+    openFileRelativePath should handle nested directory paths: 
+  Ô£ö openFileRelativePath should handle nested directory paths: 1ms
+    GrpcRecorderBuilder when not enabling should return GrpcRecorderNoops when enableIf is false: 
+  Ô£ö GrpcRecorderBuilder when not enabling should return GrpcRecorderNoops when enableIf is false: 0ms
+    GrpcRecorderBuilder when not enabling should return GrpcRecorderNoops when enableIf is false even with log file handler: 
+  Ô£ö GrpcRecorderBuilder when not enabling should return GrpcRecorderNoops when enableIf is false even with log file handler: 0ms
+    GrpcRecorderBuilder GrpcRecorderNoops functionality should have no-op methods that don't throw errors: 
+  Ô£ö GrpcRecorderBuilder GrpcRecorderNoops functionality should have no-op methods that don't throw errors: 0ms
+    grpc-recorder GrpcRecorder matches multiple request, response and stats: 
+  Ô£ö grpc-recorder GrpcRecorder matches multiple request, response and stats: 1ms
+    grpc-recorder GrpcRecorder using default filtering should filter out unwanted requests: 
+  Ô£ö grpc-recorder GrpcRecorder using default filtering should filter out unwanted requests: 0ms
+    grpc-recorder GrpcRecorder cleanupSyntheticEntries removes synthetic entries from session log: 
+  Ô£ö grpc-recorder GrpcRecorder cleanupSyntheticEntries removes synthetic entries from session log: 0ms
+    grpc-recorder GrpcRecorder recordResponse executes post-record hooks: 
+  Ô£ö grpc-recorder GrpcRecorder recordResponse executes post-record hooks: 0ms
+    log-file-handler LogFileHandler returns file name with timestamp when env var not set: 
+  Ô£ö log-file-handler LogFileHandler returns file name with timestamp when env var not set: 0ms
+    test-hooks should return an array of post-record hooks: 
+  Ô£ö test-hooks should return an array of post-record hooks: 0ms
+    test-hooks should execute hook and call recorder methods: 
+  Ô£ö test-hooks should execute hook and call recorder methods: 62ms
+    refreshClineRecommendedModels returns hardcoded models and skips upstream fetch when rollout flag is off: 
+  Ô£ö refreshClineRecommendedModels returns hardcoded models and skips upstream fetch when rollout flag is off: 0ms
+    refreshClineRecommendedModels fetches from upstream when rollout flag is on: 
+  Ô£ö refreshClineRecommendedModels fetches from upstream when rollout flag is on: 2ms
+    refreshClineRecommendedModels uses hardcoded models when rollout flag is turned off after upstream cache is populated: 
+  Ô£ö refreshClineRecommendedModels uses hardcoded models when rollout flag is turned off after upstream cache is populated: 2ms
+    recordAndRespond helpers getActiveVoiceAgent() / setActiveVoiceAgent() returns null by default: 
+  Ô£ö recordAndRespond helpers getActiveVoiceAgent() / setActiveVoiceAgent() returns null by default: 0ms
+    recordAndRespond helpers getActiveVoiceAgent() / setActiveVoiceAgent() returns the agent set via setActiveVoiceAgent: 
+  Ô£ö recordAndRespond helpers getActiveVoiceAgent() / setActiveVoiceAgent() returns the agent set via setActiveVoiceAgent: 0ms
+    recordAndRespond helpers getActiveVoiceAgent() / setActiveVoiceAgent() can be cleared by passing null: 
+  Ô£ö recordAndRespond helpers getActiveVoiceAgent() / setActiveVoiceAgent() can be cleared by passing null: 1ms
+    recordAndRespond() returns early with error when preflight fails: 
+  Ô£ö recordAndRespond() returns early with error when preflight fails: 71ms
+    recordAndRespond() runs one-shot STT and returns transcription on success: 
+  Ô£ö recordAndRespond() runs one-shot STT and returns transcription on success: 2ms
+    recordAndRespond() returns STT error when one-shot transcription fails: 
+  Ô£ö recordAndRespond() returns STT error when one-shot transcription fails: 0ms
+    recordAndRespond() returns recording failure without invoking STT: 
+  Ô£ö recordAndRespond() returns recording failure without invoking STT: 1ms
+    Hook System NoOpRunner should return success without executing anything when no hooks found: 
+  Ô£ö Hook System NoOpRunner should return success without executing anything when no hooks found: 3ms
+    Hook System StdioHookRunner should execute workspace hook from its respective workspace root directory: 
+  Ô£ö Hook System StdioHookRunner should execute workspace hook from its respective workspace root directory: 1929ms
+    Hook System StdioHookRunner should execute hook script and parse output: 

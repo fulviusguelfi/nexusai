@@ -11,6 +11,9 @@ type SpeakListener = (request: SpeakRequest) => void
 
 export interface SpeakRequest {
 	text: string
+	requestId: string
+	createdAt: number
+	source?: string
 	onSentenceSpoken?: (spokenSoFar: string, isFinal: boolean) => Promise<void>
 }
 
@@ -96,8 +99,18 @@ export class VoiceSessionManager {
 	 * Request the extension host to synthesize and play the given text.
 	 * VscodeWebviewProvider listens to this event and dispatches to PiperService.
 	 */
-	requestSpeak(text: string, onSentenceSpoken?: (spokenSoFar: string, isFinal: boolean) => Promise<void>): void {
-		const request: SpeakRequest = { text, onSentenceSpoken }
+	requestSpeak(
+		text: string,
+		onSentenceSpoken?: (spokenSoFar: string, isFinal: boolean) => Promise<void>,
+		source?: string,
+	): void {
+		const request: SpeakRequest = {
+			text,
+			requestId: `tts-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+			createdAt: Date.now(),
+			source,
+			onSentenceSpoken,
+		}
 		this._emitter.emit(VoiceSessionManager._SPEAK_EVENT, request)
 	}
 

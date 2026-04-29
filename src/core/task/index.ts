@@ -839,20 +839,6 @@ export class Task {
 				// await this.postStateToWebview()
 				const protoMessage = convertClineMessageToProto(lastMessage)
 				await sendPartialMessageEvent(protoMessage) // more performant than an entire postStateToWebview
-				if (
-					(type === "text" || type === "completion_result") &&
-					this.taskState.isVoiceInput &&
-					text &&
-					this.stateManager.getGlobalStateKey("voiceTtsEnabled")
-				) {
-					const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
-					Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
-					if (ttsText) {
-						void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
-							VoiceSessionManager.getInstance().requestSpeak(ttsText)
-						})
-					}
-				}
 				return undefined
 			}
 			// this is a new partial=false message, so add it like normal
@@ -868,34 +854,7 @@ export class Task {
 				modelInfo,
 			})
 			await this.postStateToWebview()
-			if (
-				(type === "text" || type === "completion_result") &&
-				this.taskState.isVoiceInput &&
-				text &&
-				this.stateManager.getGlobalStateKey("voiceTtsEnabled")
-			) {
-				const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
-				Logger.log(
-					`[TTS] 🎙️ Firing requestSpeak: type=${type}, chars=${ttsText.length}, isVoiceInput=${this.taskState.isVoiceInput}`,
-				)
-				if (ttsText) {
-					try {
-						void import("@services/voice/VoiceSessionManager")
-							.then(({ VoiceSessionManager }) => {
-								Logger.log("[TTS] ✅ VoiceSessionManager imported, calling requestSpeak...")
-								VoiceSessionManager.getInstance().requestSpeak(ttsText)
-								Logger.log("[TTS] ✅ requestSpeak called successfully")
-							})
-							.catch((err) => {
-								Logger.error("[TTS] ❌ Failed to import VoiceSessionManager:", err)
-							})
-					} catch (err) {
-						Logger.error("[TTS] ❌ requestSpeak error:", err)
-					}
-				} else {
-					Logger.log("[TTS] ⚠️ ttsText is empty after filtering thinking blocks")
-				}
-			} else {
+			if (!(type === "completion_result" && this.taskState.isVoiceInput && text)) {
 				Logger.log(
 					`[TTS] ⏭️ TTS skipped: type=${type}, hasText=${!!text}, isVoiceInput=${this.taskState.isVoiceInput}, voiceTtsEnabled=${this.stateManager.getGlobalStateKey("voiceTtsEnabled")}`,
 				)
@@ -915,20 +874,6 @@ export class Task {
 			modelInfo,
 		})
 		await this.postStateToWebview()
-		if (
-			(type === "text" || type === "completion_result") &&
-			this.taskState.isVoiceInput &&
-			text &&
-			this.stateManager.getGlobalStateKey("voiceTtsEnabled")
-		) {
-			const ttsText = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
-			Logger.log(`[TTS] Firing requestSpeak (type=${type}, chars=${ttsText.length})`)
-			if (ttsText) {
-				void import("@services/voice/VoiceSessionManager").then(({ VoiceSessionManager }) => {
-					VoiceSessionManager.getInstance().requestSpeak(ttsText)
-				})
-			}
-		}
 		return sayTs
 	}
 
